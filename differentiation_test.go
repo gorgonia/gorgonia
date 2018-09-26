@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gonum.org/v1/gonum/graph/iterator"
 	"gonum.org/v1/gonum/graph/topo"
 )
 
@@ -20,7 +21,7 @@ func TestForwardDiffAnalysis(t *testing.T) {
 		t.Error(err)
 	}
 
-	sortedNodes := graphNodeToNode(sorted)
+	sortedNodes := graphNodeToNode(iterator.NewOrderedNodes(sorted))
 	affectsOutput, err := forwardDiffAnalysis(Nodes{res1}, sortedNodes)
 	if err != nil {
 		t.Error(err)
@@ -46,7 +47,7 @@ func TestBackwardDiffAnalysis(t *testing.T) {
 		t.Error(err)
 	}
 
-	sortedNodes := graphNodeToNode(sorted)
+	sortedNodes := graphNodeToNode(iterator.NewOrderedNodes(sorted))
 	affectedByOutput, err := backwardDiffAnalysis(Nodes{x, y}, sortedNodes)
 	if err != nil {
 		t.Error(err)
