@@ -34,7 +34,7 @@ const (
 
 	// error messages
 	sortFail            = "Failed to sort"
-	cloneFail           = "Failed to carry clone()"
+	cloneFail           = "Failed to carry clone(%v)"
 	clone0Fail          = "Failed to carry clone0()"
 	nyiTypeFail         = "%s not yet implemented for %T"
 	nyiFail             = "%s not yet implemented for %v"

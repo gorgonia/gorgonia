@@ -45,10 +45,10 @@ func TestGraphBasics(t *testing.T) {
 	assert.Equal(correctTo, g.to[x])
 
 	correctTo = Nodes{xy}
-	assert.Equal(correctTo, graphNodeToNode(g.To(y.ID())))
-	assert.Equal(correctTo, graphNodeToNode(g.To(x.ID())))
+	assert.Equal(correctTo, graphNodeToNode(graph.NodesOf(g.To(y.ID()))))
+	assert.Equal(correctTo, graphNodeToNode(graph.NodesOf(g.To(x.ID()))))
 
-	assert.Equal(3, len(g.Nodes()))
+	assert.Equal(3, g.Nodes().Len())
 
 	// Now, time to deal with constants
 	xy1 := Must(Add(xy, onef64))
@@ -56,7 +56,7 @@ func TestGraphBasics(t *testing.T) {
 	assert.Equal(g, xy1.g)
 
 	var containsOne bool
-	for _, node := range g.Nodes() {
+	for _, node := range graph.NodesOf(g.Nodes()) {
 		n := node.(*Node)
 		if n.Hashcode() == onef64.Hashcode() {
 			containsOne = true
