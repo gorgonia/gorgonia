@@ -140,7 +140,8 @@ func (g *ExprGraph) AddNode(n *Node) (retVal *Node) {
 	// we don't update the graph if this is the case
 	for _, node := range g.constants {
 		if node.name == n.name && n.isConstant() {
-			return node
+			retVal = node
+			return
 		}
 	}
 	hash := n.Hashcode()
