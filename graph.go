@@ -25,11 +25,11 @@ type ExprGraph struct {
 	counter   uint
 }
 
-// Graphconopt sets options
-type Graphconopt func(g *ExprGraph)
+// graphconopt sets options
+type graphconopt func(g *ExprGraph)
 
 // WithGraphName is a ExprGraph construction option that provides a name.
-func WithGraphName(name string) Graphconopt {
+func WithGraphName(name string) graphconopt {
 	f := func(g *ExprGraph) {
 		g.name = name
 	}
@@ -37,7 +37,7 @@ func WithGraphName(name string) Graphconopt {
 }
 
 // NewGraph creates a new graph. Duh
-func NewGraph(opts ...Graphconopt) *ExprGraph {
+func NewGraph(opts ...graphconopt) *ExprGraph {
 	g := &ExprGraph{
 		byHash: make(map[uint32]*Node),
 		evac:   make(map[uint32]Nodes),
