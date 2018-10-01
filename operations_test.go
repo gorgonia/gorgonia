@@ -910,9 +910,10 @@ func TestReshape(t *testing.T) {
 	for _, rst := range reshapeTests {
 		g := NewGraph()
 		T := NewTensor(g, Float64, len(rst.input), WithShape(rst.input.Clone()...))
-		T2, err := Reshape(T, rst.output.Clone())
+		T2, err := Reshape(T, rst.to.Clone())
+		t.Log(T2)
 		switch {
-		case rst.err && err != nil:
+		case rst.err && err == nil:
 			t.Fatalf("Expected Error when testing %v", rst)
 		case rst.err:
 			continue

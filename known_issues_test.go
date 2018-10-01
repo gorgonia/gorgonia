@@ -86,6 +86,7 @@ func TestIssue182(t *testing.T) {
 // 	return nil
 // }
 
+
 func TestIssue233_F32(t *testing.T) {
 	g := NewGraph()
 	xV := tensor.New(tensor.WithShape(1, 1, 5, 5), tensor.WithBacking([]float32{
@@ -167,3 +168,4 @@ func TestIssue233_F64(t *testing.T) {
 	assert.Equal(t, correct, y.Value().Data())
 
 }
+

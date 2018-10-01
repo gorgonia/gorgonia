@@ -105,6 +105,8 @@ func (e *Engine) Init(device cu.Device, size int64) (err error) {
 func (e *Engine) doInit(size int64) (err error) {
 	e.workAvailable = make(chan bool)
 	e.syncChan = make(chan struct{})
+	e.finishChan = make(chan struct{})
+	e.finishChan2 = make(chan struct{}, 1)
 	e.a = makeBFC(memalign)
 
 	// create and set context
@@ -165,7 +167,6 @@ func (e *Engine) doInit(size int64) (err error) {
 func (e *Engine) Close() error {
 	e.Lock()
 	defer e.Unlock()
-
 	e.c.Cleanup() // frees all ancillary allocations in C land
 	cu.SetCurrentContext(e.c.Context.CUDAContext())
 
@@ -182,17 +183,13 @@ func (e *Engine) Close() error {
 	}
 	e.a.reset()
 
-	closeB := func() error {
-		return e.b.Close()
-	}
+	closeB := func() error { return e.b.Close() }
 
 	if err := e.c.Do(closeB); err != nil {
 		return errors.Wrap(e.err, "Failed to close cuBLAS context")
 	}
 
-	closeN := func() error {
-		return e.n.Close()
-	}
+	closeN := func() error { return e.n.Close() }
 
 	if err := e.c.Do(closeN); err != nil {
 		return errors.Wrap(e.err, "Failed to close cuDNN context")
@@ -206,6 +203,9 @@ func (e *Engine) Close() error {
 		return errors.Wrapf(err, "Failed to cloes CUDA Context ")
 	}
 
+	runtime.Gosched() // make sure everyone has a fair play
+	e.finishChan <- struct{}{}
+	e.finishChan2 <- struct{}{} // wait
 	e.initialized = false
 	return nil
 }
@@ -216,8 +216,6 @@ func (e *Engine) DoWork() error {
 }
 
 func (e *Engine) Run() {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
 	e.Lock()
 	if e.running {
 		e.Unlock()
@@ -225,6 +223,12 @@ func (e *Engine) Run() {
 	}
 	e.Unlock()
 
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	e.finishChan2 <- struct{}{}
+
+loop:
 	for {
 		select {
 		case <-e.c.WorkAvailable():
@@ -234,7 +238,7 @@ func (e *Engine) Run() {
 				e.err = err
 				e.running = false
 				e.Unlock()
-				break
+				break loop
 			}
 		case w := <-e.c.Work():
 			if w != nil {
@@ -246,11 +250,14 @@ func (e *Engine) Run() {
 					e.err = err
 					e.running = false
 					e.Unlock()
-					break
+					break loop
 				}
 			}
+		case <-e.finishChan:
+			break loop
 		}
 	}
+	<-e.finishChan2
 }
 
 // blockThread is an easier version of calculating <<threads, blocks>> for CUDA. Useful for debugging
