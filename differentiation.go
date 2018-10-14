@@ -1,6 +1,9 @@
 package gorgonia
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+	"gonum.org/v1/gonum/graph"
+)
 
 /*
 This file holds code for symbolic differentiation.
@@ -100,7 +103,7 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 			}
 			g := n.g
 			for _, child := range n.children {
-				parents := g.To(child.ID())
+				parents := graph.NodesOf(g.To(child.ID()))
 
 				symdiffLogf("parents of %v: %v", child, graphNodeToNode(parents))
 				if len(parents) == 1 && len(child.children) > 0 {
@@ -156,8 +159,8 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 	for i := 0; i < len(g.AllNodes()); i++ {
 		n := g.AllNodes()[i]
 
-		fr := len(g.From(n.ID()))
-		to := len(g.To(n.ID()))
+		fr := g.From(n.ID()).Len()
+		to := g.To(n.ID()).Len()
 
 		if fr == 0 && to == 0 && !n.isConstant() && !n.isInput() {
 			g.RemoveNode(n)
