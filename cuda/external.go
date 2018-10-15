@@ -168,6 +168,9 @@ func (e *Engine) Close() error {
 	e.Lock()
 	defer e.Unlock()
 	e.c.Cleanup() // frees all ancillary allocations in C land
+	if e.c.Context == nil {
+		return nil
+	}
 	cu.SetCurrentContext(e.c.Context.CUDAContext())
 
 	// Unload all modules (and consequently all functions)
