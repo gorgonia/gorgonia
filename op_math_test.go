@@ -22,6 +22,138 @@ type binOpTest struct {
 
 var binOpTests = []binOpTest{
 
+	{Mul,
+		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
+		newF64(1.0),
+
+		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
+		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
+		newF64(10),
+		tensor.Shape{4},
+	},
+
+	{Mul,
+		newF64(1.0),
+		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
+
+		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
+		newF64(10),
+		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
+		tensor.Shape{4},
+	},
+
+	{Mul,
+		newF64(1.0),
+		newF64(1.0),
+
+		newF64(1.0),
+		newF64(1.0),
+		newF64(1.0),
+		scalarShape,
+	},
+
+	{Div,
+		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
+		newF64(1.0),
+
+		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
+		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
+		newF64(-10),
+		tensor.Shape{4},
+	},
+
+	{Div,
+		newF64(1),
+		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
+
+		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
+		newF64(4),
+		tensor.New(tensor.WithBacking([]float64{-1, -1, -1, -1})),
+		tensor.Shape{4},
+	},
+
+	{Div,
+		newF64(1.0),
+		newF64(1.0),
+
+		newF64(1.0),
+		newF64(1.0),
+		newF64(-1.0),
+		scalarShape,
+	},
+	{Mul,
+		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
+		newF32(1.0),
+
+		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
+		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
+		newF32(10),
+		tensor.Shape{4},
+	},
+
+	{Mul,
+		newF32(1.0),
+		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
+
+		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
+		newF32(10),
+		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
+		tensor.Shape{4},
+	},
+
+	{Mul,
+		newF32(1.0),
+		newF32(1.0),
+
+		newF32(1.0),
+		newF32(1.0),
+		newF32(1.0),
+		scalarShape,
+	},
+
+	{Div,
+		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
+		newF32(1.0),
+
+		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
+		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
+		newF32(-10),
+		tensor.Shape{4},
+	},
+
+	{Div,
+		newF32(1),
+		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
+
+		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
+		newF32(4),
+		tensor.New(tensor.WithBacking([]float32{-1, -1, -1, -1})),
+		tensor.Shape{4},
+	},
+
+	{Div,
+		newF32(1.0),
+		newF32(1.0),
+
+		newF32(1.0),
+		newF32(1.0),
+		newF32(-1.0),
+		scalarShape,
+	},
+}
+
+type binOpTestBroadcastable struct {
+	binOp func(*Node, *Node, BroadcastPattern) (*Node, error)
+	a, b  Value
+
+	correct       Value
+	correctDerivA Value
+	correctDerivB Value
+	correctShape  tensor.Shape
+}
+
+var binOpTestsBroadcastable = []binOpTestBroadcastable{
+
 	{Add,
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
@@ -111,37 +243,6 @@ var binOpTests = []binOpTest{
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
 		tensor.Shape{4},
 	},
-
-	{Mul,
-		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
-		newF64(1.0),
-
-		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
-		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
-		newF64(10),
-		tensor.Shape{4},
-	},
-
-	{Mul,
-		newF64(1.0),
-		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
-
-		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
-		newF64(10),
-		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
-		tensor.Shape{4},
-	},
-
-	{Mul,
-		newF64(1.0),
-		newF64(1.0),
-
-		newF64(1.0),
-		newF64(1.0),
-		newF64(1.0),
-		scalarShape,
-	},
-
 	{HadamardDiv,
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
 		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
@@ -151,37 +252,6 @@ var binOpTests = []binOpTest{
 		tensor.New(tensor.WithBacking([]float64{-1, -2, -3, -4})),
 		tensor.Shape{4},
 	},
-
-	{Div,
-		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
-		newF64(1.0),
-
-		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
-		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
-		newF64(-10),
-		tensor.Shape{4},
-	},
-
-	{Div,
-		newF64(1),
-		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
-
-		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
-		newF64(4),
-		tensor.New(tensor.WithBacking([]float64{-1, -1, -1, -1})),
-		tensor.Shape{4},
-	},
-
-	{Div,
-		newF64(1.0),
-		newF64(1.0),
-
-		newF64(1.0),
-		newF64(1.0),
-		newF64(-1.0),
-		scalarShape,
-	},
-
 	// Float32
 
 	{Add,
@@ -274,36 +344,6 @@ var binOpTests = []binOpTest{
 		tensor.Shape{4},
 	},
 
-	{Mul,
-		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
-		newF32(1.0),
-
-		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
-		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
-		newF32(10),
-		tensor.Shape{4},
-	},
-
-	{Mul,
-		newF32(1.0),
-		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
-
-		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
-		newF32(10),
-		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
-		tensor.Shape{4},
-	},
-
-	{Mul,
-		newF32(1.0),
-		newF32(1.0),
-
-		newF32(1.0),
-		newF32(1.0),
-		newF32(1.0),
-		scalarShape,
-	},
-
 	{HadamardDiv,
 		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
 		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
@@ -312,36 +352,6 @@ var binOpTests = []binOpTest{
 		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
 		tensor.New(tensor.WithBacking([]float32{-1, -2, -3, -4})),
 		tensor.Shape{4},
-	},
-
-	{Div,
-		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
-		newF32(1.0),
-
-		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
-		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
-		newF32(-10),
-		tensor.Shape{4},
-	},
-
-	{Div,
-		newF32(1),
-		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
-
-		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
-		newF32(4),
-		tensor.New(tensor.WithBacking([]float32{-1, -1, -1, -1})),
-		tensor.Shape{4},
-	},
-
-	{Div,
-		newF32(1.0),
-		newF32(1.0),
-
-		newF32(1.0),
-		newF32(1.0),
-		newF32(-1.0),
-		scalarShape,
 	},
 }
 
@@ -360,6 +370,100 @@ func TestBasicArithmetic(t *testing.T) {
 		}
 		runtime.GC()
 	}
+}
+
+func testOneArithLispBcast(t *testing.T, bot binOpTestBroadcastable, i int) error {
+	g := NewGraph()
+	xV, _ := CloneValue(bot.a)
+	yV, _ := CloneValue(bot.b)
+	x := NodeFromAny(g, xV, WithName("x"))
+	y := NodeFromAny(g, yV, WithName("y"))
+
+	var ret *Node
+	var retVal Value
+	var err error
+	if ret, err = bot.binOp(x, y, 0); err != nil {
+		return errors.Wrapf(err, "do binop failure")
+	}
+	Read(ret, &retVal)
+
+	if !(xV.Shape().IsScalar() && yV.Shape().IsScalar()) {
+		Must(Sum(ret))
+	}
+	m1 := NewLispMachine(g)
+	defer m1.Close()
+	if err = m1.RunAll(); err != nil {
+		return errors.Wrapf(err, "Error while running")
+	}
+
+	as := newAssertState(assert.New(t))
+	as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
+	as.True(bot.correctShape.Eq(ret.Shape()))
+
+	var xG, yG Value
+	if xG, err = x.Grad(); err != nil {
+		return errors.Wrapf(err, "Failed to get the grad of x")
+	}
+
+	if yG, err = y.Grad(); err != nil {
+		return errors.Wrapf(err, "Failed to get the grad of y")
+	}
+
+	as.Equal(bot.correctDerivA.Data(), xG.Data(), "Test %v xgrad", i)
+	as.Equal(bot.correctDerivB.Data(), yG.Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, yG)
+	if !as.cont {
+		t.Errorf("an error occurred")
+	}
+
+	if assertGraphEngine(t, g, stdengType); t.Failed() {
+		return errors.New("Lisp Machine Graph Engine expected")
+	}
+	return nil
+}
+
+func testOneArithTapeBcast(t *testing.T, bot binOpTestBroadcastable, i int) error {
+	g := NewGraph()
+	xV, _ := CloneValue(bot.a)
+	yV, _ := CloneValue(bot.b)
+	x := NodeFromAny(g, xV, WithName("x"))
+	y := NodeFromAny(g, yV, WithName("y"))
+
+	var ret *Node
+	var retVal Value
+	var err error
+	if ret, err = bot.binOp(x, y, 0); err != nil {
+		return errors.Wrapf(err, "binOp() failed")
+	}
+	Read(ret, &retVal)
+
+	cost := Must(Sum(ret))
+	var grads Nodes
+	if grads, err = Grad(cost, x, y); err != nil {
+		return errors.Wrapf(err, "Grad failed")
+	}
+
+	m1 := NewTapeMachine(g)
+	defer m1.Close()
+	if err = m1.RunAll(); err != nil {
+		t.Logf("%v", m1.Prog())
+		return errors.Wrapf(err, "Error while running")
+	}
+
+	as := newAssertState(assert.New(t))
+	as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
+	as.True(bot.correctShape.Eq(ret.Shape()))
+	as.Equal(2, len(grads))
+	as.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v xgrad", i)
+	as.Equal(bot.correctDerivB.Data(), grads[1].Value().Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, grads[1].Value())
+	if !as.cont {
+		prog := m1.Prog()
+		return errors.Errorf("Failed. Prog %v", prog)
+	}
+
+	if assertGraphEngine(t, g, stdengType); t.Failed() {
+		return errors.Errorf("BasicArithmetic. Engine of Graph is not stdengType.")
+	}
+	return nil
 }
 
 func testOneArithLisp(t *testing.T, bot binOpTest, i int) error {

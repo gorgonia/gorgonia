@@ -110,8 +110,8 @@ func TestLispMachineMechanics(t *testing.T) {
 	assert.True(ValueEq(grad, yG))
 
 	// tack more items onto the graph, and execute it again
-	szp2 := Must(Add(sz, twof64))
-	szp3 := Must(Add(sz, threef64))
+	szp2 := Must(Add(sz, twof64, 0))
+	szp3 := Must(Add(sz, threef64, 0))
 
 	var szp2Val Value
 	readSzp2 := Read(szp2, &szp2Val)
@@ -154,7 +154,7 @@ func TestLispMachineMechanics(t *testing.T) {
 	// idiotsville
 
 	// non scalar costs
-	cost := Must(Add(sz, x))
+	cost := Must(Add(sz, x, 0))
 	sg = g.Subgraph(cost)
 	machine = NewLispMachine(sg)
 	defer machine.Close()

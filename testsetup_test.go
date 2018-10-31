@@ -94,7 +94,7 @@ func simpleMatEqn() (g *ExprGraph, x, y, z *Node) {
 	g = NewGraph()
 	x = NewMatrix(g, Float64, WithName("x"), WithShape(2, 2))
 	y = NewMatrix(g, Float64, WithName("y"), WithShape(2, 2))
-	z = Must(Add(x, y))
+	z = Must(Add(x, y, 0))
 	return
 }
 
@@ -102,7 +102,7 @@ func simpleVecEqn() (g *ExprGraph, x, y, z *Node) {
 	g = NewGraph()
 	x = NewVector(g, Float64, WithName("x"), WithShape(2))
 	y = NewVector(g, Float64, WithName("y"), WithShape(2))
-	z = Must(Add(x, y))
+	z = Must(Add(x, y, 0))
 	return
 }
 
@@ -110,7 +110,7 @@ func simpleEqn() (g *ExprGraph, x, y, z *Node) {
 	g = NewGraph()
 	x = NewScalar(g, Float64, WithName("x"))
 	y = NewScalar(g, Float64, WithName("y"))
-	z = Must(Add(x, y))
+	z = Must(Add(x, y, 0))
 	return
 }
 

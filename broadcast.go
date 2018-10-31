@@ -59,7 +59,7 @@ func (bcpat BroadcastPattern) on() (retVal [2][]int) {
 }
 
 // Broadcast works somewhat like Numpy's broadcast, except it's now exposed as a function.
-func Broadcast(binOp ʘBinaryOperatorType, a, b *Node, pattern BroadcastPattern) (retVal *Node, err error) {
+func broadcast(binOp ʘBinaryOperatorType, a, b *Node, pattern BroadcastPattern) (retVal *Node, err error) {
 	broadcastOn := pattern.on()
 
 	x := a

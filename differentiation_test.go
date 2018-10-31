@@ -134,7 +134,7 @@ func TestCompoundOpDiff(t *testing.T) {
 
 	// log1p
 	x := NewVector(g, Float64, WithName("x"), WithShape(2))
-	p := Must(Add(x, onef64))
+	p := Must(Add(x, onef64, 0))
 	lp := Must(Log(p))
 	op := lp.op.(elemUnaryOp)
 	diffs, err := op.SymDiff(Nodes{x}, lp, onef64)

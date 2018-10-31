@@ -87,13 +87,13 @@ func TestWeirdNetwork(t *testing.T) {
 
 	// add all them layers
 	var add0, add1, add2 *Node
-	if add0, err = Add(wx, wp); err != nil {
+	if add0, err = Add(wx, wp, 0); err != nil {
 		t.Fatal(err)
 	}
-	if add1, err = Add(add0, wq); err != nil {
+	if add1, err = Add(add0, wq, 0); err != nil {
 		t.Fatal(err)
 	}
-	if add2, err = Add(add1, b); err != nil {
+	if add2, err = Add(add1, b, 0); err != nil {
 		t.Fatal(err)
 	}
 

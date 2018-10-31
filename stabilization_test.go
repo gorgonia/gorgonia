@@ -10,7 +10,7 @@ func TestLogStabilization(t *testing.T) {
 
 	// log(a+1)
 	x := NewVector(g, Float64, WithName("x"), WithShape(2))
-	p := Must(Add(x, onef64))
+	p := Must(Add(x, onef64, 0))
 	lp := Must(Log(p))
 	if lp.children[0] != x {
 		t.Error("Oops.")
@@ -18,7 +18,7 @@ func TestLogStabilization(t *testing.T) {
 	}
 
 	// log(1+a)
-	p = Must(Add(onef64, x))
+	p = Must(Add(onef64, x, 0))
 	lp = Must(Log(p))
 	if lp.children[0] != x {
 		t.Error("Oops.")
@@ -26,7 +26,7 @@ func TestLogStabilization(t *testing.T) {
 	}
 
 	//log(1-a)
-	m := Must(Sub(onef64, x))
+	m := Must(Sub(onef64, x, 0))
 	lp = Must(Log(m))
 	if euo, ok := lp.children[0].op.(elemUnaryOp); !ok {
 		t.Error("Oops.")
@@ -45,7 +45,7 @@ func TestLogStabilization(t *testing.T) {
 	}
 
 	//log(a-1)
-	m = Must(Sub(x, onef64))
+	m = Must(Sub(x, onef64, 0))
 	lp = Must(Log(m))
 	//TODO: surely there is a better way to test?
 	if lp.children[0] == x {
@@ -58,7 +58,7 @@ func TestExpStabilization(t *testing.T) {
 
 	x := NewVector(g, Float64, WithName("x"), WithShape(2))
 	e := Must(Exp(x))
-	s := Must(Sub(e, onef64))
+	s := Must(Sub(e, onef64, 0))
 
 	if s.children[0] != x {
 		t.Error("oops")

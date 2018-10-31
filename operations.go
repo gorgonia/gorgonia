@@ -52,7 +52,7 @@ func binOpNode(op BinaryOp, a, b *Node) (retVal *Node, err error) {
 // If both nodes are matrices, then well, matrix multiplication will be done
 func Mul(a, b *Node) (retVal *Node, err error) {
 	if a.IsScalar() || b.IsScalar() {
-		return HadamardProd(a, b)
+		return HadamardProd(a, b, 0)
 	}
 
 	var op BinaryOp
@@ -94,7 +94,7 @@ func OuterProd(a, b *Node) (retVal *Node, err error) {
 // Div is a shortcut function for HadamardDiv for scalar values. For matrix/tensor values, the matrix division operation is not yet handled, and will panic.
 func Div(a, b *Node) (retVal *Node, err error) {
 	if a.IsScalar() || b.IsScalar() {
-		return HadamardDiv(a, b)
+		return HadamardDiv(a, b, 0)
 	}
 
 	// otherwise, matrix division
@@ -149,9 +149,9 @@ func SoftMax(a *Node) (retVal *Node, err error) {
 
 		if sum, err = Sum(exp, axis); err == nil {
 			if sum.IsScalar() {
-				return HadamardDiv(exp, sum)
+				return HadamardDiv(exp, sum, 0)
 			}
-			return Broadcast(divOpType, exp, sum, NewBroadcastPattern(nil, []byte{1}))
+			return broadcast(divOpType, exp, sum, NewBroadcastPattern(nil, []byte{1}))
 		}
 		return nil, errors.Wrap(err, operationError)
 	}
@@ -165,10 +165,10 @@ func StableSoftMax(a *Node) (retVal *Node, err error) {
 	if max, err = Max(a); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
-	if retVal, err = Sub(a, max); err == nil {
+	if retVal, err = Sub(a, max, 0); err == nil {
 		if exp, err = Exp(retVal); err == nil {
 			if sum, err = Sum(exp, 1); err == nil {
-				return HadamardDiv(exp, sum)
+				return HadamardDiv(exp, sum, 0)
 			}
 			return nil, errors.Wrap(err, operationError)
 		}
@@ -183,10 +183,10 @@ func LogSumExp(a *Node, axis int) (retVal *Node, err error) {
 	if max, err = Max(a, axis); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
-	if retVal, err = Sub(a, max); err == nil {
+	if retVal, err = Sub(a, max, 0); err == nil {
 		if exp, err = Exp(retVal); err == nil {
 			if sum, err = Sum(exp, axis); err == nil {
-				if sum, err = Add(sum, max); err == nil {
+				if sum, err = Add(sum, max, 0); err == nil {
 					if logSum, err = Log(sum); err == nil {
 						return Sum(logSum, axis)
 					}
@@ -264,7 +264,7 @@ func Mean(a *Node, along ...int) (retVal *Node, err error) {
 
 	var counts *Node
 	if counts, err = ReduceMul(sizes); err == nil {
-		return HadamardDiv(s, counts)
+		return HadamardDiv(s, counts, 0)
 	}
 	return nil, errors.Wrap(err, operationError)
 }
@@ -329,9 +329,9 @@ func Norm(a *Node, axis, p int) (retVal *Node, err error) {
 		return nil, errors.New("Cannot norm a non-floating point type")
 	}
 
-	if retVal, err = Pow(a, b); err == nil {
+	if retVal, err = Pow(a, b, 0); err == nil {
 		if retVal, err = Sum(retVal, axis); err == nil {
-			if retVal, err = Pow(retVal, inv); err != nil {
+			if retVal, err = Pow(retVal, inv, 0); err != nil {
 				return nil, errors.Wrap(err, operationError)
 			}
 		} else {
@@ -353,7 +353,7 @@ func ReduceAdd(nodes Nodes, opts ...NodeConsOpt) (retVal *Node, err error) {
 	case 1:
 		return nodes[0], nil
 	case 2:
-		if retVal, err = Add(nodes[0], nodes[1]); err == nil {
+		if retVal, err = Add(nodes[0], nodes[1], 0); err == nil {
 			for _, opt := range opts {
 				opt(retVal)
 			}
@@ -369,7 +369,7 @@ func ReduceAdd(nodes Nodes, opts ...NodeConsOpt) (retVal *Node, err error) {
 			continue
 		}
 
-		if retVal, err = Add(retVal, n); err != nil {
+		if retVal, err = Add(retVal, n, 0); err != nil {
 			err = errors.Wrap(err, operationError)
 			return
 		}

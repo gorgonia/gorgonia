@@ -147,7 +147,7 @@ func TestSumOpDiff(t *testing.T) {
 	g = NewGraph()
 	x = NewMatrix(g, Float64, WithName("x"), WithShape(11, 7), WithInit(RangedFrom(0)))
 	y = Must(Sum(x))
-	z = Must(Add(y, twof64))
+	z = Must(Add(y, twof64, 0))
 
 	if _, err = Grad(z, x); err != nil {
 		t.Fatal(err)
@@ -163,7 +163,7 @@ func TestSumOpDiff(t *testing.T) {
 	g2 = NewGraph()
 	a = NewMatrix(g2, Float64, WithName("x"), WithShape(11, 7), WithInit(RangedFrom(0)))
 	b = Must(Sum(a))
-	c = Must(Add(b, twof64))
+	c = Must(Add(b, twof64, 0))
 
 	m2 = NewLispMachine(g2)
 	defer m2.Close()

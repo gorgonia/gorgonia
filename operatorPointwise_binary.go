@@ -646,8 +646,8 @@ func subDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 
 func hadamardProdDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	var dzdx, dzdy *Node
-	if dzdx, err = HadamardProd(y, gradZ); err == nil {
-		dzdy, err = HadamardProd(x, gradZ)
+	if dzdx, err = HadamardProd(y, gradZ, 0); err == nil {
+		dzdy, err = HadamardProd(x, gradZ, 0)
 		if err != nil {
 			return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
 		}
@@ -808,13 +808,13 @@ end:
 
 func hadamardDivDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	var dzdx, dzdy *Node
-	if dzdx, err = HadamardDiv(gradZ, y); err == nil {
+	if dzdx, err = HadamardDiv(gradZ, y, 0); err == nil {
 		WithGroupName(gradClust)(dzdx)
-		if dzdy, err = HadamardDiv(z, y); err == nil {
+		if dzdy, err = HadamardDiv(z, y, 0); err == nil {
 			WithGroupName(gradClust)(dzdy)
 			if dzdy, err = Neg(dzdy); err == nil {
 				WithGroupName(gradClust)(dzdy)
-				if dzdy, err = HadamardProd(dzdy, gradZ); err == nil {
+				if dzdy, err = HadamardProd(dzdy, gradZ, 0); err == nil {
 					WithGroupName(gradClust)(dzdy)
 					retVal = Nodes{dzdx, dzdy}
 					return
@@ -894,19 +894,19 @@ func hadamardPowDiffExpr(x, y, z, grad *Node) (retVal Nodes, err error) {
 	}
 
 	var ym1, pow *Node
-	if ym1, err = Sub(y, one); err != nil {
+	if ym1, err = Sub(y, one, 0); err != nil {
 		return
 	}
 
-	if pow, err = Pow(x, ym1); err != nil {
+	if pow, err = Pow(x, ym1, 0); err != nil {
 		return
 	}
 
 	var dzdx *Node
-	if dzdx, err = HadamardProd(grad, y); err != nil {
+	if dzdx, err = HadamardProd(grad, y, 0); err != nil {
 		return
 	}
-	if dzdx, err = HadamardProd(dzdx, pow); err != nil {
+	if dzdx, err = HadamardProd(dzdx, pow, 0); err != nil {
 		return
 	}
 
@@ -916,10 +916,10 @@ func hadamardPowDiffExpr(x, y, z, grad *Node) (retVal Nodes, err error) {
 	}
 
 	var dzdy *Node
-	if dzdy, err = HadamardProd(grad, z); err != nil {
+	if dzdy, err = HadamardProd(grad, z, 0); err != nil {
 		return
 	}
-	if dzdy, err = HadamardProd(dzdy, logx); err != nil {
+	if dzdy, err = HadamardProd(dzdy, logx, 0); err != nil {
 		return
 	}
 

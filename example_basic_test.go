@@ -20,7 +20,7 @@ func Example_basic() {
 	// define the expression
 	x = NewScalar(g, Float64, WithName("x"))
 	y = NewScalar(g, Float64, WithName("y"))
-	if z, err = Add(x, y); err != nil {
+	if z, err = Add(x, y, 0); err != nil {
 		log.Fatal(err)
 	}
 

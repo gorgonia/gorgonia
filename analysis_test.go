@@ -16,7 +16,7 @@ func TestBuildIntervals(t *testing.T) {
 	r := Read(z, &readVal)
 
 	z2 := Must(Square(z))
-	z2y := Must(HadamardProd(z2, y))
+	z2y := Must(HadamardProd(z2, y, 0))
 	c := NewConstant(1.0, WithName("FOOO")) // const
 	g.addToAll(c)                           // this is a hack because there is no good way to get a constant into a graph since In() won't work on constatns
 

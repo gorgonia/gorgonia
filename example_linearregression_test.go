@@ -63,8 +63,8 @@ func linregSetup(Float tensor.Dtype) (m, c *Node, machine VM) {
 	m = NewScalar(g, Float, WithName("m"), WithValue(random(Float)))
 	c = NewScalar(g, Float, WithName("c"), WithValue(random(Float)))
 
-	pred := Must(Add(Must(Mul(x, m)), c))
-	se := Must(Square(Must(Sub(pred, y))))
+	pred := Must(Add(Must(Mul(x, m)), c, 0))
+	se := Must(Square(Must(Sub(pred, y, 0))))
 	cost := Must(Mean(se))
 
 	if _, err := Grad(cost, m, c); err != nil {

@@ -67,11 +67,11 @@ func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 
 	var eq *Node
 	bcpat := NewBroadcastPattern(leftAxes, nil)
-	if eq, err = Broadcast(eqOpType, output, t, bcpat); err != nil {
+	if eq, err = broadcast(eqOpType, output, t, bcpat); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
 
-	if retVal[0], err = Broadcast(mulOpType, gradNode, eq, bcpat); err != nil {
+	if retVal[0], err = broadcast(mulOpType, gradNode, eq, bcpat); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
 	return

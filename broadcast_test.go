@@ -57,7 +57,7 @@ func TestBroadcast(t *testing.T) {
 	g = NewGraph()
 	x = NewMatrix(g, Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
 	y = NewVector(g, Float64, WithShape(2), WithValue(yT), WithName("y"))
-	if z, err = Broadcast(addOpType, x, y, NewBroadcastPattern(nil, []byte{1})); err != nil {
+	if z, err = broadcast(addOpType, x, y, NewBroadcastPattern(nil, []byte{1})); err != nil {
 		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
 		t.Fatal(err)
 	}
@@ -72,7 +72,51 @@ func TestBroadcast(t *testing.T) {
 	g = NewGraph()
 	x = NewMatrix(g, Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
 	y = NewVector(g, Float64, WithShape(2), WithValue(yT), WithName("y"))
-	if z, err = Broadcast(addOpType, y, x, NewBroadcastPattern([]byte{1}, nil)); err != nil {
+	if z, err = broadcast(addOpType, y, x, NewBroadcastPattern([]byte{1}, nil)); err != nil {
+		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
+		t.Fatalf("%+v", err)
+	}
+
+	m = NewLispMachine(g, ExecuteFwdOnly())
+	defer m.Close()
+	if err := m.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal([]float64{100, 101, 102, 203, 204, 205}, extractF64s(z.Value()))
+}
+func TestAdd_Broadcast(t *testing.T) {
+	if CUDA {
+		t.SkipNow()
+	}
+
+	assert := assert.New(t)
+	var g *ExprGraph
+	var x, y, z *Node
+	var m *lispMachine
+	var err error
+
+	xT := tensor.New(tensor.WithShape(2, 3), tensor.WithBacking(tensor.Range(tensor.Float64, 0, 6)))
+	yT := tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{100, 200}))
+
+	g = NewGraph()
+	x = NewMatrix(g, Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
+	y = NewVector(g, Float64, WithShape(2), WithValue(yT), WithName("y"))
+	if z, err = Add(x, y, NewBroadcastPattern(nil, []byte{1})); err != nil {
+		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
+		t.Fatal(err)
+	}
+
+	m = NewLispMachine(g, ExecuteFwdOnly())
+	defer m.Close()
+	if err := m.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal([]float64{100, 101, 102, 203, 204, 205}, extractF64s(z.Value()))
+
+	g = NewGraph()
+	x = NewMatrix(g, Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
+	y = NewVector(g, Float64, WithShape(2), WithValue(yT), WithName("y"))
+	if z, err = Add(y, x, NewBroadcastPattern([]byte{1}, nil)); err != nil {
 		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
 		t.Fatalf("%+v", err)
 	}

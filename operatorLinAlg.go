@@ -231,8 +231,8 @@ func matVecMulDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node) (er
 
 func vecDotDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	var dzdx, dzdy *Node
-	if dzdx, err = HadamardProd(y, gradZ); err == nil {
-		if dzdy, err = HadamardProd(x, gradZ); err == nil {
+	if dzdx, err = HadamardProd(y, gradZ, 0); err == nil {
+		if dzdy, err = HadamardProd(x, gradZ, 0); err == nil {
 			retVal = Nodes{dzdx, dzdy}
 		} else {
 			return nil, errors.Wrap(err, "Failed to carry HadamardProd()")

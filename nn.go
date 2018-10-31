@@ -31,15 +31,15 @@ func BinaryXent(output, target *Node) (retVal *Node, err error) {
 		return nil, errors.Wrap(err, operationError)
 	}
 
-	if omt, err = Sub(one, target); err != nil {
+	if omt, err = Sub(one, target, 0); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
 
-	if omo, err = Sub(one, output); err != nil {
+	if omo, err = Sub(one, output, 0); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
 
-	if tLogO, err = HadamardProd(target, logO); err != nil {
+	if tLogO, err = HadamardProd(target, logO, 0); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
 
@@ -47,11 +47,11 @@ func BinaryXent(output, target *Node) (retVal *Node, err error) {
 		return nil, errors.Wrap(err, operationError)
 	}
 
-	if retVal, err = HadamardProd(omt, retVal); err != nil {
+	if retVal, err = HadamardProd(omt, retVal, 0); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
 
-	if retVal, err = Add(tLogO, retVal); err != nil {
+	if retVal, err = Add(tLogO, retVal, 0); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
 
@@ -91,11 +91,11 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 		return nil, errors.Wrap(err, "Greater Than failed")
 	}
 
-	if retVal, err = HadamardProd(x, retVal); err != nil {
+	if retVal, err = HadamardProd(x, retVal, 0); err != nil {
 		return nil, errors.Wrap(err, mulFail)
 	}
 
-	return HadamardDiv(retVal, c)
+	return HadamardDiv(retVal, c, 0)
 }
 
 // Rectify is a convenience function for creating rectified linear units activation functions.
@@ -125,7 +125,7 @@ func Rectify(x *Node) (retVal *Node, err error) {
 		return nil, errors.Wrap(err, applyOpFail)
 	}
 
-	return HadamardProd(x, retVal)
+	return HadamardProd(x, retVal, 0)
 }
 
 // Im2Col converts a BCHW image block to columns. The kernel, pad and stride parameter must be shape of size 2, no more no less
@@ -345,10 +345,10 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 	if retVal, err = ApplyOp(op, x); err != nil {
 		return nil, nil, nil, nil, err
 	}
-	if retVal, err = HadamardProd(scale, retVal); err != nil {
+	if retVal, err = HadamardProd(scale, retVal, 0); err != nil {
 		return nil, nil, nil, nil, err
 	}
-	retVal, err = Add(retVal, bias)
+	retVal, err = Add(retVal, bias, 0)
 
 	return retVal, scale, bias, op, err
 }

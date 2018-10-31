@@ -415,7 +415,7 @@ func model2dRosenbrock(a, b, xInit, yInit float64) (z, cost *Node, machine *tape
 
 	// First term
 
-	sqrt1stTerm := Must(Sub(aN, x))
+	sqrt1stTerm := Must(Sub(aN, x, 0))
 
 	firstTerm := Must(Square(sqrt1stTerm))
 
@@ -423,14 +423,14 @@ func model2dRosenbrock(a, b, xInit, yInit float64) (z, cost *Node, machine *tape
 
 	xSquared := Must(Square(x))
 
-	yMinusxSquared := Must(Sub(y, xSquared))
+	yMinusxSquared := Must(Sub(y, xSquared, 0))
 
 	yMinusxSquaredSqu := Must(Square(yMinusxSquared))
 
 	secondTerm := Must(Mul(bN, yMinusxSquaredSqu))
 
 	// cost
-	cost = Must(Add(firstTerm, secondTerm))
+	cost = Must(Add(firstTerm, secondTerm, 0))
 
 	dcost, err := Grad(cost, z)
 	if nil != err {

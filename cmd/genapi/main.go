@@ -40,9 +40,17 @@ func {{.FnName}}(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp({{.
 `
 
 const binaryTemplateRaw = `// {{.FnName}} perfors a pointwise {{lower .FnName}} operation.
+// Broadcasting is applied as mentioned by BroadcastPattern.
+// Set it to 0 to avoid broadcasting
 {{if .AsSame -}}//	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
 {{end -}}
-func {{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}) (*Node, error) { {{if not .AsSame -}}return binOpNode(newElemBinOp({{.OpType}}, a, b), a, b) {{else -}}
+func {{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{else}}, broadcastPattern BroadcastPattern{{end}}) (*Node, error) { {{if not .AsSame -}}
+if broadcastPattern == 0 {
+return binOpNode(newElemBinOp({{.OpType}}, a, b), a, b) 
+} else {
+return broadcast({{.OpType}}, a, b, broadcastPattern)
+}
+{{else -}}
 	op := newElemBinOp({{.OpType}}, a, b)
 	op.retSame = retSame
 	return binOpNode(op, a, b)

@@ -63,21 +63,63 @@ func Expm1(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(expm1OpTy
 func Softplus(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(softplusOpType, a), a) }
 
 // Add perfors a pointwise add operation.
-func Add(a, b *Node) (*Node, error) { return binOpNode(newElemBinOp(addOpType, a, b), a, b) }
+// Broadcasting is applied as mentioned by BroadcastPattern.
+// Set it to 0 to avoid broadcasting
+func Add(a, b *Node, broadcastPattern BroadcastPattern) (*Node, error) {
+	if broadcastPattern == 0 {
+		return binOpNode(newElemBinOp(addOpType, a, b), a, b)
+	} else {
+		return broadcast(addOpType, a, b, broadcastPattern)
+	}
+}
 
 // Sub perfors a pointwise sub operation.
-func Sub(a, b *Node) (*Node, error) { return binOpNode(newElemBinOp(subOpType, a, b), a, b) }
+// Broadcasting is applied as mentioned by BroadcastPattern.
+// Set it to 0 to avoid broadcasting
+func Sub(a, b *Node, broadcastPattern BroadcastPattern) (*Node, error) {
+	if broadcastPattern == 0 {
+		return binOpNode(newElemBinOp(subOpType, a, b), a, b)
+	} else {
+		return broadcast(subOpType, a, b, broadcastPattern)
+	}
+}
 
 // HadamardProd perfors a pointwise hadamardprod operation.
-func HadamardProd(a, b *Node) (*Node, error) { return binOpNode(newElemBinOp(mulOpType, a, b), a, b) }
+// Broadcasting is applied as mentioned by BroadcastPattern.
+// Set it to 0 to avoid broadcasting
+func HadamardProd(a, b *Node, broadcastPattern BroadcastPattern) (*Node, error) {
+	if broadcastPattern == 0 {
+		return binOpNode(newElemBinOp(mulOpType, a, b), a, b)
+	} else {
+		return broadcast(mulOpType, a, b, broadcastPattern)
+	}
+}
 
 // HadamardDiv perfors a pointwise hadamarddiv operation.
-func HadamardDiv(a, b *Node) (*Node, error) { return binOpNode(newElemBinOp(divOpType, a, b), a, b) }
+// Broadcasting is applied as mentioned by BroadcastPattern.
+// Set it to 0 to avoid broadcasting
+func HadamardDiv(a, b *Node, broadcastPattern BroadcastPattern) (*Node, error) {
+	if broadcastPattern == 0 {
+		return binOpNode(newElemBinOp(divOpType, a, b), a, b)
+	} else {
+		return broadcast(divOpType, a, b, broadcastPattern)
+	}
+}
 
 // Pow perfors a pointwise pow operation.
-func Pow(a, b *Node) (*Node, error) { return binOpNode(newElemBinOp(powOpType, a, b), a, b) }
+// Broadcasting is applied as mentioned by BroadcastPattern.
+// Set it to 0 to avoid broadcasting
+func Pow(a, b *Node, broadcastPattern BroadcastPattern) (*Node, error) {
+	if broadcastPattern == 0 {
+		return binOpNode(newElemBinOp(powOpType, a, b), a, b)
+	} else {
+		return broadcast(powOpType, a, b, broadcastPattern)
+	}
+}
 
 // Lt perfors a pointwise lt operation.
+// Broadcasting is applied as mentioned by BroadcastPattern.
+// Set it to 0 to avoid broadcasting
 //	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
 func Lt(a, b *Node, retSame bool) (*Node, error) {
 	op := newElemBinOp(ltOpType, a, b)
@@ -86,6 +128,8 @@ func Lt(a, b *Node, retSame bool) (*Node, error) {
 }
 
 // Gt perfors a pointwise gt operation.
+// Broadcasting is applied as mentioned by BroadcastPattern.
+// Set it to 0 to avoid broadcasting
 //	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
 func Gt(a, b *Node, retSame bool) (*Node, error) {
 	op := newElemBinOp(gtOpType, a, b)
@@ -94,6 +138,8 @@ func Gt(a, b *Node, retSame bool) (*Node, error) {
 }
 
 // Lte perfors a pointwise lte operation.
+// Broadcasting is applied as mentioned by BroadcastPattern.
+// Set it to 0 to avoid broadcasting
 //	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
 func Lte(a, b *Node, retSame bool) (*Node, error) {
 	op := newElemBinOp(lteOpType, a, b)
@@ -102,6 +148,8 @@ func Lte(a, b *Node, retSame bool) (*Node, error) {
 }
 
 // Gte perfors a pointwise gte operation.
+// Broadcasting is applied as mentioned by BroadcastPattern.
+// Set it to 0 to avoid broadcasting
 //	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
 func Gte(a, b *Node, retSame bool) (*Node, error) {
 	op := newElemBinOp(gteOpType, a, b)
@@ -110,6 +158,8 @@ func Gte(a, b *Node, retSame bool) (*Node, error) {
 }
 
 // Eq perfors a pointwise eq operation.
+// Broadcasting is applied as mentioned by BroadcastPattern.
+// Set it to 0 to avoid broadcasting
 //	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
 func Eq(a, b *Node, retSame bool) (*Node, error) {
 	op := newElemBinOp(eqOpType, a, b)
@@ -118,6 +168,8 @@ func Eq(a, b *Node, retSame bool) (*Node, error) {
 }
 
 // Ne perfors a pointwise ne operation.
+// Broadcasting is applied as mentioned by BroadcastPattern.
+// Set it to 0 to avoid broadcasting
 //	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
 func Ne(a, b *Node, retSame bool) (*Node, error) {
 	op := newElemBinOp(neOpType, a, b)

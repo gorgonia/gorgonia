@@ -1136,7 +1136,7 @@ func (op tensordotOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal No
 		var tensordot *Node
 		switch {
 		case grad.Shape().IsScalar():
-			if tensordot, err = HadamardProd(other, grad); err != nil {
+			if tensordot, err = HadamardProd(other, grad, 0); err != nil {
 				return nil, err
 			}
 

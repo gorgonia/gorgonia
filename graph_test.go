@@ -38,7 +38,7 @@ func TestGraphBasics(t *testing.T) {
 	newY := g.AddNode(y)
 	assert.Equal(y, newY)
 
-	newXY := Must(Add(x, y))
+	newXY := Must(Add(x, y, 0))
 	correctTo = append(correctTo, xy) // note this is correct. .Set() will be called when graph.To() is called
 	assert.Equal(xy, newXY)
 	assert.Equal(correctTo, g.to[y])
@@ -51,7 +51,7 @@ func TestGraphBasics(t *testing.T) {
 	assert.Equal(3, g.Nodes().Len())
 
 	// Now, time to deal with constants
-	xy1 := Must(Add(xy, onef64))
+	xy1 := Must(Add(xy, onef64, 0))
 	assert.Nil(onef64.g)
 	assert.Equal(g, xy1.g)
 
@@ -184,7 +184,7 @@ func TestGraph_SubgraphRoots(t *testing.T) {
 	sz := Must(Sum(z))
 	a := NewVector(g, Float64, WithName("a"), WithShape(2))
 	b := NewVector(g, Float64, WithName("b"), WithShape(2))
-	c := Must(Add(a, b))
+	c := Must(Add(a, b, 0))
 	sc := Must(Sum(c))
 
 	var szVal, scVal Value
@@ -267,9 +267,9 @@ func TestGraph_Clone(t *testing.T) {
 	g.AddNode(colleen)
 
 	one := onef64
-	z2p1 := Must(Add(z2, one))                                    // add a constant
+	z2p1 := Must(Add(z2, one, 0))                                 // add a constant
 	rando := UniformRandomNode(g, Float64, 0, 1, z2p1.Shape()...) // add a weird node
-	blah := Must(HadamardProd(z2p1, rando))
+	blah := Must(HadamardProd(z2p1, rando, 0))
 	cost := Must(Sum(blah))
 	_, err := Grad(cost, x, y)
 	if err != nil {
