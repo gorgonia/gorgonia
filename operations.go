@@ -70,7 +70,7 @@ func Mul(a, b *Node) (retVal *Node, err error) {
 		op = linAlgBinOp{āBinaryOperator: matMulOperator}
 		return binOpNode(op, a, b)
 	default:
-		return nil, errors.Errorf(nyiFail, "Mul", fmt.Sprintf("a %v b %v", a.shape, b.shape))
+		return nil, &ErrNotImplemented{errors.Errorf(nyiFail, "Mul", fmt.Sprintf("a %v b %v", a.shape, b.shape))}
 	}
 }
 
@@ -563,7 +563,7 @@ func Tensordot(aAxes []int, bAxes []int, a, b *Node) (retVal *Node, err error) {
 
 	// Check if input tensors actually have dim >= 1
 	if (len(a.Shape()) < 1) || (len(b.Shape()) < 1) || (a.Dims() < 1) || (b.Dims() < 1) {
-		return nil, errors.New("Input Node's shape should have length at least 1!")
+		return nil, errors.New("Input Node's shape should have length at least 1")
 	}
 
 	// Check if number of specified axes for a and b matches

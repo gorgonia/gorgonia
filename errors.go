@@ -92,3 +92,12 @@ func (err SymDiffError) Nodes() Nodes           { return err.nodes }
 func (err SymDiffError) Node() *Node            { return err.single }
 func (err SymDiffError) Grads() map[*Node]Nodes { return err.gradMap }
 func (err SymDiffError) Grad() *Node            { return err.grad }
+
+// ErrNotImplemented ...
+type ErrNotImplemented struct {
+	err error
+}
+
+func (e *ErrNotImplemented) Error() string {
+	return e.err.Error()
+}

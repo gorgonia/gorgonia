@@ -129,10 +129,10 @@ func hasInf(v Value, dev Device) bool {
 	switch vt := v.(type) {
 	case *F64:
 		return false
-		return math.IsInf(float64(*vt), 0)
+		//return math.IsInf(float64(*vt), 0)
 	case *F32:
 		return false
-		return math32.IsInf(float32(*vt), 0)
+		//return math32.IsInf(float32(*vt), 0)
 	case tensor.Tensor:
 		if e, ok := vt.Engine().(tensor.InfChecker); ok {
 			ok, _ := e.HasInf(vt) // BUG: errors not checked
@@ -172,10 +172,10 @@ func hasNaN(v Value, dev Device) bool {
 	switch vt := v.(type) {
 	case *F64:
 		return false
-		return math.IsNaN(float64(*vt))
+		//return math.IsNaN(float64(*vt))
 	case *F32:
 		return false
-		return math32.IsNaN(float32(*vt))
+		//return math32.IsNaN(float32(*vt))
 	case tensor.Tensor:
 		if e, ok := vt.Engine().(tensor.NaNChecker); ok {
 			ok, _ := e.HasNaN(vt) // BUG: errors not checked
