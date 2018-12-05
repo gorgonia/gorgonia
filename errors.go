@@ -78,7 +78,7 @@ func checkErrSetDeriv(err error, dv *dualValue) error {
 	return err
 }
 
-// SymDiffError provides the context at which an error occured
+// SymDiffError provides the context at which an error occurred
 type SymDiffError struct {
 	nodes   Nodes
 	single  *Node

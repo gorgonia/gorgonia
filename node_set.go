@@ -148,7 +148,7 @@ func (set NodeSet) Iter() <-chan *Node {
 
 // Equal determines if two sets are equal to each other.
 // If they both are the same size and have the same items they are considered equal.
-// Order of items is not relevent for sets to be equal.
+// Order of items is not relevant for sets to be equal.
 func (set NodeSet) Equal(other NodeSet) bool {
 	if set.Cardinality() != other.Cardinality() {
 		return false

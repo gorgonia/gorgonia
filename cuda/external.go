@@ -93,7 +93,7 @@ func (e *Engine) Init(device cu.Device, size int64) (err error) {
 		e.Unlock()
 		err2 := e.Close()
 		if err2 != nil {
-			return errors.Wrapf(err, "Failed to initialize CUDA Engine with size %d for device %v. Additionally, there were errors that occured when cleaning up %v", size, device, err)
+			return errors.Wrapf(err, "Failed to initialize CUDA Engine with size %d for device %v. Additionally, there were errors that occurred when cleaning up %v", size, device, err)
 		}
 		return errors.Wrapf(err, "Failed to initialize CUDA Engine with size %d for device %v", size, device)
 	}
