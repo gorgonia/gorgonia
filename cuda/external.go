@@ -138,9 +138,6 @@ func (e *Engine) doInit(size int64) (err error) {
 	e.mbdy = attrs[6]
 	e.mbdz = attrs[7]
 
-	e.b.Init(cublas.WithContext(&e.c))
-
-	e.n = *(cudnn.NewContext())
 	e.m = make(map[string]cu.Module)
 	e.f = make(map[string]cu.Function)
 
@@ -229,6 +226,11 @@ func (e *Engine) Run() {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
+	// finish initialization
+	e.b.Init(cublas.WithContext(&e.c))
+	e.n = *(cudnn.NewContext())
+
+	// finishChan2 blocks any external commands to engine (like Close) until it's ready to finish.
 	e.finishChan2 <- struct{}{}
 
 loop:
