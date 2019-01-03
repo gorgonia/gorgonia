@@ -129,7 +129,7 @@ func newDevTransNode(read, write *Node, from, to Device) *Node {
 	n.shape = read.shape.Clone()
 	n.t = read.t
 	n.isStmt = true
-	n.children = Nodes{read}
+	//n.children = Nodes{read}
 	return n
 }
 

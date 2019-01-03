@@ -23,7 +23,7 @@ type Node struct {
 
 	// this node is the result of applying the op to the children
 	op       Op
-	children Nodes // shortcut, instead of having to go through the graph
+	children Nodes // shortcut, instead of having to go through the graph. It is set by the compiler
 
 	// For nicely grouping stuff in graphviz.
 	// TODO: Should this be in *Node?

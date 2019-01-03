@@ -27,6 +27,19 @@ func compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 		err = errors.Errorf("Cannot compile a graph that has no input nodes")
 		return
 	}
+	// Set the children of the nodes
+	all := g.Nodes()
+	for all.Next() {
+		n := all.Node().(*Node)
+		if n.children == nil {
+			child := g.From(n.ID())
+			n.children = make([]*Node, child.Len())
+			for i := 0; child.Next(); i++ {
+				n.children[i] = child.Node().(*Node)
+			}
+		}
+
+	}
 
 	compileLogf("sorting")
 	it, err := Sort(g)
