@@ -216,6 +216,9 @@ func ApplyOp(op Op, children ...*Node) (*Node, error) {
 	WithShape(s...)(n)
 	returnDimSizers(ds)
 	g.AddNode(n)
+	for i, child := range children {
+		g.SetWeightedEdge(g.NewWeightedEdge(n, child, float64(i)))
+	}
 	return n, nil
 }
 
