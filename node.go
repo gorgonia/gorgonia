@@ -11,6 +11,7 @@ import (
 	"github.com/awalterschulze/gographviz"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/debugger"
 	"gorgonia.org/tensor"
 )
 
@@ -49,6 +50,28 @@ type Node struct {
 	unchanged     bool // has this node been modified
 	isStmt        bool // is this a statement node
 	ofInterest    bool // is this node of particular interest? (for debugging)
+}
+
+// Group the node belongs to (useful for graphviz representation)
+func (n *Node) Group() debugger.GroupID {
+	var groupID debugger.GroupID
+	var isConst bool
+	var isInput = n.isInput()
+
+	if n.op != nil {
+		_, isConst = n.op.(constant)
+	}
+	switch {
+	case isConst:
+		groupID = debugger.ConstantCluster
+	case isInput:
+		groupID = debugger.InputCluster
+	case n.group == "":
+		groupID = debugger.ExprGraphCluster
+	default:
+		groupID = debugger.UndefinedCluster
+	}
+	return groupID
 }
 
 // NodeConsOpt is a function that provides construction options for any Node.
