@@ -156,14 +156,15 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 	// this entire section about removing foreveralone nodes need a rethink
 	symdiffLogf("removing foreveralone nodes")
 	enterLogScope()
-	for i := 0; i < len(g.AllNodes()); i++ {
-		n := g.AllNodes()[i]
+	it := g.Nodes()
+	for it.Next() {
+		n := it.Node().(*Node)
 
 		fr := g.From(n.ID()).Len()
 		to := g.To(n.ID()).Len()
 
 		if fr == 0 && to == 0 && !n.isConstant() && !n.isInput() {
-			g.RemoveNode(n)
+			g.RemoveNode(n.ID())
 			symdiffLogf("removed %v(%p); %x; %s", n, n, n.ID(), n.Name())
 		}
 	}

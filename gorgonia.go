@@ -47,8 +47,11 @@ func NodeFromAny(g *ExprGraph, any interface{}, opts ...NodeConsOpt) *Node {
 func NewScalar(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 	curOpts := []NodeConsOpt{WithType(t), In(g), WithShape()}
 	curOpts = append(curOpts, opts...)
-
-	return NewUniqueNode(curOpts...)
+	n := g.NewNode().(*Node)
+	for _, opt := range curOpts {
+		opt(n)
+	}
+	return n
 }
 
 // NewVector creates a Node representing a variable that holds a vector (nx1 matrix)
@@ -56,8 +59,11 @@ func NewVector(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 	tt := makeTensorType(1, t)
 	curOpts := []NodeConsOpt{WithType(tt), In(g)}
 	curOpts = append(curOpts, opts...)
-
-	return NewUniqueNode(curOpts...)
+	n := g.NewNode().(*Node)
+	for _, opt := range curOpts {
+		opt(n)
+	}
+	return n
 }
 
 // NewMatrix creates a Node representing a variable that holds a matrix (nxm)
@@ -65,8 +71,11 @@ func NewMatrix(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 	tt := makeTensorType(2, t)
 	curOpts := []NodeConsOpt{WithType(tt), In(g)}
 	curOpts = append(curOpts, opts...)
-
-	return NewUniqueNode(curOpts...)
+	n := g.NewNode().(*Node)
+	for _, opt := range curOpts {
+		opt(n)
+	}
+	return n
 }
 
 // NewTensor creates a Node representing a variable that holds a tensor (any n-dimensional array with dimensions greater than 2)
@@ -74,8 +83,11 @@ func NewTensor(g *ExprGraph, t tensor.Dtype, dims int, opts ...NodeConsOpt) *Nod
 	tt := makeTensorType(dims, t)
 	curOpts := []NodeConsOpt{WithType(tt), In(g)}
 	curOpts = append(curOpts, opts...)
-
-	return NewUniqueNode(curOpts...)
+	n := g.NewNode().(*Node)
+	for _, opt := range curOpts {
+		opt(n)
+	}
+	return n
 }
 
 // NewConstant takes in any reasonable value and makes it a constant node.
@@ -233,7 +245,7 @@ func Grad(cost *Node, WRTs ...*Node) (retVal Nodes, err error) {
 		return nil, errors.Wrapf(err, "%s not yet implemented for %v of %T", dt.String(), "Grad()'s gradOut", gradOut)
 	}
 
-	gradOut = cost.g.AddNode(gradOut)
+	cost.g.AddNode(gradOut)
 	return Backpropagate(Nodes{cost}, Nodes{gradOut}, Nodes(WRTs))
 }
 

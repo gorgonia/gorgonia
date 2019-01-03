@@ -11,7 +11,6 @@ import (
 	"github.com/awalterschulze/gographviz"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
-	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/tensor"
 )
 
@@ -234,22 +233,6 @@ func newNode(opts ...NodeConsOpt) *Node {
 
 	incrNN()
 	return n
-}
-
-// NewUniqueNode creates a new unique node in a graph. If no graph was specified in the construction options then it will just return a graphless node.
-func NewUniqueNode(opts ...NodeConsOpt) *Node {
-	n := newNode(opts...)
-	if n.g == nil {
-		return n
-	}
-	n.fixChildren() // ensure that all the kids are in the graph first
-
-	m := n.g.AddNode(n)
-	if n != m {
-		returnNode(n)
-	}
-	m.fixEdges()
-	return m
 }
 
 // ID returns the ID of the node. This satisfies the gonum/graph.Node interface
@@ -503,69 +486,6 @@ func (n *Node) Hashcode() uint32 {
 	return n.hash
 }
 
-// ToDot returns the graph as a graphviz compatible string
-func (n *Node) ToDot() string {
-	graphName := exprgraphClust
-
-	g := gographviz.NewEscape()
-	g.SetName(graphName)
-	g.SetDir(true)
-
-	g.AddAttr(exprgraphClust, "splines", "spline")
-	g.AddAttr(exprgraphClust, "nodesep", "0.5")
-	g.AddAttr(exprgraphClust, "ranksep", "1.2 equally")
-
-	seen := make(map[*Node]string)
-	n.dot(g, graphName, seen)
-
-	return g.String()
-}
-
-// RestrictedToDot prints the graphviz compatible string but does not print the entire tree
-// up and down indicates how many levels to look up, and how many levels to look down
-func (n *Node) RestrictedToDot(up, down int) string {
-	if n.g == nil {
-		return n.ToDot()
-	}
-
-	g := n.g
-	var ns, upQ, downQ Nodes
-
-	//	up
-	ns = Nodes{n}
-	upQ = Nodes{n}
-	for l := 0; l < up; l++ {
-		origLen := len(upQ)
-		for i := 0; i < origLen; i++ {
-			qn := upQ[i]
-			toQN := graphNodeToNode(graph.NodesOf(g.To(qn.ID())))
-			upQ = append(upQ, toQN...)
-			ns = append(ns, toQN...)
-		}
-		upQ = upQ[origLen:]
-	}
-
-	// down
-	downQ = Nodes{n}
-	for d := 0; d < down; d++ {
-		origLen := len(downQ)
-		for i := 0; i < origLen; i++ {
-			qn := downQ[i]
-			downQ = append(downQ, qn.children...)
-			ns = append(ns, qn.children...)
-		}
-		downQ = downQ[origLen:]
-	}
-
-	sg := g.subgraph(ns, false)
-
-	n.ofInterest = true
-	defer func() {
-		n.ofInterest = false
-	}()
-	return sg.ToDot()
-}
-
 // String() implements the fmt.Stringer interface
 func (n *Node) String() string {
 	var buf bytes.Buffer
@@ -729,19 +649,6 @@ func (n *Node) fix() {
 
 	if n.g == nil {
 		panic(fmt.Sprintf("no graph supplied %v", n))
-	}
-}
-
-func (n *Node) fixChildren() {
-	if n.g == nil {
-		return
-	}
-
-	for i, child := range n.children {
-		newChild := n.g.AddNode(child)
-		if child != newChild {
-			n.children[i] = newChild
-		}
 	}
 }
 
