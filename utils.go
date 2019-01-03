@@ -9,6 +9,7 @@ import (
 	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
+	"gonum.org/v1/gonum/graph/iterator"
 	"gorgonia.org/tensor"
 )
 
@@ -26,20 +27,21 @@ func NodesToValueGrads(in Nodes) (out []ValueGrad) {
 	return out
 }
 
-func graphNodeToNode(in []graph.Node) (out Nodes) {
-	out = make(Nodes, len(in))
-	for i, n := range in {
-		out[i] = n.(*Node) // will panic if not. which is a good thng
+func graphNodeToNode(in graph.Nodes) (out Nodes) {
+	out = make(Nodes, in.Len())
+	for i := 0; in.Next(); i++ {
+		out[i] = in.Node().(*Node)
 	}
+
 	return
 }
 
-func nodeToGraphNode(in []*Node) (out []graph.Node) {
-	out = make([]graph.Node, len(in))
+func nodeToGraphNode(in []*Node) graph.Nodes {
+	nodes := make([]graph.Node, len(in))
 	for i, n := range in {
-		out[i] = n
+		nodes[i] = n
 	}
-	return
+	return iterator.NewOrderedNodes(nodes)
 }
 
 func tensorInfo(t tensor.Tensor) (dt tensor.Dtype, dim int) {

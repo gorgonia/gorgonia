@@ -297,66 +297,62 @@ func (op im2colOp) calcShape(s tensor.Shape) (retVal tensor.Shape) {
 }
 
 func (op im2colOp) retHW(h, w int) (retHeight, retWidth int) {
-	retHeight = (h+2*op.padH-((op.dilationH*op.h-1)+1))/op.strideH + 1
-	retWidth = (w+2*op.padW-((op.dilationW*op.w-1)+1))/op.strideW + 1
+	retHeight = (h+2*op.padH-(op.dilationH*(op.h-1)+1))/op.strideH + 1
+	retWidth = (w+2*op.padW-(op.dilationW*(op.w-1)+1))/op.strideW + 1
 	return
 }
 
 func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
+	inputT := input.(*tensor.Dense)
+	outputT := prealloc.(*tensor.Dense)
+
 	// extract bchw - this bit can be expanded in the future, but for now we only support bchw
-	s := input.Shape()
+	s := inputT.Shape()
 	b := s[0]
 	c := s[1]
 	h := s[2]
 	w := s[3]
 
+	inputStrides := inputT.Strides()
 	retHeight, retWidth := op.retHW(h, w)
-	batchStrideIm := c * h * w
-	batchStrideCol := (op.w * op.h * c) * retHeight * retWidth
+	batchStrideIm := inputStrides[0]
+	batchStrideCol := outputT.Strides()[0]
 	chanStride := h * w
+	inRowStride := inputStrides[2]
 
-	var imStart, imEnd, colStart, colEnd int
-	imEnd = imStart + batchStrideIm
-	colEnd = colStart + batchStrideCol
-
+	var imEnd, colEnd int
 	switch input.Dtype() {
 	case tensor.Float64:
 		imData := input.Data().([]float64)
 		colData := prealloc.Data().([]float64)
 		for i := 0; i < b; i++ {
-			op.f64s(c, h, w, chanStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd])
+			imStart := i * batchStrideIm
+			colStart := i * batchStrideCol
 
-			colStart += batchStrideCol
-			colEnd += batchStrideCol
-
-			imStart += batchStrideIm
-			imEnd += batchStrideIm
-
-			if imEnd > len(imData) {
+			if imEnd = imStart + batchStrideIm; imEnd >= len(imData) {
 				imEnd = len(imData)
 			}
-			if colEnd > len(colData) {
+			if colEnd = colStart + batchStrideCol; colEnd >= len(colData) {
 				colEnd = len(colData)
 			}
+
+			op.f64s(c, h, w, chanStride, inRowStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd])
 		}
 	case tensor.Float32:
 		imData := input.Data().([]float32)
 		colData := prealloc.Data().([]float32)
 		for i := 0; i < b; i++ {
-			op.f32s(c, h, w, chanStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd])
+			imStart := i * batchStrideIm
+			colStart := i * batchStrideCol
 
-			colStart += batchStrideCol
-			colEnd += batchStrideCol
-
-			imStart += batchStrideIm
-			imEnd += batchStrideIm
-
-			if imEnd > len(imData) {
+			if imEnd = imStart + batchStrideIm; imEnd >= len(imData) {
 				imEnd = len(imData)
 			}
-			if colEnd > len(colData) {
+			if colEnd = colStart + batchStrideCol; colEnd >= len(colData) {
 				colEnd = len(colData)
 			}
+
+			op.f32s(c, h, w, chanStride, inRowStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd])
 		}
 	default:
 		return nil, errors.Errorf(nyiFail, "im2col", input.Dtype())
@@ -364,62 +360,58 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 	return prealloc, nil
 }
 
-func (op im2colOp) f64s(chans, height, width, chanStride, retHeight, retWidth int, im, col []float64) {
+func (op im2colOp) f64s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float64) {
 	var colIdx int
-	for ch := chans; ch > 0; ch, im = ch-1, im[chanStride:] {
-		for kernelRow := 0; kernelRow < op.h; kernelRow++ {
-			for kernelCol := 0; kernelCol < op.w; kernelCol++ {
-				inRow := -op.padH + kernelRow*op.dilationH
-				for outRow := retHeight; outRow > 0; outRow-- {
-					if !(inRow >= 0 && inRow < height) {
-						for outCol := retWidth; outCol > 0; outCol-- {
-							col[colIdx] = 0
-							colIdx++
+	for ch := 0; ch < chans; ch, im = ch+1, im[chanStride:] {
+		for r := 0; r < retHeight; r++ {
+			for c := 0; c < retWidth; c++ {
+				for kr := 0; kr < op.h; kr++ {
+					inRow := -op.padH + kr*op.dilationH + r*op.strideH
+					for kc := 0; kc < op.w; kc++ {
+						inCol := -op.padW + kc*op.dilationW + c*op.strideW
+						var val float64
+
+						switch {
+						case inRow < 0:
+						case inCol < 0:
+						case inRow*inRowStride+inCol >= len(im):
+						case inCol >= inRowStride:
+						default:
+							val = im[inRow*inRowStride+inCol]
 						}
-						continue
-					}
-					inCol := -op.padW + kernelCol*op.dilationW
-					for outCol := retWidth; outCol > 0; outCol-- {
-						if inCol >= 0 && inCol < width {
-							col[colIdx] = im[inRow*width+inCol]
-						} else {
-							col[colIdx] = 0
-						}
+
+						col[colIdx] = val
 						colIdx++
-						inCol += op.strideW
 					}
-					inRow += op.strideH
 				}
 			}
 		}
 	}
 }
 
-func (op im2colOp) f32s(chans, height, width, chanStride, retHeight, retWidth int, im, col []float32) {
+func (op im2colOp) f32s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float32) {
 	var colIdx int
-	for ch := chans; ch > 0; ch, im = ch-1, im[chanStride:] {
-		for kernelRow := 0; kernelRow < op.h; kernelRow++ {
-			for kernelCol := 0; kernelCol < op.w; kernelCol++ {
-				inRow := -op.padH + kernelRow*op.dilationH
-				for outRow := retHeight; outRow > 0; outRow-- {
-					if !(inRow >= 0 && inRow < height) {
-						for outCol := retWidth; outCol > 0; outCol-- {
-							col[colIdx] = 0
-							colIdx++
+	for ch := 0; ch < chans; ch, im = ch+1, im[chanStride:] {
+		for r := 0; r < retHeight; r++ {
+			for c := 0; c < retWidth; c++ {
+				for kr := 0; kr < op.h; kr++ {
+					inRow := -op.padH + kr*op.dilationH + r*op.strideH
+					for kc := 0; kc < op.w; kc++ {
+						inCol := -op.padW + kc*op.dilationW + c*op.strideW
+						var val float32
+
+						switch {
+						case inRow < 0:
+						case inCol < 0:
+						case inRow*inRowStride+inCol >= len(im):
+						case inCol >= inRowStride:
+						default:
+							val = im[inRow*inRowStride+inCol]
 						}
-						continue
-					}
-					inCol := -op.padW + kernelCol*op.dilationW
-					for outCol := retWidth; outCol > 0; outCol-- {
-						if inCol >= 0 && inCol < width {
-							col[colIdx] = im[inRow*width+inCol]
-						} else {
-							col[colIdx] = 0
-						}
+
+						col[colIdx] = val
 						colIdx++
-						inCol += op.strideW
 					}
-					inRow += op.strideH
 				}
 			}
 		}
@@ -491,54 +483,49 @@ func (op col2imOp) do(prealloc, input Value) (retVal Value, err error) {
 	retWidth := op.unpaddedW
 	batchStrideIm := c * retHeight * retWidth
 
-	s := input.Shape()
+	inputT := input.(*tensor.Dense)
+	outputT := prealloc.(*tensor.Dense)
+
+	s := inputT.Shape()
 	h := s[1]
 	w := s[2]
 	chanStride := retHeight * retWidth
 	batchStrideCol := h * w * s[3]
+	imRowStride := outputT.Strides()[2]
 
-	var imStart, imEnd, colStart, colEnd int
-	imEnd = imStart + batchStrideIm
-	colEnd = colStart + batchStrideCol
-
+	var imEnd, colEnd int
 	switch input.Dtype() {
 	case tensor.Float64:
 		colData := input.Data().([]float64)
 		imData := prealloc.Data().([]float64)
 		for i := 0; i < b; i++ {
-			op.f64s(c, retHeight, retWidth, chanStride, h, w, colData[colStart:colEnd], imData[imStart:imEnd])
+			imStart := i * batchStrideIm
+			colStart := i * batchStrideCol
 
-			colStart += batchStrideCol
-			colEnd += batchStrideCol
-
-			imStart += batchStrideIm
-			imEnd += batchStrideIm
-
-			if imEnd > len(imData) {
+			if imEnd = imStart + batchStrideIm; imEnd >= len(imData) {
 				imEnd = len(imData)
 			}
-			if colEnd > len(colData) {
+			if colEnd = colStart + batchStrideCol; colEnd >= len(colData) {
 				colEnd = len(colData)
 			}
+
+			op.f64s(c, retHeight, retWidth, chanStride, imRowStride, h, w, colData[colStart:colEnd], imData[imStart:imEnd])
 		}
 	case tensor.Float32:
 		colData := input.Data().([]float32)
 		imData := prealloc.Data().([]float32)
 		for i := 0; i < b; i++ {
-			op.f32s(c, retHeight, retWidth, chanStride, h, w, colData[colStart:colEnd], imData[imStart:imEnd])
+			imStart := i * batchStrideIm
+			colStart := i * batchStrideCol
 
-			colStart += batchStrideCol
-			colEnd += batchStrideCol
-
-			imStart += batchStrideIm
-			imEnd += batchStrideIm
-
-			if imEnd > len(imData) {
+			if imEnd = imStart + batchStrideIm; imEnd >= len(imData) {
 				imEnd = len(imData)
 			}
-			if colEnd > len(colData) {
+			if colEnd = colStart + batchStrideCol; colEnd >= len(colData) {
 				colEnd = len(colData)
 			}
+
+			op.f32s(c, retHeight, retWidth, chanStride, imRowStride, h, w, colData[colStart:colEnd], imData[imStart:imEnd])
 		}
 	default:
 		return nil, errors.Errorf(nyiFail, "col2im", input.Dtype())
@@ -547,11 +534,12 @@ func (op col2imOp) do(prealloc, input Value) (retVal Value, err error) {
 	return prealloc, nil
 }
 
-func (op col2imOp) f64s(chans, height, width, chanStride, retHeight, retWidth int, col, im []float64) {
+func (op col2imOp) f64s(chans, height, width, chanStride, imRowStride, retHeight, retWidth int, col, im []float64) {
 	// memset im to 0
 	for i := range im {
 		im[i] = 0
 	}
+
 	var colIdx int
 	for ch := chans; ch > 0; ch, im = ch-1, im[chanStride:] {
 		for kernelRow := 0; kernelRow < op.h; kernelRow++ {
@@ -576,34 +564,59 @@ func (op col2imOp) f64s(chans, height, width, chanStride, retHeight, retWidth in
 		}
 	}
 }
-func (op col2imOp) f32s(chans, height, width, chanStride, retHeight, retWidth int, col, im []float32) {
+func (op col2imOp) f32s(chans, height, width, chanStride, imRowStride, retHeight, retWidth int, col, im []float32) {
 	// memset im to 0
 	for i := range im {
 		im[i] = 0
 	}
 	var colIdx int
-	for ch := chans; ch > 0; ch, im = ch-1, im[chanStride:] {
-		for kernelRow := 0; kernelRow < op.h; kernelRow++ {
-			for kernelCol := 0; kernelCol < op.w; kernelCol++ {
-				inRow := -op.padH + kernelRow*op.dilationH
-				for outRow := retHeight; outRow > 0; outRow-- {
-					if !(inRow >= 0 && inRow < height) {
-						colIdx += retWidth
-					} else {
-						inCol := -op.padW + kernelCol*op.dilationW
-						for outCol := retWidth; outCol > 0; outCol-- {
-							if inCol >= 0 && inCol < width {
-								im[inRow*width+inCol] += col[colIdx]
-							}
-							colIdx++
-							inCol += op.strideW
+	for ch := 0; ch < chans; ch, im = ch+1, im[chanStride:] {
+		for r := 0; r < retHeight; r++ {
+			for c := 0; c < retWidth; c++ {
+				for kr := 0; kr < op.h; kr++ {
+					inRow := -op.padH + kr*op.dilationH + r*op.strideH
+					for kc := 0; kc < op.w; kc++ {
+						inCol := -op.padW + kc*op.dilationW + c*op.strideW
+
+						switch {
+						case inRow < 0:
+						case inCol < 0:
+						case inRow*imRowStride+inCol >= len(im):
+						case inCol >= imRowStride:
+						default:
+							im[inRow*imRowStride+inCol] += col[colIdx]
 						}
+
+						colIdx++
 					}
-					inRow += op.strideH
+
 				}
+
 			}
 		}
 	}
+	// for ch := chans; ch > 0; ch, im = ch-1, im[chanStride:] {
+	// 	for kernelRow := 0; kernelRow < op.h; kernelRow++ {
+	// 		for kernelCol := 0; kernelCol < op.w; kernelCol++ {
+	// 			inRow := -op.padH + kernelRow*op.dilationH
+	// 			for outRow := retHeight; outRow > 0; outRow-- {
+	// 				if !(inRow >= 0 && inRow < height) {
+	// 					colIdx += retWidth
+	// 				} else {
+	// 					inCol := -op.padW + kernelCol*op.dilationW
+	// 					for outCol := retWidth; outCol > 0; outCol-- {
+	// 						if inCol >= 0 && inCol < width {
+	// 							im[inRow*width+inCol] += col[colIdx]
+	// 						}
+	// 						colIdx++
+	// 						inCol += op.strideW
+	// 					}
+	// 				}
+	// 				inRow += op.strideH
+	// 			}
+	// 		}
+	// 	}
+	// }
 }
 
 // It's important to note that this op actually produces TWO values - one argmax, which will be used

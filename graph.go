@@ -25,6 +25,7 @@ type ExprGraph struct {
 	counter   uint
 }
 
+// graphconopt sets options
 type graphconopt func(g *ExprGraph)
 
 // WithGraphName is a ExprGraph construction option that provides a name.
@@ -520,7 +521,7 @@ func (g *ExprGraph) Has(nodeid int64) bool {
 }
 
 // Nodes returns all the nodes in the graph.
-func (g *ExprGraph) Nodes() []graph.Node {
+func (g *ExprGraph) Nodes() graph.Nodes {
 	// nodes := make([]graph.Node, len(g.from))
 	ns := g.AllNodes()
 
@@ -533,7 +534,7 @@ func (g *ExprGraph) Nodes() []graph.Node {
 func (g *ExprGraph) AllNodes() Nodes { return g.all }
 
 // From returns all nodes in g that can be reached directly from n.
-func (g *ExprGraph) From(nodeid int64) []graph.Node {
+func (g *ExprGraph) From(nodeid int64) graph.Nodes {
 	if n := g.node(nodeid); n != nil {
 		return nodeToGraphNode(n.children)
 	}
@@ -583,7 +584,7 @@ func (g *ExprGraph) HasEdgeFromTo(u, v int64) bool {
 }
 
 // To returns all nodes in g that can reach directly to n.
-func (g *ExprGraph) To(nid int64) []graph.Node {
+func (g *ExprGraph) To(nid int64) graph.Nodes {
 	n := g.node(nid)
 	if n == nil {
 		return nil

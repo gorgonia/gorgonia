@@ -5,7 +5,6 @@ package nnops
 import (
 	"fmt"
 	"hash"
-	"log"
 
 	"github.com/chewxy/hm"
 	"gorgonia.org/cu/dnn"
@@ -148,6 +147,7 @@ func (op *BatchNormOp) DoDiff(ctx gorgonia.ExecutionContext, inputs gorgonia.Nod
 
 func (op *BatchNormOp) SetTraining() { op.training = true }
 func (op *BatchNormOp) SetTesting()  { op.training = false }
+func (op *BatchNormOp) Reset() error { return nil }
 
 type batchNormDiffOp struct {
 	*BatchNormOp
@@ -195,7 +195,6 @@ func (op *batchNormDiffOp) CUDADo(extern gorgonia.External, dev gorgonia.Device,
 	ctx := machine.CUDNNContexts()[int(dev)]
 
 	x, scale, dscale, dbias, dy, cachedMean, cachedVariance := inputs[0], inputs[1], inputs[2], inputs[3], inputs[4], inputs[5], inputs[6]
-	log.Printf("x %v, scale %v, dscale %v, dbias %v, dy %v, cachedMean %v, cachedVariance %v", x.Shape(), scale.Shape(), dscale.Shape(), dbias.Shape(), dy.Shape(), cachedMean.Shape(), cachedVariance.Shape())
 	dscale = gorgonia.ScalarAsTensor(dscale, 4, e)
 	dbias = gorgonia.ScalarAsTensor(dbias, 4, e)
 

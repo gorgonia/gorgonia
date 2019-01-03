@@ -103,7 +103,7 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 				parents := g.To(child.ID())
 
 				symdiffLogf("parents of %v: %v", child, graphNodeToNode(parents))
-				if len(parents) == 1 && len(child.children) > 0 {
+				if parents.Len() == 1 && len(child.children) > 0 {
 					leaveLogScope()
 					return nil, errors.Errorf("Being unable to differentiate %v would leave a portion of the graph unreachable. Unable to continue", n)
 				}
@@ -156,8 +156,8 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 	for i := 0; i < len(g.AllNodes()); i++ {
 		n := g.AllNodes()[i]
 
-		fr := len(g.From(n.ID()))
-		to := len(g.To(n.ID()))
+		fr := g.From(n.ID()).Len()
+		to := g.To(n.ID()).Len()
 
 		if fr == 0 && to == 0 && !n.isConstant() && !n.isInput() {
 			g.RemoveNode(n)
