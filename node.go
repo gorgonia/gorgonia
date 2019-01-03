@@ -304,6 +304,7 @@ func (n *Node) IsMatrix() bool {
 // Graph returns the graph of the node
 func (n *Node) Graph() *ExprGraph { return n.g }
 
+/*
 // CloneTo clones the node into a new graph. If CloneTo() is called on the same graph as the n, it will return n. The reason this is done is because
 // at any given time, every node  should be unique in the *ExprGraph.
 //
@@ -317,7 +318,9 @@ func (n *Node) CloneTo(g *ExprGraph) *Node {
 	n2 = g.AddNode(n2)
 	return n2
 }
+*/
 
+/*
 // Clone clones the node. There are some caveats:
 //		- the graph is not copied over - the node essentially does not belong to a collection
 //		- there is no ID
@@ -353,6 +356,7 @@ func (n *Node) Clone() (retVal interface{}) {
 	n2.ofInterest = n.ofInterest
 	return n2
 }
+*/
 
 // Value returns the valuse bound to the node. May return nil
 func (n *Node) Value() Value {
@@ -654,6 +658,7 @@ func (n *Node) fix() {
 	}
 }
 
+/*
 func (n *Node) fixEdges() {
 	if n.g == nil {
 		return
@@ -668,6 +673,7 @@ func (n *Node) fixEdges() {
 		n.g.leaves = append(n.g.leaves, n)
 	}
 }
+*/
 
 func (n *Node) setShape(s tensor.Shape, inferred bool) {
 	n.shape = s
@@ -678,6 +684,7 @@ func (n *Node) setGroup(grp string) {
 	n.group = grp
 }
 
+/*
 func (n *Node) clone(opts ...NodeConsOpt) *Node {
 	if n.isInput() {
 		return n
@@ -702,6 +709,7 @@ func (n *Node) clone(opts ...NodeConsOpt) *Node {
 
 	return nn
 }
+*/
 
 func (n *Node) diffWRT() []bool {
 	if sdop, ok := n.op.(SDOp); ok {

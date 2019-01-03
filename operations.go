@@ -320,11 +320,11 @@ func Norm(a *Node, axis, p int) (retVal *Node, err error) {
 	var b, inv *Node
 	switch dt {
 	case Float32:
-		b = NewConstant(float32(p))
-		inv = NewConstant(float32(1) / float32(p))
+		b = NewConstant(a.g, float32(p))
+		inv = NewConstant(a.g, float32(1)/float32(p))
 	case Float64:
-		b = NewConstant(float64(p))
-		inv = NewConstant(float64(1) / float64(p))
+		b = NewConstant(a.g, float64(p))
+		inv = NewConstant(a.g, float64(1)/float64(p))
 	default:
 		return nil, errors.New("Cannot norm a non-floating point type")
 	}
@@ -563,7 +563,7 @@ func Tensordot(aAxes []int, bAxes []int, a, b *Node) (retVal *Node, err error) {
 
 	// Check if input tensors actually have dim >= 1
 	if (len(a.Shape()) < 1) || (len(b.Shape()) < 1) || (a.Dims() < 1) || (b.Dims() < 1) {
-		return nil, errors.New("Input Node's shape should have length at least 1!")
+		return nil, errors.New("Input Node's shape should have length at least 1")
 	}
 
 	// Check if number of specified axes for a and b matches

@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"runtime"
 	"strings"
@@ -60,7 +59,9 @@ func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 		panic(err)
 	}
 
-	for _, n := range g.AllNodes() {
+	it := g.Nodes()
+	for it.Next() {
+		n := it.Node().(*Node)
 		setEngine(n.boundTo, m.Engine)
 	}
 
@@ -233,7 +234,7 @@ func (m *lispMachine) checkRoots() (err error) {
 				// }
 			case !m.setRootGrad() && !root.IsScalar() && !root.isStmt:
 				err = errors.Errorf("Expected cost to be a scalar. Got %v with shape %v instead", root, root.Shape())
-				ioutil.WriteFile("err.dot", []byte(root.RestrictedToDot(2, 10)), 0644)
+				//ioutil.WriteFile("err.dot", []byte(root.RestrictedToDot(2, 10)), 0644)
 				return
 			}
 		}
@@ -243,10 +244,16 @@ func (m *lispMachine) checkRoots() (err error) {
 
 func (m *lispMachine) prepGraph() (err error) {
 	if m.sorted == nil {
-		if m.sorted, err = Sort(m.g); err != nil {
+		it, err := Sort(m.g)
+		if err != nil {
 			return errors.Wrap(err, sortFail)
 		}
-		reverseNodes(m.sorted)
+		sortedNodes := make([]*Node, it.Len())
+		for i := 0; it.Next(); i++ {
+			sortedNodes[i] = it.Node().(*Node)
+		}
+		reverseNodes(sortedNodes)
+		m.sorted = sortedNodes
 		m.fwd = 0
 	}
 	return

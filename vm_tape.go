@@ -39,7 +39,7 @@ type tapeMachine struct {
 }
 
 // NewTapeMachine creates a VM that compiles a graph into a prog.
-func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
+func NewTapeMachine(g *ExprGraph, opts ...VMOpt) VM {
 	m := &tapeMachine{
 		valueFmt: "%3.3g",
 	}
@@ -56,7 +56,7 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 	m.doAlloc()
 
 	if m.p == nil || m.locMap == nil {
-		prog, locMap, err := Compile(g)
+		prog, locMap, err := compile(g)
 		if err != nil {
 			panic(err)
 		}
@@ -67,7 +67,9 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 	m.cpumem = make([]Value, m.p.cpulocs)
 	m.gpumem = make([]Value, m.p.gpulocs)
 	m.init()
-	for _, n := range m.p.g.AllNodes() {
+	it := m.p.g.Nodes()
+	for it.Next() {
+		n := it.Node().(*Node)
 		setEngine(n.boundTo, m.Engine)
 	}
 

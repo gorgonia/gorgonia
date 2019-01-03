@@ -96,6 +96,7 @@ type BinaryOp interface {
 	IsBinary() bool
 }
 
+// BestDoer ...
 type BestDoer interface {
 	Op
 
@@ -160,13 +161,14 @@ type CLDoer interface {
 	CLDo(inputs ...Value) (Value, error)
 }
 
+// CUDAADOp ...
 type CUDAADOp interface {
 	ADOp
 	CUDADoDiff(extern External, dev Device, inputs Nodes, output *Node) error
 }
 
 // ApplyOp is the generic function application - for when no specialization is required
-func ApplyOp(op Op, children ...*Node) (retVal *Node, err error) {
+func ApplyOp(op Op, children ...*Node) (*Node, error) {
 	var g *ExprGraph
 
 	for _, child := range children {
@@ -189,28 +191,32 @@ func ApplyOp(op Op, children ...*Node) (retVal *Node, err error) {
 	enterLogScope()
 	defer leaveLogScope()
 	var retType hm.Type
-	if retType, err = inferNodeType(op, children...); err != nil {
+	retType, err := inferNodeType(op, children...)
+	if err != nil {
 		return nil, errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())
 	}
 	typeSysLogf("Done inferring. Return type is: %#v(%T)", retType, retType)
 
 	// infer shapes, but print errors instead of returning
 	shapeLogf("op: %v(%T) inferring shape", op, op)
-	if err = checkArity(op, len(children)); err != nil {
-		return
+	err = checkArity(op, len(children))
+	if err != nil {
+		return nil, err
 	}
 
 	ds := Nodes(children).dimSizers()
-	var s tensor.Shape
-	if s, err = op.InferShape(ds...); err == nil {
-		shapeLogf("inferred shape %v", s)
-		retVal = NewUniqueNode(WithType(retType), WithOp(op), WithChildren(children), In(g), WithShape(s...))
-	} else {
-		err = errors.Wrapf(err, "Failed to infer shape. Op: %v", op)
-		// retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g))
+	s, err := op.InferShape(ds...)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to infer shape. Op: %v", op)
 	}
+	shapeLogf("inferred shape %v", s)
+	n := g.NewNode().(*Node)
+	WithType(retType)(n)
+	WithOp(op)(n)
+	WithShape(s...)(n)
 	returnDimSizers(ds)
-	return
+	g.AddNode(n)
+	return n, nil
 }
 
 // ApplyOpWithName applies the op, and then gives the node the given name

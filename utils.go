@@ -26,14 +26,6 @@ func NodesToValueGrads(in Nodes) (out []ValueGrad) {
 	return out
 }
 
-func graphNodeToNode(in []graph.Node) (out Nodes) {
-	out = make(Nodes, len(in))
-	for i, n := range in {
-		out[i] = n.(*Node) // will panic if not. which is a good thng
-	}
-	return
-}
-
 func nodeToGraphNode(in []*Node) (out []graph.Node) {
 	out = make([]graph.Node, len(in))
 	for i, n := range in {

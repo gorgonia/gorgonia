@@ -20,9 +20,9 @@ func BinaryXent(output, target *Node) (retVal *Node, err error) {
 
 	switch dt {
 	case Float64:
-		one = onef64
+		one = onef64(target.g)
 	case Float32:
-		one = onef32
+		one = onef32(target.g)
 	default:
 		return nil, errors.Errorf(nyiFail, "BinaryXEnt", dt)
 	}
@@ -83,8 +83,8 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 		return nil, errors.Errorf(nyiTypeFail, "Dropout()", dt)
 	}
 
-	p := NewConstant(pr)
-	c := NewConstant(opp)
+	p := NewConstant(x.g, pr)
+	c := NewConstant(x.g, opp)
 
 	m := UniformRandomNode(x.g, dt, 0, 1, x.shape...)
 	if retVal, err = Gt(m, p, true); err != nil {
@@ -111,9 +111,9 @@ func Rectify(x *Node) (retVal *Node, err error) {
 	}
 	switch dt {
 	case Float64:
-		zero = zerof64
+		zero = zerof64(x.g)
 	case Float32:
-		zero = zerof32
+		zero = zerof32(x.g)
 	default:
 		return nil, errors.Errorf(nyiFail, "ReLu", dt)
 	}
@@ -250,6 +250,7 @@ func Conv1d(in, filter *Node, kernel, pad, stride, dilation int) (*Node, error) 
 	return Conv2d(in, filter, tensor.Shape{1, kernel}, []int{0, pad}, []int{1, stride}, []int{1, dilation})
 }
 
+// MaxPool2D ...
 func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 	xShape := x.Shape()
 	h, w := xShape[2], xShape[3]
@@ -278,6 +279,7 @@ func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 	return ApplyOp(op, x)
 }
 
+// BatchNorm ...
 func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β *Node, op *BatchNormOp, err error) {
 	dt, err := dtypeOf(x.Type())
 	if err != nil {
@@ -291,8 +293,8 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 	variance := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	ma := tensor.New(tensor.Of(dt), tensor.WithShape(1))
 
-	mean_ := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
-	variance_ := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	meanB := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	varianceB := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	tmp := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
 	xNorm := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
 	batchSumMultiplier := tensor.New(tensor.Of(dt), tensor.WithShape(batches))
@@ -322,8 +324,8 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 		variance: variance,
 		ma:       ma,
 
-		mean_:                mean_,
-		variance_:            variance_,
+		mean_:                meanB,
+		variance_:            varianceB,
 		tmp_:                 tmp,
 		xNorm:                xNorm,
 		batchSumMultiplier:   batchSumMultiplier,

@@ -116,7 +116,7 @@ func NewConstant(g *ExprGraph, v interface{}, opts ...NodeConsOpt) *Node {
 	}
 
 	n := g.NewNode().(*Node)
-	consOpts := []NodeConsOpt{WithOp(op), WithType(t), WithShape(s...), WithValue(val), WithName(fmt.Sprintf("%v", v))}
+	consOpts := []NodeConsOpt{WithName(name), WithOp(op), WithType(t), WithShape(s...), WithValue(val), WithName(fmt.Sprintf("%v", v))}
 	consOpts = append(consOpts, opts...)
 	for i := range opts {
 		opts[i](n)
@@ -189,7 +189,7 @@ func BinomialRandomNode(g *ExprGraph, dt tensor.Dtype, trials, prob float64, sha
 }
 
 // OneHotVector creates a node representing a one hot vector
-func OneHotVector(id, classes int, t tensor.Dtype, opts ...NodeConsOpt) *Node {
+func OneHotVector(g *ExprGraph, id, classes int, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 	T := tensor.New(tensor.Of(t), tensor.WithShape(classes))
 	var err error
 	// This is stupid, I want generics. - docmerlin
@@ -210,11 +210,11 @@ func OneHotVector(id, classes int, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 	if err != nil {
 		panic(err.Error())
 	}
-	return NewConstant(T, opts...)
+	return NewConstant(g, T, opts...)
 }
 
 // Grad takes a scalar cost node and a list of with-regards-to, and returns the gradient
-func Grad(cost *Node, WRTs ...*Node) (retVal Nodes, err error) {
+func Grad(g *ExprGraph, cost *Node, WRTs ...*Node) (retVal Nodes, err error) {
 	symdiffLogf("Cost:%v", cost)
 	if !cost.IsScalar() {
 		return nil, errors.Errorf("Expected Cost to be a scalar. Got %v instead", cost)
@@ -237,9 +237,9 @@ func Grad(cost *Node, WRTs ...*Node) (retVal Nodes, err error) {
 	var gradOut *Node
 	switch dt {
 	case Float64:
-		gradOut = onef64
+		gradOut = onef64(g)
 	case Float32:
-		gradOut = onef32
+		gradOut = onef32(g)
 	default:
 		return nil, errors.Wrapf(err, "%s not yet implemented for %v of %T", dt.String(), "Grad()'s gradOut", gradOut)
 	}
@@ -296,14 +296,17 @@ func UnsafeLet(n *Node, be interface{}) error {
 // Set is the equivalent of doing this:
 //		a = b
 // where a and b are both variables
+/*
 func Set(a, b *Node) (retVal *Node) {
 	op := letOp{}
 	name := fmt.Sprintf("%v %s %v", a, op, b)
 	return NewUniqueNode(WithOp(op), WithChildren(Nodes{a, b}), WithName(name), In(a.g))
 }
+*/
 
 // Read is one of those special snowflake tumblrina *Nodes. It allows for extraction of the value of the *Node at runtime
 // into a Value. Note that a *Value (a pointer to a Value) is passed into this function, not a Value.
+/*
 func Read(n *Node, into *Value) (retVal *Node) {
 	op := readOp{into}
 	name := fmt.Sprintf("read %v into %v", n, into)
@@ -312,3 +315,4 @@ func Read(n *Node, into *Value) (retVal *Node) {
 	retVal.name = name
 	return
 }
+*/

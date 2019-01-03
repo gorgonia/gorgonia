@@ -56,6 +56,17 @@ func NewGraph(opts ...Graphconopt) *ExprGraph {
 	return g
 }
 
+// Has returns true if the id is present in the graph
+func (g *ExprGraph) Has(id int64) bool {
+	it := g.Nodes()
+	for it.Next() {
+		if it.Node().ID() == id {
+			return true
+		}
+	}
+	return false
+}
+
 // RemoveNode removes the node with the given ID from the graph, as well as any edges attached to it. If the node is not in the graph it is a no-op.
 func (g *ExprGraph) RemoveNode(id int64) {
 	g.w.RemoveNode(id)
@@ -85,7 +96,7 @@ func (g *ExprGraph) Roots() (retVal Nodes) {
 }
 
 // Inputs returns a list of nodes which are inputs (that is to say, the user is required to set a value in it)
-func (g *ExprGraph) Inputs() graph.Iterator {
+func (g *ExprGraph) Inputs() *iterator.OrderedNodes {
 	retVal := make([]graph.Node, 0)
 	it := g.Nodes()
 	for it.Next() {

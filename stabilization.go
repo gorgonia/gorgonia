@@ -34,19 +34,19 @@ func logStabilization(a *Node) (retVal *Node, err error) {
 	switch bot {
 	case addOpType:
 		if cnst, ok := input0.op.(constant); ok {
-			if constEq(cnst, onef32ConstOp) || constEq(cnst, onef64ConstOp) {
+			if constEq(cnst, onef32ConstOp(a.g)) || constEq(cnst, onef64ConstOp(a.g)) {
 				x = input1
 				break
 			}
 		}
 
 		if cnst, ok := input1.op.(constant); ok {
-			if constEq(cnst, onef32ConstOp) || constEq(cnst, onef64ConstOp) {
+			if constEq(cnst, onef32ConstOp(a.g)) || constEq(cnst, onef64ConstOp(a.g)) {
 				x = input0
 			}
 		}
 	case subOpType:
-		if cnst, ok := input0.op.(constant); !ok || (ok && !constEq(cnst, onef32ConstOp) && !constEq(cnst, onef64ConstOp)) {
+		if cnst, ok := input0.op.(constant); !ok || (ok && !constEq(cnst, onef32ConstOp(a.g)) && !constEq(cnst, onef64ConstOp(a.g))) {
 			return a, noStabilizationErr{}
 		}
 		x = input1
@@ -56,7 +56,7 @@ func logStabilization(a *Node) (retVal *Node, err error) {
 
 	g := a.g
 	g.removeAllEdgesFrom(a) // remove all references
-	g.RemoveNode(a)
+	g.RemoveNode(a.ID())
 	defer returnNode(a) // send it back to the pool, since it is literally useless now
 
 	if bot == subOpType {
@@ -75,7 +75,7 @@ func expStabilization(a, b *Node) (retVal *Node, err error) {
 	enterLogScope()
 	defer leaveLogScope()
 
-	if cnst, ok := b.op.(constant); !ok || (ok && !constEq(cnst, onef32ConstOp) && !constEq(cnst, onef64ConstOp)) {
+	if cnst, ok := b.op.(constant); !ok || (ok && !constEq(cnst, onef32ConstOp(a.g)) && !constEq(cnst, onef64ConstOp(a.g))) {
 		return nil, noStabilizationErr{}
 	}
 
@@ -94,7 +94,7 @@ func oneMinusSigmoidStabilization(a, b *Node) (retVal *Node, err error) {
 	enterLogScope()
 	defer leaveLogScope()
 
-	if cnst, ok := a.op.(constant); !ok || (ok && !constEq(cnst, onef32ConstOp) && !constEq(cnst, onef64ConstOp)) {
+	if cnst, ok := a.op.(constant); !ok || (ok && !constEq(cnst, onef32ConstOp(a.g)) && !constEq(cnst, onef64ConstOp(a.g))) {
 		return nil, noStabilizationErr{}
 	}
 

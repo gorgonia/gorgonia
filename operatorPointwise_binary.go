@@ -885,9 +885,9 @@ func hadamardPowDiffExpr(x, y, z, grad *Node) (retVal Nodes, err error) {
 
 	switch dt {
 	case Float32:
-		one = onef32
+		one = onef32(x.g)
 	case Float64:
-		one = onef64
+		one = onef64(x.g)
 	default:
 		err = errors.Errorf(nyiTypeFail, "Hadamard Power Diff", y.t)
 		return

@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/pkg/errors"
+	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/tensor"
 )
 
@@ -13,7 +14,7 @@ import (
 // that is executed by an interpreter
 
 // Compile takes a graph and outputs a program suitable for *tapeMachine to run
-func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error) {
+func compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error) {
 	compileLogf("Compiling")
 	enterLogScope()
 	defer leaveLogScope()
@@ -28,9 +29,13 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	}
 
 	compileLogf("sorting")
-	var sortedNodes Nodes
-	if sortedNodes, err = Sort(g); err != nil {
+	it, err := Sort(g)
+	if err != nil {
 		return nil, nil, errors.Wrap(err, sortFail)
+	}
+	sortedNodes := make([]*Node, it.Len())
+	for i := 0; it.Next(); i++ {
+		sortedNodes[i] = it.Node().(*Node)
 	}
 	reverseNodes(sortedNodes)
 
@@ -46,7 +51,7 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	logCompileState(g.name, g, df)
 
 	inputs := g.Inputs()
-	cg := newCodeGenerator(inputs, sortedNodes, df)
+	cg := newCodeGenerator(g, inputs, sortedNodes, df)
 	prog, locMap = cg.gen()
 	prog.cpulocs = ra.cpucount
 	prog.gpulocs = ra.gpucount
@@ -59,10 +64,11 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	return
 }
 
+/*
 // CompileFunction takes a graph, subsets it based on the input and output nodes provided and outputs a program suitable for *tapeMachine to run.
 // It is analogous to theano.Function().
 // If some input nodes are not used or is not reachable, this function will return an error
-func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap map[*Node]register, err error) {
+func compileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap map[*Node]register, err error) {
 	compileLogf("CompileFunctionNEW. Inputs: %d; outputs: %d", inputs, outputs)
 	enterLogScope()
 	defer leaveLogScope()
@@ -102,6 +108,7 @@ func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap
 
 	return
 }
+*/
 
 // codgenerator holds the state for the code generation process
 type codegenerator struct {
@@ -119,13 +126,14 @@ type codegenerator struct {
 	cpumem int64
 	gpumem []int64
 
-	g              *ExprGraph
-	inputs, sorted Nodes
-	df             *dataflow
-	instructions   fragment
+	g            *ExprGraph
+	inputs       graph.Iterator
+	sorted       Nodes
+	df           *dataflow
+	instructions fragment
 }
 
-func newCodeGenerator(inputs, sorted Nodes, df *dataflow) *codegenerator {
+func newCodeGenerator(g *ExprGraph, inputs graph.Iterator, sorted Nodes, df *dataflow) *codegenerator {
 	return &codegenerator{
 		locMap:     make(map[*Node]register),
 		lastWrites: make(map[register]*Node),
@@ -136,7 +144,7 @@ func newCodeGenerator(inputs, sorted Nodes, df *dataflow) *codegenerator {
 		instrMap:   make(map[*Node]fragment),
 		lastReads:  make(map[register]int),
 
-		g:      inputs[0].g,
+		g:      g,
 		inputs: inputs,
 		sorted: sorted,
 		df:     df,
@@ -629,7 +637,7 @@ func (cg *codegenerator) gen() (*program, map[*Node]register) {
 
 	return &program{
 		instructions: cg.instructions,
-		args:         len(cg.inputs),
+		args:         cg.inputs.Len(),
 		g:            cg.g,
 		m:            cg.instrMap,
 	}, cg.locMap
@@ -641,7 +649,9 @@ func compileState(w io.Writer, g *ExprGraph, df *dataflow) {
 	}
 
 	var rows [][]string
-	for _, n := range g.AllNodes() {
+	it := g.Nodes()
+	for it.Next() {
+		n := it.Node().(*Node)
 		interv := df.intervals[n]
 
 		row := make([]string, len(header))

@@ -27,6 +27,7 @@ func (g *ExprGraph) NewNode() graph.Node {
 	n := borrowNode()
 	n.dataOn = CPU
 	n.id = g.w.NewNode().ID()
+	n.g = g
 	n.fix()
 	return n
 }

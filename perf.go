@@ -16,7 +16,7 @@ func borrowNode() *Node { return nodePool.Get().(*Node) }
 func returnNode(n *Node) {
 	// if the node is being returned to the pool then it should be removed from the graph that it is linked too as well
 	if n.g != nil {
-		n.g.RemoveNode(n)
+		n.g.RemoveNode(n.ID())
 	}
 
 	// zero out any data in the node
@@ -129,7 +129,7 @@ func returnTensorType(t *TensorType) {
 	tensorTypePool.Put(t)
 }
 
-// ReturnType
+// ReturnType ...
 func ReturnType(t hm.Type) {
 	switch tt := t.(type) {
 	case *TensorType:
