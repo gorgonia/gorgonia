@@ -69,7 +69,7 @@ func (g *ExprGraph) NewVector(t tensor.Dtype, opts ...NodeConsOpt) *Node {
 // NewMatrix creates a Node representing a variable that holds a matrix (nxm)
 func (g *ExprGraph) NewMatrix(t tensor.Dtype, opts ...NodeConsOpt) *Node {
 	tt := makeTensorType(2, t)
-	curOpts := []NodeConsOpt{WithType(tt), In(g)}
+	curOpts := []NodeConsOpt{WithType(tt)}
 	curOpts = append(curOpts, opts...)
 	n := g.NewNode().(*Node)
 	for _, opt := range curOpts {
@@ -81,7 +81,7 @@ func (g *ExprGraph) NewMatrix(t tensor.Dtype, opts ...NodeConsOpt) *Node {
 // NewTensor creates a Node representing a variable that holds a tensor (any n-dimensional array with dimensions greater than 2)
 func (g *ExprGraph) NewTensor(t tensor.Dtype, dims int, opts ...NodeConsOpt) *Node {
 	tt := makeTensorType(dims, t)
-	curOpts := []NodeConsOpt{WithType(tt), In(g)}
+	curOpts := []NodeConsOpt{WithType(tt)}
 	curOpts = append(curOpts, opts...)
 	n := g.NewNode().(*Node)
 	for _, opt := range curOpts {

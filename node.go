@@ -98,21 +98,6 @@ func WithOp(op Op) NodeConsOpt {
 	return f
 }
 
-// In is a node construction option to set a node's graph.
-// A `*Node`'s graph is immutable. If the graph has already been set, a check will be made that the specifiec *Graph
-// and the *Graph set in *Node are the same. If they are not, the function will panic/
-func In(g *ExprGraph) NodeConsOpt {
-	f := func(n *Node) {
-		if n.g != nil {
-			if g != n.g {
-				panic(fmt.Sprintf("Node Graphs are immutable. Cannot set g %v", g))
-			}
-		}
-		n.g = g
-	}
-	return f
-}
-
 // WithName is a node construction option that gives the *Node the provided name. This is especially useful in debugging graphs.
 func WithName(name string) NodeConsOpt {
 	f := func(n *Node) {
