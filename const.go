@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"fmt"
 	"math"
 
 	"gorgonia.org/tensor"
@@ -82,49 +83,76 @@ const (
 var empty struct{}
 
 var (
-	onef32   = NewConstant(float32(1.0))
-	onef64   = NewConstant(float64(1.0))
-	zerof32  = NewConstant(float32(0.0))
-	zerof64  = NewConstant(float64(0.0))
-	twof64   = NewConstant(float64(2.0))
-	twof32   = NewConstant(float32(2.0))
-	threef64 = NewConstant(float64(3.0))
-	threef32 = NewConstant(float32(3.0))
-	ln2f64   = NewConstant(math.Ln2)
-	ln2f32   = NewConstant(float32(math.Ln2))
+	onef32   = func(g *ExprGraph) *Node { return NewConstant(g, float32(1.0)) }
+	onef64   = func(g *ExprGraph) *Node { return NewConstant(g, float64(1.0)) }
+	zerof32  = func(g *ExprGraph) *Node { return NewConstant(g, float32(0.0)) }
+	zerof64  = func(g *ExprGraph) *Node { return NewConstant(g, float64(0.0)) }
+	twof64   = func(g *ExprGraph) *Node { return NewConstant(g, float64(2.0)) }
+	twof32   = func(g *ExprGraph) *Node { return NewConstant(g, float32(2.0)) }
+	threef64 = func(g *ExprGraph) *Node { return NewConstant(g, float64(3.0)) }
+	threef32 = func(g *ExprGraph) *Node { return NewConstant(g, float32(3.0)) }
+	ln2f64   = func(g *ExprGraph) *Node { return NewConstant(g, math.Ln2) }
+	ln2f32   = func(g *ExprGraph) *Node { return NewConstant(g, float32(math.Ln2)) }
 
-	onef32ConstOp  = onef32.op.(constant)
-	onef64ConstOp  = onef64.op.(constant)
-	zerof32ConstOp = zerof32.op.(constant)
-	zerof64ConstOp = zerof64.op.(constant)
+	onef32ConstOp  = func(g *ExprGraph) constant { return onef32(g).op.(constant) }
+	onef64ConstOp  = func(g *ExprGraph) constant { return onef64(g).op.(constant) }
+	zerof32ConstOp = func(g *ExprGraph) constant { return zerof32(g).op.(constant) }
+	zerof64ConstOp = func(g *ExprGraph) constant { return zerof64(g).op.(constant) }
 
 	constmap map[string]map[tensor.Dtype]*Node
 )
 
 var oneone = tensor.Shape{1, 1}
 
-func init() {
-	constmap = map[string]map[tensor.Dtype]*Node{
-		"zero": {
-			Float32: zerof32,
-			Float64: zerof64,
-		},
-		"one": {
-			Float32: onef32,
-			Float64: onef64,
-		},
-		"two": {
-			Float32: twof32,
-			Float64: twof64,
-		},
-		"three": {
-			Float32: threef32,
-			Float64: threef64,
-		},
-		"log2": {
-			Float32: ln2f32,
-			Float64: ln2f64,
-		},
+func constants(g *ExprGraph, s string, dt tensor.Dtype) (*Node, error) {
+	switch s {
+	case "zero":
+		switch dt {
+		case Float32:
+			return zerof32(g), nil
+		case Float64:
+			return zerof64(g), nil
+		default:
+			return nil, fmt.Errorf("Constant %v not provided for %v", s, dt)
+		}
+	case "one":
+		switch dt {
+		case Float32:
+			return onef32(g), nil
+		case Float64:
+			return onef64(g), nil
+		default:
+			return nil, fmt.Errorf("Constant %v not provided for %v", s, dt)
+		}
+	case "two":
+		switch dt {
+		case Float32:
+			return twof32(g), nil
+		case Float64:
+			return twof64(g), nil
+		default:
+			return nil, fmt.Errorf("Constant %v not provided for %v", s, dt)
+		}
+	case "three":
+		switch dt {
+		case Float32:
+			return threef32(g), nil
+		case Float64:
+			return threef64(g), nil
+		default:
+			return nil, fmt.Errorf("Constant %v not provided for %v", s, dt)
+		}
+	case "log2":
+		switch dt {
+		case Float32:
+			return ln2f32(g), nil
+		case Float64:
+			return ln2f64(g), nil
+		default:
+			return nil, fmt.Errorf("Constant %v not provided for %v", s, dt)
+		}
+	default:
+		return nil, fmt.Errorf("Constant %v not provided for %v", s, dt)
 	}
-
+	return nil, nil
 }

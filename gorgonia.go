@@ -91,7 +91,7 @@ func NewTensor(g *ExprGraph, t tensor.Dtype, dims int, opts ...NodeConsOpt) *Nod
 }
 
 // NewConstant takes in any reasonable value and makes it a constant node.
-func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
+func NewConstant(g *ExprGraph, v interface{}, opts ...NodeConsOpt) *Node {
 	var op Op
 	var t hm.Type
 	var name string
@@ -115,21 +115,13 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 		panic(fmt.Sprintf("HELP. Op: %v, t: %v", op, t))
 	}
 
-	dummy := borrowNode()
-	consOpts := []NodeConsOpt{WithOp(op), WithType(t), WithShape(s...), WithValue(val)}
+	n := g.NewNode().(*Node)
+	consOpts := []NodeConsOpt{WithOp(op), WithType(t), WithShape(s...), WithValue(val), WithName(fmt.Sprintf("%v", v))}
 	consOpts = append(consOpts, opts...)
 	for i := range opts {
-		opts[i](dummy)
+		opts[i](n)
 	}
-	if dummy.name == "" {
-		name = fmt.Sprintf("%v", v)
-	} else {
-		name = dummy.name
-	}
-	returnNode(dummy)
-
-	consOpts = append(consOpts, WithName(name))
-	return newNode(consOpts...)
+	return n
 }
 
 // UniformRandomNode creates an input node that has a random op so everytime the node is passed, random values will be plucked from
@@ -145,9 +137,11 @@ func UniformRandomNode(g *ExprGraph, dt tensor.Dtype, low, high float64, shape .
 	} else {
 		t = makeTensorType(s.Dims(), dt)
 	}
-
-	retVal := NewUniqueNode(WithType(t), WithOp(op), In(g), WithShape(shape...))
-	return retVal
+	n := g.NewNode().(*Node)
+	WithType(t)(n)
+	WithOp(op)(n)
+	WithShape(shape...)(n)
+	return n
 }
 
 // GaussianRandomNode creates an input node that has a random op so everytime the node is passed, random values will be plucked from
@@ -163,9 +157,11 @@ func GaussianRandomNode(g *ExprGraph, dt tensor.Dtype, mean, stdev float64, shap
 	} else {
 		t = makeTensorType(s.Dims(), dt)
 	}
-
-	retVal := NewUniqueNode(WithType(t), WithOp(op), In(g), WithShape(shape...))
-	return retVal
+	n := g.NewNode().(*Node)
+	WithType(t)(n)
+	WithOp(op)(n)
+	WithShape(shape...)(n)
+	return n
 }
 
 // BinomialRandomNode creates an input node that has a random op so that everytime the node is passed, random values will be plucked from
@@ -185,8 +181,11 @@ func BinomialRandomNode(g *ExprGraph, dt tensor.Dtype, trials, prob float64, sha
 		t = makeTensorType(s.Dims(), dt)
 	}
 
-	retVal := NewUniqueNode(WithType(t), WithOp(op), In(g), WithShape(shape...))
-	return retVal
+	n := g.NewNode().(*Node)
+	WithType(t)(n)
+	WithOp(op)(n)
+	WithShape(shape...)(n)
+	return n
 }
 
 // OneHotVector creates a node representing a one hot vector

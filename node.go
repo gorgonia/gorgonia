@@ -221,6 +221,7 @@ func WithGroupName(name string) NodeConsOpt {
 	return f
 }
 
+/*
 func newNode(opts ...NodeConsOpt) *Node {
 	n := borrowNode()
 	n.dataOn = CPU
@@ -234,6 +235,7 @@ func newNode(opts ...NodeConsOpt) *Node {
 	incrNN()
 	return n
 }
+*/
 
 // ID returns the ID of the node. This satisfies the gonum/graph.Node interface
 func (n *Node) ID() int64 { return n.id }
