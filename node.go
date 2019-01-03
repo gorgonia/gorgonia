@@ -8,7 +8,6 @@ import (
 	"hash/fnv"
 	"log"
 
-	"github.com/awalterschulze/gographviz"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/debugger"
@@ -525,69 +524,6 @@ func (n *Node) Hashcode() uint32 {
 	return n.hash
 }
 
-// ToDot returns the graph as a graphviz compatible string
-func (n *Node) ToDot() string {
-	graphName := exprgraphClust
-
-	g := gographviz.NewEscape()
-	g.SetName(graphName)
-	g.SetDir(true)
-
-	g.AddAttr(exprgraphClust, "splines", "spline")
-	g.AddAttr(exprgraphClust, "nodesep", "0.5")
-	g.AddAttr(exprgraphClust, "ranksep", "1.2 equally")
-
-	seen := make(map[*Node]string)
-	n.dot(g, graphName, seen)
-
-	return g.String()
-}
-
-// RestrictedToDot prints the graphviz compatible string but does not print the entire tree
-// up and down indicates how many levels to look up, and how many levels to look down
-func (n *Node) RestrictedToDot(up, down int) string {
-	if n.g == nil {
-		return n.ToDot()
-	}
-
-	g := n.g
-	var ns, upQ, downQ Nodes
-
-	//	up
-	ns = Nodes{n}
-	upQ = Nodes{n}
-	for l := 0; l < up; l++ {
-		origLen := len(upQ)
-		for i := 0; i < origLen; i++ {
-			qn := upQ[i]
-			toQN := graphNodeToNode(g.To(qn.ID()))
-			upQ = append(upQ, toQN...)
-			ns = append(ns, toQN...)
-		}
-		upQ = upQ[origLen:]
-	}
-
-	// down
-	downQ = Nodes{n}
-	for d := 0; d < down; d++ {
-		origLen := len(downQ)
-		for i := 0; i < origLen; i++ {
-			qn := downQ[i]
-			downQ = append(downQ, qn.children...)
-			ns = append(ns, qn.children...)
-		}
-		downQ = downQ[origLen:]
-	}
-
-	sg := g.subgraph(ns, false)
-
-	n.ofInterest = true
-	defer func() {
-		n.ofInterest = false
-	}()
-	return sg.ToDot()
-}
-
 // String() implements the fmt.Stringer interface
 func (n *Node) String() string {
 	var buf bytes.Buffer
@@ -696,50 +632,6 @@ func (n *Node) unbind() {
 	n.boundTo = nil
 }
 
-func (n *Node) dotCluster() string {
-	var group string
-	var isConst bool
-	var isInput = n.isInput()
-
-	if n.op != nil {
-		_, isConst = n.op.(constant)
-	}
-
-	switch {
-	case isConst:
-		group = constantsClust
-	case isInput:
-		group = inputsClust
-	case n.group == "":
-		group = exprgraphClust
-	default:
-		group = n.group
-	}
-	return group
-}
-
-func (n *Node) dot(g *gographviz.Escape, graphName string, seen map[*Node]string) string {
-	var id string
-	var ok bool
-	if id, ok = seen[n]; !ok {
-		id = n.dotString(g, graphName)
-		seen[n] = id
-	} else {
-		return id
-	}
-
-	for i, child := range n.children {
-		childID := child.dot(g, graphName, seen)
-		edgeAttrs := map[string]string{
-			"taillabel":  fmt.Sprintf(" %d ", i+1),
-			"labelfloat": "false",
-		}
-
-		g.AddPortEdge(id, id+":anchor:s", childID, childID+":anchor:n", true, edgeAttrs)
-	}
-	return id
-}
-
 func (n *Node) fix() {
 	if n.IsScalar() {
 		n.shape = scalarShape
@@ -830,23 +722,4 @@ func (n *Node) seqWalk() Nodes {
 		retVal = append(retVal, child.seqWalk()...)
 	}
 	return retVal
-}
-
-// dotString returns the ID of the node.
-func (n *Node) dotString(g *gographviz.Escape, graphName string) string {
-	var buf bytes.Buffer
-	if err := exprNodeTempl.ExecuteTemplate(&buf, "node", n); err != nil {
-		panic(err)
-	}
-
-	id := fmt.Sprintf("Node_%p", n)
-	label := buf.String()
-	attrs := map[string]string{
-		"fontname": "monospace",
-		"shape":    "none",
-		"label":    label,
-	}
-
-	g.AddNode(graphName, id, attrs)
-	return id
 }
