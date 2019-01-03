@@ -39,7 +39,7 @@ type tapeMachine struct {
 }
 
 // NewTapeMachine creates a VM that compiles a graph into a prog.
-func NewTapeMachine(g *ExprGraph, opts ...VMOpt) VM {
+func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 	m := &tapeMachine{
 		valueFmt: "%3.3g",
 	}

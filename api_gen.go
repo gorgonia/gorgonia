@@ -90,7 +90,10 @@ func Lt(a, b *Node, retSame bool) (*Node, error) {
 func Gt(a, b *Node, retSame bool) (*Node, error) {
 	op := newElemBinOp(gtOpType, a, b)
 	op.retSame = retSame
-	return binOpNode(op, a, b)
+	return binOpNode(op,
+		a,
+		b,
+	)
 }
 
 // Lte perfors a pointwise lte operation.

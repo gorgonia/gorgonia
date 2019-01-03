@@ -214,7 +214,8 @@ func OneHotVector(g *ExprGraph, id, classes int, t tensor.Dtype, opts ...NodeCon
 }
 
 // Grad takes a scalar cost node and a list of with-regards-to, and returns the gradient
-func (g *ExprGraph) Grad(cost *Node, WRTs ...*Node) (retVal Nodes, err error) {
+func Grad(cost *Node, WRTs ...*Node) (retVal Nodes, err error) {
+	g := cost.g
 	symdiffLogf("Cost:%v", cost)
 	if !cost.IsScalar() {
 		return nil, errors.Errorf("Expected Cost to be a scalar. Got %v instead", cost)
@@ -306,13 +307,15 @@ func Set(a, b *Node) (retVal *Node) {
 
 // Read is one of those special snowflake tumblrina *Nodes. It allows for extraction of the value of the *Node at runtime
 // into a Value. Note that a *Value (a pointer to a Value) is passed into this function, not a Value.
-/*
-func Read(n *Node, into *Value) (retVal *Node) {
+func Read(n *Node, into *Value) *Node {
 	op := readOp{into}
+	g := n.g
 	name := fmt.Sprintf("read %v into %v", n, into)
-	retVal = NewUniqueNode(WithOp(op), WithChildren(Nodes{n}), WithName(name), In(n.g))
-	retVal.op = op // this ensures the correct pointer is written
-	retVal.name = name
-	return
+	retVal := g.NewNode().(*Node)
+	WithOp(op)(retVal)
+	WithName(name)(retVal)
+	WithChildren(Nodes{n})
+	n.op = op // this ensures the correct pointer is written
+	n.name = name
+	return n
 }
-*/

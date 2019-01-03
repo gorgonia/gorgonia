@@ -77,13 +77,18 @@ func main() {
 	// We start by creating nodes for the training
 	// create a new graph and add x, y, w, b, and one as Nodes
 	g := G.NewGraph()
-	x := G.NewMatrix(g, Float, G.WithName("x"), G.WithShape(N, feats))
-	y := G.NewVector(g, Float, G.WithName("y"), G.WithShape(N))
+	x := g.NewMatrix(Float, G.WithName("x"), G.WithShape(N, feats))
+	g.AddNode(x)
+	y := g.NewVector(Float, G.WithName("y"), G.WithShape(N))
+	g.AddNode(y)
 
-	w := G.NewVector(g, Float, G.WithName("w"), G.WithShape(feats))
-	b := G.NewScalar(g, Float, G.WithName("bias"))
+	w := g.NewVector(Float, G.WithName("w"), G.WithShape(feats))
+	g.AddNode(w)
+	b := g.NewScalar(Float, G.WithName("bias"))
+	g.AddNode(b)
 	// Add a constant node 1 to be used later in the loss function
-	one := g.AddNode(g.NewConstant(1.0))
+	one := g.NewConstant(1.0)
+	g.AddNode(one)
 
 	// Here we create the nodes that will do the prediction operations
 	// create a node that has the operation: (x*w + b)
@@ -94,13 +99,19 @@ func main() {
 	// create a "pred" node that has the operation that checks if prob is
 	// greater than 0.5. This ensures that our prediction output returns
 	// {true, false}
-	pred := G.Must(G.Gt(prob, G.NewConstant(g, 0.5), false))
+	zeroDotFive := g.NewConstant(0.5)
+	g.AddNode(zeroDotFive)
+	log.Println(g)
+	pred := G.Must(
+		G.Gt(
+			prob, zeroDotFive,
+			false))
 	G.WithName("pred")(pred)
 
 	// Gorgonia might delete values from nodes so we are going to save it
 	// and print it out later
 	var predicted G.Value
-	readNode := G.Read(pred, &predicted)
+	//readNode := G.Read(pred, &predicted)
 
 	// Here we create the nodes that contain the operations that
 	// will calculate the cost function.
@@ -119,7 +130,8 @@ func main() {
 	// In order to prevent overfitting, we add a L2 regularization term
 	weightSq := G.Must(G.Square(w))
 	sumSq := G.Must(G.Sum(weightSq))
-	l2reg := G.NewConstant(g, 0.01, G.WithName("l2reg"))
+	l2reg := g.NewConstant(0.01, G.WithName("l2reg"))
+	g.AddNode(l2reg)
 	regTerm := G.Must(G.Mul(l2reg, sumSq))
 
 	// cost we want to minimize
@@ -127,7 +139,7 @@ func main() {
 	G.WithName("cost")(cost)
 
 	// calculate gradient by backpropagation https://en.wikipedia.org/wiki/Backpropagation
-	grads, err := G.Grad(g, cost, w, b)
+	grads, err := G.Grad(cost, w, b)
 	handleError(err)
 	// "dcost/dw" == derivative of cost with respect to w
 	G.WithName("dcost/dw")(grads[0])
@@ -135,7 +147,8 @@ func main() {
 	G.WithName("dcost/db")(grads[1])
 
 	// create the nodes for calculating the gradient
-	learnRate := G.NewConstant(g, 0.1) // be careful not to set a learnRate too high
+	learnRate := g.NewConstant(0.1) // be careful not to set a learnRate too high
+	g.AddNode(learnRate)
 	gwlr := G.Must(G.Mul(learnRate, grads[0]))
 	wUpd := G.Must(G.Sub(w, gwlr))
 	gblr := G.Must(G.Mul(learnRate, grads[1]))
@@ -148,11 +161,13 @@ func main() {
 	// We are essentially creating a list of instructions to get from our inputs {x, y}
 	// to our outputs {wUpd, bUpd, readNode}. Note that we need to tell gorgonia that
 	// readNode is one of our outputs so that we can access it.
-	prog, locMap, err := G.CompileFunction(g, G.Nodes{x, y}, G.Nodes{wUpd, bUpd, readNode})
+	//prog, locMap, err := G.CompileFunction(g, G.Nodes{x, y}, G.Nodes{wUpd, bUpd, readNode})
 	handleError(err)
-	fmt.Printf("%v", prog) // print the instructions
+	//fmt.Printf("%v", prog) // print the instructions
 	// With our program, we initialize a new TapeMachine that will execute our program
-	machine := G.NewTapeMachine(g, G.WithPrecompiled(prog, locMap))
+	//machine := G.NewTapeMachine(g, G.WithPrecompiled(prog, locMap))
+	log.Println(g)
+	machine := G.NewTapeMachine(g)
 	defer machine.Close()
 	// Note that NewTapeMachine() will compile if WithPrecomiled() is not provided.
 	// Internally, Gorgonia will figure out that a compilation process needs to happen,
@@ -201,9 +216,10 @@ func main() {
 
 	// Now that we have our final model, we need to write a new program
 	// that goes from the input {x} to the prediction {pred}
-	prog, locMap, err = G.CompileFunction(g, G.Nodes{x}, G.Nodes{pred})
+	//	prog, locMap, err = G.CompileFunction(g, G.Nodes{x}, G.Nodes{pred})
 	handleError(err)
-	machine = G.NewTapeMachine(g, G.WithPrecompiled(prog, locMap))
+	//machine = G.NewTapeMachine(g, G.WithPrecompiled(prog, locMap))
+	machine = G.NewTapeMachine(g)
 	defer machine.Close()
 
 	machine.Let(w, wT)
