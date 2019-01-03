@@ -22,7 +22,7 @@ func Must(n *Node, err error, opts ...NodeConsOpt) *Node {
 }
 
 // NodeFromAny creates a Node from a tensor.Tensor, automatically filling in shape and type info
-func NodeFromAny(g *ExprGraph, any interface{}, opts ...NodeConsOpt) *Node {
+func (g *ExprGraph) NodeFromAny(any interface{}, opts ...NodeConsOpt) *Node {
 	v, t, dt, err := anyToValue(any)
 	if err != nil {
 		panic(err)
@@ -32,20 +32,20 @@ func NodeFromAny(g *ExprGraph, any interface{}, opts ...NodeConsOpt) *Node {
 
 	switch t.(type) {
 	case tensor.Dtype:
-		return NewScalar(g, dt, opts...)
+		return g.NewScalar(dt, opts...)
 	case TensorType:
 		opts = append(opts, nil)
 		copy(opts[1:], opts[0:len(opts)-1])
 		opts[0] = WithShape(v.Shape()...)
-		return NewTensor(g, dt, v.Shape().Dims(), opts...)
+		return g.NewTensor(dt, v.Shape().Dims(), opts...)
 	default:
 		panic(nyi("NewNodeFromAny", any))
 	}
 }
 
 // NewScalar creates a Node representing a variable that holds a scalar value
-func NewScalar(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
-	curOpts := []NodeConsOpt{WithType(t), In(g), WithShape()}
+func (g *ExprGraph) NewScalar(t tensor.Dtype, opts ...NodeConsOpt) *Node {
+	curOpts := []NodeConsOpt{WithType(t), WithShape()}
 	curOpts = append(curOpts, opts...)
 	n := g.NewNode().(*Node)
 	for _, opt := range curOpts {
@@ -55,9 +55,9 @@ func NewScalar(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 }
 
 // NewVector creates a Node representing a variable that holds a vector (nx1 matrix)
-func NewVector(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
+func (g *ExprGraph) NewVector(t tensor.Dtype, opts ...NodeConsOpt) *Node {
 	tt := makeTensorType(1, t)
-	curOpts := []NodeConsOpt{WithType(tt), In(g)}
+	curOpts := []NodeConsOpt{WithType(tt)}
 	curOpts = append(curOpts, opts...)
 	n := g.NewNode().(*Node)
 	for _, opt := range curOpts {
@@ -67,7 +67,7 @@ func NewVector(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 }
 
 // NewMatrix creates a Node representing a variable that holds a matrix (nxm)
-func NewMatrix(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
+func (g *ExprGraph) NewMatrix(t tensor.Dtype, opts ...NodeConsOpt) *Node {
 	tt := makeTensorType(2, t)
 	curOpts := []NodeConsOpt{WithType(tt), In(g)}
 	curOpts = append(curOpts, opts...)
@@ -79,7 +79,7 @@ func NewMatrix(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 }
 
 // NewTensor creates a Node representing a variable that holds a tensor (any n-dimensional array with dimensions greater than 2)
-func NewTensor(g *ExprGraph, t tensor.Dtype, dims int, opts ...NodeConsOpt) *Node {
+func (g *ExprGraph) NewTensor(t tensor.Dtype, dims int, opts ...NodeConsOpt) *Node {
 	tt := makeTensorType(dims, t)
 	curOpts := []NodeConsOpt{WithType(tt), In(g)}
 	curOpts = append(curOpts, opts...)
@@ -91,7 +91,7 @@ func NewTensor(g *ExprGraph, t tensor.Dtype, dims int, opts ...NodeConsOpt) *Nod
 }
 
 // NewConstant takes in any reasonable value and makes it a constant node.
-func NewConstant(g *ExprGraph, v interface{}, opts ...NodeConsOpt) *Node {
+func (g *ExprGraph) NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 	var op Op
 	var t hm.Type
 	var name string
@@ -210,11 +210,11 @@ func OneHotVector(g *ExprGraph, id, classes int, t tensor.Dtype, opts ...NodeCon
 	if err != nil {
 		panic(err.Error())
 	}
-	return NewConstant(g, T, opts...)
+	return g.NewConstant(T, opts...)
 }
 
 // Grad takes a scalar cost node and a list of with-regards-to, and returns the gradient
-func Grad(g *ExprGraph, cost *Node, WRTs ...*Node) (retVal Nodes, err error) {
+func (g *ExprGraph) Grad(cost *Node, WRTs ...*Node) (retVal Nodes, err error) {
 	symdiffLogf("Cost:%v", cost)
 	if !cost.IsScalar() {
 		return nil, errors.Errorf("Expected Cost to be a scalar. Got %v instead", cost)

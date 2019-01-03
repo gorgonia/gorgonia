@@ -297,6 +297,7 @@ func Sum(a *Node, along ...int) (retVal *Node, err error) {
 // This is a simpler version of the norms found in the Tensor package, which specializes and optimizes even more
 // (well, given it's adapted from Numpy, it is clearly way more optimized)
 func Norm(a *Node, axis, p int) (retVal *Node, err error) {
+	g := a.g
 	if p == 2 {
 		if retVal, err = Square(a); err == nil {
 			if retVal, err = Sum(retVal, axis); err == nil {
@@ -320,11 +321,15 @@ func Norm(a *Node, axis, p int) (retVal *Node, err error) {
 	var b, inv *Node
 	switch dt {
 	case Float32:
-		b = NewConstant(a.g, float32(p))
-		inv = NewConstant(a.g, float32(1)/float32(p))
+		b = g.NewConstant(float32(p))
+		g.AddNode(b)
+		inv = g.NewConstant(float32(1) / float32(p))
+		g.AddNode(inv)
 	case Float64:
-		b = NewConstant(a.g, float64(p))
-		inv = NewConstant(a.g, float64(1)/float64(p))
+		b = g.NewConstant(float64(p))
+		g.AddNode(b)
+		inv = g.NewConstant(float64(1) / float64(p))
+		g.AddNode(inv)
 	default:
 		return nil, errors.New("Cannot norm a non-floating point type")
 	}

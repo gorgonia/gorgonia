@@ -29,7 +29,7 @@ var wT tensor.Tensor
 var yT tensor.Tensor
 var xT tensor.Tensor
 
-// in this example, we will generate random float64 values
+// Float in this example, we will generate random float64 values
 var Float = tensor.Float64
 
 // init generates random values for x, w, and y for demo purposes
@@ -83,7 +83,7 @@ func main() {
 	w := G.NewVector(g, Float, G.WithName("w"), G.WithShape(feats))
 	b := G.NewScalar(g, Float, G.WithName("bias"))
 	// Add a constant node 1 to be used later in the loss function
-	one := G.NewConstant(1.0)
+	one := g.AddNode(g.NewConstant(1.0))
 
 	// Here we create the nodes that will do the prediction operations
 	// create a node that has the operation: (x*w + b)
@@ -94,7 +94,7 @@ func main() {
 	// create a "pred" node that has the operation that checks if prob is
 	// greater than 0.5. This ensures that our prediction output returns
 	// {true, false}
-	pred := G.Must(G.Gt(prob, G.NewConstant(0.5), false))
+	pred := G.Must(G.Gt(prob, G.NewConstant(g, 0.5), false))
 	G.WithName("pred")(pred)
 
 	// Gorgonia might delete values from nodes so we are going to save it
@@ -119,7 +119,7 @@ func main() {
 	// In order to prevent overfitting, we add a L2 regularization term
 	weightSq := G.Must(G.Square(w))
 	sumSq := G.Must(G.Sum(weightSq))
-	l2reg := G.NewConstant(0.01, G.WithName("l2reg"))
+	l2reg := G.NewConstant(g, 0.01, G.WithName("l2reg"))
 	regTerm := G.Must(G.Mul(l2reg, sumSq))
 
 	// cost we want to minimize
@@ -127,7 +127,7 @@ func main() {
 	G.WithName("cost")(cost)
 
 	// calculate gradient by backpropagation https://en.wikipedia.org/wiki/Backpropagation
-	grads, err := G.Grad(cost, w, b)
+	grads, err := G.Grad(g, cost, w, b)
 	handleError(err)
 	// "dcost/dw" == derivative of cost with respect to w
 	G.WithName("dcost/dw")(grads[0])
@@ -135,7 +135,7 @@ func main() {
 	G.WithName("dcost/db")(grads[1])
 
 	// create the nodes for calculating the gradient
-	learnRate := G.NewConstant(0.1) // be careful not to set a learnRate too high
+	learnRate := G.NewConstant(g, 0.1) // be careful not to set a learnRate too high
 	gwlr := G.Must(G.Mul(learnRate, grads[0]))
 	wUpd := G.Must(G.Sub(w, gwlr))
 	gblr := G.Must(G.Mul(learnRate, grads[1]))

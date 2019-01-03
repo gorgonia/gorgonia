@@ -83,16 +83,16 @@ const (
 var empty struct{}
 
 var (
-	onef32   = func(g *ExprGraph) *Node { return NewConstant(g, float32(1.0)) }
-	onef64   = func(g *ExprGraph) *Node { return NewConstant(g, float64(1.0)) }
-	zerof32  = func(g *ExprGraph) *Node { return NewConstant(g, float32(0.0)) }
-	zerof64  = func(g *ExprGraph) *Node { return NewConstant(g, float64(0.0)) }
-	twof64   = func(g *ExprGraph) *Node { return NewConstant(g, float64(2.0)) }
-	twof32   = func(g *ExprGraph) *Node { return NewConstant(g, float32(2.0)) }
-	threef64 = func(g *ExprGraph) *Node { return NewConstant(g, float64(3.0)) }
-	threef32 = func(g *ExprGraph) *Node { return NewConstant(g, float32(3.0)) }
-	ln2f64   = func(g *ExprGraph) *Node { return NewConstant(g, math.Ln2) }
-	ln2f32   = func(g *ExprGraph) *Node { return NewConstant(g, float32(math.Ln2)) }
+	onef32   = func(g *ExprGraph) *Node { return g.NewConstant(float32(1.0)) }
+	onef64   = func(g *ExprGraph) *Node { return g.NewConstant(float64(1.0)) }
+	zerof32  = func(g *ExprGraph) *Node { return g.NewConstant(float32(0.0)) }
+	zerof64  = func(g *ExprGraph) *Node { return g.NewConstant(float64(0.0)) }
+	twof64   = func(g *ExprGraph) *Node { return g.NewConstant(float64(2.0)) }
+	twof32   = func(g *ExprGraph) *Node { return g.NewConstant(float32(2.0)) }
+	threef64 = func(g *ExprGraph) *Node { return g.NewConstant(float64(3.0)) }
+	threef32 = func(g *ExprGraph) *Node { return g.NewConstant(float32(3.0)) }
+	ln2f64   = func(g *ExprGraph) *Node { return g.NewConstant(math.Ln2) }
+	ln2f32   = func(g *ExprGraph) *Node { return g.NewConstant(float32(math.Ln2)) }
 
 	onef32ConstOp  = func(g *ExprGraph) constant { return onef32(g).op.(constant) }
 	onef64ConstOp  = func(g *ExprGraph) constant { return onef64(g).op.(constant) }

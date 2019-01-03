@@ -62,6 +62,7 @@ func BinaryXent(output, target *Node) (retVal *Node, err error) {
 // It uses randomly zeroes out a *Tensor with a probability drawn from
 // a uniform distribution
 func Dropout(x *Node, prob float64) (retVal *Node, err error) {
+	g := x.g
 	if prob == 0.0 {
 		return x, nil
 	}
@@ -83,8 +84,11 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 		return nil, errors.Errorf(nyiTypeFail, "Dropout()", dt)
 	}
 
-	p := NewConstant(x.g, pr)
-	c := NewConstant(x.g, opp)
+	p := g.NewConstant(pr)
+	g.AddNode(p)
+
+	c := g.NewConstant(opp)
+	g.AddNode(c)
 
 	m := UniformRandomNode(x.g, dt, 0, 1, x.shape...)
 	if retVal, err = Gt(m, p, true); err != nil {
@@ -331,17 +335,18 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 		batchSumMultiplier:   batchSumMultiplier,
 		numByChans:           numByChans,
 		spatialSumMultiplier: spatialSumMultiplier,
-
-		training: true,
+		training:             true,
 	}
 	g := x.Graph()
 	dims := x.Shape().Dims()
 
 	if scale == nil {
-		scale = NewTensor(g, dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_γ"), WithInit(GlorotN(1.0)))
+		scale = g.NewTensor(dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_γ"), WithInit(GlorotN(1.0)))
+		g.AddNode(scale)
 	}
 	if bias == nil {
-		bias = NewTensor(g, dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_β"), WithInit(GlorotN(1.0)))
+		bias = g.NewTensor(dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_β"), WithInit(GlorotN(1.0)))
+		g.AddNode(bias)
 	}
 
 	if retVal, err = ApplyOp(op, x); err != nil {
