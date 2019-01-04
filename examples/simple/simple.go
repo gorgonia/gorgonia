@@ -37,5 +37,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("result: %v", z.Value())
+	log.Printf("result: %v", z.Value())
 }

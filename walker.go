@@ -80,11 +80,15 @@ func getOrderedChildren(g graph.WeightedDirected, n graph.Node) *iterator.Ordere
 	// Get all the edges that reach the node n
 	children := g.From(n.ID())
 	// Now get the edges
+	if children.Len() == 0 {
+		return nil
+	}
 	edges := make([]graph.WeightedEdge, children.Len())
 	for i := 0; children.Next(); i++ {
 		edges[i] = g.WeightedEdge(n.ID(), children.Node().ID())
 	}
 
+	children.Reset()
 	orderWeightedEdges := iterator.NewOrderedWeightedEdges(edges)
 	nodes := make([]graph.Node, children.Len())
 	for i := 0; orderWeightedEdges.Next(); i++ {
