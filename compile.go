@@ -32,7 +32,8 @@ func compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	for all.Next() {
 		n := all.Node().(*Node)
 		if n.children == nil {
-			child := g.From(n.ID())
+			child := getOrderedChildren(g, n)
+			//child := g.From(n.ID())
 			n.children = make([]*Node, child.Len())
 			for i := 0; child.Next(); i++ {
 				n.children[i] = child.Node().(*Node)

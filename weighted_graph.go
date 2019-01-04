@@ -67,3 +67,17 @@ func (g *ExprGraph) HasEdgeFromTo(uid, vid int64) bool {
 func (g *ExprGraph) To(id int64) graph.Nodes {
 	return g.w.To(id)
 }
+
+// Weight returns the weight for the edge between x and y if Edge(x, y) returns a non-nil Edge.
+// If x and y are the same node or there is no joining edge between the two nodes
+// the weight value returned is either the graph's absent or self value.
+// Weight returns true if an edge exists between x and y or if x and y have the same ID, false otherwise.
+func (g *ExprGraph) Weight(xid, yid int64) (w float64, ok bool) {
+	return g.w.Weight(xid, yid)
+}
+
+// WeightedEdge returns the weighted edge from u to v if such an edge exists and nil otherwise.
+// The node v must be directly reachable from u as defined by the From method.
+func (g *ExprGraph) WeightedEdge(uid, vid int64) graph.WeightedEdge {
+	return g.w.WeightedEdge(uid, vid)
+}
