@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/chewxy/hm"
+	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/tensor"
 )
 
@@ -84,12 +85,31 @@ type CopierFrom interface {
 	CopyFrom(src interface{}) error
 }
 
-// Setter is a any value that can Memset itself to the provided value
-// type Setter interface {
-// 	SetAll(interface{}) error
-// }
 // ValueGrad is any type that has a value and a grad. This is used for Solvers
 type ValueGrad interface {
 	Valuer
 	Grad() (Value, error)
+}
+
+// TypeOf returns the Type of the value
+func TypeOf(v Value) hm.Type {
+	switch t := v.(type) {
+	case tensor.Tensor:
+		dt, dim := tensorInfo(t)
+		return constructor.MakeTensorType(dim, dt)
+	case Scalar:
+		return t.Dtype()
+	case Typer:
+		return t.Type()
+
+	default:
+		panic(fmt.Sprintf("TypeOf Not yet implemented for %v %T", v, v))
+	}
+}
+
+// Scalar represents a scalar(non-array-based) value. Do note that it's the pointers of the scalar types (F64, F32, etc) that implement
+// the Scalar interface. The main reason is primarily due to optimizations with regards to memory allocation and copying for device interoperability.
+type Scalar interface {
+	Value
+	IsScalar() bool
 }
