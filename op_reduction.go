@@ -15,6 +15,7 @@ import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -235,7 +236,7 @@ func (op sumOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err e
 
 	var T tensor.Tensor
 	switch ydvd := ydv.d.(type) {
-	case Scalar:
+	case value.Scalar:
 		dt := ydvd.Dtype()
 		T = tensor.New(tensor.Of(dt), tensor.WithShape(xdv.d.Shape().Clone()...))
 		T.Memset(ydvd.Data())
@@ -320,7 +321,7 @@ func (op sumOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 		var ret *tensor.Dense
 		if ret, err = t.Sum(op.along...); err == nil {
 			if ret.IsScalar() {
-				retVal, _ = anyToScalar(ret.ScalarValue())
+				retVal, _ = primitive.AnyToScalar(ret.ScalarValue())
 			} else {
 				retVal = ret
 			}

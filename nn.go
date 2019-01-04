@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -76,11 +77,11 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 	var opp, pr value.Value // opp = 1 per p
 	switch dt {
 	case Float64:
-		opp, _ = anyToScalar(1.0 / prob)
-		pr, _ = anyToScalar(prob)
+		opp, _ = primitive.AnyToScalar(1.0 / prob)
+		pr, _ = primitive.AnyToScalar(prob)
 	case Float32:
-		opp, _ = anyToScalar(float32(1.0 / prob))
-		pr, _ = anyToScalar(float32(prob))
+		opp, _ = primitive.AnyToScalar(float32(1.0 / prob))
+		pr, _ = primitive.AnyToScalar(float32(prob))
 	default:
 		return nil, errors.Errorf(nyiTypeFail, "Dropout()", dt)
 	}

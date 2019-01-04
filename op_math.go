@@ -22,6 +22,7 @@ import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -262,7 +263,7 @@ func (op elemBinOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (e
 	//handle scalar gradients
 	for _, in := range inputs {
 		indv := in.boundTo.(*dualValue)
-		if _, ok := indv.d.(Scalar); in.IsScalar() && !ok {
+		if _, ok := indv.d.(value.Scalar); in.IsScalar() && !ok {
 			indvdT := indv.d.(tensor.Tensor)
 			defer returnTensor(indvdT)
 
@@ -273,7 +274,7 @@ func (op elemBinOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (e
 			}
 			defer returnTensor(t)
 
-			d, _ = anyToScalar(t.ScalarValue())
+			d, _ = primitive.AnyToScalar(t.ScalarValue())
 			indv.SetDeriv(d)
 		}
 	}
@@ -493,19 +494,19 @@ func (op elemUnaryOp) do(a value.Value, opts ...tensor.FuncOpt) (retVal value.Va
 	switch v := a.(type) {
 	case tensor.Tensor:
 		return unaryCheckApply(op.ʘUnaryOperator, v, opts...)
-	case Scalar:
+	case value.Scalar:
 		vt := v.Dtype()
 		switch vt {
 		case tensor.Float32:
-			vs := v.(*F32)
+			vs := v.(*primitive.F32)
 			f := float32(*vs)
 			opFn := op.ʘUnaryOperator.(*sf32UnaryOperator)
-			retVal, _ = anyToScalar((*opFn)(f))
+			retVal, _ = primitive.AnyToScalar((*opFn)(f))
 		case tensor.Float64:
-			vs := v.(*F64)
+			vs := v.(*primitive.F64)
 			f := float64(*vs)
 			opFn := op.ʘUnaryOperator.(*sf64UnaryOperator)
-			retVal, _ = anyToScalar((*opFn)(f))
+			retVal, _ = primitive.AnyToScalar((*opFn)(f))
 		default:
 			return nil, errors.Errorf(nyiFail, "elemUnaryOp.do", vt)
 		}
@@ -756,7 +757,7 @@ func (op linAlgBinOp) do(inputs []value.Value, opts ...tensor.FuncOpt) (retVal v
 		if ret, err = tensor.Inner(a, b); err != nil {
 			return nil, errors.Wrapf(err, "Failed to carry out linalgBinOp operation %v", op)
 		}
-		retVal, _ = anyToScalar(ret)
+		retVal, _ = primitive.AnyToScalar(ret)
 	case outerProdOperator:
 		retVal, err = tensor.Outer(a, b, opts...)
 	case batchedMatMulOperator:

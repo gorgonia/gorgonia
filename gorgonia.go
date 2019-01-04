@@ -5,6 +5,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -24,7 +25,7 @@ func Must(n *Node, err error, opts ...NodeConsOpt) *Node {
 
 // NodeFromAny creates a Node from a tensor.Tensor, automatically filling in shape and type info
 func (g *ExprGraph) NodeFromAny(any interface{}, opts ...NodeConsOpt) *Node {
-	v, t, dt, err := anyToValue(any)
+	v, t, dt, err := primitive.AnyToValue(any)
 	if err != nil {
 		panic(err)
 	}
@@ -99,12 +100,12 @@ func (g *ExprGraph) NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 	var s tensor.Shape
 	var val value.Value
 
-	val, t, _, err := anyToValue(v)
+	val, t, _, err := primitive.AnyToValue(v)
 	if err != nil {
 		panic(err)
 	}
 	switch vt := val.(type) {
-	case Scalar:
+	case value.Scalar:
 		op = constantScalar{vt}
 		s = scalarShape
 	case tensor.Tensor:
@@ -286,7 +287,7 @@ func UnsafeLet(n *Node, be interface{}) error {
 	default:
 		var val value.Value
 		var err error
-		if val, _, _, err = anyToValue(be); err != nil {
+		if val, _, _, err = primitive.AnyToValue(be); err != nil {
 			return errors.Wrapf(err, anyToValueFail, be, be)
 		}
 

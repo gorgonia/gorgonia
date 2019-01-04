@@ -17,7 +17,7 @@ func TestApplyOp(t *testing.T) {
 	var ct *Node
 	var op Op
 
-	t.Log("Simple Constant Scalar test")
+	t.Log("Simple Constant value.Scalar test")
 	cpi = NewConstant(3.1415, WithName("constantPi"))
 	cpi = g.AddNode(cpi)
 
@@ -700,7 +700,7 @@ func TestMean(t *testing.T) {
 func TestTensordot(t *testing.T) {
 	assert := assert.New(t)
 
-	// Scalars
+	// value.Scalars
 	g := NewGraph()
 
 	a := NewTensor(g, Float64, 1, WithName("a"), WithShape(1), WithInit(RangedFrom(2)))

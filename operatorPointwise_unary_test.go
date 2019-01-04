@@ -149,7 +149,7 @@ func TestAbs(t *testing.T) {
 	var yV, xG, bV, aG value.Value
 	var err error
 
-	/* FLOAT 64 Scalar */
+	/* FLOAT 64 value.Scalar */
 
 	x, y, a, b, v, err = unaryOpTest(t, Float64, tensor.Shape{}, Abs)
 	if err != nil {
@@ -173,7 +173,7 @@ func TestAbs(t *testing.T) {
 	assert.True(ValueClose(newF64(1.0), xG))
 	assert.True(ValueClose(newF64(1.0), aG))
 
-	/* FLOAT 32 Scalar */
+	/* FLOAT 32 value.Scalar */
 
 	x, y, a, b, v, err = unaryOpTest(t, Float32, tensor.Shape{}, Abs)
 	if err != nil {

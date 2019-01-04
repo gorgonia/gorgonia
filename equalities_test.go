@@ -3,7 +3,7 @@ package gorgonia
 import "testing"
 
 var scalarEqualities = []struct {
-	a, b Scalar
+	a, b value.Scalar
 	eq   bool
 }{
 	{newF64(1), newF64(1), true},

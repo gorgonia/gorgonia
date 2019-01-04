@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/debugger"
 	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -122,7 +123,7 @@ func WithName(name string) NodeConsOpt {
 //	- Gorgonia was unable to convert interface{} into a value.Value.
 //	- The type of the value.Value does not match the type of the nodes.
 func WithValue(any interface{}) NodeConsOpt {
-	v, t, _, err := anyToValue(any)
+	v, t, _, err := primitive.AnyToValue(any)
 	if err != nil {
 		panic(err)
 	}
@@ -146,7 +147,7 @@ func WithValue(any interface{}) NodeConsOpt {
 //	- There isn't already a value associated with the node (.boundTo == nil)
 //	- The type of the value.Value does not match the value of the node.
 func WithGrad(any interface{}) NodeConsOpt {
-	v, t, _, err := anyToValue(any)
+	v, t, _, err := primitive.AnyToValue(any)
 	if err != nil {
 		panic(err)
 	}
@@ -355,7 +356,7 @@ func (n *Node) Clone() (retVal interface{}) {
 }
 */
 
-// value.Value returns the valuse bound to the node. May return nil
+// Value returns the valuse bound to the node. May return nil
 func (n *Node) Value() value.Value {
 	if n.isConstant() {
 		return n.op.(constant).Value()

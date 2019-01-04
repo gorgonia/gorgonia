@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -52,22 +53,22 @@ func valuesToInts(values []value.Value) (retVal []int, err error) {
 	for i, v := range values {
 		var intV int
 		switch sv := v.(type) {
-		case *F64:
+		case *primitive.F64:
 			intV = int(float64(*sv))
-		case *F32:
+		case *primitive.F32:
 			intV = int(float32(*sv))
-		case *I:
+		case *primitive.I:
 			intV = int(*sv)
-		case *I32:
+		case *primitive.I32:
 			intV = int(int32(*sv))
-		case *I64:
+		case *primitive.I64:
 			intV = int(int64(*sv))
-		case *U8:
+		case *primitive.U8:
 			intV = int(byte(*sv))
-		case Scalar:
+		case value.Scalar:
 			return nil, errors.Errorf(nyiTypeFail, "valueToInts", v)
 		default:
-			return nil, errors.Errorf("Expected values to be all Scalar value.Value. Got %v of %T instead", v, v)
+			return nil, errors.Errorf("Expected values to be all value.Scalar value.Value. Got %v of %T instead", v, v)
 
 		}
 		retVal[i] = intV
@@ -114,17 +115,17 @@ func intRange(start, end int) []int {
 
 func ones(dt tensor.Dtype, sizes ...int) (retVal value.Value) {
 	if len(sizes) == 0 {
-		return one(dt)
+		return primitive.One(dt)
 	}
 	return tensor.Ones(dt, sizes...)
 }
 
 func hasInf(v value.Value, dev execution.Device) bool {
 	switch vt := v.(type) {
-	case *F64:
+	case *primitive.F64:
 		return false
 		return math.IsInf(float64(*vt), 0)
-	case *F32:
+	case *primitive.F32:
 		return false
 		return math32.IsInf(float32(*vt), 0)
 	case tensor.Tensor:
@@ -164,10 +165,10 @@ func hasInf(v value.Value, dev execution.Device) bool {
 
 func hasNaN(v value.Value, dev execution.Device) bool {
 	switch vt := v.(type) {
-	case *F64:
+	case *primitive.F64:
 		return false
 		return math.IsNaN(float64(*vt))
-	case *F32:
+	case *primitive.F32:
 		return false
 		return math32.IsNaN(float32(*vt))
 	case tensor.Tensor:
@@ -212,8 +213,8 @@ func setZero(val value.Value) (retVal value.Value) {
 	case value.Zeroer:
 		v.Zero()
 		return v
-	case Scalar:
-		return zero(v.Dtype())
+	case value.Scalar:
+		return primitive.Zero(v.Dtype())
 	default:
 		panic(fmt.Sprintf("setZero not implemented yet for %T", v))
 	}

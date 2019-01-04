@@ -57,7 +57,7 @@ func extractF64(v value.Value) float64 {
 			panic("Got a non scalar result!")
 		}
 		pc, _, _, _ := runtime.Caller(1)
-		log.Printf("Better watch it: %v called with a Scalar tensor", runtime.FuncForPC(pc).Name())
+		log.Printf("Better watch it: %v called with a value.Scalar tensor", runtime.FuncForPC(pc).Name())
 		return vt.ScalarValue().(float64)
 	}
 	panic(fmt.Sprintf("Unhandled types! Got %v of %T instead", v, v))
@@ -76,7 +76,7 @@ func extractF32(v value.Value) float32 {
 			panic("Got a non scalar result!")
 		}
 		pc, _, _, _ := runtime.Caller(1)
-		log.Printf("Better watch it: %v called with a Scalar tensor", runtime.FuncForPC(pc).Name())
+		log.Printf("Better watch it: %v called with a value.Scalar tensor", runtime.FuncForPC(pc).Name())
 		return vt.ScalarValue().(float32)
 	}
 	panic(fmt.Sprintf("Unhandled types! Got %v of %T instead", v, v))

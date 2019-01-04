@@ -2,61 +2,63 @@ package gorgonia
 
 import (
 	"gorgonia.org/dawson"
+	"gorgonia.org/gorgonia/internal/primitive"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
-func scalarEq(a, b Scalar) bool {
+func scalarEq(a, b value.Scalar) bool {
 	switch at := a.(type) {
-	case *F64:
-		if bt, ok := b.(*F64); ok {
+	case *primitive.F64:
+		if bt, ok := b.(*primitive.F64); ok {
 			if at == bt {
 				return true
 			}
 			return *at == *bt
 		}
 		return false
-	case *F32:
-		if bt, ok := b.(*F32); ok {
+	case *primitive.F32:
+		if bt, ok := b.(*primitive.F32); ok {
 			if at == bt {
 				return true
 			}
 			return *at == *bt
 		}
 		return false
-	case *I:
-		if bt, ok := b.(*I); ok {
+	case *primitive.I:
+		if bt, ok := b.(*primitive.I); ok {
 			if at == bt {
 				return true
 			}
 			return *at == *bt
 		}
 		return false
-	case *I32:
-		if bt, ok := b.(*I32); ok {
+	case *primitive.I32:
+		if bt, ok := b.(*primitive.I32); ok {
 			if at == bt {
 				return true
 			}
 			return *at == *bt
 		}
 		return false
-	case *I64:
-		if bt, ok := b.(*I64); ok {
+	case *primitive.I64:
+		if bt, ok := b.(*primitive.I64); ok {
 			if at == bt {
 				return true
 			}
 			return *at == *bt
 		}
 		return false
-	case *U8:
-		if bt, ok := b.(*U8); ok {
+	case *primitive.U8:
+		if bt, ok := b.(*primitive.U8); ok {
 			if at == bt {
 				return true
 			}
 			return *at == *bt
 		}
 		return false
-	case *B:
-		if bt, ok := b.(*B); ok {
+	case *primitive.B:
+		if bt, ok := b.(*primitive.B); ok {
 			if at == bt {
 				return true
 			}
@@ -67,15 +69,15 @@ func scalarEq(a, b Scalar) bool {
 	return false
 }
 
-func scalarClose(a, b Scalar) bool {
+func scalarClose(a, b value.Scalar) bool {
 	switch at := a.(type) {
-	case *F64:
-		if bt, ok := b.(*F64); ok {
+	case *primitive.F64:
+		if bt, ok := b.(*primitive.F64); ok {
 			return dawson.CloseF64(float64(*at), float64(*bt))
 		}
 		return false
-	case *F32:
-		if bt, ok := b.(*F32); ok {
+	case *primitive.F32:
+		if bt, ok := b.(*primitive.F32); ok {
 			return dawson.CloseF32(float32(*at), float32(*bt))
 		}
 		return false

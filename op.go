@@ -244,7 +244,7 @@ type constant interface {
 }
 
 type constantScalar struct {
-	v Scalar
+	v value.Scalar
 }
 
 func (c constantScalar) Arity() int                                   { return 0 }

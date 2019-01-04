@@ -6,6 +6,7 @@ import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -17,7 +18,7 @@ type dualValue struct {
 
 func (dv *dualValue) SetDeriv(d value.Value) error {
 	if t, ok := d.(tensor.Tensor); ok && t.IsScalar() {
-		d, _ = anyToScalar(t.ScalarValue())
+		d, _ = primitive.AnyToScalar(t.ScalarValue())
 	}
 	dv.d = d
 
@@ -137,8 +138,8 @@ func variableDV(val value.Value) *dualValue {
 	retVal.Value = val
 
 	switch v := val.(type) {
-	case Scalar:
-		retVal.d = one(v.Dtype())
+	case value.Scalar:
+		retVal.d = primitive.One(v.Dtype())
 	case tensor.Tensor:
 		shp := v.Shape()
 		dt := v.Dtype()
@@ -231,20 +232,20 @@ func dvUnitVarManaged(v value.Value, op *ExternalOp) (*dualValue, error) {
 		default:
 			return dv, errors.Errorf("Unhandled dtype: %v", dt)
 		}
-	case *F64:
-		*d = F64(1)
-	case *F32:
-		*d = F32(1)
-	case *I:
-		*d = I(1)
-	case *I64:
-		*d = I64(1)
-	case *I32:
-		*d = I32(1)
-	case *U8:
-		*d = U8(1)
-	case *B:
-		*d = B(true)
+	case *primitive.F64:
+		*d = primitive.F64(1)
+	case *primitive.F32:
+		*d = primitive.F32(1)
+	case *primitive.I:
+		*d = primitive.I(1)
+	case *primitive.I64:
+		*d = primitive.I64(1)
+	case *primitive.I32:
+		*d = primitive.I32(1)
+	case *primitive.U8:
+		*d = primitive.U8(1)
+	case *primitive.B:
+		*d = primitive.B(true)
 	default:
 		return dv, errors.Errorf("Unhandeled type: %T", d)
 	}
@@ -345,8 +346,8 @@ func dvBindVar0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 	}
 
 	switch v := retVal.d.(type) {
-	case Scalar:
-		retVal.d = one(v.Dtype())
+	case value.Scalar:
+		retVal.d = primitive.One(v.Dtype())
 	case tensor.Tensor:
 		switch v.Dtype() {
 		case tensor.Float64:

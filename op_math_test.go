@@ -459,7 +459,7 @@ func testOneArithTape(t *testing.T, bot binOpTest, i int) error {
 func TestTensordotOpDoDiff(t *testing.T) {
 	assert := assert.New(t)
 
-	// Scalars
+	// value.Scalars
 	g := NewGraph()
 	a := NewTensor(g, Float64, 1, WithName("a"), WithShape(1))
 	b := NewTensor(g, Float64, 1, WithName("b"), WithShape(1))

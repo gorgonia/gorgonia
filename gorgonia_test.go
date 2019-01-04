@@ -29,7 +29,7 @@ func TestNewConstant(t *testing.T) {
 	assert.Equal(expectedType, ct.t)
 	assert.Equal("From TensorValue", ct.name)
 
-	t.Log("Testing Constant Scalars")
+	t.Log("Testing Constant value.Scalars")
 	cs := NewConstant(3.14)
 	expectedType = Float64
 	assert.Equal(scalarShape, cs.shape)

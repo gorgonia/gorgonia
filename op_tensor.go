@@ -10,6 +10,7 @@ import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -54,7 +55,7 @@ func (op atOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 			return
 		}
 
-		retVal, _, _, err = anyToValue(r)
+		retVal, _, _, err = primitive.AnyToValue(r)
 	default:
 		err = errors.Errorf(nyiTypeFail, "atOp.Do()", tt)
 	}
@@ -116,12 +117,12 @@ func (op sizeOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 	}
 
 	switch t := inputs[0].(type) {
-	case Scalar:
-		retVal = one(t.Dtype())
+	case value.Scalar:
+		retVal = primitive.One(t.Dtype())
 
 		// bools are special
-		if _, ok := t.(*B); ok {
-			retVal = newI(1)
+		if _, ok := t.(*primitive.B); ok {
+			retVal = primitive.NewI(1)
 		}
 	case tensor.Tensor:
 		sh := t.Shape()
@@ -133,11 +134,11 @@ func (op sizeOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 		// cast as ... types
 		switch t.Dtype() {
 		case tensor.Float64:
-			retVal = newF64(float64(size))
+			retVal = primitive.NewF64(float64(size))
 		case tensor.Float32:
-			retVal = newF32(float32(size))
+			retVal = primitive.NewF32(float32(size))
 		case tensor.Int:
-			retVal = newI(size)
+			retVal = primitive.NewI(size)
 		default:
 			return nil, errors.Errorf(nyiFail, "sizeOf.Do()", t.Dtype())
 		}
@@ -394,8 +395,8 @@ func (op repeatOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 	// process inputs[0]
 	var t tensor.Tensor
 	switch iv := inputs[0].(type) {
-	case *F64:
-		s := iv.any()
+	case *primitive.F64:
+		s := iv.Any()
 		if monotonic && incr {
 			ret := tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(reps...))
 			ret.Memset(s)
@@ -403,8 +404,8 @@ func (op repeatOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 			return
 		}
 		t = tensor.New(tensor.FromScalar(s))
-	case *F32:
-		s := iv.any()
+	case *primitive.F32:
+		s := iv.Any()
 		if monotonic && incr {
 			ret := tensor.New(tensor.Of(tensor.Float32), tensor.WithShape(reps...))
 			ret.Memset(s)
@@ -412,8 +413,8 @@ func (op repeatOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 			return
 		}
 		t = tensor.New(tensor.FromScalar(s))
-	case *I:
-		s := iv.any()
+	case *primitive.I:
+		s := iv.Any()
 		if monotonic && incr {
 			ret := tensor.New(tensor.Of(tensor.Int), tensor.WithShape(reps...))
 			ret.Memset(s)
@@ -421,8 +422,8 @@ func (op repeatOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 			return
 		}
 		t = tensor.New(tensor.FromScalar(s))
-	case *B:
-		s := iv.any()
+	case *primitive.B:
+		s := iv.Any()
 		if monotonic && incr {
 			ret := tensor.New(tensor.Of(tensor.Bool), tensor.WithShape(reps...))
 			ret.Memset(s)
@@ -604,11 +605,11 @@ func (op *sliceOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 			return nil, errors.Wrapf(err, sliceFail, slices)
 		}
 		if v.IsScalar() {
-			retVal, _ = anyToScalar(v.ScalarValue())
+			retVal, _ = primitive.AnyToScalar(v.ScalarValue())
 		} else {
 			retVal = v
 		}
-	case Scalar:
+	case value.Scalar:
 		return nil, errors.New("Cannot slice a scalar value")
 	default:
 		return nil, errors.Errorf(nyiFail, "sliceOp.Do()", t)
@@ -760,15 +761,15 @@ func (op sliceIncrOp) Do(inputs ...value.Value) (retVal value.Value, err error) 
 			return nil, errors.Wrapf(err, sliceFail, slices)
 		}
 		switch i := incr.(type) {
-		case *F64:
-			tensor.Add(v, i.any(), tensor.UseUnsafe())
-		case *F32:
-			tensor.Add(v, i.any(), tensor.UseUnsafe())
+		case *primitive.F64:
+			tensor.Add(v, i.Any(), tensor.UseUnsafe())
+		case *primitive.F32:
+			tensor.Add(v, i.Any(), tensor.UseUnsafe())
 		case *tensor.Dense:
 			tensor.Add(v, i, tensor.UseUnsafe())
 		}
 		retVal = grad
-	case Scalar:
+	case value.Scalar:
 		return nil, errors.New("Cannot slice a scalar value")
 	default:
 		return nil, errors.Errorf(nyiFail, "sliceIncrOp()", t)
@@ -799,15 +800,15 @@ func (op sliceIncrOp) UsePreallocDo(prealloc value.Value, inputs ...value.Value)
 			return nil, errors.Wrapf(err, sliceFail, slices)
 		}
 		switch i := incr.(type) {
-		case *F64:
-			tensor.Add(v, i.any(), tensor.UseUnsafe())
-		case *F32:
-			tensor.Add(v, i.any(), tensor.UseUnsafe())
+		case *primitive.F64:
+			tensor.Add(v, i.Any(), tensor.UseUnsafe())
+		case *primitive.F32:
+			tensor.Add(v, i.Any(), tensor.UseUnsafe())
 		case *tensor.Dense:
 			tensor.Add(v, i, tensor.UseUnsafe())
 		}
 		retVal = T
-	case Scalar:
+	case value.Scalar:
 		return nil, errors.New("Cannot slice a scalar value")
 	default:
 		return nil, errors.Errorf(nyiFail, "sliceIncrOp()", prealloc)
@@ -1155,7 +1156,7 @@ func (op reshapeOp) Do(vals ...value.Value) (value.Value, error) {
 			return nil, err
 		}
 		return v, nil
-	case Scalar:
+	case value.Scalar:
 		return nil, errors.Errorf(nyiTypeFail, "reshape.Do", "Scalar")
 	}
 
@@ -1185,7 +1186,7 @@ func (op reshapeOp) CUDADo(extern execution.External, dev execution.Device, prea
 			return nil, err
 		}
 		return v, nil
-	case Scalar:
+	case value.Scalar:
 		return nil, errors.Errorf(nyiTypeFail, "reshape.Do", "Scalar")
 	}
 

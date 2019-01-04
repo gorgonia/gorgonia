@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/blas"
 	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 	"gorgonia.org/vecf32"
@@ -106,7 +107,7 @@ func (op randomOp) Do(...value.Value) (retVal value.Value, err error) {
 			return nil, errors.Errorf(nyiFail, "randomOp.do()", op.dt)
 		}
 
-		retVal, _ = anyToScalar(v)
+		retVal, _ = primitive.AnyToScalar(v)
 		return
 	}
 
@@ -1065,7 +1066,7 @@ func (op *maxPoolDiffOp) f64s(batches, channels, pooledH, pooledW int,
 
 // clampOp is a constant clamping operation
 type clampOp struct {
-	min, max Scalar
+	min, max value.Scalar
 }
 
 func (op *clampOp) Arity() int { return 1 }

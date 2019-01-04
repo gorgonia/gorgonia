@@ -5,6 +5,7 @@ import (
 
 	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -198,6 +199,7 @@ func WithRho(rho float64) SolverOpt {
 	return f
 }
 
+// WithMomentum ...
 func WithMomentum(momentum float64) SolverOpt {
 	f := func(s Solver) {
 		switch st := s.(type) {
@@ -338,46 +340,46 @@ func (s *RMSPropSolver) Step(model []value.ValueGrad) (err error) {
 			// zero all
 			gt.Zero()
 
-		case *F32:
+		case *primitive.F32:
 			decay := float32(s.decay)
 			omdecay := float32(1.0 - s.decay)
 			stepSize := float32(s.eta)
 			eps := float32(s.eps)
 			l2reg := float32(s.l2reg)
 
-			gs := grad.(*F32).any()
-			c := cw.any()
+			gs := grad.(*primitive.F32).Any()
+			c := cw.Any()
 			c = c*decay + omdecay*gs*gs
 
-			cached.Value, _ = anyToScalar(c)
+			cached.Value, _ = primitive.AnyToScalar(c)
 
-			w := weights.(*F32).any()
+			w := weights.(*primitive.F32).Any()
 			upd := -stepSize*gs/math32.Sqrt(c+eps) - l2reg*w
 			w += upd
 
 			// because scalar values are copies, and not pointers, we have to actually re-update the dualValu in model[i]
-			*(weights.(*F32)) = F32(w)
-			*(grad.(*F32)) = F32(0.0)
-		case *F64:
+			*(weights.(*primitive.F32)) = primitive.F32(w)
+			*(grad.(*primitive.F32)) = primitive.F32(0.0)
+		case *primitive.F64:
 			decay := s.decay
 			omdecay := 1.0 - s.decay
 			stepSize := s.eta
 			eps := s.eps
 			l2reg := s.l2reg
 
-			gs := grad.(*F64).any()
-			c := cw.any()
+			gs := grad.(*primitive.F64).Any()
+			c := cw.Any()
 			c = c*decay + omdecay*gs*gs
 
-			cached.Value, _ = anyToScalar(c)
+			cached.Value, _ = primitive.AnyToScalar(c)
 
-			w := weights.(*F64).any()
+			w := weights.(*primitive.F64).Any()
 			upd := -stepSize*gs/math.Sqrt(c+eps) - l2reg*w
 			w += upd
 
 			// because scalar values are copies, and not pointers, we have to actually re-update the dualValu in model[i]
-			*(weights.(*F64)) = F64(w)
-			*(grad.(*F64)) = F64(0.0)
+			*(weights.(*primitive.F64)) = primitive.F64(w)
+			*(grad.(*primitive.F64)) = primitive.F64(0.0)
 		default:
 		}
 		solverLogf("AFTER %1.1s", n)
@@ -608,11 +610,11 @@ func (s *AdamSolver) Step(model []value.ValueGrad) (err error) {
 
 			g.Zero()
 
-		case *F32:
-			g := grad.(*F32).any()
-			w := weights.(*F32).any()
-			v := cvv.(*F32).any()
-			mm := m.any()
+		case *primitive.F32:
+			g := grad.(*primitive.F32).Any()
+			w := weights.(*primitive.F32).Any()
+			v := cvv.(*primitive.F32).Any()
+			mm := m.Any()
 
 			l1reg := float32(s.l1reg)
 			l2reg := float32(s.l2reg)
@@ -650,8 +652,8 @@ func (s *AdamSolver) Step(model []value.ValueGrad) (err error) {
 			newM := (beta1 * mm) + (1-beta1)*g
 			newV := (beta2 * v) + (1-beta2)*g*g
 
-			cached.Value, _ = anyToScalar(newM)
-			cached.d, _ = anyToScalar(newV)
+			cached.Value, _ = primitive.AnyToScalar(newM)
+			cached.d, _ = primitive.AnyToScalar(newV)
 
 			mHat := (1 / float32(correction1)) * newM
 			vHat := (1 / float32(correction2)) * newV
@@ -659,13 +661,13 @@ func (s *AdamSolver) Step(model []value.ValueGrad) (err error) {
 			upd := -eta * mHat / (float32(math.Sqrt(float64(vHat))) + eps)
 			w += upd
 
-			*(weights.(*F32)) = F32(w)
-			*(grad.(*F32)) = F32(0.0)
-		case *F64:
-			g := grad.(*F64).any()
-			w := weights.(*F64).any()
-			v := cvv.(*F64).any()
-			mm := m.any()
+			*(weights.(*primitive.F32)) = primitive.F32(w)
+			*(grad.(*primitive.F32)) = primitive.F32(0.0)
+		case *primitive.F64:
+			g := grad.(*primitive.F64).Any()
+			w := weights.(*primitive.F64).Any()
+			v := cvv.(*primitive.F64).Any()
+			mm := m.Any()
 
 			l1reg := s.l1reg
 			l2reg := s.l2reg
@@ -703,8 +705,8 @@ func (s *AdamSolver) Step(model []value.ValueGrad) (err error) {
 			newM := (beta1 * mm) + (1-beta1)*g
 			newV := (beta2 * v) + (1-beta2)*g*g
 
-			cached.Value, _ = anyToScalar(newM)
-			cached.d, _ = anyToScalar(newV)
+			cached.Value, _ = primitive.AnyToScalar(newM)
+			cached.d, _ = primitive.AnyToScalar(newV)
 
 			mHat := (1 / correction1) * newM
 			vHat := (1 / correction2) * newV
@@ -712,8 +714,8 @@ func (s *AdamSolver) Step(model []value.ValueGrad) (err error) {
 			upd := -eta * mHat / (math.Sqrt(vHat) + eps)
 			w += upd
 
-			*(weights.(*F64)) = F64(w)
-			*(grad.(*F64)) = F64(0.0)
+			*(weights.(*primitive.F64)) = primitive.F64(w)
+			*(grad.(*primitive.F64)) = primitive.F64(0.0)
 
 		default:
 			err = errors.Errorf(nyiTypeFail, "AdamSolver", cvm)
@@ -830,9 +832,9 @@ func (s *VanillaSolver) Step(model []value.ValueGrad) (err error) {
 
 			g.Zero()
 
-		case *F32:
-			g := grad.(*F32).any()
-			wv := w.any()
+		case *primitive.F32:
+			g := grad.(*primitive.F32).Any()
+			wv := w.Any()
 
 			l1reg := float32(s.l1reg)
 			l2reg := float32(s.l2reg)
@@ -867,11 +869,11 @@ func (s *VanillaSolver) Step(model []value.ValueGrad) (err error) {
 			upd := -eta * g
 			wv += upd
 
-			*(weights.(*F32)) = F32(wv)
-			*(grad.(*F32)) = F32(0.0)
-		case *F64:
-			g := grad.(*F64).any()
-			wv := w.any()
+			*(weights.(*primitive.F32)) = primitive.F32(wv)
+			*(grad.(*primitive.F32)) = primitive.F32(0.0)
+		case *primitive.F64:
+			g := grad.(*primitive.F64).Any()
+			wv := w.Any()
 
 			l1reg := s.l1reg
 			l2reg := s.l2reg
@@ -906,8 +908,8 @@ func (s *VanillaSolver) Step(model []value.ValueGrad) (err error) {
 			upd := -eta * g
 			wv += upd
 
-			*(weights.(*F64)) = F64(wv)
-			*(grad.(*F64)) = F64(0.0)
+			*(weights.(*primitive.F64)) = primitive.F64(wv)
+			*(grad.(*primitive.F64)) = primitive.F64(0.0)
 		default:
 			return errors.Errorf(nyiFail, "VanillaSolver.step", w)
 		}
@@ -1055,7 +1057,7 @@ func (s *Momentum) Step(model []value.ValueGrad) (err error) {
 
 			g.Zero()
 
-		case *F32:
+		case *primitive.F32:
 			l1reg := float32(s.l1reg)
 			l2reg := float32(s.l2reg)
 			batch := float32(s.batch)
@@ -1063,9 +1065,9 @@ func (s *Momentum) Step(model []value.ValueGrad) (err error) {
 			eta := float32(s.eta)
 			momentum := float32(s.momentum)
 
-			g := grad.(*F32).any()
-			w := weights.(*F32).any()
-			c := cw.any()
+			g := grad.(*primitive.F32).Any()
+			w := weights.(*primitive.F32).Any()
+			c := cw.Any()
 
 			if s.useL1Reg {
 				if w < 0 {
@@ -1094,9 +1096,9 @@ func (s *Momentum) Step(model []value.ValueGrad) (err error) {
 			c = c*momentum - eta*g
 			w += c
 
-			*(weights.(*F32)) = F32(w)
-			*(grad.(*F32)) = F32(0.0)
-		case *F64:
+			*(weights.(*primitive.F32)) = primitive.F32(w)
+			*(grad.(*primitive.F32)) = primitive.F32(0.0)
+		case *primitive.F64:
 			l1reg := s.l1reg
 			l2reg := s.l2reg
 			batch := s.batch
@@ -1104,9 +1106,9 @@ func (s *Momentum) Step(model []value.ValueGrad) (err error) {
 			eta := s.eta
 			momentum := s.momentum
 
-			g := grad.(*F64).any()
-			w := weights.(*F64).any()
-			c := cw.any()
+			g := grad.(*primitive.F64).Any()
+			w := weights.(*primitive.F64).Any()
+			c := cw.Any()
 
 			if s.useL1Reg {
 				if w < 0 {
@@ -1135,8 +1137,8 @@ func (s *Momentum) Step(model []value.ValueGrad) (err error) {
 			c = c*momentum - eta*g
 			w += c
 
-			*(weights.(*F64)) = F64(w)
-			*(grad.(*F64)) = F64(0.0)
+			*(weights.(*primitive.F64)) = primitive.F64(w)
+			*(grad.(*primitive.F64)) = primitive.F64(0.0)
 		default:
 			return errors.Errorf(nyiFail, "Momentum.step", cv)
 		}
@@ -1269,7 +1271,7 @@ func (s *AdaGradSolver) Step(model []value.ValueGrad) (err error) {
 			// zero all
 			g.Zero()
 
-		case *F32:
+		case *primitive.F32:
 			var w, g, c float32
 
 			l2reg := float32(s.l2reg)
@@ -1277,8 +1279,8 @@ func (s *AdaGradSolver) Step(model []value.ValueGrad) (err error) {
 			eps := float32(s.eps)
 			eta := float32(s.eta)
 
-			c = cw.any()
-			g = grad.(*F32).any()
+			c = cw.Any()
+			g = grad.(*primitive.F32).Any()
 
 			c += g * g
 
@@ -1290,7 +1292,7 @@ func (s *AdaGradSolver) Step(model []value.ValueGrad) (err error) {
 				}
 			}
 
-			w = weights.(*F32).any()
+			w = weights.(*primitive.F32).Any()
 
 			upd := -eta * g / math32.Sqrt(c+eps)
 
@@ -1301,9 +1303,9 @@ func (s *AdaGradSolver) Step(model []value.ValueGrad) (err error) {
 			w += upd
 
 			// because scalar values are copies, and not pointers, we have to actually re-update the dualValu in model[i]
-			*(weights.(*F32)) = F32(w)
-			*(grad.(*F32)) = F32(0.0)
-		case *F64:
+			*(weights.(*primitive.F32)) = primitive.F32(w)
+			*(grad.(*primitive.F32)) = primitive.F32(0.0)
+		case *primitive.F64:
 			var w, g, c float64
 
 			l2reg := s.l2reg
@@ -1311,8 +1313,8 @@ func (s *AdaGradSolver) Step(model []value.ValueGrad) (err error) {
 			eps := s.eps
 			eta := s.eta
 
-			c = cw.any()
-			g = grad.(*F64).any()
+			c = cw.Any()
+			g = grad.(*primitive.F64).Any()
 
 			c += g * g
 
@@ -1324,7 +1326,7 @@ func (s *AdaGradSolver) Step(model []value.ValueGrad) (err error) {
 				}
 			}
 
-			w = weights.(*F64).any()
+			w = weights.(*primitive.F64).Any()
 			upd := -eta * g / math.Sqrt(c+eps)
 			if s.useL2Reg {
 				upd -= w * l2reg
@@ -1333,8 +1335,8 @@ func (s *AdaGradSolver) Step(model []value.ValueGrad) (err error) {
 			w += upd
 
 			// because scalar values are copies, and not pointers, we have to actually re-update the dualValu in model[i]
-			*(weights.(*F64)) = F64(w)
-			*(grad.(*F64)) = F64(0.0)
+			*(weights.(*primitive.F64)) = primitive.F64(w)
+			*(grad.(*primitive.F64)) = primitive.F64(0.0)
 
 		default:
 			return errors.Errorf(nyiFail, "Adagrad step", cv)
@@ -1425,7 +1427,7 @@ func (s *BarzilaiBorweinSolver) Step(model []value.ValueGrad) (err error) {
 
 				// <(x_i - x_{i-1}), (Grad(F)(x_i) - Grad(F)(x_{i-1}))>
 
-				// Scalar Product == Total tensor contraction
+				// value.Scalar Product == Total tensor contraction
 				dims := valueDiff.Dims()
 				contractionAxes := make([]int, dims, dims)
 				for axis := 0; axis < len(contractionAxes); axis++ {
