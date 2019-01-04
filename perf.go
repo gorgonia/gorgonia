@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/chewxy/hm"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
@@ -49,7 +50,7 @@ func ReturnNode(n *Node) {
 	returnNode(n)
 }
 
-// handles Returning of Values
+// handles Returning of value.Values
 
 var dvpool = &sync.Pool{
 	New: func() interface{} { return new(dualValue) },
@@ -76,7 +77,7 @@ func returnTensor(t tensor.Tensor) {
 	tensor.ReturnTensor(t)
 }
 
-func returnValue(v Value) {
+func returnValue(v value.Value) {
 	if t, ok := v.(tensor.Tensor); ok {
 		returnTensor(t)
 	}

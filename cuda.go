@@ -117,7 +117,7 @@ func (m *ExternMetadata) Get(dev Device, size int64) (tensor.Memory, error) {
 }
 
 // GetFromValue allocates a memory on the GPU, and then copies the data over. v MUST be on CPU.
-func (m *ExternMetadata) GetFromValue(dev Device, v Value) (tensor.Memory, error) {
+func (m *ExternMetadata) GetFromValue(dev Device, v value.Value) (tensor.Memory, error) {
 	d := int(dev)
 	if d >= len(m.engines) {
 		return nil, noopError{}
@@ -145,7 +145,7 @@ func (m *ExternMetadata) Put(dev Device, mem tensor.Memory, size int64) {
 }
 
 // PutValue puts a previously allocated memory slab back into the pool
-func (m *ExternMetadata) PutValue(dev Device, v Value) {
+func (m *ExternMetadata) PutValue(dev Device, v value.Value) {
 	d := int(dev)
 	if d >= len(m.engines) {
 		return
@@ -155,7 +155,7 @@ func (m *ExternMetadata) PutValue(dev Device, v Value) {
 }
 
 // Transfer transfers data from device to device.
-func (m *ExternMetadata) Transfer(toDev, fromDev Device, v Value, synchronous bool) (retVal Value, err error) {
+func (m *ExternMetadata) Transfer(toDev, fromDev Device, v value.Value, synchronous bool) (retVal value.Value, err error) {
 	defer func() {
 		if synchronous {
 			m.Signal()
@@ -298,9 +298,9 @@ func init() {
 	log.Println("Using CUDA build")
 }
 
-// ValueOnDevice gets the value of the node as a Value but on the desired device. If the node's valud is not on the same device
+// value.ValueOnDevice gets the value of the node as a value.Value but on the desired device. If the node's valud is not on the same device
 // as the desired device, a copy will be made.
-func (n *Node) ValueOnDevice(toDev Device, extern External) (retVal Value, allocOnExtern bool, err error) {
+func (n *Node) value.ValueOnDevice(toDev Device, extern External) (retVal value.Value, allocOnExtern bool, err error) {
 	if n.dataOn == toDev {
 		return n.Value(), false, nil
 	}
@@ -318,15 +318,15 @@ func (n *Node) ValueOnDevice(toDev Device, extern External) (retVal Value, alloc
 	return
 }
 
-// GradOnDevice gets the gradient value of the node as a Value but on the desired device. If the node's valud is not on the same device
+// GradOnDevice gets the gradient value of the node as a value.Value but on the desired device. If the node's valud is not on the same device
 // as the desired device, a copy will be made.
-func (n *Node) GradOnDevice(toDev Device, extern External) (retVal Value, allocOnExtern bool, err error) {
+func (n *Node) GradOnDevice(toDev Device, extern External) (retVal value.Value, allocOnExtern bool, err error) {
 	if n.dataOn == toDev {
 		retVal, err = n.Grad()
 		return
 	}
 
-	var d Value
+	var d value.Value
 	if dv, ok := n.boundTo.(*dualValue); ok {
 		d = dv.d
 	} else if n.deriv != nil {

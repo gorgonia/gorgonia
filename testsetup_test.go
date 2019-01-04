@@ -44,11 +44,11 @@ func floatsEqual32(a, b []float32) bool {
 	return true
 }
 
-func extractF64s(v Value) []float64 {
+func extractF64s(v value.Value) []float64 {
 	return v.Data().([]float64)
 }
 
-func extractF64(v Value) float64 {
+func extractF64(v value.Value) float64 {
 	switch vt := v.(type) {
 	case *F64:
 		return float64(*vt)
@@ -63,11 +63,11 @@ func extractF64(v Value) float64 {
 	panic(fmt.Sprintf("Unhandled types! Got %v of %T instead", v, v))
 }
 
-func extractF32s(v Value) []float32 {
+func extractF32s(v value.Value) []float32 {
 	return v.Data().([]float32)
 }
 
-func extractF32(v Value) float32 {
+func extractF32(v value.Value) float32 {
 	switch vt := v.(type) {
 	case *F32:
 		return float32(*vt)
@@ -290,17 +290,17 @@ func (g TensorGenerator) Generate(r *rand.Rand, size int) reflect.Value {
 	// if g.DtypeConstraint == (tensor.Dtype{}) {
 	// 	of = g.DtypeConstraint
 	// }
-	var retVal Value
+	var retVal value.Value
 
 	return reflect.ValueOf(retVal)
 }
 
-type ValueGenerator struct {
+type value.ValueGenerator struct {
 	ShapeConstraint tensor.Shape // [0, 6, 0] implies that the second dimension is the constraint. 0 is any.
 	DtypeConstraint tensor.Dtype
 }
 
-func (g ValueGenerator) Generate(r *rand.Rand, size int) reflect.Value {
+func (g value.ValueGenerator) Generate(r *rand.Rand, size int) reflect.Value {
 	// generate scalar or tensor
 	ri := r.Intn(2)
 	if ri == 0 {
@@ -311,7 +311,7 @@ func (g ValueGenerator) Generate(r *rand.Rand, size int) reflect.Value {
 		return gen.Generate(r, size)
 
 	}
-	var retVal Value
+	var retVal value.Value
 	// of := acceptableDtypes[r.Intn(len(acceptableDtypes))]
 
 	return reflect.ValueOf(retVal)

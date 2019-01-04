@@ -202,7 +202,7 @@ func TestBatchNorm_F64(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var yVal Value
+	var yVal value.Value
 	Read(y, &yVal)
 
 	cost, _ := Mean(y)
@@ -295,7 +295,7 @@ func TestBatchNorm_F32(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var yVal Value
+	var yVal value.Value
 	Read(y, &yVal)
 
 	cost, _ := Mean(y)

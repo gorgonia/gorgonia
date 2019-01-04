@@ -6,11 +6,10 @@ import (
 	"unsafe"
 
 	"github.com/xtgo/set"
-	"golang.org/x/exp/shiny/widget/node"
 )
 
 // Nodes is a slice of nodes, but it also acts as a set of nodes by implementing the Sort interface
-type Nodes []*node.Node
+type Nodes []*Node
 
 // implement sort.Interface
 
@@ -31,7 +30,7 @@ func (ns Nodes) Set() Nodes {
 }
 
 // Add adds to set
-func (ns Nodes) Add(n *node.Node) Nodes {
+func (ns Nodes) Add(n *Node) Nodes {
 	for _, node := range ns {
 		if node == n {
 			return ns
@@ -42,7 +41,7 @@ func (ns Nodes) Add(n *node.Node) Nodes {
 }
 
 // Contains checks if the wanted node is in the set
-func (ns Nodes) Contains(want *node.Node) bool {
+func (ns Nodes) Contains(want *Node) bool {
 	for _, n := range ns {
 		if n == want {
 			return true
@@ -161,7 +160,7 @@ func (ns Nodes) Equals(other Nodes) bool {
 
 func (ns Nodes) mapSet() NodeSet { return NewNodeSet(ns...) }
 
-func (ns Nodes) index(n *node.Node) int {
+func (ns Nodes) index(n *Node) int {
 	for i, node := range ns {
 		if node == n {
 			return i
@@ -178,7 +177,7 @@ func (ns Nodes) reverse() {
 	}
 }
 
-func (ns Nodes) replace(what, with *node.Node) Nodes {
+func (ns Nodes) replace(what, with *Node) Nodes {
 	for i, n := range ns {
 		if n == what {
 			ns[i] = with
@@ -189,7 +188,7 @@ func (ns Nodes) replace(what, with *node.Node) Nodes {
 
 var removers = make(map[string]int)
 
-func (ns Nodes) remove(what *node.Node) Nodes {
+func (ns Nodes) remove(what *Node) Nodes {
 	for i := ns.index(what); i != -1; i = ns.index(what) {
 		copy(ns[i:], ns[i+1:])
 		ns[len(ns)-1] = nil // to prevent any unwanted references so things can be GC'd away

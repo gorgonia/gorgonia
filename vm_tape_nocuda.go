@@ -4,6 +4,8 @@ package gorgonia
 
 import (
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
@@ -14,7 +16,7 @@ func UseCudaFor(ops ...string) VMOpt {
 	return func(m VM) {}
 }
 
-func (m *tapeMachine) getEngine(dev Device) tensor.Engine { return m.Engine }
+func (m *tapeMachine) getEngine(dev execution.Device) tensor.Engine { return m.Engine }
 
 func (instr *execOp) exec(m *tapeMachine) (err error) {
 	m.logf("Executing %v. Node is: %x", instr, instr.id)
@@ -24,7 +26,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	// Read
 	m.watchedLogf("Inputs:")
 	m.enterLogScope()
-	var inputs []Value
+	var inputs []value.Value
 	for _, reg := range instr.readFrom {
 		v := m.cpumem[reg.id]
 		inputs = append(inputs, v)
@@ -33,7 +35,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	m.leaveLogScope()
 
 	// Execute
-	var v Value
+	var v value.Value
 	switch {
 	case instr.preAllocated:
 		if pd, ok := instr.op.(UsePreallocDoer); ok {

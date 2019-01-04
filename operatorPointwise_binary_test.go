@@ -74,7 +74,7 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 		return
 	}
 
-	var xG, aG, yG, bG, zG, cG Value
+	var xG, aG, yG, bG, zG, cG value.Value
 	if op.isArith() {
 		if xG, err = x.Grad(); err != nil {
 			return
@@ -101,9 +101,9 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 		assert.True(ValueClose(zG, cG), "Test ssDiff of %v. zG != cG. Got %v and %v", op, zG, cG)
 	}
 
-	assert.True(ValueClose(x.Value(), a.Value()), "Test ss op %v. Values are different: x: %v, a %v", op, x.Value(), a.Value())
-	assert.True(ValueClose(y.Value(), b.Value()), "Test ss op %v. Values are different: y: %v, b %v", op, y.Value(), b.Value())
-	assert.True(ValueClose(z.Value(), c.Value()), "Test ss op %v. Values are different: z: %v, c %v", op, z.Value(), c.Value())
+	assert.True(ValueClose(x.Value(), a.Value()), "Test ss op %v. value.Values are different: x: %v, a %v", op, x.Value(), a.Value())
+	assert.True(ValueClose(y.Value(), b.Value()), "Test ss op %v. value.Values are different: y: %v, b %v", op, y.Value(), b.Value())
+	assert.True(ValueClose(z.Value(), c.Value()), "Test ss op %v. value.Values are different: z: %v, c %v", op, z.Value(), c.Value())
 
 	return nil
 }
@@ -182,7 +182,7 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 		return
 	}
 
-	var xG, aG, yG, bG, zG, cG Value
+	var xG, aG, yG, bG, zG, cG value.Value
 	if op.isArith() {
 		if xG, err = x.Grad(); err != nil {
 			return
@@ -208,9 +208,9 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 		assert.True(ValueClose(zG, cG), "Test ttDiff of %v. zG != cG. Got %+v \nand %+v", op, zG, cG)
 	}
 
-	assert.True(ValueClose(x.Value(), a.Value()), "Test tt op %v. Values are different: x: %+v\n a %+v", op, x.Value(), a.Value())
-	assert.True(ValueClose(y.Value(), b.Value()), "Test tt op %v. Values are different: y: %+v\n b %+v", op, y.Value(), b.Value())
-	assert.True(ValueClose(z.Value(), c.Value()), "Test tt op %v. Values are different: z: %+v\n c %+v", op, z.Value(), c.Value())
+	assert.True(ValueClose(x.Value(), a.Value()), "Test tt op %v. value.Values are different: x: %+v\n a %+v", op, x.Value(), a.Value())
+	assert.True(ValueClose(y.Value(), b.Value()), "Test tt op %v. value.Values are different: y: %+v\n b %+v", op, y.Value(), b.Value())
+	assert.True(ValueClose(z.Value(), c.Value()), "Test tt op %v. value.Values are different: z: %+v\n c %+v", op, z.Value(), c.Value())
 
 	if t.Failed() {
 		ioutil.WriteFile(fmt.Sprintf("Test_%v_tt.dot", op), []byte(g2.ToDot()), 0644)

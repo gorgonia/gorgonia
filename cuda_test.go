@@ -25,7 +25,7 @@ func TestDevCUDA(t *testing.T) {
 	xpy2s := Must(Slice(xpy2, S(0)))
 	ioutil.WriteFile("fullgraph.dot", []byte(g.ToDot()), 0644)
 
-	var xpyV, xmyV, xpy2V, xpy2sV, xmy2V Value
+	var xpyV, xmyV, xpy2V, xpy2sV, xmy2V value.Value
 	Read(xpy, &xpyV)
 	Read(xmy, &xmyV)
 	Read(xpy2, &xpy2V)

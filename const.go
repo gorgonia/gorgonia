@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 
-	"golang.org/x/exp/shiny/widget/node"
 	"gorgonia.org/tensor"
 )
 
@@ -63,7 +62,7 @@ const (
 	softplusFail        = "Failed to carry Softplus()"
 	incrErr             = "increment couldn't be done. Safe op was performed instead"
 	bindFail            = "Failed to bind"
-	anyToValueFail      = "Failed to convert %v(%T) into a Value"
+	anyToValueFail      = "Failed to convert %v(%T) into a value.Value"
 	dtypeExtractionFail = "Failed to extract dtype from %v"
 	operationError      = "Operation failed"
 	doFail              = "Doing %v failed"
@@ -84,28 +83,28 @@ const (
 var empty struct{}
 
 var (
-	onef32   = func(g *ExprGraph) *node.Node { return g.NewConstant(float32(1.0)) }
-	onef64   = func(g *ExprGraph) *node.Node { return g.NewConstant(float64(1.0)) }
-	zerof32  = func(g *ExprGraph) *node.Node { return g.NewConstant(float32(0.0)) }
-	zerof64  = func(g *ExprGraph) *node.Node { return g.NewConstant(float64(0.0)) }
-	twof64   = func(g *ExprGraph) *node.Node { return g.NewConstant(float64(2.0)) }
-	twof32   = func(g *ExprGraph) *node.Node { return g.NewConstant(float32(2.0)) }
-	threef64 = func(g *ExprGraph) *node.Node { return g.NewConstant(float64(3.0)) }
-	threef32 = func(g *ExprGraph) *node.Node { return g.NewConstant(float32(3.0)) }
-	ln2f64   = func(g *ExprGraph) *node.Node { return g.NewConstant(math.Ln2) }
-	ln2f32   = func(g *ExprGraph) *node.Node { return g.NewConstant(float32(math.Ln2)) }
+	onef32   = func(g *ExprGraph) *Node { return g.NewConstant(float32(1.0)) }
+	onef64   = func(g *ExprGraph) *Node { return g.NewConstant(float64(1.0)) }
+	zerof32  = func(g *ExprGraph) *Node { return g.NewConstant(float32(0.0)) }
+	zerof64  = func(g *ExprGraph) *Node { return g.NewConstant(float64(0.0)) }
+	twof64   = func(g *ExprGraph) *Node { return g.NewConstant(float64(2.0)) }
+	twof32   = func(g *ExprGraph) *Node { return g.NewConstant(float32(2.0)) }
+	threef64 = func(g *ExprGraph) *Node { return g.NewConstant(float64(3.0)) }
+	threef32 = func(g *ExprGraph) *Node { return g.NewConstant(float32(3.0)) }
+	ln2f64   = func(g *ExprGraph) *Node { return g.NewConstant(math.Ln2) }
+	ln2f32   = func(g *ExprGraph) *Node { return g.NewConstant(float32(math.Ln2)) }
 
 	onef32ConstOp  = func(g *ExprGraph) constant { return onef32(g).op.(constant) }
 	onef64ConstOp  = func(g *ExprGraph) constant { return onef64(g).op.(constant) }
 	zerof32ConstOp = func(g *ExprGraph) constant { return zerof32(g).op.(constant) }
 	zerof64ConstOp = func(g *ExprGraph) constant { return zerof64(g).op.(constant) }
 
-	constmap map[string]map[tensor.Dtype]*node.Node
+	constmap map[string]map[tensor.Dtype]*Node
 )
 
 var oneone = tensor.Shape{1, 1}
 
-func constants(g *ExprGraph, s string, dt tensor.Dtype) (*node.Node, error) {
+func constants(g *ExprGraph, s string, dt tensor.Dtype) (*Node, error) {
 	switch s {
 	case "zero":
 		switch dt {

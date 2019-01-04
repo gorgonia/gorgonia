@@ -246,7 +246,7 @@ func (op elemBinOp) Do(values ...value.Value) (value.Value, error) {
 	return op.ʘBinaryOperator.Do(op.retSame, values...)
 }
 
-func (op elemBinOp) DoDiff(ctx execution.ExecutionContext, inputs Nodes, output *Node) (err error) {
+func (op elemBinOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -436,7 +436,7 @@ func (op elemUnaryOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Node
 	return
 }
 
-func (op elemUnaryOp) DoDiff(ctx execution.ExecutionContext, inputs Nodes, output *Node) (err error) {
+func (op elemUnaryOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -618,7 +618,7 @@ func (op linAlgBinOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Node
 	return
 }
 
-func (op linAlgBinOp) DoDiff(ctx execution.ExecutionContext, inputs Nodes, output *Node) (err error) {
+func (op linAlgBinOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -865,7 +865,7 @@ func (op tensordotOp) String() string {
 	return fmt.Sprintf("Tensordot(aAxes=%d, bAxes=%d)", op.aAxes, op.bAxes)
 }
 
-func (op tensordotOp) DoDiff(ctx execution.ExecutionContext, inputs Nodes, output *Node) error {
+func (op tensordotOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) error {
 	odv := output.boundTo.(*dualValue)
 	odvd := odv.d.(tensor.Tensor)
 

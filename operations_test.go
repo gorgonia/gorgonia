@@ -154,10 +154,10 @@ func TestMul(t *testing.T) {
 }
 
 var gtTests = []struct {
-	a, b    Value
+	a, b    value.Value
 	retSame bool
 
-	expected Value
+	expected value.Value
 	err      bool
 }{
 	// s-s
@@ -368,7 +368,7 @@ func TestSoftMax(t *testing.T) {
 		t.Error(err)
 	}
 
-	var smg, xG Value
+	var smg, xG value.Value
 	var err error
 	if smg, err = sm.Grad(); err != nil {
 		t.Error(err)
@@ -393,7 +393,7 @@ func TestSoftMax(t *testing.T) {
 		t.Error(err)
 	}
 
-	var sm2g, x2G Value
+	var sm2g, x2G value.Value
 	if sm2g, err = sm2.Grad(); err != nil {
 		t.Error(err)
 	}
@@ -548,8 +548,8 @@ var sumTests = []struct {
 	along []int
 
 	expectedShape tensor.Shape
-	expectedVal   Value
-	expectedGrad  Value
+	expectedVal   value.Value
+	expectedGrad  value.Value
 	err           bool
 }{
 	{"Sum(vec)", tensor.Shape{2}, nil, scalarShape, newF64(1.0), newF64(1.0), false},

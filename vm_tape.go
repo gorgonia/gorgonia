@@ -9,7 +9,6 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
-	"golang.org/x/exp/shiny/widget/node"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
@@ -19,11 +18,11 @@ type tapeMachine struct {
 	ExternMetadata
 
 	p      *program
-	locMap map[*node.Node]register
+	locMap map[*Node]register
 
 	// "register" banks
-	cpumem []value.Value // Value - knows its own type and shape
-	gpumem []value.Value // Value of which the memories are stored in GPU memory
+	cpumem []value.Value // value.Value - knows its own type and shape
+	gpumem []value.Value // value.Value of which the memories are stored in GPU memory
 
 	// state stuff, to allow continuation
 	pc int
@@ -72,7 +71,7 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 	m.init()
 	it := m.p.g.Nodes()
 	for it.Next() {
-		n := it.Node().(*node.Node)
+		n := it.Node().(*Node)
 		setEngine(n.boundTo, m.Engine)
 	}
 
@@ -132,10 +131,10 @@ func (m *tapeMachine) Close() error {
 func (m *tapeMachine) Prog() *program { return m.p }
 
 // LocMap returns the location where the Node's execution results are stored. This would mainly be used in debugging functions.
-func (m *tapeMachine) LocMap() map[*node.Node]register { return m.locMap }
+func (m *tapeMachine) LocMap() map[*Node]register { return m.locMap }
 
 // Let wraps the Let() function of the package, with additional checks that n is in the machine
-func (m *tapeMachine) Let(n *node.Node, be interface{}) (err error) {
+func (m *tapeMachine) Let(n *Node, be interface{}) (err error) {
 	if !m.p.g.Has(n.ID()) {
 		return errors.Errorf("Node %v does not exist in this graph", n)
 	}
@@ -144,7 +143,7 @@ func (m *tapeMachine) Let(n *node.Node, be interface{}) (err error) {
 }
 
 // Set wraps the Set() function of this package, with additional checks that both a and b are in the machine
-func (m *tapeMachine) Set(a, b *node.Node) (err error) {
+func (m *tapeMachine) Set(a, b *Node) (err error) {
 	if !m.p.g.Has(a.ID()) {
 		return errors.Errorf("Node %v does not exist in this graph", a)
 	}
@@ -160,10 +159,10 @@ func (m *tapeMachine) Set(a, b *node.Node) (err error) {
 	breg := m.locMap[b]
 	v := m.getValue(breg)
 	if v == nil {
-		return nyi("handling of tensor.Memory -> Value", "tapeMachine.Set")
+		return nyi("handling of tensor.Memory -> value.Value", "tapeMachine.Set")
 	}
 
-	machineLogf("Setting %v to %v. Read from %v Value is %v", b, a, breg, v)
+	machineLogf("Setting %v to %v. Read from %v value.Value is %v", b, a, breg, v)
 	return a.bind(v)
 }
 
@@ -189,7 +188,7 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 
 		v := m.getValue(r)
 		if v == nil {
-			return nyi("converting tensor.Memory to Value", "TapeMachine.Run")
+			return nyi("converting tensor.Memory to value.Value", "TapeMachine.Run")
 		}
 
 		if err = n.bind(m.cpumem[r.id]); err != nil {
@@ -254,13 +253,13 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 			if writeTo > 0 && id > 0 {
 				v := m.getValue(instr.writes())
 				if v == nil {
-					err := errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchNaN")
+					err := errors.Errorf(nyiFail, "converting tensor.Memory to value.Value", "watchNaN")
 					errChan <- err
 					return
 				}
 
-				if hasNaN(v, CPU) {
-					n := m.p.g.Node(id).(*node.Node)
+				if hasNaN(v, execution.CPU) {
+					n := m.p.g.Node(id).(*Node)
 					err := errors.Errorf("NaN found in value. Node: %v(%x)", n, n.ID())
 					errChan <- err
 					return
@@ -274,13 +273,13 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 			if writeTo > 0 && id > 0 {
 				v := m.getValue(instr.writes())
 				if v == nil {
-					err := errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchInf")
+					err := errors.Errorf(nyiFail, "converting tensor.Memory to value.Value", "watchInf")
 					errChan <- err
 					return
 				}
 
-				if hasInf(v, CPU) {
-					n := m.p.g.Node(id).(*node.Node)
+				if hasInf(v, execution.CPU) {
+					n := m.p.g.Node(id).(*Node)
 					err := errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
 					errChan <- err
 					return
@@ -292,18 +291,18 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	doneChan <- struct{}{}
 }
 
-func (m *tapeMachine) getValue(r register) Value {
+func (m *tapeMachine) getValue(r register) value.Value {
 	switch r.device {
-	case CPU:
+	case execution.CPU:
 		return m.cpumem[r.id]
 	default:
 		return m.gpumem[r.id]
 	}
 }
 
-func (m *tapeMachine) writeValue(r register, v Value) {
+func (m *tapeMachine) writeValue(r register, v value.Value) {
 	switch r.device {
-	case CPU:
+	case execution.CPU:
 		m.cpumem[r.id] = v
 	default:
 		m.gpumem[r.id] = v
@@ -406,15 +405,15 @@ type program struct {
 	gpulocs      int
 	cpumem       int64
 	gpumem       []int64
-	g            *ExprGraph              // original dag
-	df           *dataflow               // dataflow analysis
-	m            map[*node.Node]fragment // store which nodes create which instructions
+	g            *ExprGraph         // original dag
+	df           *dataflow          // dataflow analysis
+	m            map[*Node]fragment // store which nodes create which instructions
 	sorted       Nodes
 }
 
 func (p *program) String() string {
 	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "Instructions:\n%s\nArgs: %d | CPU Memories: %d | GPU Memories: %d\nCPU Mem: %v | GPU Mem %v\n\nNode:instructions map:\n", p.instructions, p.args, p.cpulocs, p.gpulocs, p.cpumem, p.gpumem)
+	fmt.Fprintf(&buf, "Instructions:\n%s\nArgs: %d | execution.CPU Memories: %d | GPU Memories: %d\nexecution.CPU Mem: %v | GPU Mem %v\n\nNode:instructions map:\n", p.instructions, p.args, p.cpulocs, p.gpulocs, p.cpumem, p.gpumem)
 
 	for i, n := range p.sorted {
 		fmt.Fprintf(&buf, "\t%d\t%x:", i, n.ID())
@@ -490,7 +489,7 @@ type alloc struct {
 	writeTo  register
 }
 
-func newAlloc(n *node.Node, writeTo register) alloc {
+func newAlloc(n *Node, writeTo register) alloc {
 	return alloc{
 		id:      n.ID(),
 		t:       n.t,
@@ -514,9 +513,9 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 	}
 
 	dev := instr.writeTo.device
-	var v Value
+	var v value.Value
 	switch dev {
-	case CPU:
+	case execution.CPU:
 		v, err = makeValue(instr.t, instr.s)
 
 	default:
@@ -551,14 +550,14 @@ type free struct {
 
 func (instr free) ID() int64         { return -1 }
 func (instr free) reads() []register { return []register{instr.readsFrom} }
-func (instr free) writes() register  { return register{-1, CPU} }
+func (instr free) writes() register  { return register{-1, execution.CPU} }
 func (instr free) exec(m *tapeMachine) error {
 	m.logf("Executing Free %v", instr.readsFrom)
 	switch instr.readsFrom.device {
-	case CPU:
+	case execution.CPU:
 		return nil
 	default:
-		m.logf("instr.read from not CPU - %v %v %d", instr.readsFrom, instr.readsFrom.device == CPU, instr.readsFrom.device)
+		m.logf("instr.read from not execution.CPU - %v %v %d", instr.readsFrom, instr.readsFrom.device == execution.CPU, instr.readsFrom.device)
 		mem := m.gpumem[instr.readsFrom.id]
 		size := int64(mem.MemSize())
 
@@ -584,14 +583,14 @@ func (instr loadArg) exec(m *tapeMachine) error {
 	m.enterLogScope()
 	defer m.leaveLogScope()
 
-	node := m.p.g.Node(instr.index).(*node.Node)
+	node := m.p.g.Node(instr.index).(*Node)
 	m.logf("node %v", node)
 
 	if node.boundTo == nil {
 		return errors.Errorf("No value bound to node %v (%x)", node, node.ID())
 	}
 
-	var v Value
+	var v value.Value
 	if dv, ok := node.boundTo.(*dualValue); ok {
 		v = dv.Value
 	} else {
@@ -626,7 +625,7 @@ func (instr *execOp) ID() int64         { return instr.id }
 func (instr *execOp) reads() []register { return instr.readFrom }
 func (instr *execOp) writes() register  { return instr.writeTo }
 
-func newExecOp(n *node.Node) *execOp {
+func newExecOp(n *Node) *execOp {
 	_, useGPU := n.op.(CUDADoer)
 	compileLogf("op %v uses GPU %v", n.op, useGPU)
 	dt, err := dtypeOf(n.t)
@@ -657,7 +656,7 @@ func (instr flushInstr) exec(m *tapeMachine) error {
 
 func (instr flushInstr) ID() int64         { return -1 }
 func (instr flushInstr) reads() []register { return nil }
-func (instr flushInstr) writes() register  { return register{-1, CPU} }
+func (instr flushInstr) writes() register  { return register{-1, execution.CPU} }
 func (instr flushInstr) String() string    { return "DoWork" }
 
 type letInstr struct {
@@ -676,16 +675,16 @@ func (instr letInstr) String() string {
 
 type readInstr struct {
 	readFrom register
-	into     *Value
+	into     *value.Value
 
-	// required to convert tensor.Memory to Value
+	// required to convert tensor.Memory to value.Value
 	t hm.Type
 	s tensor.Shape
 }
 
 func (instr *readInstr) ID() int64         { return -1 }
 func (instr *readInstr) reads() []register { return []register{instr.readFrom} }
-func (instr *readInstr) writes() register  { return register{-1, CPU} }
+func (instr *readInstr) writes() register  { return register{-1, execution.CPU} }
 func (instr *readInstr) exec(m *tapeMachine) (err error) {
 	m.logf("Executing READ - read from %v into %v", instr.readFrom, instr.into)
 	v := m.getValue(instr.readFrom)

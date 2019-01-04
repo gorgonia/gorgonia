@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
@@ -224,7 +225,7 @@ func absDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 func absDiff(x, y *Node) (err error) {
 	xdv, ydv := getDV(x, y)
 
-	var d Value
+	var d value.Value
 	sign := newElemUnaryOp(signOpType, x)
 	if d, err = sign.Do(xdv.Value); err == nil {
 		if dT, ok := d.(tensor.Tensor); ok {
@@ -260,7 +261,7 @@ func sinDiff(x, y *Node) (err error) {
 
 	cos := newElemUnaryOp(cosOpType, x)
 
-	var d Value
+	var d value.Value
 	if d, err = cos.Do(xdv.Value); err == nil {
 		if dT, ok := d.(tensor.Tensor); ok {
 			defer returnTensor(dT)
@@ -300,7 +301,7 @@ func cosDiff(x, y *Node) (err error) {
 
 	sin := newElemUnaryOp(sinOpType, x)
 
-	var d Value
+	var d value.Value
 	if d, err = sin.Do(xdv.Value); err == nil {
 		if dT, ok := d.(tensor.Tensor); ok {
 			defer returnTensor(dT)
@@ -379,7 +380,7 @@ func log2Diff(x, y *Node) (err error) {
 	}
 
 	mul := newElemBinOp(mulOpType, x, log2)
-	var d Value
+	var d value.Value
 	if d, err = mul.Do(xdv.Value, log2.boundTo); err != nil {
 		return errors.Wrapf(err, doFail, mul)
 	}
@@ -441,7 +442,7 @@ func squareDiff(x, y *Node) (err error) {
 		return errors.Wrap(err, "getConst failed")
 	}
 
-	var d Value
+	var d value.Value
 	mul := newElemBinOp(mulOpType, x, y)
 	if d, err = mul.Do(xdv.Value, two.boundTo); err == nil {
 		if dT, ok := d.(tensor.Tensor); ok {
@@ -484,7 +485,7 @@ func sqrtDiff(x, y *Node) (err error) {
 
 	mul := newElemBinOp(mulOpType, x, y)
 
-	var d Value
+	var d value.Value
 	if d, err = mul.Do(ydv.Value, two.boundTo); err == nil {
 		if dT, ok := d.(tensor.Tensor); ok {
 			defer returnTensor(dT)
@@ -522,7 +523,7 @@ func inverseDiff(x, y *Node) (err error) {
 
 	sq := newElemUnaryOp(squareOpType, y)
 
-	var d Value
+	var d value.Value
 	if d, err = sq.Do(ydv.Value); err != nil {
 		return errors.Wrapf(err, doFail, sq)
 	}
@@ -568,7 +569,7 @@ func inverseSqrtDiff(x, y *Node) (err error) {
 	}
 
 	cb := newElemUnaryOp(cubeOpType, y)
-	var d Value
+	var d value.Value
 	if d, err = cb.Do(ydv.Value); err != nil {
 		return errors.Wrapf(err, doFail, cb)
 	}
@@ -622,7 +623,7 @@ func cubeDiff(x, y *Node) (err error) {
 	}
 
 	mul := newElemBinOp(mulOpType, x, y)
-	var d Value
+	var d value.Value
 	if d, err = mul.Do(xdv.Value, xdv.Value); err != nil {
 		return errors.Wrapf(err, doFail, mul)
 	}
@@ -675,7 +676,7 @@ func tanhDiff(x, y *Node) (err error) {
 
 	sq := newElemUnaryOp(squareOpType, y)
 
-	var d Value
+	var d value.Value
 	if d, err = sq.Do(ydv.Value); err != nil {
 		return errors.Wrapf(err, doFail, sq)
 	}
@@ -730,7 +731,7 @@ func sigmoidDiff(x, y *Node) (err error) {
 
 	sub := newElemBinOp(subOpType, one, y)
 
-	var d Value
+	var d value.Value
 	if d, err = sub.Do(one.boundTo, ydv.Value); err != nil {
 		return errors.Wrapf(err, doFail, sub)
 	}
@@ -780,7 +781,7 @@ func log1pDiff(x, y *Node) (err error) {
 
 	add := newElemBinOp(addOpType, x, one)
 
-	var d Value
+	var d value.Value
 	if d, err = add.Do(xdv.Value, one.boundTo); err != nil {
 		return errors.Wrapf(err, doFail, add)
 	}
@@ -810,7 +811,7 @@ func expm1Diff(x, y *Node) (err error) {
 
 	exp := newElemUnaryOp(expOpType, x)
 
-	var d Value
+	var d value.Value
 	if d, err = exp.Do(xdv.Value); err != nil {
 		return errors.Wrapf(err, doFail, exp)
 	}
@@ -840,7 +841,7 @@ func softplusDiff(x, y *Node) (err error) {
 
 	sigmoid := newElemUnaryOp(sigmoidOpType, x)
 
-	var d Value
+	var d value.Value
 	if d, err = sigmoid.Do(xdv.Value); err != nil {
 		return errors.Wrapf(err, doFail, sigmoid)
 	}

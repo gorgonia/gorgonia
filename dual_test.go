@@ -9,7 +9,7 @@ import (
 )
 
 func Test_dvBind0(t *testing.T) {
-	var x, y, z Value
+	var x, y, z value.Value
 	var xT, yT, zT hm.Type
 	x, xT = anyToScalar(2.0)
 	y, yT = anyToScalar(3.0)
@@ -26,7 +26,7 @@ func Test_dvBind0(t *testing.T) {
 }
 
 func TestDVBindVar(t *testing.T) {
-	var x, y Value
+	var x, y value.Value
 	var xT, yT hm.Type
 	x, xT = anyToScalar(2.0)
 	y, yT = anyToScalar(3.0)

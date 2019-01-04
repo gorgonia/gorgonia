@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
@@ -262,8 +263,8 @@ func WithPrecompiled(prog *program, locMap map[*Node]register) VMOpt {
 		case *tapeMachine:
 			v.p = prog
 			v.locMap = locMap
-			v.cpumem = make([]Value, prog.cpulocs)
-			v.gpumem = make([]Value, prog.gpulocs)
+			v.cpumem = make([]value.Value, prog.cpulocs)
+			v.gpumem = make([]value.Value, prog.gpulocs)
 		default:
 			// no op
 		}

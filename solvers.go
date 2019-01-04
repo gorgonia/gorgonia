@@ -5,19 +5,14 @@ import (
 
 	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
 // Solver is anything that does gradient updates.
 // The name solvers is stolen from Caffe. A much shorter name than GradientUpdaters
 type Solver interface {
-	Step([]ValueGrad) error
-}
-
-// ValueGrad is any type that has a value and a grad. This is used for Solvers
-type ValueGrad interface {
-	Valuer
-	Grad() (Value, error)
+	Step([]value.ValueGrad) error
 }
 
 // Namer is anything that has a name
@@ -25,7 +20,7 @@ type Namer interface {
 	Name() string
 }
 
-func newCachedDV(n ValueGrad, weights, grad Value, zero bool) (cached *dualValue, err error) {
+func newCachedDV(n value.ValueGrad, weights, grad value.Value, zero bool) (cached *dualValue, err error) {
 	cached = new(dualValue)
 	if cached.Value, err = CloneValue(weights); err != nil {
 		if nm, ok := n.(Namer); ok {
@@ -46,7 +41,7 @@ func newCachedDV(n ValueGrad, weights, grad Value, zero bool) (cached *dualValue
 	return
 }
 
-func extractWeightGrad(n ValueGrad) (weights, grad Value, err error) {
+func extractWeightGrad(n value.ValueGrad) (weights, grad value.Value, err error) {
 	weights = n.Value()
 	if grad, err = n.Grad(); err != nil {
 		if nm, ok := n.(Namer); ok {
@@ -248,13 +243,13 @@ func NewRMSPropSolver(opts ...SolverOpt) *RMSPropSolver {
 // Step steps through each node in the model and applies the RMSProp gradient descent algorithm on the value.
 //
 // This function will error out if the nodes do not have an associated Grad value.
-func (s *RMSPropSolver) Step(model []ValueGrad) (err error) {
+func (s *RMSPropSolver) Step(model []value.ValueGrad) (err error) {
 	if s.cache == nil {
 		s.cache = make([]*dualValue, len(model))
 	}
 
 	for i, n := range model {
-		var weights, grad Value
+		var weights, grad value.Value
 		if weights, grad, err = extractWeightGrad(n); err != nil {
 			return err
 		}
@@ -436,7 +431,7 @@ func NewAdamSolver(opts ...SolverOpt) *AdamSolver {
 // Step steps through each node in the model and applies the Adaptive Moment Estimation gradient descent algorithm on the value.
 //
 // This function will error out if the nodes do not have an associated Grad value.
-func (s *AdamSolver) Step(model []ValueGrad) (err error) {
+func (s *AdamSolver) Step(model []value.ValueGrad) (err error) {
 	if s.cache == nil {
 		s.cache = make([]*dualValue, len(model))
 	}
@@ -446,7 +441,7 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 	correction2 := (1 - math.Pow(s.beta2, float64(s.iter)))
 
 	for i, n := range model {
-		var weights, grad Value
+		var weights, grad value.Value
 		if weights, grad, err = extractWeightGrad(n); err != nil {
 			return err
 		}
@@ -755,9 +750,9 @@ func NewVanillaSolver(opts ...SolverOpt) *VanillaSolver {
 // Step steps through each node in the model and applies the most basic gradient descent algorithm on the value.
 //
 // This function will error out if the nodes do not have an associated Grad value.
-func (s *VanillaSolver) Step(model []ValueGrad) (err error) {
+func (s *VanillaSolver) Step(model []value.ValueGrad) (err error) {
 	for _, n := range model {
-		var weights, grad Value
+		var weights, grad value.Value
 		if weights, grad, err = extractWeightGrad(n); err != nil {
 			return err
 		}
@@ -950,13 +945,13 @@ func NewMomentum(opts ...SolverOpt) *Momentum {
 // Step steps through each node in the model and applies the Momentum stochastic gradient descent algorithm on the value.
 //
 // This function will error out if the nodes do not have an associated Grad value.
-func (s *Momentum) Step(model []ValueGrad) (err error) {
+func (s *Momentum) Step(model []value.ValueGrad) (err error) {
 	if s.cache == nil {
 		s.cache = make([]*dualValue, len(model))
 	}
 
 	for i, n := range model {
-		var weights, grad Value
+		var weights, grad value.Value
 		if weights, grad, err = extractWeightGrad(n); err != nil {
 			return err
 		}
@@ -1178,13 +1173,13 @@ func NewAdaGradSolver(opts ...SolverOpt) *AdaGradSolver {
 // Step steps through each node in the model and applies the Adaptive Gradient gradient descent algorithm on the value.
 //
 // This function will error out if the nodes do not have an associated Grad value.
-func (s *AdaGradSolver) Step(model []ValueGrad) (err error) {
+func (s *AdaGradSolver) Step(model []value.ValueGrad) (err error) {
 	if s.cache == nil {
 		s.cache = make([]*dualValue, len(model))
 	}
 
 	for i, n := range model {
-		var weights, grad Value
+		var weights, grad value.Value
 		if weights, grad, err = extractWeightGrad(n); err != nil {
 			return err
 		}
@@ -1380,7 +1375,7 @@ func NewBarzilaiBorweinSolver(opts ...SolverOpt) *BarzilaiBorweinSolver {
 // Step steps through each node in the model and applies the Barzilai-Borwein gradient descent algorithm on the value.
 //
 // This function will error out if the nodes do not have an associated Grad value.
-func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
+func (s *BarzilaiBorweinSolver) Step(model []value.ValueGrad) (err error) {
 
 	firstRun := false
 	if s.prevDV == nil {
@@ -1394,7 +1389,7 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 		denominator := float64(0.0)
 
 		for nodeNr, node := range model {
-			var weights, grad Value
+			var weights, grad value.Value
 			if weights, grad, err = extractWeightGrad(node); err != nil {
 				return err
 			}
@@ -1472,7 +1467,7 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 
 	// Save this iteration's values for the next run
 	for nodeNr, node := range model {
-		var weights, grad Value
+		var weights, grad value.Value
 		if weights, grad, err = extractWeightGrad(node); err != nil {
 			return err
 		}
@@ -1490,7 +1485,7 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 
 	// Update the weights
 	for _, node := range model {
-		var weights, grad Value
+		var weights, grad value.Value
 		if weights, grad, err = extractWeightGrad(node); err != nil {
 			return err
 		}

@@ -24,7 +24,7 @@ type External interface {
 }
 
 // ExecutionContext informs how an op should be executed
-type ExecutionContext struct {
+type Context struct {
 	External
 	Device
 }

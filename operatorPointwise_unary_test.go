@@ -11,8 +11,8 @@ import (
 	"gorgonia.org/tensor"
 )
 
-func unaryOpTest(t *testing.T, dt tensor.Dtype, shape tensor.Shape, fn func(*Node) (*Node, error)) (x, y, a, b *Node, v Value, err error) {
-	var xV, aV Value
+func unaryOpTest(t *testing.T, dt tensor.Dtype, shape tensor.Shape, fn func(*Node) (*Node, error)) (x, y, a, b *Node, v value.Value, err error) {
+	var xV, aV value.Value
 	var any interface{}
 	if shape.IsScalar() {
 		if dt == tensor.Float64 {
@@ -69,7 +69,7 @@ func unaryOpTest(t *testing.T, dt tensor.Dtype, shape tensor.Shape, fn func(*Nod
 		return
 	}
 
-	var yV, xG, bV, aG Value
+	var yV, xG, bV, aG value.Value
 	yV = y.Value()
 	if xG, err = x.Grad(); err != nil {
 		t.Errorf("x has no grad: %v", err)
@@ -145,8 +145,8 @@ func TestAbs(t *testing.T) {
 	assert := assert.New(t)
 
 	var x, y, a, b *Node
-	var v Value
-	var yV, xG, bV, aG Value
+	var v value.Value
+	var yV, xG, bV, aG value.Value
 	var err error
 
 	/* FLOAT 64 Scalar */
@@ -492,8 +492,8 @@ func TestSoftplus(t *testing.T) {
 	assert := assert.New(t)
 
 	var x, y, a, b *Node
-	var v Value
-	var xV, yV, xG, bV, aG Value
+	var v value.Value
+	var xV, yV, xG, bV, aG value.Value
 	var err error
 
 	/* FLOAT64 SCALAR */

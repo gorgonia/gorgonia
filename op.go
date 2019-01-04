@@ -116,7 +116,7 @@ type NoRetOp interface {
 type ADOp interface {
 	Op
 
-	DoDiff(ctx execution.ExecutionContext, inputs Nodes, output *Node) error
+	DoDiff(ctx execution.Context, inputs Nodes, output *Node) error
 }
 
 // A SDOp is an Op that supports symbolic differentiation

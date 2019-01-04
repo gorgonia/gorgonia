@@ -5,17 +5,19 @@ import (
 
 	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
 type incrDoerBinOp interface {
-	IncrDo(v Value, retSame bool, inputs ...Value) error
+	IncrDo(v value.Value, retSame bool, inputs ...value.Value) error
 }
 type usePreallocDoerBinOp interface {
-	UsePreallocDo(v Value, retSame bool, inputs ...Value) (retVal Value, err error)
+	UsePreallocDo(v value.Value, retSame bool, inputs ...value.Value) (retVal value.Value, err error)
 }
 type unsafeDoerBinOp interface {
-	UnsafeDo(retSame bool, inputs ...Value) (Value, error)
+	UnsafeDo(retSame bool, inputs ...value.Value) (value.Value, error)
 }
 
 /* BINARY OPERATOR */
@@ -23,7 +25,7 @@ type unsafeDoerBinOp interface {
 type ʘBinaryOperator interface {
 	isArith() bool
 	binOpType() ʘBinaryOperatorType
-	Do(bool, ...Value) (Value, error)
+	Do(bool, ...value.Value) (value.Value, error)
 	String() string
 }
 
@@ -37,7 +39,7 @@ func (o scalarBinOp) binOpType() ʘBinaryOperatorType { return o.ʘBinaryOperato
 func (o scalarBinOp) isArith() bool                  { return o.ʘBinaryOperatorType.isArith() }
 func (o scalarBinOp) String() string                 { return o.ʘBinaryOperatorType.String() }
 
-func (o scalarBinOp) Do(same bool, vals ...Value) (retVal Value, err error) {
+func (o scalarBinOp) Do(same bool, vals ...value.Value) (retVal value.Value, err error) {
 	if err = checkArity(o, len(vals)); err != nil {
 		return
 	}
@@ -302,20 +304,20 @@ func (o tBinOp) binOpType() ʘBinaryOperatorType { return o.ʘBinaryOperatorType
 func (o tBinOp) String() string                 { return o.ʘBinaryOperatorType.String() }
 func (o tBinOp) isArith() bool                  { return o.ʘBinaryOperatorType.isArith() }
 
-func (o tBinOp) Do(same bool, inputs ...Value) (Value, error) {
+func (o tBinOp) Do(same bool, inputs ...value.Value) (value.Value, error) {
 	if same {
 		return o.do(inputs, tensor.AsSameType())
 	}
 	return o.do(inputs)
 }
 
-func (o tBinOp) UnsafeDo(retSame bool, inputs ...Value) (Value, error) {
+func (o tBinOp) UnsafeDo(retSame bool, inputs ...value.Value) (value.Value, error) {
 	if retSame {
 		return o.do(inputs, tensor.AsSameType(), tensor.UseUnsafe())
 	}
 	return o.do(inputs, tensor.UseUnsafe())
 }
-func (o tBinOp) UsePreallocDo(v Value, retSame bool, inputs ...Value) (retVal Value, err error) {
+func (o tBinOp) UsePreallocDo(v value.Value, retSame bool, inputs ...value.Value) (retVal value.Value, err error) {
 	t, ok := v.(tensor.Tensor)
 	if !ok {
 		return nil, errors.Errorf("Expected Tensor as preallocated value. Got %v of %T instead", v, v)
@@ -328,14 +330,14 @@ func (o tBinOp) UsePreallocDo(v Value, retSame bool, inputs ...Value) (retVal Va
 	return o.do(inputs, tensor.WithReuse(reuse))
 }
 
-func (o tBinOp) IncrDo(incr Value, retSame bool, inputs ...Value) (err error) {
+func (o tBinOp) IncrDo(incr value.Value, retSame bool, inputs ...value.Value) (err error) {
 	reuse, ok := incr.(tensor.Tensor)
 	if ok {
 		_, err = o.do(inputs, tensor.WithIncr(reuse))
 		return
 	}
 
-	var retVal Value
+	var retVal value.Value
 	if retSame {
 		if retVal, err = o.do(inputs, tensor.AsSameType()); err != nil {
 			return errors.Wrapf(err, doFail, o)
@@ -356,7 +358,7 @@ func (o tBinOp) IncrDo(incr Value, retSame bool, inputs ...Value) (err error) {
 	return
 }
 
-func (o tBinOp) do(vals []Value, opts ...tensor.FuncOpt) (retVal Value, err error) {
+func (o tBinOp) do(vals []value.Value, opts ...tensor.FuncOpt) (retVal value.Value, err error) {
 	if err = checkArity(o, len(vals)); err != nil {
 		return
 	}
@@ -431,7 +433,7 @@ func addDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	return Nodes{gradZ, gradZ}, nil
 }
 
-func addDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
+func addDiff(ctx execution.Context, x, y, z *Node) (err error) {
 	xdv, ydv := getDV(x, y)
 
 	// set up the op to be executed
@@ -442,7 +444,7 @@ func addDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	// we'll use the same device as the device the data from the node resides in
 	dev := op.Device
 
-	var d, xd, yd, zd Value
+	var d, xd, yd, zd value.Value
 	var extra bool
 
 	// allocate if necessary
@@ -461,9 +463,9 @@ func addDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	}
 
 	// if x is scalar, an additional vector needs to be acquired
-	if x.IsScalar() && dev != CPU {
+	if x.IsScalar() && dev != execution.CPU {
 		var mem tensor.Memory
-		var xd2 Value
+		var xd2 value.Value
 		memsize := calcMemSize(zd.Dtype(), zd.Shape())
 		if mem, err = ctx.Get(dev, memsize); err != nil {
 			return
@@ -505,9 +507,9 @@ func addDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	}
 
 	// if y is scalar, an additional vector needs to be acquired
-	if y.IsScalar() && dev != CPU {
+	if y.IsScalar() && dev != execution.CPU {
 		var mem tensor.Memory
-		var yd2 Value
+		var yd2 value.Value
 		memsize := calcMemSize(zd.Dtype(), zd.Shape())
 		if mem, err = ctx.Get(dev, memsize); err != nil {
 			return
@@ -541,7 +543,7 @@ func subDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	return
 }
 
-func subDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
+func subDiff(ctx execution.Context, x, y, z *Node) (err error) {
 	xdv, ydv := getDV(x, y)
 
 	add := NewAddOp(x, z, ctx)
@@ -554,7 +556,7 @@ func subDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	// add := newEBOByType(addOpType, x.t, z.t)
 
 	dev := sub.Device
-	var xd, yd, zd, d Value
+	var xd, yd, zd, d value.Value
 	var extra bool
 
 	if zd, extra, err = z.GradOnDevice(dev, ctx.External); err != nil {
@@ -573,9 +575,9 @@ func subDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 
 	// if y is scalar an additional vector needs to be allocated for the prelloc
 	switch {
-	case y.IsScalar() && dev != CPU:
+	case y.IsScalar() && dev != execution.CPU:
 		var mem tensor.Memory
-		var yd2 Value
+		var yd2 value.Value
 		memsize := calcMemSize(zd.Dtype(), zd.Shape())
 		if mem, err = ctx.Get(dev, memsize); err != nil {
 			return errors.Wrapf(err, allocFail, memsize, dev)
@@ -586,7 +588,7 @@ func subDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 
 		sub.Prealloc = yd2
 		defer ctx.Signal()
-	case y.IsScalar() && dev == CPU:
+	case y.IsScalar() && dev == execution.CPU:
 		if sub.Prealloc, err = makeValue(z.t, zd.Shape()); err != nil {
 			return
 		}
@@ -616,9 +618,9 @@ func subDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	}
 
 	switch {
-	case x.IsScalar() && dev != CPU:
+	case x.IsScalar() && dev != execution.CPU:
 		var mem tensor.Memory
-		var xd2 Value
+		var xd2 value.Value
 		memsize := calcMemSize(zd.Dtype(), zd.Shape())
 		if mem, err = ctx.Get(dev, memsize); err != nil {
 			return
@@ -629,7 +631,7 @@ func subDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 		}
 		add.Prealloc = xd2
 		defer ctx.Signal()
-	case x.IsScalar() && dev == CPU:
+	case x.IsScalar() && dev == execution.CPU:
 		if sub.Prealloc, err = makeValue(z.t, zd.Shape()); err != nil {
 			return
 		}
@@ -659,12 +661,12 @@ func hadamardProdDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
 }
 
-func hadamardProdDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
+func hadamardProdDiff(ctx execution.Context, x, y, z *Node) (err error) {
 	xdv, ydv := getDV(x, y)
 
 	var mul *ExternalOp
-	var dev Device
-	var xd, yd, zd, d Value
+	var dev execution.Device
+	var xd, yd, zd, d value.Value
 	var extra bool
 
 	if x.isConstant() {
@@ -700,9 +702,9 @@ func hadamardProdDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	mul.Incr = xd
 
 	// if y is Scalar, then it needs to be broadcasted across to the
-	if x.IsScalar() && dev != CPU && !zd.Shape().IsScalar() {
+	if x.IsScalar() && dev != execution.CPU && !zd.Shape().IsScalar() {
 		var memIncr, mem2 tensor.Memory
-		var xdIncr, xd2 Value
+		var xdIncr, xd2 value.Value
 		memsize := calcMemSize(zd.Dtype(), zd.Shape())
 		if mem2, err = ctx.Get(dev, memsize); err != nil {
 			return errors.Wrapf(err, allocFail, memsize, dev)
@@ -768,9 +770,9 @@ dzdy:
 	mul.Incr = yd
 
 	// if y is Scalar, then it needs to be broadcasted across to the
-	if y.IsScalar() && dev != CPU && !zd.Shape().IsScalar() {
+	if y.IsScalar() && dev != execution.CPU && !zd.Shape().IsScalar() {
 		var memIncr, mem2 tensor.Memory
-		var ydIncr, yd2 Value
+		var ydIncr, yd2 value.Value
 		memsize := calcMemSize(zd.Dtype(), zd.Shape())
 		if mem2, err = ctx.Get(dev, memsize); err != nil {
 			return errors.Wrapf(err, allocFail, memsize, dev)
@@ -828,16 +830,16 @@ func hadamardDivDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
 }
 
-func hadamardDivDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
+func hadamardDivDiff(ctx execution.Context, x, y, z *Node) (err error) {
 	xdv, ydv, zdv := getDV3(x, y, z)
 
 	// dzdx = 1/y * dz
 	div := newEBOByType(divOpType, TypeOf(zdv.d), TypeOf(ydv.Value))
 	err = div.IncrDo(xdv.d, zdv.d, ydv.Value)
 	if err != nil {
-		var ver Valuer
+		var ver value.Valuer
 		var ok bool
-		if ver, ok = err.(Valuer); !ok {
+		if ver, ok = err.(value.Valuer); !ok {
 			return
 		}
 
@@ -849,7 +851,7 @@ func hadamardDivDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	//		unsafe do : neg zdv.d
 	// 		unsafe do : mul zdv.d, zdv.Value
 	//		incr do   : <incr: ydv.d> div zdv.d, ydv.Value
-	var d Value
+	var d value.Value
 	if d, err = div.Do(zdv.Value, ydv.Value); err != nil {
 		return errors.Wrapf(err, doFail, div)
 	}
@@ -862,9 +864,9 @@ func hadamardDivDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	mul := newElemBinOp(mulOpType, z, y)
 	err = mul.IncrDo(ydv.d, zdv.d, d)
 	if err != nil {
-		var ver Valuer
+		var ver value.Valuer
 		var ok bool
-		if ver, ok = err.(Valuer); !ok {
+		if ver, ok = err.(value.Valuer); !ok {
 			return
 		}
 
@@ -928,10 +930,10 @@ func hadamardPowDiffExpr(x, y, z, grad *Node) (retVal Nodes, err error) {
 	// return nil, errors.New("hadamardPowDiffExpr not yet implemented")
 }
 
-func hadamardPowDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
+func hadamardPowDiff(ctx execution.Context, x, y, z *Node) (err error) {
 	xdv, ydv, zdv := getDV3(x, y, z)
 
-	var ym1 Value
+	var ym1 value.Value
 	switch ydvt := ydv.Value.(type) {
 	case *F64:
 		ym1 = newF64(ydvt.any() - float64(1))
@@ -954,7 +956,7 @@ func hadamardPowDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	}
 
 	// dzdx
-	var pow Value
+	var pow value.Value
 	powOp := newEBOByType(powOpType, TypeOf(xdv.Value), TypeOf(ym1))
 	if pow, err = powOp.Do(xdv.Value, ym1); err != nil {
 		return
@@ -966,9 +968,9 @@ func hadamardPowDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	}
 
 	if err = mul.IncrDo(xdv.d, pow, zdv.d); err != nil {
-		var ver Valuer
+		var ver value.Valuer
 		var ok bool
-		if ver, ok = err.(Valuer); !ok {
+		if ver, ok = err.(value.Valuer); !ok {
 			return
 		}
 
@@ -976,7 +978,7 @@ func hadamardPowDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	}
 
 	// dzdy
-	var logx Value
+	var logx value.Value
 	logOp := newElemUnaryOp(lnOpType, x)
 	if logx, err = logOp.Do(xdv.Value); err != nil {
 		return
@@ -985,9 +987,9 @@ func hadamardPowDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 		return
 	}
 	if err = mul.IncrDo(ydv.d, logx, zdv.d); err != nil {
-		var ver Valuer
+		var ver value.Valuer
 		var ok bool
-		if ver, ok = err.(Valuer); !ok {
+		if ver, ok = err.(value.Valuer); !ok {
 			return
 		}
 
@@ -1000,6 +1002,6 @@ func nondiffBinOpExpr(x, y, z, grad *Node) (retVal Nodes, err error) {
 	return nil, errors.New("Nondifferentiable")
 }
 
-func nondiffBinOp(ctx ExecutionContext, x, y, z *Node) (err error) {
+func nondiffBinOp(ctx execution.Context, x, y, z *Node) (err error) {
 	return AutoDiffError{}
 }

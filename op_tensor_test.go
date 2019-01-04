@@ -12,9 +12,9 @@ var repeatOpTests = []struct {
 	name string
 	rep  int
 	axes []int
-	val  Value
+	val  value.Value
 
-	correct       Value
+	correct       value.Value
 	expectedShape tensor.Shape
 	err           bool
 }{
@@ -86,7 +86,7 @@ func TestRepeatOp(t *testing.T) {
 
 	for _, rots := range repeatOpTests {
 		g := NewGraph()
-		var res Value
+		var res value.Value
 		var err error
 		var repeat *repeatOp
 
@@ -157,7 +157,7 @@ func repeatOpDiff(repeatOn int, shape tensor.Shape, xV, yV interface{}) (g *Expr
 	yVal, _, _, _ := anyToValue(yV)
 	x.bind(dvUnit(xVal))
 	y.bind(dvUnitVar(yVal))
-	if err = repeat.DoDiff(ExecutionContext{}, Nodes{x, repN}, y); err != nil {
+	if err = repeat.DoDiff(execution.Context{}, Nodes{x, repN}, y); err != nil {
 		return
 	}
 	return
@@ -171,7 +171,7 @@ func TestRepeatOpDoDiff(t *testing.T) {
 	var x *Node
 	var err error
 
-	var xG Value
+	var xG value.Value
 	var xT, yT *tensor.Dense
 
 	yT = tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{3.14, 3.14}))
@@ -268,7 +268,7 @@ func TestTransposeOp(t *testing.T) {
 	}
 	assert.Equal(tensor.Shape{3, 2}, BT.shape)
 
-	var ag, bg Value
+	var ag, bg value.Value
 	if ag, err = A.Grad(); err != nil {
 		t.Fatalf("Cannot get grad of A. Err: %v", err)
 	}
@@ -277,7 +277,7 @@ func TestTransposeOp(t *testing.T) {
 		t.Fatalf("Cannot get grad of B. Err: %v", err)
 	}
 
-	var costGrad1, costGrad2 Value
+	var costGrad1, costGrad2 value.Value
 	if costGrad1, err = cost1.Grad(); err != nil {
 		t.Fatalf("Cannot get grad of Cost1. Err %v", err)
 	}

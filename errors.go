@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"golang.org/x/exp/shiny/widget/node"
 	"gorgonia.org/gorgonia/internal/value"
 )
 
@@ -30,7 +29,7 @@ type noStabilizationErr struct{}
 func (noStabilizationErr) Error() string         { return "No stabilization mechanism found" }
 func (noStabilizationErr) noStabilization() bool { return true }
 
-// noIncrErr is an error used internally when a Value cannot be incremented
+// noIncrErr is an error used internally when a value.Value cannot be incremented
 type noIncrErr struct {
 	v value.Value
 }
@@ -56,11 +55,11 @@ func (err AutoDiffError) Error() string { return "AutoDiffError" }
 // vmContextualError is an error that is used to wrap errors that arise from the VM
 type vmContextualError struct {
 	error
-	node  *node.Node // which node was it processing
-	instr int        // what instruction ID it was
+	node  *Node // which node was it processing
+	instr int   // what instruction ID it was
 }
 
-func (err vmContextualError) Node() *node.Node   { return err.node }
+func (err vmContextualError) Node() *Node        { return err.node }
 func (err vmContextualError) Value() value.Value { return err.node.Value() }
 func (err vmContextualError) InstructionID() int { return err.instr }
 
@@ -72,9 +71,9 @@ func nondiffErr(op Op) error {
 	return errors.Errorf("%s is a non-differentiable function", op)
 }
 
-// checkErrSetDeriv sets the deriv if the error is a Valuer. Helper function for linalg operations
+// checkErrSetDeriv sets the deriv if the error is a value.Valuer. Helper function for linalg operations
 func checkErrSetDeriv(err error, dv *dualValue) error {
-	if ver, ok := err.(Valuer); ok {
+	if ver, ok := err.(value.Valuer); ok {
 		return dv.SetDeriv(ver.Value())
 	}
 	return err
@@ -83,14 +82,14 @@ func checkErrSetDeriv(err error, dv *dualValue) error {
 // SymDiffError provides the context at which an error occured
 type SymDiffError struct {
 	nodes   Nodes
-	single  *node.Node
-	grad    *node.Node
-	gradMap map[*node.Node]Nodes
+	single  *Node
+	grad    *Node
+	gradMap map[*Node]Nodes
 	err     error
 }
 
-func (err SymDiffError) Error() string               { return err.err.Error() }
-func (err SymDiffError) Nodes() Nodes                { return err.nodes }
-func (err SymDiffError) Node() *node.Node            { return err.single }
-func (err SymDiffError) Grads() map[*node.Node]Nodes { return err.gradMap }
-func (err SymDiffError) Grad() *node.Node            { return err.grad }
+func (err SymDiffError) Error() string          { return err.err.Error() }
+func (err SymDiffError) Nodes() Nodes           { return err.nodes }
+func (err SymDiffError) Node() *Node            { return err.single }
+func (err SymDiffError) Grads() map[*Node]Nodes { return err.gradMap }
+func (err SymDiffError) Grad() *Node            { return err.grad }

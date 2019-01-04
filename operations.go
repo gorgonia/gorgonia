@@ -292,7 +292,7 @@ func Sum(a *Node, along ...int) (retVal *Node, err error) {
 	return ApplyOp(op, a)
 }
 
-// Norm returns the p-norm of a Value. Use p=2 if you want to use unordered norms.
+// Norm returns the p-norm of a value.Value. Use p=2 if you want to use unordered norms.
 //
 // This is a simpler version of the norms found in the Tensor package, which specializes and optimizes even more
 // (well, given it's adapted from Numpy, it is clearly way more optimized)

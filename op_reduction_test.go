@@ -36,8 +36,8 @@ func TestSumOpDiff(t *testing.T) {
 	var g, g2 *ExprGraph
 	var x, y, z, a, b, c *Node
 	// var x, y, a, b *Node
-	var xG, yG, aG, bG Value
-	// var xG, aG Value
+	var xG, yG, aG, bG value.Value
+	// var xG, aG value.Value
 	// var prog *program
 	// var locMap map[*Node]register
 	var m *tapeMachine

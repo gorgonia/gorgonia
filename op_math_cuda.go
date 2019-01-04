@@ -20,7 +20,7 @@ const (
 
 func (op elemUnaryOp) CallsExtern() bool { return true }
 
-func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
+func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc value.Value, inputs ...Value) (retVal value.Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -86,7 +86,7 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 
 func (op elemBinOp) CallsExtern() bool { return true }
 
-func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
+func (op elemBinOp) CUDADo(extern External, dev Device, prealloc value.Value, inputs ...Value) (retVal value.Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -138,7 +138,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	return nil, errors.Errorf("op %v cannot be done by CUDA", op)
 }
 
-func (op elemBinOp) ssop(a, b, prealloc Value, e *cuda.Engine) (retVal Value, err error) {
+func (op elemBinOp) ssop(a, b, prealloc value.Value, e *cuda.Engine) (retVal value.Value, err error) {
 	dt := a.Dtype()
 	ctx := e.Context()
 	opName := ʘBinOpNames[op.binOpType()]
@@ -181,7 +181,7 @@ func (op elemBinOp) ssop(a, b, prealloc Value, e *cuda.Engine) (retVal Value, er
 
 func (op linAlgBinOp) CallsExtern() bool { return true }
 
-func (op linAlgBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
+func (op linAlgBinOp) CUDADo(extern External, dev Device, prealloc value.Value, inputs ...Value) (retVal value.Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -243,7 +243,7 @@ func (op linAlgBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 /* API stuff  */
 
 // NewAddOp creates a new *ExternalOp that wraps a add op
-func NewAddOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
+func NewAddOp(a, b *Node, ctx execution.Context) *ExternalOp {
 	add := newElemBinOp(addOpType, a, b)
 	op := NewExternalOp(add, ctx, nil)
 	if a.Device() == CPU && b.Device() == CPU {
@@ -265,7 +265,7 @@ func NewAddOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
 }
 
 // NewSubOp creates a new *ExternalOp that wraps a sub op
-func NewSubOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
+func NewSubOp(a, b *Node, ctx execution.Context) *ExternalOp {
 	sub := newEBOByType(subOpType, a.t, b.t)
 	op := NewExternalOp(sub, ctx, nil)
 
@@ -286,7 +286,7 @@ func NewSubOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
 	return op
 }
 
-func NewHadamardProdOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
+func NewHadamardProdOp(a, b *Node, ctx execution.Context) *ExternalOp {
 	mul := newEBOByType(mulOpType, a.t, b.t)
 	op := NewExternalOp(mul, ctx, nil)
 

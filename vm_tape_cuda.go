@@ -88,7 +88,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	m.leaveLogScope()
 
 	toDev := instr.writeTo.device
-	var v Value
+	var v value.Value
 	switch op := instr.op.(type) {
 	case CUDADoer:
 		prealloc := m.getValue(instr.writeTo)
@@ -187,7 +187,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 						return errors.Wrapf(err, "Unable to allocate %v bytes from %v", memsize, dev)
 					}
 
-					var d Value
+					var d value.Value
 					if d, err = makeValueFromMem(dt, shp, mem); err != nil {
 						return
 					}

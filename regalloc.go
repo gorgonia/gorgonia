@@ -5,6 +5,7 @@ import (
 
 	"github.com/xtgo/set"
 	"gonum.org/v1/gonum/graph"
+	"gorgonia.org/gorgonia/internal/execution"
 )
 
 // this file holds all the code that relates to register allocation
@@ -143,10 +144,10 @@ func newRegalloc(df *dataflow) *regalloc {
 	}
 }
 
-func (ra *regalloc) newReg(device Device) register {
+func (ra *regalloc) newReg(device execution.Device) register {
 	var out register
 	switch device {
-	case CPU:
+	case execution.CPU:
 		out = register{ra.cpucount, device}
 		ra.cpucount++
 	default:
@@ -158,7 +159,7 @@ func (ra *regalloc) newReg(device Device) register {
 }
 
 func (ra *regalloc) allocArg(nInterv *interval) {
-	nInterv.result = ra.newReg(CPU)
+	nInterv.result = ra.newReg(execution.CPU)
 }
 
 func (ra *regalloc) allocMutableOp(node *Node, nInterv *interval) {
@@ -219,36 +220,36 @@ func (ra *regalloc) allocMutableOp(node *Node, nInterv *interval) {
 		if len(letStmts) == 1 || !overwrittenIsLive {
 
 			switch {
-			case onDev && overwriteDev != CPU:
+			case onDev && overwriteDev != execution.CPU:
 				// if overwritten reg is on external device and op will execute on external device
 				// then safe to overwrite
 				writeTo = overwriteReg
-			case !node.op.CallsExtern() && overwriteDev == CPU:
+			case !node.op.CallsExtern() && overwriteDev == execution.CPU:
 				// original case:
-				// if the op doesn't call an extern, and is executed on CPU
+				// if the op doesn't call an extern, and is executed on execution.CPU
 				// safe to overwrite
 				writeTo = overwriteReg
 			case onDev:
 				// new register otherwise
-				writeTo = ra.newReg(Device(0))
+				writeTo = ra.newReg(execution.Device(0))
 			case !onDev:
 				// new register otherwise
-				writeTo = ra.newReg(CPU)
+				writeTo = ra.newReg(execution.CPU)
 			}
 
 		} else {
 			if onDev {
-				writeTo = ra.newReg(Device(0))
+				writeTo = ra.newReg(execution.Device(0))
 			} else {
-				writeTo = ra.newReg(CPU)
+				writeTo = ra.newReg(execution.CPU)
 			}
 		}
 	} else {
 		compileLogf("New register")
 		if onDev {
-			writeTo = ra.newReg(Device(0))
+			writeTo = ra.newReg(execution.Device(0))
 		} else {
-			writeTo = ra.newReg(CPU)
+			writeTo = ra.newReg(execution.CPU)
 		}
 	}
 
@@ -280,9 +281,9 @@ func (ra *regalloc) allocImmutableOp(node *Node, nInterv *interval) {
 
 	compileLogf("NodeID: %x does not returns pointer", node.ID())
 	if _, ok := node.op.(CUDADoer); ok {
-		writeTo = ra.newReg(Device(0))
+		writeTo = ra.newReg(execution.Device(0))
 	} else {
-		writeTo = ra.newReg(CPU)
+		writeTo = ra.newReg(execution.CPU)
 	}
 
 	for _, r := range reads {

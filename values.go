@@ -6,11 +6,12 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
 // makeValue creates a value given a type and shape. The default value is the zero value of the type.
-func makeValue(t hm.Type, s tensor.Shape) (retVal Value, err error) {
+func makeValue(t hm.Type, s tensor.Shape) (retVal value.Value, err error) {
 	var dt tensor.Dtype
 	if dt, err = dtypeOf(t); err != nil {
 		return
@@ -44,7 +45,7 @@ func makeValue(t hm.Type, s tensor.Shape) (retVal Value, err error) {
 	}
 }
 
-func makeValueFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal Value, err error) {
+func makeValueFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal value.Value, err error) {
 	var dt tensor.Dtype
 	if dt, err = dtypeOf(t); err != nil {
 		return
@@ -65,7 +66,7 @@ func makeValueFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal Valu
 	}
 }
 
-func makeScalarFromMem(dt tensor.Dtype, mem tensor.Memory) (retVal Value, err error) {
+func makeScalarFromMem(dt tensor.Dtype, mem tensor.Memory) (retVal value.Value, err error) {
 	switch dt {
 	case tensor.Float64:
 		retVal = (*F64)(unsafe.Pointer(mem.Uintptr()))
@@ -107,8 +108,8 @@ func calcMemSize(dt tensor.Dtype, s tensor.Shape) int64 {
 
 // ScalarAsTensor returns the tensor representation of a scalar. It is particularly useful as a "reshape" of tensors of sorts
 //
-// The Value passed in are either Scalar, tensor.Tensor, or *dualValue. Anything else will panic.
-func ScalarAsTensor(v Value, dims int, e tensor.Engine) Value {
+// The value.Value passed in are either Scalar, tensor.Tensor, or *dualValue. Anything else will panic.
+func ScalarAsTensor(v value.Value, dims int, e tensor.Engine) value.Value {
 	switch a := v.(type) {
 	case Scalar:
 		sh := make(tensor.Shape, dims)

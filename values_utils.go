@@ -5,18 +5,19 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
 // TypeOf returns the Type of the value
-func TypeOf(v Value) hm.Type {
+func TypeOf(v value.Value) hm.Type {
 	switch t := v.(type) {
 	case tensor.Tensor:
 		dt, dim := tensorInfo(t)
 		return makeTensorType(dim, dt)
 	case Scalar:
 		return t.Dtype()
-	case Typer:
+	case value.Typer:
 		return t.Type()
 
 	default:
@@ -24,14 +25,14 @@ func TypeOf(v Value) hm.Type {
 	}
 }
 
-func typeCheckTypeOf(v Value) hm.Type {
+func typeCheckTypeOf(v value.Value) hm.Type {
 	switch t := v.(type) {
 	case tensor.Tensor:
 		dt, dim := tensorInfo(t)
 		return newTensorType(dim, dt)
 	case Scalar:
 		return t.Dtype()
-	case Typer:
+	case value.Typer:
 		return t.Type()
 
 	default:
@@ -40,7 +41,7 @@ func typeCheckTypeOf(v Value) hm.Type {
 }
 
 // ValueEq is the equality function for values
-func ValueEq(a, b Value) bool {
+func ValueEq(a, b value.Value) bool {
 	if a == nil && b == nil {
 		return true
 	}
@@ -55,7 +56,7 @@ func ValueEq(a, b Value) bool {
 			return at.Eq(bt)
 		}
 		return false
-	case ValueEqualer:
+	case value.ValueEqualer:
 		return at.ValueEq(b)
 	default:
 		panic(fmt.Sprintf("Not implemented yet, %T", a))
@@ -63,7 +64,7 @@ func ValueEq(a, b Value) bool {
 }
 
 // ValueClose checks whether two values are close to one another. It's predominantly used as an alternative equality test for floats
-func ValueClose(a, b Value) bool {
+func ValueClose(a, b value.Value) bool {
 	if a == nil && b == nil {
 		return true
 	}
@@ -79,7 +80,7 @@ func ValueClose(a, b Value) bool {
 			return tensorClose(at, bt)
 		}
 		return false
-	case ValueCloser:
+	case value.ValueCloser:
 		return at.ValueClose(b)
 	default:
 		panic("Not implemented yet")
@@ -87,7 +88,7 @@ func ValueClose(a, b Value) bool {
 }
 
 // CloneValue clones a value. For scalars, since Go copies scalars, it returns itself
-func CloneValue(v Value) (Value, error) {
+func CloneValue(v value.Value) (value.Value, error) {
 	switch vt := v.(type) {
 	case *F64:
 		retVal := *vt
@@ -112,25 +113,25 @@ func CloneValue(v Value) (Value, error) {
 		return &retVal, nil
 	case tensor.Tensor:
 		return vt.Clone().(*tensor.Dense), nil
-	case CloneErrorer:
+	case value.CloneErrorer:
 		ret, err := vt.Clone()
 		if err != nil {
 			return nil, err
 		}
-		retVal, ok := ret.(Value)
+		retVal, ok := ret.(value.Value)
 		if !ok {
 			return nil, errors.Errorf("Cloner is not a value: %v %T", v, v)
 		}
 		return retVal, nil
-	case Cloner:
-		return vt.Clone().(Value), nil
+	case value.Cloner:
+		return vt.Clone().(value.Value), nil
 	default:
 		return nil, errors.Errorf("Unable to clone value of type %T", v)
 	}
 }
 
 // ZeroValue returns the zero value of a type
-func ZeroValue(v Value) Value {
+func ZeroValue(v value.Value) value.Value {
 	switch vt := v.(type) {
 	case *F64:
 		*vt = 0
@@ -156,7 +157,7 @@ func ZeroValue(v Value) Value {
 	case tensor.Tensor:
 		vt.Zero()
 		return vt
-	case ZeroValuer:
+	case value.ZeroValuer:
 		return vt.ZeroValue()
 	default:
 		panic(fmt.Sprintf("Cannot return zero value of %T", v))
@@ -164,7 +165,7 @@ func ZeroValue(v Value) Value {
 }
 
 // Copy copies the src values into dest values. For scalars, it just returns itself
-func Copy(dest, src Value) (Value, error) {
+func Copy(dest, src value.Value) (value.Value, error) {
 	var ok bool
 	switch srcT := src.(type) {
 	case *F64:
@@ -223,12 +224,12 @@ func Copy(dest, src Value) (Value, error) {
 		}
 		err := tensor.Copy(destT, srcT)
 		return dest, err
-	case CopierTo:
+	case value.CopierTo:
 		err := srcT.CopyTo(dest)
 		return dest, err
 	default:
-		var copyFrom CopierFrom
-		if copyFrom, ok = dest.(CopierFrom); ok {
+		var copyFrom value.CopierFrom
+		if copyFrom, ok = dest.(value.CopierFrom); ok {
 			err := copyFrom.CopyFrom(src)
 			return dest, err
 		}
@@ -236,7 +237,7 @@ func Copy(dest, src Value) (Value, error) {
 	}
 }
 
-func setEngine(v Value, e tensor.Engine) {
+func setEngine(v value.Value, e tensor.Engine) {
 	switch vv := v.(type) {
 	case *dualValue:
 		setEngine(vv.Value, e)

@@ -49,7 +49,7 @@ func TestGeneraCUDA_init(t *testing.T) {
 		}
 	}
 
-	var xG, yG Value
+	var xG, yG value.Value
 	var err error
 	if xG, err = x.Grad(); err != nil {
 		t.Fatal(err)

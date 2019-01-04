@@ -1,6 +1,9 @@
 package gorgonia
 
-import "github.com/chewxy/hm"
+import (
+	"github.com/chewxy/hm"
+	"gorgonia.org/gorgonia/internal/execution"
+)
 
 // āBinOpStrs is the string representation for binLAOperator
 // It should be held constant
@@ -20,7 +23,7 @@ var āBinOpDiffExprs = [maxĀBinaryOperator]func(tA, tB bool, x, y, z, grad *Nod
 	batchedMatMulDiffExpr,
 }
 
-var āBinOpDiffs = [maxĀBinaryOperator]func(ctx ExecutionContext, tA, tB bool, x, y, z *Node) error{
+var āBinOpDiffs = [maxĀBinaryOperator]func(ctx execution.Context, tA, tB bool, x, y, z *Node) error{
 	matMulDiff,
 	matVecMulDiff,
 	vecDotDiff,

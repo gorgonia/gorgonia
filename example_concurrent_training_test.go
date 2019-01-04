@@ -24,7 +24,7 @@ type concurrentTrainer struct {
 	g    *ExprGraph
 	x, y *Node
 	vm   VM
-	// cost Value
+	// cost value.Value
 
 	batchSize int
 	epoch     int // number of epochs done
@@ -57,10 +57,10 @@ type cost struct {
 	Nodes []ValueGrad
 	VM    // placed for debugging purposes. In real life use you can just use a channel of Nodes
 
-	// cost Value
+	// cost value.Value
 }
 
-func (t *concurrentTrainer) train(x, y Value, costChan chan cost, wg *sync.WaitGroup) {
+func (t *concurrentTrainer) train(x, y value.Value, costChan chan cost, wg *sync.WaitGroup) {
 	Let(t.x, x)
 	Let(t.y, y)
 	if err := t.vm.RunAll(); err != nil {
@@ -115,11 +115,11 @@ func trainEpoch(bs []batch, ts []*concurrentTrainer, threads int) {
 }
 
 type batch struct {
-	xs Value
-	ys Value
+	xs value.Value
+	ys value.Value
 }
 
-func prep() (x, y Value, bs []batch) {
+func prep() (x, y value.Value, bs []batch) {
 	xV := tensor.New(tensor.WithShape(rows, cols), tensor.WithBacking(tensor.Range(Float64, 0, cols*rows)))
 	yV := tensor.New(tensor.WithShape(rows), tensor.WithBacking(tensor.Range(Float64, 0, rows)))
 
@@ -133,7 +133,7 @@ func prep() (x, y Value, bs []batch) {
 	return xV, yV, bs
 }
 
-func concurrentTraining(xV, yV Value, bs []batch, es int) {
+func concurrentTraining(xV, yV value.Value, bs []batch, es int) {
 	threads := runtime.GOMAXPROCS(-1) - 1 // reserve one thread for the CPU locked thread
 
 	ts := make([]*concurrentTrainer, threads)
@@ -148,7 +148,7 @@ func concurrentTraining(xV, yV Value, bs []batch, es int) {
 	}
 }
 
-func nonConcurrentTraining(xV, yV Value, es int) {
+func nonConcurrentTraining(xV, yV value.Value, es int) {
 	g := NewGraph()
 	x := NewMatrix(g, Float64, WithValue(xV))
 	y := NewVector(g, Float64, WithValue(yV))

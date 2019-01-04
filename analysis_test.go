@@ -12,7 +12,7 @@ func TestBuildIntervals(t *testing.T) {
 	assert := assert.New(t)
 	var err error
 	g, x, y, z := simpleVecEqn()
-	var readVal Value
+	var readVal value.Value
 	r := Read(z, &readVal)
 
 	z2 := Must(Square(z))

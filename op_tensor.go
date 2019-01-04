@@ -9,6 +9,8 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
@@ -39,7 +41,7 @@ func (op atOp) DiffWRT(i int) []bool                                    { return
 func (op atOp) SymDiff(Nodes, *Node, *Node) (Nodes, error)              { return nil, nondiffErr(op) }
 func (op atOp) String() string                                          { return fmt.Sprintf("At(%v)", op.coordinates) }
 
-func (op atOp) Do(inputs ...Value) (retVal Value, err error) {
+func (op atOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -108,7 +110,7 @@ func (op sizeOp) SymDiff(inputs Nodes, output, gradNode *Node) (Nodes, error) {
 	return nil, nondiffErr(op)
 }
 
-func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
+func (op sizeOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -288,14 +290,14 @@ func (op repeatOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, 
 	return
 }
 
-func (op repeatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+func (op repeatOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 	xdv, ydv := getDV(inputs[0], output)
 
 	var reps []int
-	var repeats []Value
+	var repeats []value.Value
 	for _, r := range inputs[1:] {
 		repeats = append(repeats, r.Value())
 	}
@@ -305,7 +307,7 @@ func (op repeatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err
 	}
 
 	xshape := xdv.Shape()
-	var d Value
+	var d value.Value
 	d = ydv.d
 
 	// we make it a colVec
@@ -369,7 +371,7 @@ func (op repeatOp) String() string { return fmt.Sprintf("Repeat%v", op.along) }
 
 // Do performs a repeat on the value.
 // TODO(anyone): implement for other types
-func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
+func (op repeatOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -561,13 +563,13 @@ func (op *sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nod
 	return
 }
 
-func (op *sliceOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+func (op *sliceOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 	xdv, ydv := getDV(inputs[0], output)
 
-	// var d Value
+	// var d value.Value
 	incrOp := sliceIncrOp{op}
 	if _, err = incrOp.UsePreallocDo(xdv.d, xdv.d, ydv.d); err != nil {
 		return errors.Wrapf(err, doFail, incrOp)
@@ -582,7 +584,7 @@ func (op *sliceOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err
 	return
 }
 
-func (op *sliceOp) Do(inputs ...Value) (retVal Value, err error) {
+func (op *sliceOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -658,7 +660,7 @@ func (op sliceOp) String() string {
 	return buf.String()
 }
 
-// func (op sliceOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
+// func (op sliceOp) CUDADo(extern execution.External, dev Device, prealloc value.Value, inputs ...value.Value) (retVal value.Value, err error) {
 // 	return op.Do(inputs...)
 // }
 
@@ -710,7 +712,7 @@ func (op sliceIncrOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal 
 	return
 }
 
-func (op sliceIncrOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+func (op sliceIncrOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
 	xdv, ydv, zdv := getDV3(inputs[0], inputs[1], output)
 
 	// dzdx
@@ -720,7 +722,7 @@ func (op sliceIncrOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (
 	}
 
 	// dzdy
-	var d Value
+	var d value.Value
 	if d, err = op.sliceOp.Do(zdv.d); err != nil {
 		return errors.Wrapf(err, doFail, op)
 	}
@@ -732,7 +734,7 @@ func (op sliceIncrOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (
 	return
 }
 
-func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
+func (op sliceIncrOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 	machineLogf("Doing %v", op)
 	enterLogScope()
 	defer leaveLogScope()
@@ -774,7 +776,7 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 	return
 }
 
-func (op sliceIncrOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
+func (op sliceIncrOp) UsePreallocDo(prealloc value.Value, inputs ...value.Value) (retVal value.Value, err error) {
 	machineLogf("Doing %v", op)
 	enterLogScope()
 	defer leaveLogScope()
@@ -859,7 +861,7 @@ func (op sliceIncrOp) String() string {
 	return buf.String()
 }
 
-// func (op sliceIncrOp) UsePreallocDo(val Value, inputs ...Value) (Value, error) {
+// func (op sliceIncrOp) UsePreallocDo(val value.Value, inputs ...value.Value) (Value, error) {
 
 // }
 
@@ -911,7 +913,7 @@ func (op transposeOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal 
 	return
 }
 
-func (op transposeOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+func (op transposeOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
 	xdv, zdv := getDV(inputs[0], output)
 
 	newPattern := make([]int, len(op.pattern))
@@ -939,7 +941,7 @@ func (op transposeOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (
 	return
 }
 
-func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
+func (op transposeOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 	machineLogf("Doing %v", op)
 	enterLogScope()
 	defer leaveLogScope()
@@ -1028,7 +1030,7 @@ func (op concatOp) InferShape(ds ...DimSizer) (tensor.Shape, error) {
 	return shapes[0].Concat(op.axis, shapes[1:]...)
 }
 
-func (op concatOp) Do(vals ...Value) (Value, error) {
+func (op concatOp) Do(vals ...value.Value) (value.Value, error) {
 	if len(vals) == 1 {
 		return vals[0], nil
 	}
@@ -1083,7 +1085,7 @@ func (op concatOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes
 	return
 }
 
-func (op concatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
+func (op concatOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) error {
 	odv := output.boundTo.(*dualValue)
 	odvd := odv.d.(tensor.Tensor)
 
@@ -1134,11 +1136,11 @@ func (op reshapeOp) Type() hm.Type {
 }
 func (op reshapeOp) InferShape(ds ...DimSizer) (tensor.Shape, error) { return op.to.Clone(), nil }
 
-func (op reshapeOp) Do(vals ...Value) (Value, error) {
+func (op reshapeOp) Do(vals ...value.Value) (value.Value, error) {
 	if err := checkArity(op, len(vals)); err != nil {
 		return nil, err
 	}
-	var val Value
+	var val value.Value
 	var err error
 	if val, err = CloneValue(vals[0]); err != nil {
 		return nil, errors.Wrapf(err, cloneFail, vals[0])
@@ -1172,7 +1174,7 @@ func (op reshapeOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op reshapeOp) String() string { return fmt.Sprintf("Reshape%v", op.to) }
 
-func (op reshapeOp) CUDADo(extern External, dev Device, prealloc Value, vals ...Value) (retVal Value, err error) {
+func (op reshapeOp) CUDADo(extern execution.External, dev execution.Device, prealloc value.Value, vals ...value.Value) (retVal value.Value, err error) {
 	if err := checkArity(op, len(vals)); err != nil {
 		return nil, err
 	}
@@ -1200,8 +1202,8 @@ func (op reshapeOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Node
 	return Nodes{ret}, nil
 }
 
-func (op reshapeOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
-	var grad Value
+func (op reshapeOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
+	var grad value.Value
 	if grad, err = output.Grad(); err != nil {
 		return
 	}

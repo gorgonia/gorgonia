@@ -14,6 +14,8 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
@@ -77,7 +79,7 @@ func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 	return
 }
 
-func (op maxOp) Do(inputs ...Value) (retVal Value, err error) {
+func (op maxOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -222,7 +224,7 @@ func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 	return
 }
 
-func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+func (op sumOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -253,7 +255,7 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 		return
 	}
 
-	var val Value
+	var val value.Value
 	if !T.Shape().Eq(xdv.d.Shape()) {
 		// TO DO: Optimize: figure out a way to bunch it all up so you can repeat in one call
 		for _, a := range op.along {
@@ -277,8 +279,8 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 	addOp.Device = x.Device()
 
 	dev := x.Device()
-	if output.Device() != dev && dev != CPU {
-		var valOnDev Value
+	if output.Device() != dev && dev != execution.CPU {
+		var valOnDev value.Value
 		if valOnDev, err = ctx.Transfer(dev, output.Device(), val, false); err != nil {
 			return
 		}
@@ -287,7 +289,7 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 
 		// Copy(valOnDev, val)
 	}
-	var xd, d Value
+	var xd, d value.Value
 	var extra bool
 	if xd, extra, err = x.GradOnDevice(dev, ctx.External); err != nil {
 		return errors.Wrapf(err, gradOnDeviceFail, x, dev)
@@ -301,13 +303,13 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 
 	return xdv.SetDeriv(d)
 
-	// var d Value
+	// var d value.Value
 	// if d, err = add.UnsafeDo(xdv.d, val); err != nil {
 	// 	return errors.Wrapf(err, unsafeDoFail, add)
 	// }
 }
 
-func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
+func (op sumOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}

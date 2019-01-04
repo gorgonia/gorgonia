@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/tensor"
 )
 
@@ -101,7 +102,7 @@ func matMulDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes, er
 	return
 }
 
-func matMulDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node) (err error) {
+func matMulDiff(ctx execution.Context, transA, transB bool, x, y, z *Node) (err error) {
 	xdv, ydv, zdv := getDV3(x, y, z)
 
 	op := linAlgBinOp{
@@ -201,7 +202,7 @@ func matVecMulDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes,
 	return Nodes{dzdx, dzdy}, nil
 }
 
-func matVecMulDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node) (err error) {
+func matVecMulDiff(ctx execution.Context, transA, transB bool, x, y, z *Node) (err error) {
 	xdv, ydv, zdv := getDV3(x, y, z)
 
 	op := linAlgBinOp{
@@ -243,7 +244,7 @@ func vecDotDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes, er
 	return
 }
 
-func vecDotDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node) (err error) {
+func vecDotDiff(ctx execution.Context, transA, transB bool, x, y, z *Node) (err error) {
 	xdv, ydv, zdv := getDV3(x, y, z)
 
 	mul := newElemBinOp(mulOpType, x, z)
@@ -273,7 +274,7 @@ func outerProdDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes,
 	return
 }
 
-func outerProdDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node) (err error) {
+func outerProdDiff(ctx execution.Context, transA, transB bool, x, y, z *Node) (err error) {
 	xdv, ydv, zdv := getDV3(x, y, z)
 
 	mul := newElemBinOp(mulOpType, x, z)
@@ -343,7 +344,7 @@ func batchedMatMulDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal No
 	return
 }
 
-func batchedMatMulDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node) (err error) {
+func batchedMatMulDiff(ctx execution.Context, transA, transB bool, x, y, z *Node) (err error) {
 	xdv, ydv, zdv := getDV3(x, y, z)
 
 	op := linAlgBinOp{

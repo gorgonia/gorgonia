@@ -113,7 +113,7 @@ func TestLispMachineMechanics(t *testing.T) {
 	szp2 := Must(Add(sz, twof64))
 	szp3 := Must(Add(sz, threef64))
 
-	var szp2Val Value
+	var szp2Val value.Value
 	readSzp2 := Read(szp2, &szp2Val)
 
 	sg := g.SubgraphRoots(readSzp2, szp2)
@@ -181,7 +181,7 @@ func TestLispMachineRepeatedRuns(t *testing.T) {
 			continue
 		}
 
-		var gradX, gradY, gradZ, gradC Value
+		var gradX, gradY, gradZ, gradC value.Value
 		if gradX, err = x.Grad(); err != nil {
 			t.Errorf("No gradient for x in repetition %d. Error: %v", i, err)
 			continue

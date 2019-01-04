@@ -355,7 +355,7 @@ func (n *Node) Clone() (retVal interface{}) {
 }
 */
 
-// Value returns the valuse bound to the node. May return nil
+// value.Value returns the valuse bound to the node. May return nil
 func (n *Node) Value() value.Value {
 	if n.isConstant() {
 		return n.op.(constant).Value()

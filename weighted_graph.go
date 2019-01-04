@@ -1,6 +1,9 @@
 package gorgonia
 
-import "gonum.org/v1/gonum/graph"
+import (
+	"gonum.org/v1/gonum/graph"
+	"gorgonia.org/gorgonia/internal/execution"
+)
 
 // SetWeightedEdge adds a weighted edge from one node to another.
 // If the nodes do not exist, they are added and are set to the nodes of the edge otherwise.
@@ -25,7 +28,7 @@ func (g *ExprGraph) AddNode(n graph.Node) {
 // NewNode returns a new unique Node to be added to g. The Node's ID does not become valid in g until the Node is added to g.
 func (g *ExprGraph) NewNode() graph.Node {
 	n := borrowNode()
-	n.dataOn = CPU
+	n.dataOn = execution.CPU
 	n.id = g.w.NewNode().ID()
 	n.g = g
 	n.fix()

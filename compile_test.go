@@ -12,7 +12,7 @@ func TestCompile_medium(t *testing.T) {
 	Must(Square(xpys))
 	xmy2 := Must(Square(xmy))
 
-	var final Value
+	var final value.Value
 	Set(xmy2, xpy)
 	Read(xmy2, &final)
 

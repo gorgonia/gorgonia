@@ -5,6 +5,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -56,8 +57,8 @@ func (dv *dualValue) ValueEq(a value.Value) bool {
 		if at == dv {
 			return true
 		}
-		veq := value.ValueEq(at.Value, dv.Value)
-		deq := value.ValueEq(at.d, dv.d)
+		veq := ValueEq(at.Value, dv.Value)
+		deq := ValueEq(at.d, dv.d)
 		return veq && deq
 	// case value.Value:
 	// 	return value.ValueEq(at, dv.Value)
@@ -182,7 +183,7 @@ func dvUnit0(v value.Value) *dualValue {
 
 // dvUnitManaged does dvUnit for values whose memories are manually managed
 func dvUnitManaged(v value.Value, op *ExternalOp) (*dualValue, error) {
-	if op.Device == CPU {
+	if op.Device == execution.CPU {
 		return dvUnit(v), nil
 	}
 
@@ -252,7 +253,7 @@ func dvUnitVarManaged(v value.Value, op *ExternalOp) (*dualValue, error) {
 
 // helper to unpack from []*dualValue
 func idValue(inputs []*dualValue) (retVals []value.Value) {
-	retVals = make([]Value, len(inputs))
+	retVals = make([]value.Value, len(inputs))
 	for i, input := range inputs {
 		retVals[i] = input.Value
 	}

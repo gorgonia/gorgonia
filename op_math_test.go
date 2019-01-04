@@ -12,11 +12,11 @@ import (
 
 type binOpTest struct {
 	binOp func(*Node, *Node) (*Node, error)
-	a, b  Value
+	a, b  value.Value
 
-	correct       Value
-	correctDerivA Value
-	correctDerivB Value
+	correct       value.Value
+	correctDerivA value.Value
+	correctDerivB value.Value
 	correctShape  tensor.Shape
 }
 
@@ -370,7 +370,7 @@ func testOneArithLisp(t *testing.T, bot binOpTest, i int) error {
 	y := NodeFromAny(g, yV, WithName("y"))
 
 	var ret *Node
-	var retVal Value
+	var retVal value.Value
 	var err error
 	if ret, err = bot.binOp(x, y); err != nil {
 		return errors.Wrapf(err, "do binop failure")
@@ -390,7 +390,7 @@ func testOneArithLisp(t *testing.T, bot binOpTest, i int) error {
 	as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
 	as.True(bot.correctShape.Eq(ret.Shape()))
 
-	var xG, yG Value
+	var xG, yG value.Value
 	if xG, err = x.Grad(); err != nil {
 		return errors.Wrapf(err, "Failed to get the grad of x")
 	}
@@ -419,7 +419,7 @@ func testOneArithTape(t *testing.T, bot binOpTest, i int) error {
 	y := NodeFromAny(g, yV, WithName("y"))
 
 	var ret *Node
-	var retVal Value
+	var retVal value.Value
 	var err error
 	if ret, err = bot.binOp(x, y); err != nil {
 		return errors.Wrapf(err, "binOp() failed")
@@ -491,7 +491,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 	b.bind(dvUnit(bVal))
 	c.bind(dvUnitVar(cVal)) // Will set Output derivative to all ones
 
-	if err := tensordot.DoDiff(ExecutionContext{}, Nodes{a, b}, c); err != nil {
+	if err := tensordot.DoDiff(execution.Context{}, Nodes{a, b}, c); err != nil {
 		log.Fatal("scalars: Cannot DoDiff:", err)
 		return
 	}
@@ -539,7 +539,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 	b.bind(dvUnit(bVal))
 	c.bind(dvUnitVar(cVal)) // Will set Output derivative to all ones
 
-	if err := tensordot.DoDiff(ExecutionContext{}, Nodes{a, b}, c); err != nil {
+	if err := tensordot.DoDiff(execution.Context{}, Nodes{a, b}, c); err != nil {
 		log.Fatal("vectors: Cannot DoDiff:", err)
 		return
 	}
@@ -587,7 +587,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 	b.bind(dvUnit(bVal))
 	c.bind(dvUnitVar(cVal)) // Will set Output derivative to all ones
 
-	if err := tensordot.DoDiff(ExecutionContext{}, Nodes{a, b}, c); err != nil {
+	if err := tensordot.DoDiff(execution.Context{}, Nodes{a, b}, c); err != nil {
 		log.Fatal("matrix vector: Cannot DoDiff:", err)
 		return
 	}
@@ -636,7 +636,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 	b.bind(dvUnit(bVal))
 	c.bind(dvUnitVar(cVal)) // Will set Output derivative to all ones
 
-	if err := tensordot.DoDiff(ExecutionContext{}, Nodes{a, b}, c); err != nil {
+	if err := tensordot.DoDiff(execution.Context{}, Nodes{a, b}, c); err != nil {
 		log.Fatal("matrices: Cannot DoDiff:", err)
 		return
 	}
@@ -685,7 +685,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 	b.bind(dvUnit(bVal))
 	c.bind(dvUnitVar(cVal)) // Will set Output derivative to all ones
 
-	if err := tensordot.DoDiff(ExecutionContext{}, Nodes{a, b}, c); err != nil {
+	if err := tensordot.DoDiff(execution.Context{}, Nodes{a, b}, c); err != nil {
 		log.Fatal("matrices total contraction: Cannot DoDiff:", err)
 		return
 	}

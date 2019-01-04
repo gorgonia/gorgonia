@@ -109,7 +109,7 @@ func (m *lispMachine) execDevTrans(op devTrans, n *Node, children Nodes) (err er
 	m.logf("DevTrans: %v | %v | %v", op, n.boundTo, child.boundTo)
 
 	var dv *dualValue
-	var cv, cd, v, d Value
+	var cv, cd, v, d value.Value
 	if child.boundTo != nil {
 		var ok bool
 		if dv, ok = child.boundTo.(*dualValue); ok {

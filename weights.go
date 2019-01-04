@@ -18,7 +18,7 @@ import (
 // It's typically used in closures
 type InitWFn func(dt tensor.Dtype, s ...int) interface{}
 
-// Zeroes creates an InitWfn that populates a Value with... zeroes. I don't know what you expected.
+// Zeroes creates an InitWfn that populates a value.Value with... zeroes. I don't know what you expected.
 func Zeroes() InitWFn {
 	f := func(dt tensor.Dtype, s ...int) interface{} {
 		size := tensor.Shape(s).TotalSize()
@@ -67,7 +67,7 @@ func Ones() InitWFn {
 	return f
 }
 
-// RangedFrom creates an InitWFn that populates a Value starting with the provided start, increamenting the number for each element in the value by 1
+// RangedFrom creates an InitWFn that populates a value.Value starting with the provided start, increamenting the number for each element in the value by 1
 func RangedFrom(start int) InitWFn {
 	f := func(dt tensor.Dtype, s ...int) interface{} {
 		size := tensor.Shape(s).TotalSize()
@@ -148,7 +148,7 @@ func Uniform(low, high float64) InitWFn {
 	return f
 }
 
-// GlorotN creates a InitWFn that populates a Value with weights normally sampled using Glorot et al.'s algorithm
+// GlorotN creates a InitWFn that populates a value.Value with weights normally sampled using Glorot et al.'s algorithm
 func GlorotN(gain float64) InitWFn {
 	f := func(dt tensor.Dtype, s ...int) interface{} {
 		switch dt {
@@ -164,7 +164,7 @@ func GlorotN(gain float64) InitWFn {
 	return f
 }
 
-// GlorotU creates a InitWFn that populates a Value with weights uniformly sampled using Glorot et al.'s algorithm
+// GlorotU creates a InitWFn that populates a value.Value with weights uniformly sampled using Glorot et al.'s algorithm
 func GlorotU(gain float64) InitWFn {
 	f := func(dt tensor.Dtype, s ...int) interface{} {
 		switch dt {

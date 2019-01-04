@@ -8,13 +8,14 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
 // Scalar represents a scalar(non-array-based) value. Do note that it's the pointers of the scalar types (F64, F32, etc) that implement
 // the Scalar interface. The main reason is primarily due to optimizations with regards to memory allocation and copying for device interoperability.
 type Scalar interface {
-	Value
+	value.Value
 	isScalar() bool
 }
 
@@ -70,48 +71,48 @@ func (v *U8) Shape() tensor.Shape { return scalarShape }
 // Shape returns a scalar shape for all scalar values
 func (v *B) Shape() tensor.Shape { return scalarShape }
 
-// Size returns 0 for all scalar Values
+// Size returns 0 for all scalar value.Values
 func (v *F64) Size() int { return 0 }
 
-// Size returns 0 for all scalar Values
+// Size returns 0 for all scalar value.Values
 func (v *F32) Size() int { return 0 }
 
-// Size returns 0 for all scalar Values
+// Size returns 0 for all scalar value.Values
 func (v *I) Size() int { return 0 }
 
-// Size returns 0 for all scalar Values
+// Size returns 0 for all scalar value.Values
 func (v *I64) Size() int { return 0 }
 
-// Size returns 0 for all scalar Values
+// Size returns 0 for all scalar value.Values
 func (v *I32) Size() int { return 0 }
 
-// Size returns 0 for all scalar Values
+// Size returns 0 for all scalar value.Values
 func (v *U8) Size() int { return 0 }
 
-// Size returns 0 for all scalar Values
+// Size returns 0 for all scalar value.Values
 func (v *B) Size() int { return 0 }
 
 /* Data() */
 
-// Data returns the original representation of the Value
+// Data returns the original representation of the value.Value
 func (v *F64) Data() interface{} { return v.any() }
 
-// Data returns the original representation of the Value
+// Data returns the original representation of the value.Value
 func (v *F32) Data() interface{} { return v.any() }
 
-// Data returns the original representation of the Value
+// Data returns the original representation of the value.Value
 func (v *I) Data() interface{} { return v.any() }
 
-// Data returns the original representation of the Value
+// Data returns the original representation of the value.Value
 func (v *I64) Data() interface{} { return v.any() }
 
-// Data returns the original representation of the Value
+// Data returns the original representation of the value.Value
 func (v *I32) Data() interface{} { return v.any() }
 
-// Data returns the original representation of the Value
+// Data returns the original representation of the value.Value
 func (v *U8) Data() interface{} { return v.any() }
 
-// Data returns the original representation of the Value
+// Data returns the original representation of the value.Value
 func (v *B) Data() interface{} { return v.any() }
 
 func (v *F64) any() float64 { return float64(*v) }
@@ -315,9 +316,9 @@ func anyToScalar(any interface{}) (Scalar, tensor.Dtype) {
 	}
 }
 
-func anyToValue(any interface{}) (val Value, t hm.Type, dt tensor.Dtype, err error) {
+func anyToValue(any interface{}) (val value.Value, t hm.Type, dt tensor.Dtype, err error) {
 	switch a := any.(type) {
-	case Value:
+	case value.Value:
 		val = a
 		t = TypeOf(a)
 		dt = a.Dtype()

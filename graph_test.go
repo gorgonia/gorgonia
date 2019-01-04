@@ -187,7 +187,7 @@ func TestGraph_SubgraphRoots(t *testing.T) {
 	c := Must(Add(a, b))
 	sc := Must(Sum(c))
 
-	var szVal, scVal Value
+	var szVal, scVal value.Value
 	readSZ := Read(sz, &szVal)
 	readSC := Read(sc, &scVal)
 

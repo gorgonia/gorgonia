@@ -88,3 +88,8 @@ type CopierFrom interface {
 // type Setter interface {
 // 	SetAll(interface{}) error
 // }
+// ValueGrad is any type that has a value and a grad. This is used for Solvers
+type ValueGrad interface {
+	Valuer
+	Grad() (Value, error)
+}

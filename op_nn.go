@@ -9,6 +9,8 @@ import (
 	rng "github.com/leesper/go_rng"
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/blas"
+	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 	"gorgonia.org/vecf32"
 	"gorgonia.org/vecf64"
@@ -72,7 +74,7 @@ func (op randomOp) Type() hm.Type {
 
 func (op randomOp) InferShape(...DimSizer) (tensor.Shape, error) { return op.shape, nil }
 
-func (op randomOp) Do(...Value) (retVal Value, err error) {
+func (op randomOp) Do(...value.Value) (retVal value.Value, err error) {
 	if op.shape.IsScalar() {
 		var v interface{}
 		switch op.dt {
@@ -192,7 +194,7 @@ func (op im2colOp) InferShape(shapes ...DimSizer) (retVal tensor.Shape, err erro
 	return nil, errors.Errorf("expected tensor.Shape. got %T instead", shapes[0])
 }
 
-func (op im2colOp) Do(inputs ...Value) (retVal Value, err error) {
+func (op im2colOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -252,7 +254,7 @@ func (op im2colOp) SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err 
 	return
 }
 
-func (op im2colOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+func (op im2colOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -302,7 +304,7 @@ func (op im2colOp) retHW(h, w int) (retHeight, retWidth int) {
 	return
 }
 
-func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
+func (op im2colOp) do(prealloc, input value.Value) (retVal value.Value, err error) {
 	inputT := input.(*tensor.Dense)
 	outputT := prealloc.(*tensor.Dense)
 
@@ -439,7 +441,7 @@ func (op col2imOp) InferShape(shapes ...DimSizer) (retVal tensor.Shape, err erro
 	return tensor.Shape{op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW}, nil
 }
 
-func (op col2imOp) Do(inputs ...Value) (retVal Value, err error) {
+func (op col2imOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -469,14 +471,14 @@ func (op col2imOp) String() string {
 	return fmt.Sprintf("col2im<(%d,%d), (%d, %d), (%d,%d)>", op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
 
-func (op col2imOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
+func (op col2imOp) UsePreallocDo(prealloc value.Value, inputs ...value.Value) (value.Value, error) {
 	if err := checkArity(op, len(inputs)); err != nil {
 		return nil, err
 	}
 	return op.do(prealloc, inputs[0])
 }
 
-func (op col2imOp) do(prealloc, input Value) (retVal Value, err error) {
+func (op col2imOp) do(prealloc, input value.Value) (retVal value.Value, err error) {
 	b := op.unpaddedB
 	c := op.unpaddedC
 	retHeight := op.unpaddedH
@@ -676,7 +678,7 @@ func (op *maxPoolOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
 	return nil, errors.Errorf("Expected a shape")
 }
 
-func (op *maxPoolOp) Do(inputs ...Value) (retVal Value, err error) {
+func (op *maxPoolOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 	var in, out tensor.Tensor
 	if in, err = op.checkInput(inputs...); err != nil {
 		return nil, err
@@ -704,7 +706,7 @@ func (op *maxPoolOp) String() string {
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
 
-func (op *maxPoolOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
+func (op *maxPoolOp) UsePreallocDo(prealloc value.Value, inputs ...value.Value) (value.Value, error) {
 	var in tensor.Tensor
 	var err error
 	if in, err = op.checkInput(inputs...); err != nil {
@@ -737,7 +739,7 @@ func (op *maxPoolOp) SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, er
 	return Nodes{ret}, nil
 }
 
-func (op *maxPoolOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+func (op *maxPoolOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -754,7 +756,7 @@ func (op *maxPoolOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (e
 	return
 }
 
-func (op *maxPoolOp) checkInput(inputs ...Value) (tensor.Tensor, error) {
+func (op *maxPoolOp) checkInput(inputs ...value.Value) (tensor.Tensor, error) {
 	if err := checkArity(op, len(inputs)); err != nil {
 		return nil, err
 	}
@@ -913,7 +915,7 @@ func (op *maxPoolDiffOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
 	return s, nil
 }
 
-func (op *maxPoolDiffOp) Do(inputs ...Value) (Value, error) {
+func (op *maxPoolDiffOp) Do(inputs ...value.Value) (value.Value, error) {
 	var in, out, pooled, pooledGrad tensor.Tensor
 	var err error
 	if in, pooled, pooledGrad, err = op.checkInput(inputs...); err != nil {
@@ -942,7 +944,7 @@ func (op *maxPoolDiffOp) String() string {
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
 
-func (op *maxPoolDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
+func (op *maxPoolDiffOp) UsePreallocDo(prealloc value.Value, inputs ...value.Value) (value.Value, error) {
 	var in, pooled, pooledGrad tensor.Tensor
 	var err error
 	if in, pooled, pooledGrad, err = op.checkInput(inputs...); err != nil {
@@ -955,7 +957,7 @@ func (op *maxPoolDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, 
 	return nil, errors.Errorf("Cannot do with PreallocDo - expected PreAlloc to be tensor")
 }
 
-func (op *maxPoolDiffOp) checkInput(inputs ...Value) (in, pooled, pooledGrad tensor.Tensor, err error) {
+func (op *maxPoolDiffOp) checkInput(inputs ...value.Value) (in, pooled, pooledGrad tensor.Tensor, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -1076,7 +1078,7 @@ func (op *clampOp) InferShape(shps ...DimSizer) (tensor.Shape, error) {
 	return shps[0].(tensor.Shape), nil
 }
 
-func (op *clampOp) Do(vals ...Value) (Value, error) {
+func (op *clampOp) Do(vals ...value.Value) (value.Value, error) {
 	return nil, nil
 }
 
@@ -1127,11 +1129,11 @@ func (op *BatchNormOp) InferShape(ns ...DimSizer) (tensor.Shape, error) {
 	return ns[0].(tensor.Shape).Clone(), nil
 }
 
-func (op *BatchNormOp) Do(values ...Value) (retVal Value, err error) {
+func (op *BatchNormOp) Do(values ...value.Value) (retVal value.Value, err error) {
 	if err := checkArity(op, len(values)); err != nil {
 		return nil, errors.Wrapf(err, "batchNorm Do")
 	}
-	var v, out Value
+	var v, out value.Value
 	v = values[0]
 	if out, err = CloneValue(v); err != nil {
 		return nil, err
@@ -1155,7 +1157,7 @@ func (op *BatchNormOp) String() string {
 	return fmt.Sprintf("batchnorm-%1.1f-%1.1f", op.momentum, op.epsilon)
 }
 
-func (op *BatchNormOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
+func (op *BatchNormOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) error {
 	diff := &batchnormDiffOp{op}
 	xdv, ydv := getDV(inputs[0], output)
 	_, err := diff.UsePreallocDo(xdv.d, xdv.Value, ydv.d)
@@ -1178,7 +1180,7 @@ func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal N
 	return Nodes{ret}, nil
 }
 
-func (op *BatchNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
+func (op *BatchNormOp) UsePreallocDo(prealloc value.Value, inputs ...value.Value) (retVal value.Value, err error) {
 	v := inputs[0]
 	switch v.Dtype() {
 	case Float64:
@@ -1401,7 +1403,7 @@ func (op *batchnormDiffOp) InferShape(ns ...DimSizer) (tensor.Shape, error) {
 	return ns[0].(tensor.Shape).Clone(), nil
 }
 
-func (op *batchnormDiffOp) Do(values ...Value) (Value, error) {
+func (op *batchnormDiffOp) Do(values ...value.Value) (value.Value, error) {
 	input := values[0].(*tensor.Dense)
 	grad := values[1].(*tensor.Dense)
 	inputGrad := input.Clone().(*tensor.Dense)
@@ -1432,12 +1434,12 @@ func (op *batchnormDiffOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retV
 	return nil, nyi("SymDiff", "batchNormDiffOp")
 }
 
-func (op *batchnormDiffOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
+func (op *batchnormDiffOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) error {
 	// god help those who want to  do 2nd order differentiation on batchnorm
 	return nyi("DoDiff", "batchnormDiffOp")
 }
 
-func (op *batchnormDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
+func (op *batchnormDiffOp) UsePreallocDo(prealloc value.Value, inputs ...value.Value) (retVal value.Value, err error) {
 	input := inputs[0].(*tensor.Dense)
 	inGrad := prealloc.(*tensor.Dense)
 	outGrad := inputs[1].(*tensor.Dense)

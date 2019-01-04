@@ -9,7 +9,7 @@ import (
 // ExternalOp is an op that contains an external context. This allows for ops to be run without needing a VM
 type ExternalOp struct {
 	Op
-	execution.ExecutionContext
+	execution.Context
 
 	Prealloc  value.Value
 	Incr      value.Value // is this a Incr? IncrDoers have higher precedence over PreallocDo
@@ -17,12 +17,12 @@ type ExternalOp struct {
 }
 
 // NewExternalOp creates a new *ExternalOp.
-func NewExternalOp(op Op, ctx execution.ExecutionContext, prealloc value.Value) *ExternalOp {
+func NewExternalOp(op Op, ctx execution.Context, prealloc value.Value) *ExternalOp {
 	retVal := &ExternalOp{
-		Op:               op,
-		ExecutionContext: ctx,
-		Prealloc:         prealloc,
-		UseUnsafe:        false,
+		Op:        op,
+		Context:   ctx,
+		Prealloc:  prealloc,
+		UseUnsafe: false,
 	}
 
 	return retVal
@@ -31,7 +31,7 @@ func NewExternalOp(op Op, ctx execution.ExecutionContext, prealloc value.Value) 
 // DetermineDevice ...
 func (op *ExternalOp) DetermineDevice(inputs Nodes, output *Node) error {
 	dev := output.dataOn
-	var inDev Device = -2
+	var inDev execution.Device = -2
 	var allSame bool
 	for _, in := range inputs {
 		if in.dataOn != dev {
@@ -56,12 +56,12 @@ func (op *ExternalOp) DetermineDevice(inputs Nodes, output *Node) error {
 
 // Do performs the op,
 func (op *ExternalOp) Do(vals ...value.Value) (value.Value, error) {
-	if op.Device == CPU {
+	if op.Device == execution.CPU {
 		switch {
 		case op.Incr != nil:
 			if id, ok := op.Op.(IncrDoer); ok {
 				if err := id.IncrDo(op.Incr, vals...); err != nil {
-					if ver, ok := err.(Valuer); ok {
+					if ver, ok := err.(value.Valuer); ok {
 						return ver.Value(), nil
 					}
 					return nil, err
@@ -96,7 +96,7 @@ func (op *ExternalOp) Do(vals ...value.Value) (value.Value, error) {
 			}
 
 			add := newEBOByType(addOpType, TypeOf(op.Incr), TypeOf(v))
-			addOp := NewExternalOp(add, op.ExecutionContext, nil)
+			addOp := NewExternalOp(add, op.Context, nil)
 			addOp.UseUnsafe = true
 			retVal, err := addOp.Do(op.Incr, v)
 			return retVal, err
@@ -106,7 +106,7 @@ func (op *ExternalOp) Do(vals ...value.Value) (value.Value, error) {
 	case IncrDoer:
 		if op.Incr != nil {
 			if err := o.IncrDo(op.Incr, vals...); err != nil {
-				if ver, ok := err.(Valuer); ok {
+				if ver, ok := err.(value.Valuer); ok {
 					return ver.Value(), nil
 				}
 				return nil, err

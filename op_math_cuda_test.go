@@ -22,7 +22,7 @@ func TestCUDACube(t *testing.T) {
 	g := NewGraph(WithGraphName("Test"))
 	x := NewMatrix(g, tensor.Float32, WithName("x"), WithShape(8, 4), WithValue(xT))
 	x3 := Must(Cube(x))
-	var x3Val Value
+	var x3Val value.Value
 	Read(x3, &x3Val)
 
 	m := NewTapeMachine(g)
@@ -64,7 +64,7 @@ func testOneCUDABasicArithmetic(t *testing.T, bot binOpTest, i int) error {
 	y := NodeFromAny(g, yV, WithName("y"))
 
 	var ret *Node
-	var retVal Value
+	var retVal value.Value
 	var err error
 	if ret, err = bot.binOp(x, y); err != nil {
 		return err

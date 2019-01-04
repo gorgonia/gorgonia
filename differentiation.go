@@ -2,7 +2,6 @@ package gorgonia
 
 import (
 	"github.com/pkg/errors"
-	"golang.org/x/exp/shiny/widget/node"
 	"gonum.org/v1/gonum/graph"
 )
 
@@ -159,7 +158,7 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 	enterLogScope()
 	it := g.Nodes()
 	for it.Next() {
-		n := it.Node().(*node.Node)
+		n := it.Node().(*Node)
 
 		fr := g.From(n.ID()).Len()
 		to := g.To(n.ID()).Len()
@@ -175,9 +174,9 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, sortFail)
 	}
-	sortedNodes := make([]*node.Node, it.Len())
+	sortedNodes := make([]*Node, it.Len())
 	for i := 0; it.Next(); i++ {
-		sortedNodes[i] = sorted.Node().(*node.Node)
+		sortedNodes[i] = sorted.Node().(*Node)
 	}
 
 	symdiffLogf("sorted nodes: %v", sortedNodes)
@@ -212,7 +211,7 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 	// map a node to a list of gradient terms
 	// these  gradient terms will be summed up when we visit the node
 	// when iterating through the nondes in reverse topological order
-	nodeGradMap := make(map[*node.Node]Nodes)
+	nodeGradMap := make(map[*Node]Nodes)
 	for i, n := range outputs {
 		symdiffLogf("Adding outputs for %x", n.ID())
 		nodeGradMap[n] = Nodes{gradOutputs[i]}
@@ -259,7 +258,7 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 		symdiffLogf("nodeGradMap[%x]: %d", node.ID(), nodeGradMap[node])
 		if len(nodeGradMap[node]) > 1 {
 
-			var n *node.Node
+			var n *Node
 			symdiffLogf("reduce adding")
 			if n, err = ReduceAdd(nodeGradMap[node], WithGroupName(gradClust)); err != nil {
 				leaveLogScope()
@@ -360,7 +359,7 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 // of calculating the derivative of the input. Because Gorgonia's Ops are modelled as pure functions (and no tuples)
 // this causes a bit of trouble. With the clever use of scratch space ops multireturn can be simulated.
 // But this causes derivatives to not be set correctly.
-func SetDerivOf(deriv, of *node.Node) {
+func SetDerivOf(deriv, of *Node) {
 	deriv.derivOf = append(deriv.derivOf, of)
 	of.deriv = deriv
 }

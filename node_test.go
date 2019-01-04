@@ -84,7 +84,7 @@ func TestNodeBasics(t *testing.T) {
 
 	n = newNode(In(g), WithValue(F64(3.14)), WithGrad(F64(1)))
 	if _, ok := n.boundTo.(*dualValue); !ok {
-		t.Error("Expected a dual Value")
+		t.Error("Expected a dual value.Value")
 	}
 	returnNode(n)
 

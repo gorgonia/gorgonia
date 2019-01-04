@@ -54,7 +54,7 @@ func random(dt tensor.Dtype) interface{} {
 }
 
 func linregSetup(Float tensor.Dtype) (m, c *Node, machine VM) {
-	var xT, yT Value
+	var xT, yT value.Value
 	xT, yT = xy(Float)
 
 	g := NewGraph()
@@ -76,7 +76,7 @@ func linregSetup(Float tensor.Dtype) (m, c *Node, machine VM) {
 	return m, c, machine
 }
 
-func linregRun(m, c *Node, machine VM, iter int, autoCleanup bool) (retM, retC Value) {
+func linregRun(m, c *Node, machine VM, iter int, autoCleanup bool) (retM, retC value.Value) {
 	if autoCleanup {
 		defer machine.Close()
 	}
@@ -104,7 +104,7 @@ func linregRun(m, c *Node, machine VM, iter int, autoCleanup bool) (retM, retC V
 
 }
 
-func linearRegression(Float tensor.Dtype, iter int) (retM, retC Value) {
+func linearRegression(Float tensor.Dtype, iter int) (retM, retC value.Value) {
 	defer runtime.GC()
 	m, c, machine := linregSetup(Float)
 	return linregRun(m, c, machine, iter, true)
@@ -116,7 +116,7 @@ func linearRegression(Float tensor.Dtype, iter int) (retM, retC Value) {
 //		y = mx + c
 // We want to find an `m` and a `c` that fits the equation well. We'll do it in both float32 and float64 to showcase the extensibility of Gorgonia
 func Example_linearRegression() {
-	var m, c Value
+	var m, c value.Value
 	// Float32
 	m, c = linearRegression(Float32, 500)
 	fmt.Printf("float32: y = %3.3fx + %3.3f\n", m, c)

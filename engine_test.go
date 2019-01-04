@@ -13,7 +13,7 @@ func init() {
 	stdengType = reflect.TypeOf(StandardEngine{})
 }
 
-func assertEngine(v Value, eT reflect.Type) bool {
+func assertEngine(v value.Value, eT reflect.Type) bool {
 	te := engineOf(v)
 	if te == nil {
 		return true
@@ -48,7 +48,7 @@ func assertGraphEngine(t *testing.T, g *ExprGraph, eT reflect.Type) {
 	}
 }
 
-func engineOf(v Value) tensor.Engine {
+func engineOf(v value.Value) tensor.Engine {
 	if t, ok := v.(tensor.Tensor); ok {
 		return t.Engine()
 	}

@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
@@ -317,7 +319,7 @@ func (m *lispMachine) forward() (err error) {
 			return
 		case n.isRandom():
 			machineLogf("binding value of random node")
-			var v Value
+			var v value.Value
 			if v, err = n.op.Do(); err != nil {
 				return errors.Wrapf(err, execFail, n.op, n)
 			}
@@ -337,7 +339,7 @@ func (m *lispMachine) forward() (err error) {
 	// other wise it's time to execute the op
 	m.logf("execute Op")
 	dev := n.dataOn
-	op := NewExternalOp(n.op, ExecutionContext{m, dev}, nil)
+	op := NewExternalOp(n.op, execution.Context{m, dev}, nil)
 
 	// m.watchedLogf("Result of execution of this node would reside in %v", dev)
 	var output *dualValue
@@ -354,9 +356,9 @@ func (m *lispMachine) forward() (err error) {
 		}
 
 		var allocV, allocD bool
-		var v, d Value
+		var v, d value.Value
 		if v, allocV, err = child.ValueOnDevice(dev, m); err != nil {
-			return errors.Wrapf(err, "Unable to get Value on Device %v", dev)
+			return errors.Wrapf(err, "Unable to get value.Value on Device %v", dev)
 		}
 		if d, allocD, err = child.GradOnDevice(dev, m); err != nil {
 			if !child.isRandom() {
@@ -418,7 +420,7 @@ func (m *lispMachine) forward() (err error) {
 			machineLogf("ReadOp: %v ", op)
 			child := children[0]
 			childVal := child.boundTo
-			if child.Device() != CPU {
+			if child.Device() != execution.CPU {
 				m.Signal() // get work to be done first
 
 				if dv, ok := n.children[0].boundTo.(*dualValue); ok {
@@ -438,7 +440,7 @@ func (m *lispMachine) forward() (err error) {
 
 	case n.boundTo == nil:
 		m.watchedLogf("Fresh, unencountered node, so dvBind(%v)", op)
-		if dev != CPU {
+		if dev != execution.CPU {
 			var dt tensor.Dtype
 			if dt, err = dtypeOf(n.t); err != nil {
 				return errors.Wrapf(err, dtypeExtractionFail, n.t)
@@ -450,7 +452,7 @@ func (m *lispMachine) forward() (err error) {
 				return errors.Wrapf(err, allocFail, memsize, dev)
 			}
 
-			var reuse Value
+			var reuse value.Value
 			if reuse, err = makeValueFromMem(n.t, n.shape, mem); err != nil {
 				return errors.Wrapf(err, makeValueFail, n.t, n.shape)
 			}
@@ -474,7 +476,7 @@ func (m *lispMachine) forward() (err error) {
 			return errors.Wrap(err, bindFail)
 		}
 
-		if dev != CPU {
+		if dev != execution.CPU {
 			op.Prealloc = output.Value
 		}
 
@@ -491,7 +493,7 @@ func (m *lispMachine) forward() (err error) {
 	if aop, ok := op.Op.(ADOp); ok && m.runBwd() {
 		instr := adInstr{
 			ADOp: aop,
-			ctx:  op.ExecutionContext,
+			ctx:  op.Context,
 
 			inputs: n.children, // this is correct.
 			output: n,
@@ -657,16 +659,16 @@ func (m *lispMachine) leaveLogScope() {
 // adInstr is an autodifferentiation instruction
 type adInstr struct {
 	ADOp
-	ctx ExecutionContext
+	ctx execution.Context
 
 	inputs Nodes
 	output *Node
 }
 
 func (instr adInstr) do() error {
-	if instr.output.dataOn != CPU {
+	if instr.output.dataOn != execution.CPU {
 		for _, in := range instr.inputs {
-			if in.dataOn == CPU {
+			if in.dataOn == execution.CPU {
 				// ensure everything gets executed in the GPU first
 				instr.ctx.Signal()
 				break

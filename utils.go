@@ -9,6 +9,8 @@ import (
 	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
+	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
@@ -17,9 +19,9 @@ const (
 	maxFloat64 = math.MaxFloat64
 )
 
-// NodesToValueGrads is a utility function that converts a Nodes to a slice of ValueGrad for the solvers
-func NodesToValueGrads(in Nodes) (out []ValueGrad) {
-	out = make([]ValueGrad, len(in))
+// NodesToValueGrads is a utility function that converts a Nodes to a slice of value.value.ValueGrad for the solvers
+func NodesToValueGrads(in Nodes) (out []value.ValueGrad) {
+	out = make([]value.ValueGrad, len(in))
 	for i := range in {
 		out[i] = in[i]
 	}
@@ -45,7 +47,7 @@ func cloneNodes(node Nodes, replacements map[*Node]*Node) Nodes {
 }
 
 // valuesToInts will FORCIBLY cast floats to ints.
-func valuesToInts(values []Value) (retVal []int, err error) {
+func valuesToInts(values []value.Value) (retVal []int, err error) {
 	retVal = tensor.BorrowInts(len(values))
 	for i, v := range values {
 		var intV int
@@ -65,7 +67,7 @@ func valuesToInts(values []Value) (retVal []int, err error) {
 		case Scalar:
 			return nil, errors.Errorf(nyiTypeFail, "valueToInts", v)
 		default:
-			return nil, errors.Errorf("Expected values to be all Scalar Value. Got %v of %T instead", v, v)
+			return nil, errors.Errorf("Expected values to be all Scalar value.Value. Got %v of %T instead", v, v)
 
 		}
 		retVal[i] = intV
@@ -73,7 +75,7 @@ func valuesToInts(values []Value) (retVal []int, err error) {
 	return
 }
 
-func valuesToTensors(values []Value) (retVal []tensor.Tensor, err error) {
+func valuesToTensors(values []value.Value) (retVal []tensor.Tensor, err error) {
 	retVal = make([]tensor.Tensor, len(values))
 	for i, v := range values {
 		if vt, ok := v.(tensor.Tensor); ok {
@@ -110,14 +112,14 @@ func intRange(start, end int) []int {
 	return retVal
 }
 
-func ones(dt tensor.Dtype, sizes ...int) (retVal Value) {
+func ones(dt tensor.Dtype, sizes ...int) (retVal value.Value) {
 	if len(sizes) == 0 {
 		return one(dt)
 	}
 	return tensor.Ones(dt, sizes...)
 }
 
-func hasInf(v Value, dev Device) bool {
+func hasInf(v value.Value, dev execution.Device) bool {
 	switch vt := v.(type) {
 	case *F64:
 		return false
@@ -160,7 +162,7 @@ func hasInf(v Value, dev Device) bool {
 	}
 }
 
-func hasNaN(v Value, dev Device) bool {
+func hasNaN(v value.Value, dev execution.Device) bool {
 	switch vt := v.(type) {
 	case *F64:
 		return false
@@ -205,9 +207,9 @@ func hasNaN(v Value, dev Device) bool {
 	}
 }
 
-func setZero(val Value) (retVal Value) {
+func setZero(val value.Value) (retVal value.Value) {
 	switch v := val.(type) {
-	case Zeroer:
+	case value.Zeroer:
 		v.Zero()
 		return v
 	case Scalar:
