@@ -170,7 +170,9 @@ func (g *ExprGraph) Constant(v Value) *Node {
 func (g *ExprGraph) String() string {
 	var buf bytes.Buffer
 	buf.WriteString("Graph: [\n")
-	for _, n := range g.byHash {
+	it := g.Nodes()
+	for it.Next() {
+		n := it.Node().(*Node)
 		fmt.Fprintf(&buf, "\t%d: %s\n", n.Hashcode(), n)
 	}
 	buf.WriteString("]")
