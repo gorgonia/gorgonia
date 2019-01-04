@@ -11,7 +11,7 @@ import (
 // DOTID is used for the graphviz output. It fulfils the gonum encoding interface
 func (n *Node) DOTID() string {
 	//	return strconv.Itoa(int(n.ID()))
-	return fmt.Sprintf("Node_%p", n)
+	return fmt.Sprintf("Node_%v_%p", n.id, n)
 }
 
 // Attributes is for graphviz output. It specifies the "label" of the node (a table)

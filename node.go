@@ -8,7 +8,6 @@ import (
 	"hash/fnv"
 	"log"
 
-	"github.com/awalterschulze/gographviz"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/debugger"
@@ -50,6 +49,16 @@ type Node struct {
 	unchanged     bool // has this node been modified
 	isStmt        bool // is this a statement node
 	ofInterest    bool // is this node of particular interest? (for debugging)
+}
+
+// SetName of the node
+func (n *Node) SetName(name string) {
+	n.name = name
+}
+
+// GetName of the node
+func (n *Node) GetName() string {
+	return n.name
 }
 
 // NodeConsOpt is a function that provides construction options for any Node.
@@ -608,28 +617,6 @@ func (n *Node) dotCluster() string {
 	return group
 }
 
-func (n *Node) dot(g *gographviz.Escape, graphName string, seen map[*Node]string) string {
-	var id string
-	var ok bool
-	if id, ok = seen[n]; !ok {
-		id = n.dotString(g, graphName)
-		seen[n] = id
-	} else {
-		return id
-	}
-
-	for i, child := range n.children {
-		childID := child.dot(g, graphName, seen)
-		edgeAttrs := map[string]string{
-			"taillabel":  fmt.Sprintf(" %d ", i+1),
-			"labelfloat": "false",
-		}
-
-		g.AddPortEdge(id, id+":anchor:s", childID, childID+":anchor:n", true, edgeAttrs)
-	}
-	return id
-}
-
 func (n *Node) fix() {
 	if n.IsScalar() {
 		n.shape = scalarShape
@@ -711,25 +698,6 @@ func (n *Node) seqWalk() Nodes {
 		retVal = append(retVal, child.seqWalk()...)
 	}
 	return retVal
-}
-
-// dotString returns the ID of the node.
-func (n *Node) dotString(g *gographviz.Escape, graphName string) string {
-	var buf bytes.Buffer
-	if err := exprNodeTempl.ExecuteTemplate(&buf, "node", n); err != nil {
-		panic(err)
-	}
-
-	id := fmt.Sprintf("Node_%p", n)
-	label := buf.String()
-	attrs := map[string]string{
-		"fontname": "monospace",
-		"shape":    "none",
-		"label":    label,
-	}
-
-	g.AddNode(graphName, id, attrs)
-	return id
 }
 
 // Group the node belongs to (useful for graphviz representation)
