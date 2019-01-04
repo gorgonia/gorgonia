@@ -56,6 +56,16 @@ func NewGraph(opts ...Graphconopt) *ExprGraph {
 	return g
 }
 
+// Attach the node to the graph and returns the self node.
+//    a := g.Attach(g.NewNode())
+// is equivalent to
+// a := NewNode()
+// g.AddNode(a)
+func (g *ExprGraph) Attach(n *Node) *Node {
+	g.AddNode(n)
+	return n
+}
+
 // Has returns true if the id is present in the graph
 func (g *ExprGraph) Has(id int64) bool {
 	it := g.Nodes()

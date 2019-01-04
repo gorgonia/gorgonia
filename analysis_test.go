@@ -17,8 +17,7 @@ func TestBuildIntervals(t *testing.T) {
 
 	z2 := Must(Square(z))
 	z2y := Must(HadamardProd(z2, y))
-	c := NewConstant(1.0, WithName("FOOO")) // const
-	g.addToAll(c)                           // this is a hack because there is no good way to get a constant into a graph since In() won't work on constatns
+	c := g.Attach(g.NewConstant(1.0, WithName("FOOO"))) // const
 
 	// because sorting is unstable, we need to test many times
 	var sorted Nodes

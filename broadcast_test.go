@@ -1,7 +1,6 @@
 package gorgonia
 
 import (
-	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -55,10 +54,9 @@ func TestBroadcast(t *testing.T) {
 	yT := tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{100, 200}))
 
 	g = NewGraph()
-	x = NewMatrix(g, Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
-	y = NewVector(g, Float64, WithShape(2), WithValue(yT), WithName("y"))
+	x = g.NewMatrix(Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
+	y = g.NewVector(Float64, WithShape(2), WithValue(yT), WithName("y"))
 	if z, err = Broadcast(addOpType, x, y, NewBroadcastPattern(nil, []byte{1})); err != nil {
-		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
 		t.Fatal(err)
 	}
 
@@ -70,10 +68,9 @@ func TestBroadcast(t *testing.T) {
 	assert.Equal([]float64{100, 101, 102, 203, 204, 205}, extractF64s(z.Value()))
 
 	g = NewGraph()
-	x = NewMatrix(g, Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
-	y = NewVector(g, Float64, WithShape(2), WithValue(yT), WithName("y"))
+	x = g.NewMatrix(Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
+	y = g.NewVector(Float64, WithShape(2), WithValue(yT), WithName("y"))
 	if z, err = Broadcast(addOpType, y, x, NewBroadcastPattern([]byte{1}, nil)); err != nil {
-		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
 		t.Fatalf("%+v", err)
 	}
 
