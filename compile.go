@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/pkg/errors"
+	"golang.org/x/exp/shiny/widget/node"
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/tensor"
 )
@@ -14,7 +15,7 @@ import (
 // that is executed by an interpreter
 
 // Compile takes a graph and outputs a program suitable for *tapeMachine to run
-func compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error) {
+func compile(g *ExprGraph) (prog *program, locMap map[*node.Node]register, err error) {
 	compileLogf("Compiling")
 	enterLogScope()
 	defer leaveLogScope()
@@ -30,13 +31,13 @@ func compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	// Set the children of the nodes
 	all := g.Nodes()
 	for all.Next() {
-		n := all.Node().(*Node)
+		n := all.Node().(*node.Node)
 		if n.children == nil {
 			child := getOrderedChildren(g, n)
 			//child := g.From(n.ID())
-			n.children = make([]*Node, child.Len())
+			n.children = make([]*node.Node, child.Len())
 			for i := 0; child.Next(); i++ {
-				n.children[i] = child.Node().(*Node)
+				n.children[i] = child.Node().(*node.Node)
 			}
 		}
 
@@ -47,9 +48,9 @@ func compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, sortFail)
 	}
-	sortedNodes := make([]*Node, it.Len())
+	sortedNodes := make([]*node.Node, it.Len())
 	for i := 0; it.Next(); i++ {
-		sortedNodes[i] = it.Node().(*Node)
+		sortedNodes[i] = it.Node().(*node.Node)
 	}
 	reverseNodes(sortedNodes)
 
@@ -82,7 +83,7 @@ func compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 // CompileFunction takes a graph, subsets it based on the input and output nodes provided and outputs a program suitable for *tapeMachine to run.
 // It is analogous to theano.Function().
 // If some input nodes are not used or is not reachable, this function will return an error
-func compileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap map[*Node]register, err error) {
+func compileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap map[*node.Node]register, err error) {
 	compileLogf("CompileFunctionNEW. Inputs: %d; outputs: %d", inputs, outputs)
 	enterLogScope()
 	defer leaveLogScope()
@@ -126,13 +127,13 @@ func compileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap
 
 // codgenerator holds the state for the code generation process
 type codegenerator struct {
-	locMap     map[*Node]register
-	lastWrites map[register]*Node
+	locMap     map[*node.Node]register
+	lastWrites map[register]*node.Node
 	flushed    map[int]struct{}
 	allocated  map[register]struct{}
 	freed      map[register]struct{}
 	deferFree  map[register]struct{}
-	instrMap   map[*Node]fragment
+	instrMap   map[*node.Node]fragment
 	queue      []int // queue to flush
 
 	lastReads map[register]int
@@ -149,13 +150,13 @@ type codegenerator struct {
 
 func newCodeGenerator(g *ExprGraph, inputs graph.Iterator, sorted Nodes, df *dataflow) *codegenerator {
 	return &codegenerator{
-		locMap:     make(map[*Node]register),
-		lastWrites: make(map[register]*Node),
+		locMap:     make(map[*node.Node]register),
+		lastWrites: make(map[register]*node.Node),
 		flushed:    make(map[int]struct{}),
 		allocated:  make(map[register]struct{}),
 		freed:      make(map[register]struct{}),
 		deferFree:  make(map[register]struct{}),
-		instrMap:   make(map[*Node]fragment),
+		instrMap:   make(map[*node.Node]fragment),
 		lastReads:  make(map[register]int),
 
 		g:      g,
@@ -167,7 +168,7 @@ func newCodeGenerator(g *ExprGraph, inputs graph.Iterator, sorted Nodes, df *dat
 
 // addInstr adds the instruction to the associated node in the instrMap.
 // when we add instructions to the node map, we also try to determine the size of the allocations required
-func (cg *codegenerator) addInstr(node *Node, instr tapeInstr) {
+func (cg *codegenerator) addInstr(node *node.Node, instr tapeInstr) {
 	if instrs := cg.instrMap[node]; instrs != nil {
 		instrs = append(instrs, instr)
 		cg.instrMap[node] = instrs
@@ -240,7 +241,7 @@ func (cg *codegenerator) addInstr(node *Node, instr tapeInstr) {
 // every time an instruction is added to the list of instructions,
 // also add the instructionID and the register the instruction writes to.
 // This helps with determining if a flushInstruction needs to be issued.
-func (cg *codegenerator) updateLastWrites(reg register, n *Node) {
+func (cg *codegenerator) updateLastWrites(reg register, n *node.Node) {
 	cg.lastWrites[reg] = n
 }
 
@@ -252,7 +253,7 @@ func (cg *codegenerator) flush() {
 	cg.queue = cg.queue[:0]
 }
 
-func (cg *codegenerator) addArg(node *Node, interv *interval) {
+func (cg *codegenerator) addArg(node *node.Node, interv *interval) {
 	compileLogf("LoadArg: %x", node.ID())
 	writeTo := interv.result
 
@@ -269,7 +270,7 @@ func (cg *codegenerator) addArg(node *Node, interv *interval) {
 	cg.updateLastWrites(writeTo, node)
 }
 
-func (cg *codegenerator) addStmt(node *Node, interv *interval, i int) {
+func (cg *codegenerator) addStmt(node *node.Node, interv *interval, i int) {
 	compileLogf("Add Statement")
 	enterLogScope()
 	defer leaveLogScope()
@@ -366,7 +367,7 @@ func (cg *codegenerator) addStmt(node *Node, interv *interval, i int) {
 	}
 }
 
-func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i int) {
+func (cg *codegenerator) addNode(node, replacement *node.Node, interv *interval, i int) {
 	compileLogf("AddNode: %x %v", node.ID(), node.op)
 	compileLogf("interval %v", interv)
 	enterLogScope()
@@ -525,7 +526,7 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 	}
 }
 
-func (cg *codegenerator) insertFree(instrID int, node *Node) {
+func (cg *codegenerator) insertFree(instrID int, node *node.Node) {
 	compileLogf("Inserting Free for instrID %d | instr: %v | op: %v", instrID, node, node.op)
 	enterLogScope()
 	defer leaveLogScope()
@@ -545,7 +546,7 @@ func (cg *codegenerator) insertFree(instrID int, node *Node) {
 
 	// check if anything needs to be freed
 	for _, read := range reads {
-		var readNode *Node
+		var readNode *node.Node
 		for n, reg := range cg.locMap {
 			if reg == read {
 				if readNode == nil {
@@ -612,7 +613,7 @@ func (cg *codegenerator) insertLastFrees() int {
 	return instructionsAdded
 }
 
-func (cg *codegenerator) gen() (*program, map[*Node]register) {
+func (cg *codegenerator) gen() (*program, map[*node.Node]register) {
 	compileLogf("Generating from SORTED: %v", cg.sorted)
 	enterLogScope()
 	defer leaveLogScope()
@@ -665,7 +666,7 @@ func compileState(w io.Writer, g *ExprGraph, df *dataflow) {
 	var rows [][]string
 	it := g.Nodes()
 	for it.Next() {
-		n := it.Node().(*Node)
+		n := it.Node().(*node.Node)
 		interv := df.intervals[n]
 
 		row := make([]string, len(header))

@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"golang.org/x/exp/shiny/widget/node"
+	"gorgonia.org/gorgonia/internal/value"
 )
 
 // NoOpError is an error returned when an operation does nothing.
@@ -30,11 +32,11 @@ func (noStabilizationErr) noStabilization() bool { return true }
 
 // noIncrErr is an error used internally when a Value cannot be incremented
 type noIncrErr struct {
-	v Value
+	v value.Value
 }
 
-func (noIncrErr) Error() string  { return incrErr }
-func (e noIncrErr) Value() Value { return e.v }
+func (noIncrErr) Error() string        { return incrErr }
+func (e noIncrErr) Value() value.Value { return e.v }
 
 // oomError represents an Out of tensor.Memory error. It is typically used for CUDA related machine work
 type oomError struct {
@@ -54,12 +56,12 @@ func (err AutoDiffError) Error() string { return "AutoDiffError" }
 // vmContextualError is an error that is used to wrap errors that arise from the VM
 type vmContextualError struct {
 	error
-	node  *Node // which node was it processing
-	instr int   // what instruction ID it was
+	node  *node.Node // which node was it processing
+	instr int        // what instruction ID it was
 }
 
-func (err vmContextualError) Node() *Node        { return err.node }
-func (err vmContextualError) Value() Value       { return err.node.Value() }
+func (err vmContextualError) Node() *node.Node   { return err.node }
+func (err vmContextualError) Value() value.Value { return err.node.Value() }
 func (err vmContextualError) InstructionID() int { return err.instr }
 
 func nyi(what string, implFor interface{}) error {
@@ -81,14 +83,14 @@ func checkErrSetDeriv(err error, dv *dualValue) error {
 // SymDiffError provides the context at which an error occured
 type SymDiffError struct {
 	nodes   Nodes
-	single  *Node
-	grad    *Node
-	gradMap map[*Node]Nodes
+	single  *node.Node
+	grad    *node.Node
+	gradMap map[*node.Node]Nodes
 	err     error
 }
 
-func (err SymDiffError) Error() string          { return err.err.Error() }
-func (err SymDiffError) Nodes() Nodes           { return err.nodes }
-func (err SymDiffError) Node() *Node            { return err.single }
-func (err SymDiffError) Grads() map[*Node]Nodes { return err.gradMap }
-func (err SymDiffError) Grad() *Node            { return err.grad }
+func (err SymDiffError) Error() string               { return err.err.Error() }
+func (err SymDiffError) Nodes() Nodes                { return err.nodes }
+func (err SymDiffError) Node() *node.Node            { return err.single }
+func (err SymDiffError) Grads() map[*node.Node]Nodes { return err.gradMap }
+func (err SymDiffError) Grad() *node.Node            { return err.grad }

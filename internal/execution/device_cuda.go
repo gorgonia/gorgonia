@@ -1,6 +1,6 @@
 // +build cuda
 
-package gorgonia
+package execution
 
 import (
 	"gorgonia.org/cu"

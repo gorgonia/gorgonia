@@ -5,16 +5,18 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"golang.org/x/exp/shiny/widget/node"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
-// Functions in this file returns *Node and panics if an error happens
+// Functions in this file returns *node.Node and panics if an error happens
 
 /* Helper functions to create new input nodes */
 
 // Must indicates a node must be created. If there isn't a node created, or there was an error,
 // it subsumes the error, and immediately panics
-func Must(n *Node, err error, opts ...NodeConsOpt) *Node {
+func Must(n *node.Node, err error, opts ...NodeConsOpt) *node.Node {
 	if err != nil || n == nil {
 		panic(err)
 	}
@@ -22,7 +24,7 @@ func Must(n *Node, err error, opts ...NodeConsOpt) *Node {
 }
 
 // NodeFromAny creates a Node from a tensor.Tensor, automatically filling in shape and type info
-func (g *ExprGraph) NodeFromAny(any interface{}, opts ...NodeConsOpt) *Node {
+func (g *ExprGraph) NodeFromAny(any interface{}, opts ...NodeConsOpt) *node.Node {
 	v, t, dt, err := anyToValue(any)
 	if err != nil {
 		panic(err)
@@ -44,10 +46,10 @@ func (g *ExprGraph) NodeFromAny(any interface{}, opts ...NodeConsOpt) *Node {
 }
 
 // NewScalar creates a Node representing a variable that holds a scalar value
-func (g *ExprGraph) NewScalar(t tensor.Dtype, opts ...NodeConsOpt) *Node {
+func (g *ExprGraph) NewScalar(t tensor.Dtype, opts ...NodeConsOpt) *node.Node {
 	curOpts := []NodeConsOpt{WithType(t), WithShape()}
 	curOpts = append(curOpts, opts...)
-	n := g.NewNode().(*Node)
+	n := g.NewNode().(*node.Node)
 	for _, opt := range curOpts {
 		opt(n)
 	}
@@ -55,11 +57,11 @@ func (g *ExprGraph) NewScalar(t tensor.Dtype, opts ...NodeConsOpt) *Node {
 }
 
 // NewVector creates a Node representing a variable that holds a vector (nx1 matrix)
-func (g *ExprGraph) NewVector(t tensor.Dtype, opts ...NodeConsOpt) *Node {
+func (g *ExprGraph) NewVector(t tensor.Dtype, opts ...NodeConsOpt) *node.Node {
 	tt := makeTensorType(1, t)
 	curOpts := []NodeConsOpt{WithType(tt)}
 	curOpts = append(curOpts, opts...)
-	n := g.NewNode().(*Node)
+	n := g.NewNode().(*node.Node)
 	for _, opt := range curOpts {
 		opt(n)
 	}
@@ -67,11 +69,11 @@ func (g *ExprGraph) NewVector(t tensor.Dtype, opts ...NodeConsOpt) *Node {
 }
 
 // NewMatrix creates a Node representing a variable that holds a matrix (nxm)
-func (g *ExprGraph) NewMatrix(t tensor.Dtype, opts ...NodeConsOpt) *Node {
+func (g *ExprGraph) NewMatrix(t tensor.Dtype, opts ...NodeConsOpt) *node.Node {
 	tt := makeTensorType(2, t)
 	curOpts := []NodeConsOpt{WithType(tt)}
 	curOpts = append(curOpts, opts...)
-	n := g.NewNode().(*Node)
+	n := g.NewNode().(*node.Node)
 	for _, opt := range curOpts {
 		opt(n)
 	}
@@ -79,11 +81,11 @@ func (g *ExprGraph) NewMatrix(t tensor.Dtype, opts ...NodeConsOpt) *Node {
 }
 
 // NewTensor creates a Node representing a variable that holds a tensor (any n-dimensional array with dimensions greater than 2)
-func (g *ExprGraph) NewTensor(t tensor.Dtype, dims int, opts ...NodeConsOpt) *Node {
+func (g *ExprGraph) NewTensor(t tensor.Dtype, dims int, opts ...NodeConsOpt) *node.Node {
 	tt := makeTensorType(dims, t)
 	curOpts := []NodeConsOpt{WithType(tt)}
 	curOpts = append(curOpts, opts...)
-	n := g.NewNode().(*Node)
+	n := g.NewNode().(*node.Node)
 	for _, opt := range curOpts {
 		opt(n)
 	}
@@ -91,12 +93,12 @@ func (g *ExprGraph) NewTensor(t tensor.Dtype, dims int, opts ...NodeConsOpt) *No
 }
 
 // NewConstant takes in any reasonable value and makes it a constant node.
-func (g *ExprGraph) NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
+func (g *ExprGraph) NewConstant(v interface{}, opts ...NodeConsOpt) *node.Node {
 	var op Op
 	var t hm.Type
 	var name string
 	var s tensor.Shape
-	var val Value
+	var val value.Value
 
 	val, t, _, err := anyToValue(v)
 	if err != nil {
@@ -115,7 +117,7 @@ func (g *ExprGraph) NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 		panic(fmt.Sprintf("HELP. Op: %v, t: %v", op, t))
 	}
 
-	n := g.NewNode().(*Node)
+	n := g.NewNode().(*node.Node)
 	consOpts := []NodeConsOpt{WithName(name), WithOp(op), WithType(t), WithShape(s...), WithValue(val), WithName(fmt.Sprintf("%v", v))}
 	consOpts = append(consOpts, opts...)
 	for i := range opts {
@@ -127,7 +129,7 @@ func (g *ExprGraph) NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 // UniformRandomNode creates an input node that has a random op so everytime the node is passed, random values will be plucked from
 // a uniform distribution. The type of the node depends on the
 // shape passed in. To get a scalar value at run time, don't pass in any shapes
-func UniformRandomNode(g *ExprGraph, dt tensor.Dtype, low, high float64, shape ...int) *Node {
+func UniformRandomNode(g *ExprGraph, dt tensor.Dtype, low, high float64, shape ...int) *node.Node {
 	op := makeRandomOp(uniform, dt, low, high, shape...)
 	s := tensor.Shape(shape)
 
@@ -137,7 +139,7 @@ func UniformRandomNode(g *ExprGraph, dt tensor.Dtype, low, high float64, shape .
 	} else {
 		t = makeTensorType(s.Dims(), dt)
 	}
-	n := g.NewNode().(*Node)
+	n := g.NewNode().(*node.Node)
 	WithType(t)(n)
 	WithOp(op)(n)
 	WithShape(shape...)(n)
@@ -147,7 +149,7 @@ func UniformRandomNode(g *ExprGraph, dt tensor.Dtype, low, high float64, shape .
 // GaussianRandomNode creates an input node that has a random op so everytime the node is passed, random values will be plucked from
 // a gaussian distribution with the mean and stdev provided. The type of the node depends on the
 // shape passed in. To get a scalar value at run time, don't pass in any shapes
-func GaussianRandomNode(g *ExprGraph, dt tensor.Dtype, mean, stdev float64, shape ...int) *Node {
+func GaussianRandomNode(g *ExprGraph, dt tensor.Dtype, mean, stdev float64, shape ...int) *node.Node {
 	op := makeRandomOp(gaussian, dt, mean, stdev, shape...)
 	s := tensor.Shape(shape)
 
@@ -157,7 +159,7 @@ func GaussianRandomNode(g *ExprGraph, dt tensor.Dtype, mean, stdev float64, shap
 	} else {
 		t = makeTensorType(s.Dims(), dt)
 	}
-	n := g.NewNode().(*Node)
+	n := g.NewNode().(*node.Node)
 	WithType(t)(n)
 	WithOp(op)(n)
 	WithShape(shape...)(n)
@@ -170,7 +172,7 @@ func GaussianRandomNode(g *ExprGraph, dt tensor.Dtype, mean, stdev float64, shap
 //
 // Whilst technically the number of trials of a binomal distribution should be a discrete value (you can't have half a trial), to keep with
 // API uniformity, trials is passed in as a float64, but will be truncated to an int at runtime.
-func BinomialRandomNode(g *ExprGraph, dt tensor.Dtype, trials, prob float64, shape ...int) *Node {
+func BinomialRandomNode(g *ExprGraph, dt tensor.Dtype, trials, prob float64, shape ...int) *node.Node {
 	op := makeRandomOp(binomial, dt, trials, prob, shape...)
 	s := tensor.Shape(shape)
 
@@ -181,7 +183,7 @@ func BinomialRandomNode(g *ExprGraph, dt tensor.Dtype, trials, prob float64, sha
 		t = makeTensorType(s.Dims(), dt)
 	}
 
-	n := g.NewNode().(*Node)
+	n := g.NewNode().(*node.Node)
 	WithType(t)(n)
 	WithOp(op)(n)
 	WithShape(shape...)(n)
@@ -189,7 +191,7 @@ func BinomialRandomNode(g *ExprGraph, dt tensor.Dtype, trials, prob float64, sha
 }
 
 // OneHotVector creates a node representing a one hot vector
-func OneHotVector(g *ExprGraph, id, classes int, t tensor.Dtype, opts ...NodeConsOpt) *Node {
+func OneHotVector(g *ExprGraph, id, classes int, t tensor.Dtype, opts ...NodeConsOpt) *node.Node {
 	T := tensor.New(tensor.Of(t), tensor.WithShape(classes))
 	var err error
 	// This is stupid, I want generics. - docmerlin
@@ -214,7 +216,7 @@ func OneHotVector(g *ExprGraph, id, classes int, t tensor.Dtype, opts ...NodeCon
 }
 
 // Grad takes a scalar cost node and a list of with-regards-to, and returns the gradient
-func Grad(cost *Node, WRTs ...*Node) (retVal Nodes, err error) {
+func Grad(cost *node.Node, WRTs ...*node.Node) (retVal Nodes, err error) {
 	g := cost.g
 	symdiffLogf("Cost:%v", cost)
 	if !cost.IsScalar() {
@@ -235,7 +237,7 @@ func Grad(cost *Node, WRTs ...*Node) (retVal Nodes, err error) {
 		return
 	}
 
-	var gradOut *Node
+	var gradOut *node.Node
 	switch dt {
 	case Float64:
 		gradOut = onef64(g)
@@ -249,10 +251,10 @@ func Grad(cost *Node, WRTs ...*Node) (retVal Nodes, err error) {
 	return Backpropagate(Nodes{cost}, Nodes{gradOut}, Nodes(WRTs))
 }
 
-// Let binds a Value to a node that is a variable. A variable is represented as a *Node with no Op.
+// Let binds a value.Value to a node that is a variable. A variable is represented as a *node.Node with no Op.
 // It is equivalent to :
 //		x = 2
-func Let(n *Node, be interface{}) error {
+func Let(n *node.Node, be interface{}) error {
 	if !n.isInput() {
 		return errors.New("Cannot bind a value to a non input node")
 	}
@@ -260,10 +262,10 @@ func Let(n *Node, be interface{}) error {
 	return UnsafeLet(n, be)
 }
 
-// UnsafeLet binds a Value to any node, not just a variable node. This means that you can use it to change any node's value at the runtime of the graph. UNSAFE!
+// UnsafeLet binds a value.Value to any node, not just a variable node. This means that you can use it to change any node's value at the runtime of the graph. UNSAFE!
 //
 // Additional notes: if `be` is a tensor.Slice, and the node's op is a sliceOp or sliceIncrOp, the op's slice will be replaced with the new slice.
-func UnsafeLet(n *Node, be interface{}) error {
+func UnsafeLet(n *node.Node, be interface{}) error {
 	switch v := be.(type) {
 	case tensor.Slice:
 		switch so := n.op.(type) {
@@ -277,13 +279,13 @@ func UnsafeLet(n *Node, be interface{}) error {
 			return errors.Errorf("Trying to Let() a node with a slice. Node's op is %v, not sliceOp", n.op)
 		}
 
-	case Value:
+	case value.Value:
 		if !n.Dtype().Eq(v.Dtype()) {
 			return errors.Errorf("Unable to let %v be %v. Expected Dtype of %v. Got %v instead", n.name, be, n.Dtype(), v.Dtype())
 		}
 		n.bind(v)
 	default:
-		var val Value
+		var val value.Value
 		var err error
 		if val, _, _, err = anyToValue(be); err != nil {
 			return errors.Wrapf(err, anyToValueFail, be, be)
@@ -298,20 +300,20 @@ func UnsafeLet(n *Node, be interface{}) error {
 //		a = b
 // where a and b are both variables
 /*
-func Set(a, b *Node) (retVal *Node) {
+func Set(a, b *node.Node) (retVal *node.Node) {
 	op := letOp{}
 	name := fmt.Sprintf("%v %s %v", a, op, b)
 	return NewUniqueNode(WithOp(op), WithChildren(Nodes{a, b}), WithName(name), In(a.g))
 }
 */
 
-// Read is one of those special snowflake tumblrina *Nodes. It allows for extraction of the value of the *Node at runtime
-// into a Value. Note that a *Value (a pointer to a Value) is passed into this function, not a Value.
-func Read(n *Node, into *Value) *Node {
+// Read is one of those special snowflake tumblrina *node.Nodes. It allows for extraction of the value of the *node.Node at runtime
+// into a value.Value. Note that a *Value (a pointer to a value.Value) is passed into this function, not a value.Value.
+func Read(n *node.Node, into *value.Value) *node.Node {
 	op := readOp{into}
 	g := n.g
 	name := fmt.Sprintf("read %v into %v", n, into)
-	retVal := g.NewNode().(*Node)
+	retVal := g.NewNode().(*node.Node)
 	WithOp(op)(retVal)
 	WithName(name)(retVal)
 	WithChildren(Nodes{n})

@@ -7,6 +7,8 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
@@ -56,7 +58,7 @@ type Op interface {
 	/* Machine related */
 
 	// executes the op
-	Do(...Value) (Value, error)
+	Do(...value.Value) (value.Value, error)
 
 	/* Analysis Related Methods */
 
@@ -100,7 +102,7 @@ type BinaryOp interface {
 type BestDoer interface {
 	Op
 
-	BestDo(prealloc Value, vals ...Value) (Value, error)
+	BestDo(prealloc value.Value, vals ...value.Value) (value.Value, error)
 }
 
 // A NoRetOp is an Op that reads a value, but does not return any value. It's a representation of a not-pure function
@@ -114,7 +116,7 @@ type NoRetOp interface {
 type ADOp interface {
 	Op
 
-	DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error
+	DoDiff(ctx execution.ExecutionContext, inputs Nodes, output *Node) error
 }
 
 // A SDOp is an Op that supports symbolic differentiation
@@ -138,33 +140,33 @@ type ReductionOp interface {
 
 // IncrDoer increments the toIncr with the result of doing
 type IncrDoer interface {
-	IncrDo(toIncr Value, inputs ...Value) error
+	IncrDo(toIncr value.Value, inputs ...value.Value) error
 }
 
 // UsePreallocDoer is an op that works when a preallocated value is provided
 type UsePreallocDoer interface {
-	UsePreallocDo(prealloc Value, inputs ...Value) (Value, error)
+	UsePreallocDo(prealloc value.Value, inputs ...value.Value) (value.Value, error)
 }
 
 // UnsafeDoer is an op that will overwrite the underlying value.
 type UnsafeDoer interface {
-	UnsafeDo(inputs ...Value) (Value, error)
+	UnsafeDo(inputs ...value.Value) (value.Value, error)
 }
 
 // CUDADoer uses CUDA to perform the Op.
 type CUDADoer interface {
-	CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error)
+	CUDADo(extern execution.External, dev execution.Device, prealloc value.Value, inputs ...value.Value) (retVal value.Value, err error)
 }
 
 // CLDoer uses OpenCL to perform the Op. As of now, there are NO Ops that support OpenCL
 type CLDoer interface {
-	CLDo(inputs ...Value) (Value, error)
+	CLDo(inputs ...value.Value) (value.Value, error)
 }
 
 // CUDAADOp ...
 type CUDAADOp interface {
 	ADOp
-	CUDADoDiff(extern External, dev Device, inputs Nodes, output *Node) error
+	CUDADoDiff(extern execution.External, dev execution.Device, inputs Nodes, output *Node) error
 }
 
 // ApplyOp is the generic function application - for when no specialization is required
@@ -233,12 +235,12 @@ func ApplyOpWithName(op Op, name string, children ...*Node) (retVal *Node, err e
 }
 
 // a constant is an unchanging value. I think everyone would know what a constant is
-// a constant op is an op that creates a constant. It is also a Value of a constant value
+// a constant op is an op that creates a constant. It is also a value.Value of a constant value
 type constant interface {
 	Op
 
 	isconstant() bool
-	Value() Value
+	Value() value.Value
 }
 
 type constantScalar struct {
@@ -254,8 +256,8 @@ func (c constantScalar) OverwritesInput() int                         { return -
 func (c constantScalar) DiffWRT(i int) []bool                         { return nil }
 func (c constantScalar) SymDiff(Nodes, *Node, *Node) (Nodes, error)   { return nil, nil }
 
-func (c constantScalar) Do(...Value) (Value, error) { return c.v, nil }
-func (c constantScalar) String() string             { return fmt.Sprintf("const %s", c.v) }
+func (c constantScalar) Do(...value.Value) (value.Value, error) { return c.v, nil }
+func (c constantScalar) String() string                         { return fmt.Sprintf("const %s", c.v) }
 
 func (c constantScalar) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "const %v: %v", TypeOf(c.v), c.v)
@@ -267,8 +269,8 @@ func (c constantScalar) Hashcode() uint32 {
 	return h.Sum32()
 }
 
-func (c constantScalar) isconstant() bool { return true }
-func (c constantScalar) Value() Value     { return c.v }
+func (c constantScalar) isconstant() bool   { return true }
+func (c constantScalar) Value() value.Value { return c.v }
 
 type constantTensor struct {
 	v tensor.Tensor
@@ -285,7 +287,7 @@ func (c constantTensor) OverwritesInput() int                       { return -1 
 func (c constantTensor) CallsExtern() bool                          { return false }
 func (c constantTensor) DiffWRT(i int) []bool                       { return nil }
 func (c constantTensor) SymDiff(Nodes, *Node, *Node) (Nodes, error) { return nil, nil }
-func (c constantTensor) Do(...Value) (Value, error)                 { return c.v, nil }
+func (c constantTensor) Do(...value.Value) (value.Value, error)     { return c.v, nil }
 func (c constantTensor) String() string                             { return fmt.Sprintf("const %s", TypeOf(c.v)) }
 
 func (c constantTensor) WriteHash(h hash.Hash) {
@@ -298,5 +300,5 @@ func (c constantTensor) Hashcode() uint32 {
 	return h.Sum32()
 }
 
-func (c constantTensor) isconstant() bool { return true }
-func (c constantTensor) Value() Value     { return c.v }
+func (c constantTensor) isconstant() bool   { return true }
+func (c constantTensor) Value() value.Value { return c.v }

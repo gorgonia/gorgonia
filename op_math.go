@@ -21,6 +21,8 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
@@ -240,11 +242,11 @@ func (op elemBinOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes,
 	return
 }
 
-func (op elemBinOp) Do(values ...Value) (Value, error) {
+func (op elemBinOp) Do(values ...value.Value) (value.Value, error) {
 	return op.ʘBinaryOperator.Do(op.retSame, values...)
 }
 
-func (op elemBinOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+func (op elemBinOp) DoDiff(ctx execution.ExecutionContext, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -264,7 +266,7 @@ func (op elemBinOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (er
 			indvdT := indv.d.(tensor.Tensor)
 			defer returnTensor(indvdT)
 
-			var d Value
+			var d value.Value
 			var t tensor.Tensor
 			if t, err = tensor.Sum(indvdT); err != nil {
 				return errors.Wrap(err, operationError)
@@ -302,7 +304,7 @@ func (op elemBinOp) WriteHash(h hash.Hash) {
 func (op elemBinOp) Hashcode() uint32 { return simpleHash(op) }
 
 // Fulfils UsePreallocDoer interface
-func (op elemBinOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
+func (op elemBinOp) UsePreallocDo(prealloc value.Value, inputs ...value.Value) (retVal value.Value, err error) {
 	if !op.ReturnsPtr() {
 		return op.Do(inputs...)
 	}
@@ -318,7 +320,7 @@ func (op elemBinOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value
 }
 
 // Fulfils UnsafeDoer interface
-func (op elemBinOp) UnsafeDo(inputs ...Value) (retVal Value, err error) {
+func (op elemBinOp) UnsafeDo(inputs ...value.Value) (retVal value.Value, err error) {
 	if !op.ReturnsPtr() {
 		return op.Do(inputs...)
 	}
@@ -330,13 +332,13 @@ func (op elemBinOp) UnsafeDo(inputs ...Value) (retVal Value, err error) {
 }
 
 // Fulfils the IncrDoer interface
-func (op elemBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
+func (op elemBinOp) IncrDo(incr value.Value, inputs ...value.Value) (err error) {
 	if id, ok := op.ʘBinaryOperator.(incrDoerBinOp); ok {
 		return id.IncrDo(incr, op.retSame, inputs...)
 	}
 
 	// if !op.ReturnsPtr() {
-	var retVal Value
+	var retVal value.Value
 	if retVal, err = op.Do(inputs...); err != nil {
 		return errors.Wrapf(err, doFail, op)
 	}
@@ -434,7 +436,7 @@ func (op elemUnaryOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Node
 	return
 }
 
-func (op elemUnaryOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+func (op elemUnaryOp) DoDiff(ctx execution.ExecutionContext, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -443,7 +445,7 @@ func (op elemUnaryOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (
 	return ʘUnaryOpDiffFns[u](inputs[0], output)
 }
 
-func (op elemUnaryOp) Do(inputs ...Value) (retVal Value, err error) {
+func (op elemUnaryOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -474,7 +476,7 @@ func (op elemUnaryOp) WriteHash(h hash.Hash) {
 func (op elemUnaryOp) Hashcode() uint32 { return simpleHash(op) }
 
 // fulfils UnsafeDoer interface
-func (op elemUnaryOp) UnsafeDo(inputs ...Value) (Value, error) {
+func (op elemUnaryOp) UnsafeDo(inputs ...value.Value) (value.Value, error) {
 	if err := checkArity(op, len(inputs)); err != nil {
 		return nil, err
 	}
@@ -487,7 +489,7 @@ func (op elemUnaryOp) isUnary() bool { return true }
 
 // misc private methods
 
-func (op elemUnaryOp) do(a Value, opts ...tensor.FuncOpt) (retVal Value, err error) {
+func (op elemUnaryOp) do(a value.Value, opts ...tensor.FuncOpt) (retVal value.Value, err error) {
 	switch v := a.(type) {
 	case tensor.Tensor:
 		return unaryCheckApply(op.ʘUnaryOperator, v, opts...)
@@ -616,7 +618,7 @@ func (op linAlgBinOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Node
 	return
 }
 
-func (op linAlgBinOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+func (op linAlgBinOp) DoDiff(ctx execution.ExecutionContext, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -625,9 +627,9 @@ func (op linAlgBinOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (
 	return āBinOpDiffs[o](ctx, op.transA, op.transB, inputs[0], inputs[1], output)
 }
 
-func (op linAlgBinOp) Do(inputs ...Value) (retVal Value, err error) { return op.do(inputs) }
-func (op linAlgBinOp) ReturnsPtr() bool                             { return true }
-func (op linAlgBinOp) OverwritesInput() int                         { return -1 }
+func (op linAlgBinOp) Do(inputs ...value.Value) (retVal value.Value, err error) { return op.do(inputs) }
+func (op linAlgBinOp) ReturnsPtr() bool                                         { return true }
+func (op linAlgBinOp) OverwritesInput() int                                     { return -1 }
 
 func (op linAlgBinOp) WriteHash(h hash.Hash) {
 	if err := binary.Write(h, binary.LittleEndian, op.āBinaryOperator); err != nil {
@@ -678,7 +680,7 @@ func (op linAlgBinOp) String() string {
 }
 
 // fulfils IncrDoer
-func (op linAlgBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
+func (op linAlgBinOp) IncrDo(incr value.Value, inputs ...value.Value) (err error) {
 	t, ok := incr.(tensor.Tensor)
 
 	switch {
@@ -690,7 +692,7 @@ func (op linAlgBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
 		return
 	}
 
-	var retVal Value
+	var retVal value.Value
 	if retVal, err = op.do(inputs); err != nil {
 		return errors.Wrapf(err, doFail, op)
 	}
@@ -705,7 +707,7 @@ func (op linAlgBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
 }
 
 // fulfils UsePreallocDoer
-func (op linAlgBinOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
+func (op linAlgBinOp) UsePreallocDo(prealloc value.Value, inputs ...value.Value) (retVal value.Value, err error) {
 	t, ok := prealloc.(tensor.Tensor)
 	if !ok {
 		return nil, errors.Errorf("Expected Tensor as preallocated value. Got %v of %T instead", prealloc, prealloc)
@@ -721,7 +723,7 @@ func (op linAlgBinOp) IsBinary() bool { return true }
 
 /* PRIVATE METHODS */
 
-func (op linAlgBinOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, err error) {
+func (op linAlgBinOp) do(inputs []value.Value, opts ...tensor.FuncOpt) (retVal value.Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -765,7 +767,7 @@ func (op linAlgBinOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 
 }
 
-func (op linAlgBinOp) preallocBatchMatMul(incr bool, prealloc Value, inputs ...Value) (retVal Value, err error) {
+func (op linAlgBinOp) preallocBatchMatMul(incr bool, prealloc value.Value, inputs ...value.Value) (retVal value.Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -831,7 +833,7 @@ func (op tensordotOp) InferShape(ds ...DimSizer) (tensor.Shape, error) {
 	return tensor.Shape(shapeBacking), nil
 }
 
-func (op tensordotOp) Do(vals ...Value) (Value, error) {
+func (op tensordotOp) Do(vals ...value.Value) (value.Value, error) {
 	if err := checkArity(op, len(vals)); err != nil {
 		return nil, errors.Wrap(err, "tensordot")
 	}
@@ -863,7 +865,7 @@ func (op tensordotOp) String() string {
 	return fmt.Sprintf("Tensordot(aAxes=%d, bAxes=%d)", op.aAxes, op.bAxes)
 }
 
-func (op tensordotOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
+func (op tensordotOp) DoDiff(ctx execution.ExecutionContext, inputs Nodes, output *Node) error {
 	odv := output.boundTo.(*dualValue)
 	odvd := odv.d.(tensor.Tensor)
 

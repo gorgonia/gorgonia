@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"golang.org/x/exp/shiny/widget/node"
 	"gorgonia.org/dawson"
 	"gorgonia.org/tensor"
 )
@@ -176,7 +177,7 @@ func constEq(a, b constant) (ok bool) {
 }
 
 // fastest comparisons to least fastest
-func nodeEq(a, b *Node) bool {
+func nodeEq(a, b *node.Node) bool {
 	if a == b {
 		return true
 	}

@@ -2,45 +2,22 @@ package gorgonia
 
 import (
 	"github.com/pkg/errors"
-	"gorgonia.org/tensor"
+	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/value"
 )
-
-// Arena is a representation of a pool of tensor.Memory
-type Arena interface {
-	Get(dev Device, size int64) (tensor.Memory, error)       // Get returns a NoOpError when it cannot get a memory. Please allocate
-	GetFromValue(dev Device, v Value) (tensor.Memory, error) // Gets a memory and copies the values into the memory and returns it.
-	Put(dev Device, mem tensor.Memory, size int64)           // puts the memory back into the arena
-	PutValue(dev Device, v Value)                            // puts the memory back into the arena
-
-	// Transfers memory from device to device
-	Transfer(toDev, fromDev Device, v Value, synchronous bool) (retVal Value, err error)
-}
-
-// External is a representation of an external device (cuda/cgo/openCL), conceptually modelled as a machine.
-type External interface {
-	Arena
-	Signal() // signals the machine to do work
-	Sync() chan struct{}
-}
-
-// ExecutionContext informs how an op should be executed
-type ExecutionContext struct {
-	External
-	Device
-}
 
 // ExternalOp is an op that contains an external context. This allows for ops to be run without needing a VM
 type ExternalOp struct {
 	Op
-	ExecutionContext
+	execution.ExecutionContext
 
-	Prealloc  Value
-	Incr      Value // is this a Incr? IncrDoers have higher precedence over PreallocDo
-	UseUnsafe bool  // Is this an unsafe op? Lowest of all "special" Dos
+	Prealloc  value.Value
+	Incr      value.Value // is this a Incr? IncrDoers have higher precedence over PreallocDo
+	UseUnsafe bool        // Is this an unsafe op? Lowest of all "special" Dos
 }
 
 // NewExternalOp creates a new *ExternalOp.
-func NewExternalOp(op Op, ctx ExecutionContext, prealloc Value) *ExternalOp {
+func NewExternalOp(op Op, ctx execution.ExecutionContext, prealloc value.Value) *ExternalOp {
 	retVal := &ExternalOp{
 		Op:               op,
 		ExecutionContext: ctx,
@@ -51,6 +28,7 @@ func NewExternalOp(op Op, ctx ExecutionContext, prealloc Value) *ExternalOp {
 	return retVal
 }
 
+// DetermineDevice ...
 func (op *ExternalOp) DetermineDevice(inputs Nodes, output *Node) error {
 	dev := output.dataOn
 	var inDev Device = -2
@@ -77,7 +55,7 @@ func (op *ExternalOp) DetermineDevice(inputs Nodes, output *Node) error {
 }
 
 // Do performs the op,
-func (op *ExternalOp) Do(vals ...Value) (Value, error) {
+func (op *ExternalOp) Do(vals ...value.Value) (value.Value, error) {
 	if op.Device == CPU {
 		switch {
 		case op.Incr != nil:

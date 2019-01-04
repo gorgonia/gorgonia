@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 
+	"golang.org/x/exp/shiny/widget/node"
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/iterator"
 	"gonum.org/v1/gonum/graph/simple"
@@ -16,9 +17,9 @@ type ExprGraph struct {
 	w    *simple.WeightedDirectedGraph
 	name string
 
-	byHash map[uint32]*Node
+	byHash map[uint32]*node.Node
 	evac   map[uint32]Nodes
-	to     map[*Node]Nodes
+	to     map[*node.Node]Nodes
 
 	leaves    Nodes
 	constants Nodes
@@ -41,9 +42,9 @@ func WithGraphName(name string) Graphconopt {
 func NewGraph(opts ...Graphconopt) *ExprGraph {
 	g := &ExprGraph{
 		w:      simple.NewWeightedDirectedGraph(math.MaxFloat64, -1),
-		byHash: make(map[uint32]*Node),
+		byHash: make(map[uint32]*node.Node),
 		evac:   make(map[uint32]Nodes),
-		to:     make(map[*Node]Nodes),
+		to:     make(map[*node.Node]Nodes),
 
 		leaves:    make(Nodes, 0, 64),
 		constants: make(Nodes, 0, 8),
@@ -61,7 +62,7 @@ func NewGraph(opts ...Graphconopt) *ExprGraph {
 // is equivalent to
 // a := NewNode()
 // g.AddNode(a)
-func (g *ExprGraph) Attach(n *Node) *Node {
+func (g *ExprGraph) Attach(n *node.Node) *node.Node {
 	g.AddNode(n)
 	return n
 }
@@ -110,7 +111,7 @@ func (g *ExprGraph) Inputs() *iterator.OrderedNodes {
 	retVal := make([]graph.Node, 0)
 	it := g.Nodes()
 	for it.Next() {
-		n := it.Node().(*Node)
+		n := it.Node().(*node.Node)
 		if n.isInput() {
 			retVal = append(retVal, n)
 		}
@@ -123,7 +124,7 @@ func (g *ExprGraph) Inputs() *iterator.OrderedNodes {
 func (g *ExprGraph) UnbindAll() {
 	it := g.Nodes()
 	for it.Next() {
-		it.Node().(*Node).unbind()
+		it.Node().(*node.Node).unbind()
 	}
 }
 
@@ -131,7 +132,7 @@ func (g *ExprGraph) UnbindAll() {
 func (g *ExprGraph) UnbindAllNonInputs() {
 	it := g.Nodes()
 	for it.Next() {
-		n := it.Node().(*Node)
+		n := it.Node().(*node.Node)
 		if n.isInput() || n.isConstant() {
 			continue
 		}
@@ -146,7 +147,7 @@ func (g *ExprGraph) UnbindAllNonInputs() {
 func (g *ExprGraph) ByName(name string) (retVal Nodes) {
 	it := g.w.Nodes()
 	for it.Next() {
-		n := it.Node().(*Node)
+		n := it.Node().(*node.Node)
 		if n.name == name {
 			retVal = append(retVal, n)
 		}
@@ -156,7 +157,7 @@ func (g *ExprGraph) ByName(name string) (retVal Nodes) {
 
 // Constant returns a constant that may be found in the graph. If no constant were found, a new one is created instead
 /*
-func (g *ExprGraph) Constant(v Value) *Node {
+func (g *ExprGraph) Constant(v Value) *node.Node {
 	for _, n := range g.constants {
 		if ValueEq(n.Value(), v) {
 			return n
@@ -172,7 +173,7 @@ func (g *ExprGraph) String() string {
 	buf.WriteString("Graph: [\n")
 	it := g.Nodes()
 	for it.Next() {
-		n := it.Node().(*Node)
+		n := it.Node().(*node.Node)
 		fmt.Fprintf(&buf, "\t%d: %s\n", n.Hashcode(), n)
 	}
 	buf.WriteString("]")
@@ -181,7 +182,7 @@ func (g *ExprGraph) String() string {
 
 // other private methods
 
-func (g *ExprGraph) removeAllEdgesFrom(n *Node) {
+func (g *ExprGraph) removeAllEdgesFrom(n *node.Node) {
 	for k, ns := range g.to {
 		g.to[k] = ns.remove(n)
 	}
@@ -267,7 +268,7 @@ func (g *ExprGraph) subgraph(ns Nodes, findMissing bool, opts ...Nodes) *ExprGra
 
 // Subgraph subsets a graph. This function has overloaded meanings - If only one node is passed in, it assumes that the one node is the root,
 // otherwise, it treats ns as the subset of nodes to be included in the subgraph
-func (g *ExprGraph) Subgraph(ns ...*Node) *ExprGraph {
+func (g *ExprGraph) Subgraph(ns ...*node.Node) *ExprGraph {
 	if len(ns) == 1 {
 		g.SubgraphRoots(ns[0])
 	}
@@ -275,7 +276,7 @@ func (g *ExprGraph) Subgraph(ns ...*Node) *ExprGraph {
 }
 
 // SubgraphRoots creates a subgraph, assuming the provided nodes are roots to the new subgraph.
-func (g *ExprGraph) SubgraphRoots(ns ...*Node) *ExprGraph {
+func (g *ExprGraph) SubgraphRoots(ns ...*node.Node) *ExprGraph {
 	sub := g.walkFromRoots(ns...)
 	return g.subgraph(sub, true, ns)
 }
@@ -290,19 +291,19 @@ func (g *ExprGraph) SubgraphRoots(ns ...*Node) *ExprGraph {
 //
 // When SubgraphRoots is used on z, the `-x.Grad` will be included.
 // When using ExactSubgraphRoots, only `x` and `y` are included in the subgraph
-func (g *ExprGraph) ExactSubgraphRoots(ns ...*Node) *ExprGraph {
+func (g *ExprGraph) ExactSubgraphRoots(ns ...*node.Node) *ExprGraph {
 	sub := g.walkFromRoots(ns...)
 	return g.subgraph(sub, false, ns)
 }
 
-func (g *ExprGraph) walkFromRoots(ns ...*Node) Nodes {
+func (g *ExprGraph) walkFromRoots(ns ...*node.Node) Nodes {
 	sub := make(Nodes, len(ns))
 	copy(sub, ns)
 
 	walked := NewNodeSet()
 	for _, n := range ns {
-		ch := make(chan *Node)
-		go func(ch chan *Node) {
+		ch := make(chan *node.Node)
+		go func(ch chan *node.Node) {
 			defer close(ch)
 			walkGraph(n, ch, walked)
 		}(ch)

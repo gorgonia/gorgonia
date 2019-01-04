@@ -3,32 +3,35 @@ package gorgonia
 import (
 	"bytes"
 	"fmt"
+
+	"golang.org/x/exp/shiny/widget/node"
+	"gorgonia.org/gorgonia/internal/execution"
 )
 
 // dataflow analysis
 
 type dataflow struct {
-	uniques map[uint32]*Node
+	uniques map[uint32]*node.Node
 
-	replacements map[*Node]*Node
-	intervals    map[*Node]*interval
+	replacements map[*node.Node]*node.Node
+	intervals    map[*node.Node]*interval
 
 	// tracks the special nodes' children and parents
-	devTransChildren map[*Node]Nodes
-	devTransRepl     map[*Node]*Node
+	devTransChildren map[*node.Node]Nodes
+	devTransRepl     map[*node.Node]*node.Node
 }
 
 func newdataflow() *dataflow {
 	df := new(dataflow)
-	df.uniques = make(map[uint32]*Node)
-	df.devTransChildren = make(map[*Node]Nodes)
-	df.devTransRepl = make(map[*Node]*Node)
+	df.uniques = make(map[uint32]*node.Node)
+	df.devTransChildren = make(map[*node.Node]Nodes)
+	df.devTransRepl = make(map[*node.Node]*node.Node)
 	return df
 }
 
 // equivalent to the value numbering algorithm
 // it returns true if it is unique
-func (df *dataflow) vn(n *Node) (retVal *Node, unique bool) {
+func (df *dataflow) vn(n *node.Node) (retVal *node.Node, unique bool) {
 	compileLogf("Value numbering")
 	enterLogScope()
 	defer leaveLogScope()
@@ -49,15 +52,15 @@ func (df *dataflow) vn(n *Node) (retVal *Node, unique bool) {
 // analyzeDevice records which node is supposed to be executed on which device.
 //
 // Currently it will only use Device 0. In the future, we can be smart about which device to use
-func (df *dataflow) analyzeDevice(n *Node) {
+func (df *dataflow) analyzeDevice(n *node.Node) {
 	switch n.op.(type) {
 	case CUDADoer:
 		if n.dataOn == CPU {
-			n.dataOn = Device(0)
+			n.dataOn = execution.Device(0)
 		}
 	case CLDoer:
 		if n.dataOn == CPU {
-			n.dataOn = Device(0)
+			n.dataOn = execution.Device(0)
 		}
 	default:
 		n.dataOn = CPU
@@ -66,7 +69,7 @@ func (df *dataflow) analyzeDevice(n *Node) {
 
 // replaceWithSelf fills the replacement map with itself. This is the method used in the lispMachine only, as it skips value numbering
 func (df *dataflow) replaceWithSelf(sorted Nodes) {
-	df.replacements = make(map[*Node]*Node)
+	df.replacements = make(map[*node.Node]*node.Node)
 	for _, n := range sorted {
 		df.replacements[n] = n
 		df.analyzeDevice(n) // Device Targeting
@@ -93,7 +96,7 @@ func analyze(g *ExprGraph, sorted Nodes) *dataflow {
 
 	// compileLogf("Common subexpression elimination")
 	// compileLogf("analyzing devices")
-	replacements := make(map[*Node]*Node)
+	replacements := make(map[*node.Node]*node.Node)
 	for _, n := range sorted {
 		r, _ := df.vn(n)
 		replacements[n] = r // CSE
@@ -106,7 +109,7 @@ func analyze(g *ExprGraph, sorted Nodes) *dataflow {
 	// constant propagation
 	/*
 		for _, node := range g.nodes {
-			n := node.(*Node)
+			n := node.(*node.Node)
 			if len(n.Children) > 0 {
 				allConst := true
 				for _, child := range n.Children {
@@ -121,7 +124,7 @@ func analyze(g *ExprGraph, sorted Nodes) *dataflow {
 	return df
 }
 
-func newDevTransNode(read, write *Node, from, to Device) *Node {
+func newDevTransNode(read, write *node.Node, from, to execution.Device) *node.Node {
 	op := devTrans{from, to, write}
 	n := borrowNode()
 	n.id = -1
@@ -224,7 +227,7 @@ func (df *dataflow) buildIntervals(sorted Nodes) {
 	enterLogScope()
 	defer leaveLogScope()
 
-	intervals := make(map[*Node]*interval)
+	intervals := make(map[*node.Node]*interval)
 
 	var g *ExprGraph
 	for _, n := range sorted {

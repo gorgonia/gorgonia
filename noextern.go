@@ -2,7 +2,11 @@
 
 package gorgonia
 
-import "gorgonia.org/tensor"
+import (
+	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/tensor"
+)
 
 // CUDA indicates if this build is using CUDA
 const CUDA = false
@@ -54,21 +58,23 @@ func (m *ExternMetadata) DoWork() error {
 }
 
 // Get allocates a memory of the size. In this build it returns a NoOpError.
-func (m *ExternMetadata) Get(dev Device, size int64) (tensor.Memory, error) { return nil, noopError{} }
+func (m *ExternMetadata) Get(dev execution.Device, size int64) (tensor.Memory, error) {
+	return nil, noopError{}
+}
 
 // GetFromValue allocates a memory of the size of v. In this build it returns a NoOpError, and v itself
-func (m *ExternMetadata) GetFromValue(dev Device, v Value) (tensor.Memory, error) {
+func (m *ExternMetadata) GetFromValue(dev execution.Device, v value.Value) (tensor.Memory, error) {
 	return v, noopError{}
 }
 
 // Put puts a previously allocated memory slab of the provided size back into the pool. Currently this is a No-op in this build.
-func (m *ExternMetadata) Put(dev Device, mem tensor.Memory, size int64) {}
+func (m *ExternMetadata) Put(dev execution.Device, mem tensor.Memory, size int64) {}
 
 // PutValue puts a previously allocated value into the pool. In this build,  it is a noop.
-func (m *ExternMetadata) PutValue(dev Device, v Value) {}
+func (m *ExternMetadata) PutValue(dev execution.Device, v value.Value) {}
 
 // Transfer transfers a value from device to device. In this build, it's a noop, returning the input value, and a nil error
-func (m *ExternMetadata) Transfer(toDev, fromDev Device, v Value, synchronous bool) (retVal Value, err error) {
+func (m *ExternMetadata) Transfer(toDev, fromDev execution.Device, v value.Value, synchronous bool) (retVal value.Value, err error) {
 	return v, nil
 }
 
@@ -107,13 +113,13 @@ func (m *ExternMetadata) signal() {
 
 func (m *ExternMetadata) setEngine(e tensor.Engine) { m.Engine = e }
 
-// ValueOnDevice gets the value of the node as a Value but on the desired device. In this build the device is always CPU, so it's equivalent to calling .Value()
-func (n *Node) ValueOnDevice(dev Device, extern External) (retVal Value, allocOnExtern bool, err error) {
+// value.ValueOnDevice gets the value of the node as a value.Value but on the desired device. In this build the device is always CPU, so it's equivalent to calling .Value()
+func (n *Node) ValueOnDevice(dev execution.Device, extern execution.External) (retVal value.Value, allocOnExtern bool, err error) {
 	return n.Value(), false, nil
 }
 
-// GradOnDevice gets the gradient value of the node as a Value but on the desired device. In this build the device is always CPU, so it's equivalent to calling .Grad()
-func (n *Node) GradOnDevice(dev Device, extern External) (retVal Value, allocOnExtern bool, err error) {
+// GradOnDevice gets the gradient value of the node as a value.Value but on the desired device. In this build the device is always CPU, so it's equivalent to calling .Grad()
+func (n *Node) GradOnDevice(dev execution.Device, extern execution.External) (retVal value.Value, allocOnExtern bool, err error) {
 	retVal, err = n.Grad()
 	return retVal, false, err
 }

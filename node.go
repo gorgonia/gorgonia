@@ -11,6 +11,8 @@ import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/debugger"
+	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
@@ -33,8 +35,8 @@ type Node struct {
 
 	// value bondage
 	// inputs are bound to values directly
-	boundTo Value
-	dataOn  Device // where is the data on
+	boundTo value.Value
+	dataOn  execution.Device // where is the data on
 
 	// to track derivations
 	derivOf Nodes
@@ -117,8 +119,8 @@ func WithName(name string) NodeConsOpt {
 }
 
 // WithValue is a node construction option that binds the value to the *Node. This function may panic if:
-//	- Gorgonia was unable to convert interface{} into a Value.
-//	- The type of the Value does not match the type of the nodes.
+//	- Gorgonia was unable to convert interface{} into a value.Value.
+//	- The type of the value.Value does not match the type of the nodes.
 func WithValue(any interface{}) NodeConsOpt {
 	v, t, _, err := anyToValue(any)
 	if err != nil {
@@ -142,7 +144,7 @@ func WithValue(any interface{}) NodeConsOpt {
 
 // WithGrad is a node construction option that binds the value to the *Node. This function may panic if:
 //	- There isn't already a value associated with the node (.boundTo == nil)
-//	- The type of the Value does not match the value of the node.
+//	- The type of the value.Value does not match the value of the node.
 func WithGrad(any interface{}) NodeConsOpt {
 	v, t, _, err := anyToValue(any)
 	if err != nil {
@@ -175,7 +177,7 @@ func WithInit(fn InitWFn) NodeConsOpt {
 			panic(err)
 		}
 
-		var v Value
+		var v value.Value
 		v = tensor.New(tensor.WithShape(n.shape...), tensor.WithBacking(fn(dt, n.shape...)))
 		WithValue(v)(n)
 	}
@@ -354,7 +356,7 @@ func (n *Node) Clone() (retVal interface{}) {
 */
 
 // Value returns the valuse bound to the node. May return nil
-func (n *Node) Value() Value {
+func (n *Node) Value() value.Value {
 	if n.isConstant() {
 		return n.op.(constant).Value()
 	}
@@ -365,7 +367,7 @@ func (n *Node) Value() Value {
 }
 
 // Grad returns the gradient if there is one.
-func (n *Node) Grad() (Value, error) {
+func (n *Node) Grad() (value.Value, error) {
 	if dv, ok := n.boundTo.(*dualValue); ok {
 		return dv.d, nil
 	}
@@ -422,7 +424,7 @@ func (n *Node) Strides() []int {
 }
 
 // Device returns the device the data will be on
-func (n *Node) Device() Device { return n.dataOn }
+func (n *Node) Device() execution.Device { return n.dataOn }
 
 // Op returns the Op of the node
 func (n *Node) Op() Op { return n.op }
@@ -506,7 +508,7 @@ func (n *Node) String() string {
 // private methods
 
 // TODO: check type, check shape, check if needsGrad -> promote to dualValue
-func (n *Node) bind(v Value) error {
+func (n *Node) bind(v value.Value) error {
 	// pc, _, _, _ := runtime.Caller(1)
 	// log.Printf("binding to %p. Called by %v", n, runtime.FuncForPC(pc).Name())
 
@@ -540,9 +542,9 @@ func (n *Node) bind(v Value) error {
 }
 
 // bindCopy copies the value if to the bound value.
-func (n *Node) bindCopy(v Value) (err error) {
+func (n *Node) bindCopy(v value.Value) (err error) {
 	if n.boundTo == nil {
-		var cloned Value
+		var cloned value.Value
 		if cloned, err = CloneValue(v); err != nil {
 			return
 		}
@@ -550,7 +552,7 @@ func (n *Node) bindCopy(v Value) (err error) {
 		return nil
 	}
 
-	var copied Value
+	var copied value.Value
 	if dv, ok := n.boundTo.(*dualValue); ok {
 
 		if vdv, ok := v.(*dualValue); ok {

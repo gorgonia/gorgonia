@@ -9,6 +9,9 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"golang.org/x/exp/shiny/widget/node"
+	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
@@ -16,11 +19,11 @@ type tapeMachine struct {
 	ExternMetadata
 
 	p      *program
-	locMap map[*Node]register
+	locMap map[*node.Node]register
 
 	// "register" banks
-	cpumem []Value // Value - knows its own type and shape
-	gpumem []Value // Value of which the memories are stored in GPU memory
+	cpumem []value.Value // Value - knows its own type and shape
+	gpumem []value.Value // Value of which the memories are stored in GPU memory
 
 	// state stuff, to allow continuation
 	pc int
@@ -64,12 +67,12 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 		m.p = prog
 		m.locMap = locMap
 	}
-	m.cpumem = make([]Value, m.p.cpulocs)
-	m.gpumem = make([]Value, m.p.gpulocs)
+	m.cpumem = make([]value.Value, m.p.cpulocs)
+	m.gpumem = make([]value.Value, m.p.gpulocs)
 	m.init()
 	it := m.p.g.Nodes()
 	for it.Next() {
-		n := it.Node().(*Node)
+		n := it.Node().(*node.Node)
 		setEngine(n.boundTo, m.Engine)
 	}
 
@@ -129,10 +132,10 @@ func (m *tapeMachine) Close() error {
 func (m *tapeMachine) Prog() *program { return m.p }
 
 // LocMap returns the location where the Node's execution results are stored. This would mainly be used in debugging functions.
-func (m *tapeMachine) LocMap() map[*Node]register { return m.locMap }
+func (m *tapeMachine) LocMap() map[*node.Node]register { return m.locMap }
 
 // Let wraps the Let() function of the package, with additional checks that n is in the machine
-func (m *tapeMachine) Let(n *Node, be interface{}) (err error) {
+func (m *tapeMachine) Let(n *node.Node, be interface{}) (err error) {
 	if !m.p.g.Has(n.ID()) {
 		return errors.Errorf("Node %v does not exist in this graph", n)
 	}
@@ -141,7 +144,7 @@ func (m *tapeMachine) Let(n *Node, be interface{}) (err error) {
 }
 
 // Set wraps the Set() function of this package, with additional checks that both a and b are in the machine
-func (m *tapeMachine) Set(a, b *Node) (err error) {
+func (m *tapeMachine) Set(a, b *node.Node) (err error) {
 	if !m.p.g.Has(a.ID()) {
 		return errors.Errorf("Node %v does not exist in this graph", a)
 	}
@@ -257,7 +260,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 				}
 
 				if hasNaN(v, CPU) {
-					n := m.p.g.Node(id).(*Node)
+					n := m.p.g.Node(id).(*node.Node)
 					err := errors.Errorf("NaN found in value. Node: %v(%x)", n, n.ID())
 					errChan <- err
 					return
@@ -277,7 +280,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 				}
 
 				if hasInf(v, CPU) {
-					n := m.p.g.Node(id).(*Node)
+					n := m.p.g.Node(id).(*node.Node)
 					err := errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
 					errChan <- err
 					return
@@ -403,9 +406,9 @@ type program struct {
 	gpulocs      int
 	cpumem       int64
 	gpumem       []int64
-	g            *ExprGraph         // original dag
-	df           *dataflow          // dataflow analysis
-	m            map[*Node]fragment // store which nodes create which instructions
+	g            *ExprGraph              // original dag
+	df           *dataflow               // dataflow analysis
+	m            map[*node.Node]fragment // store which nodes create which instructions
 	sorted       Nodes
 }
 
@@ -444,7 +447,7 @@ func (p *program) GPUMemReq() []int64 {
 
 type register struct {
 	id     int
-	device Device
+	device execution.Device
 }
 
 func (r register) String() string { return fmt.Sprintf("%s%d", r.device, r.id) }
@@ -487,7 +490,7 @@ type alloc struct {
 	writeTo  register
 }
 
-func newAlloc(n *Node, writeTo register) alloc {
+func newAlloc(n *node.Node, writeTo register) alloc {
 	return alloc{
 		id:      n.ID(),
 		t:       n.t,
@@ -581,7 +584,7 @@ func (instr loadArg) exec(m *tapeMachine) error {
 	m.enterLogScope()
 	defer m.leaveLogScope()
 
-	node := m.p.g.Node(instr.index).(*Node)
+	node := m.p.g.Node(instr.index).(*node.Node)
 	m.logf("node %v", node)
 
 	if node.boundTo == nil {
@@ -623,7 +626,7 @@ func (instr *execOp) ID() int64         { return instr.id }
 func (instr *execOp) reads() []register { return instr.readFrom }
 func (instr *execOp) writes() register  { return instr.writeTo }
 
-func newExecOp(n *Node) *execOp {
+func newExecOp(n *node.Node) *execOp {
 	_, useGPU := n.op.(CUDADoer)
 	compileLogf("op %v uses GPU %v", n.op, useGPU)
 	dt, err := dtypeOf(n.t)

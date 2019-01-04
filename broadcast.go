@@ -1,6 +1,9 @@
 package gorgonia
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+	"golang.org/x/exp/shiny/widget/node"
+)
 
 const (
 	bcAllowableAxes = 4
@@ -59,7 +62,7 @@ func (bcpat BroadcastPattern) on() (retVal [2][]int) {
 }
 
 // Broadcast works somewhat like Numpy's broadcast, except it's now exposed as a function.
-func Broadcast(binOp ʘBinaryOperatorType, a, b *Node, pattern BroadcastPattern) (retVal *Node, err error) {
+func Broadcast(binOp ʘBinaryOperatorType, a, b *node.Node, pattern BroadcastPattern) (retVal *node.Node, err error) {
 	broadcastOn := pattern.on()
 
 	x := a
@@ -68,7 +71,7 @@ func Broadcast(binOp ʘBinaryOperatorType, a, b *Node, pattern BroadcastPattern)
 	if len(broadcastOn[0]) > 0 {
 		children := Nodes{x}
 		for _, a := range broadcastOn[0] {
-			var size *Node
+			var size *node.Node
 			if size, err = SizeOf(a, y); err != nil {
 				return nil, errors.Wrap(err, operationError)
 			}
@@ -83,7 +86,7 @@ func Broadcast(binOp ʘBinaryOperatorType, a, b *Node, pattern BroadcastPattern)
 	if len(broadcastOn[1]) > 0 {
 		children := Nodes{y}
 		for _, a := range broadcastOn[1] {
-			var size *Node
+			var size *node.Node
 			if size, err = SizeOf(a, x); err != nil {
 				return nil, errors.Wrap(err, operationError)
 			}

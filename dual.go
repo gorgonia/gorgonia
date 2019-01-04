@@ -5,15 +5,16 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
 type dualValue struct {
-	Value
-	d Value // the derivative wrt to each input
+	value.Value
+	d value.Value // the derivative wrt to each input
 }
 
-func (dv *dualValue) SetDeriv(d Value) error {
+func (dv *dualValue) SetDeriv(d value.Value) error {
 	if t, ok := d.(tensor.Tensor); ok && t.IsScalar() {
 		d, _ = anyToScalar(t.ScalarValue())
 	}
@@ -22,13 +23,13 @@ func (dv *dualValue) SetDeriv(d Value) error {
 	return dv.sanity()
 }
 
-func (dv *dualValue) SetValue(v Value) error {
+func (dv *dualValue) SetValue(v value.Value) error {
 	dv.Value = v
 	return dv.sanity()
 }
 
 func (dv *dualValue) Clone() (retVal interface{}, err error) {
-	var v, d Value
+	var v, d value.Value
 	if v, err = CloneValue(dv.Value); err != nil {
 		return nil, errors.Wrap(err, cloneFail)
 	}
@@ -49,17 +50,17 @@ func (dv *dualValue) Clone() (retVal interface{}, err error) {
 func (dv *dualValue) Type() hm.Type       { return TypeOf(dv.Value) }
 func (dv *dualValue) Dtype() tensor.Dtype { return dv.Value.Dtype() }
 
-func (dv *dualValue) ValueEq(a Value) bool {
+func (dv *dualValue) ValueEq(a value.Value) bool {
 	switch at := a.(type) {
 	case *dualValue:
 		if at == dv {
 			return true
 		}
-		veq := ValueEq(at.Value, dv.Value)
-		deq := ValueEq(at.d, dv.d)
+		veq := value.ValueEq(at.Value, dv.Value)
+		deq := value.ValueEq(at.d, dv.d)
 		return veq && deq
-	// case Value:
-	// 	return ValueEq(at, dv.Value)
+	// case value.Value:
+	// 	return value.ValueEq(at, dv.Value)
 	default:
 		return false
 	}
@@ -87,7 +88,7 @@ func (dv *dualValue) sanity() error {
 
 // clones the dualValue and zeroes out the ndarrays
 func (dv *dualValue) clone0() (retVal *dualValue, err error) {
-	var v, d Value
+	var v, d value.Value
 	if v, err = CloneValue(dv.Value); err != nil {
 		return nil, errors.Wrap(err, cloneFail)
 	}
@@ -111,7 +112,7 @@ func (dv *dualValue) clone0() (retVal *dualValue, err error) {
 // The original implementation was to have a constantDualValue type. This would lead to waaay less allocations of matrices
 // but as it turns out, as I waws working, the constants turn out to be not so constant afterall.
 // Is this a problem with the graph that leads to derivation of constant values? I don't quite know. TO CHECK
-func constantDV(val Value) *dualValue {
+func constantDV(val value.Value) *dualValue {
 	enterLogScope()
 	defer leaveLogScope()
 
@@ -129,7 +130,7 @@ func constantDV(val Value) *dualValue {
 }
 
 // the derivative of x is 1.
-func variableDV(val Value) *dualValue {
+func variableDV(val value.Value) *dualValue {
 	// retVal := &dualValue{Value: val}
 	retVal := borrowDV()
 	retVal.Value = val
@@ -148,9 +149,9 @@ func variableDV(val Value) *dualValue {
 	return retVal
 }
 
-// monadic unit() function. This unit() function will allocate a Value for dv.d
+// monadic unit() function. This unit() function will allocate a value.Value for dv.d
 // this is useful for forward mode autodiff
-func dvUnit(v Value) *dualValue {
+func dvUnit(v value.Value) *dualValue {
 	enterLogScope()
 	defer leaveLogScope()
 
@@ -160,7 +161,7 @@ func dvUnit(v Value) *dualValue {
 	return constantDV(v)
 }
 
-func dvUnitVar(v Value) *dualValue {
+func dvUnitVar(v value.Value) *dualValue {
 	if dv, ok := v.(*dualValue); ok {
 		return dv
 	}
@@ -168,7 +169,7 @@ func dvUnitVar(v Value) *dualValue {
 }
 
 // no alloc is done. It'll just return a *dualValue with nil as the dv.d
-func dvUnit0(v Value) *dualValue {
+func dvUnit0(v value.Value) *dualValue {
 	if dv, ok := v.(*dualValue); ok {
 		return dv
 	}
@@ -180,7 +181,7 @@ func dvUnit0(v Value) *dualValue {
 }
 
 // dvUnitManaged does dvUnit for values whose memories are manually managed
-func dvUnitManaged(v Value, op *ExternalOp) (*dualValue, error) {
+func dvUnitManaged(v value.Value, op *ExternalOp) (*dualValue, error) {
 	if op.Device == CPU {
 		return dvUnit(v), nil
 	}
@@ -210,7 +211,7 @@ func dvUnitManaged(v Value, op *ExternalOp) (*dualValue, error) {
 	return retVal, nil
 }
 
-func dvUnitVarManaged(v Value, op *ExternalOp) (*dualValue, error) {
+func dvUnitVarManaged(v value.Value, op *ExternalOp) (*dualValue, error) {
 	dv, err := dvUnitManaged(v, op)
 	if err != nil {
 		return dv, err
@@ -250,7 +251,7 @@ func dvUnitVarManaged(v Value, op *ExternalOp) (*dualValue, error) {
 }
 
 // helper to unpack from []*dualValue
-func idValue(inputs []*dualValue) (retVals []Value) {
+func idValue(inputs []*dualValue) (retVals []value.Value) {
 	retVals = make([]Value, len(inputs))
 	for i, input := range inputs {
 		retVals[i] = input.Value
@@ -265,7 +266,7 @@ func dvBind(op Op, inputs []*dualValue) (retVal *dualValue, err error) {
 
 	vals := idValue(inputs)
 
-	var ret Value
+	var ret value.Value
 	if ret, err = op.Do(vals...); err != nil {
 		return nil, errors.Wrap(err, opDoFail)
 	}
@@ -280,7 +281,7 @@ func dvBind(op Op, inputs []*dualValue) (retVal *dualValue, err error) {
 func dvBindVar(op Op, inputs []*dualValue) (retVal *dualValue, err error) {
 	vals := idValue(inputs)
 
-	var ret Value
+	var ret value.Value
 	if ret, err = op.Do(vals...); err != nil {
 		return nil, errors.Wrap(err, opDoFail)
 	}
@@ -297,7 +298,7 @@ func dvBind0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 	prealloc := retVal.Value
 	vals := idValue(inputs)
 
-	var ret Value
+	var ret value.Value
 	if pd, ok := op.(UsePreallocDoer); ok {
 		if ret, err = pd.UsePreallocDo(prealloc, vals...); err == nil {
 			goto next
@@ -325,7 +326,7 @@ func dvBindVar0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 
 	vals := idValue(inputs)
 
-	var ret Value
+	var ret value.Value
 	if pd, ok := op.(UsePreallocDoer); ok {
 		ret, err = pd.UsePreallocDo(prealloc, vals...)
 	} else {
