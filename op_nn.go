@@ -9,6 +9,7 @@ import (
 	rng "github.com/leesper/go_rng"
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/blas"
+	"gorgonia.org/gorgonia/distro"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
@@ -115,26 +116,26 @@ func (op randomOp) Do(...value.Value) (retVal value.Value, err error) {
 	case Float64:
 		switch op.which {
 		case uniform:
-			backing := Uniform64(op.a, op.b, op.shape...)
+			backing := distro.Uniform64(op.a, op.b, op.shape...)
 			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		case gaussian:
-			backing := Gaussian64(op.a, op.b, op.shape...)
+			backing := distro.Gaussian64(op.a, op.b, op.shape...)
 			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		case binomial:
-			backing := Binomial64(op.a, op.b, op.shape...)
+			backing := distro.Binomial64(op.a, op.b, op.shape...)
 			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		}
 		return
 	case Float32:
 		switch op.which {
 		case uniform:
-			backing := Uniform32(op.a, op.b, op.shape...)
+			backing := distro.Uniform32(op.a, op.b, op.shape...)
 			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		case gaussian:
-			backing := Gaussian32(op.a, op.b, op.shape...)
+			backing := distro.Gaussian32(op.a, op.b, op.shape...)
 			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		case binomial:
-			backing := Binomial32(op.a, op.b, op.shape...)
+			backing := distro.Binomial32(op.a, op.b, op.shape...)
 			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		}
 		return

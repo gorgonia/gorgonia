@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/distro"
 	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
@@ -343,11 +344,11 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 	dims := x.Shape().Dims()
 
 	if scale == nil {
-		scale = g.NewTensor(dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_γ"), WithInit(GlorotN(1.0)))
+		scale = g.NewTensor(dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_γ"), WithInit(distro.GlorotN(1.0)))
 		g.AddNode(scale)
 	}
 	if bias == nil {
-		bias = g.NewTensor(dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_β"), WithInit(GlorotN(1.0)))
+		bias = g.NewTensor(dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_β"), WithInit(distro.GlorotN(1.0)))
 		g.AddNode(bias)
 	}
 

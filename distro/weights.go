@@ -1,4 +1,4 @@
-package gorgonia
+package distro
 
 import (
 	"math"
@@ -37,6 +37,7 @@ func Zeroes() InitWFn {
 	return f
 }
 
+// Ones ...
 func Ones() InitWFn {
 	f := func(dt tensor.Dtype, s ...int) interface{} {
 		size := tensor.Shape(s).TotalSize()
@@ -76,6 +77,7 @@ func RangedFrom(start int) InitWFn {
 	return f
 }
 
+// ValuesOf ...
 func ValuesOf(val interface{}) InitWFn {
 	f := func(dt tensor.Dtype, s ...int) interface{} {
 		size := tensor.Shape(s).TotalSize()

@@ -11,6 +11,7 @@ import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/debugger"
+	"gorgonia.org/gorgonia/distro"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
@@ -171,7 +172,7 @@ func WithGrad(any interface{}) NodeConsOpt {
 }
 
 // WithInit is a node construction option to initialize a *Node with the InitWFn provided.
-func WithInit(fn InitWFn) NodeConsOpt {
+func WithInit(fn distro.InitWFn) NodeConsOpt {
 	f := func(n *Node) {
 		dt, err := dtypeOf(n.t)
 		if err != nil {

@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gorgonia.org/dawson"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
@@ -295,7 +296,7 @@ func (g TensorGenerator) Generate(r *rand.Rand, size int) reflect.Value {
 	return reflect.ValueOf(retVal)
 }
 
-type value.ValueGenerator struct {
+type ValueGenerator struct {
 	ShapeConstraint tensor.Shape // [0, 6, 0] implies that the second dimension is the constraint. 0 is any.
 	DtypeConstraint tensor.Dtype
 }

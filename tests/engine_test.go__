@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
