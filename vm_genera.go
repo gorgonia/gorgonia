@@ -42,7 +42,7 @@ type lispMachine struct {
 
 // NewLispMachine creates a VM that executes the graph as it is traversed. Depending on the VMOpts passed in
 // this VM is also capable of performing automatic differentiation.
-func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
+func NewLispMachine(g *ExprGraph, opts ...VMOpt) VM {
 	runFlags := (byte(0) | (byte(1) << fwdOnly)) | (1 << bwdOnly) // run fwd and backwards
 	m := &lispMachine{
 		g:        g,
@@ -64,7 +64,7 @@ func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 	it := g.Nodes()
 	for it.Next() {
 		n := it.Node().(*Node)
-		setEngine(n.boundTo, m.Engine)
+		value.SetEngine(n.boundTo, m.Engine)
 	}
 
 	runtime.SetFinalizer(m, finalizeLispMachine)
@@ -230,8 +230,8 @@ func (m *lispMachine) checkRoots() (err error) {
 			switch {
 			case m.setRootGrad() && !root.isStmt:
 				// check root's value
-				// if _, ok := root.boundTo.(*dualValue); !ok {
-				// 	err = errors.Errorf("Expected root %v to have a boundTo of a dualValue", root)
+				// if _, ok := root.boundTo.(*value.DualValue); !ok {
+				// 	err = errors.Errorf("Expected root %v to have a boundTo of a value.DualValue", root)
 				// 	return
 				// }
 			case !m.setRootGrad() && !root.IsScalar() && !root.isStmt:
@@ -307,7 +307,7 @@ func (m *lispMachine) forward() (err error) {
 	m.enterLogScope()
 	defer m.leaveLogScope()
 
-	defer setEngine(n.boundTo, m.Engine)
+	defer value.SetEngine(n.boundTo, m.Engine)
 
 	if !n.isStmt {
 		switch {
@@ -324,7 +324,7 @@ func (m *lispMachine) forward() (err error) {
 				return errors.Wrapf(err, execFail, n.op, n)
 			}
 
-			// we wrap it in a dualValue, but don't allocate anything for the d
+			// we wrap it in a value.DualValue, but don't allocate anything for the d
 			if err = n.bind(dvUnit0(v)); err != nil {
 				return errors.Wrap(err, bindFail)
 			}
@@ -342,16 +342,16 @@ func (m *lispMachine) forward() (err error) {
 	op := NewExternalOp(n.op, execution.Context{m, dev}, nil)
 
 	// m.watchedLogf("Result of execution of this node would reside in %v", dev)
-	var output *dualValue
+	var output *value.DualValue
 
-	inputs := make([]*dualValue, len(n.children))
+	inputs := make([]*value.DualValue, len(n.children))
 	children := n.children
 
 	m.enterLogScope()
 	for i, child := range children {
 		m.logf("child %d: %v %v", i, child, child.Shape())
 		if child.Device() == n.Device() {
-			inputs[i] = child.boundTo.(*dualValue)
+			inputs[i] = child.boundTo.(*value.DualValue)
 			// continue
 		}
 
@@ -367,10 +367,10 @@ func (m *lispMachine) forward() (err error) {
 			err = nil
 		}
 
-		dv := borrowDV()
+		dv := value.BorrowDV()
 
 		dv.Value = v
-		dv.d = d
+		dv.D = d
 		inputs[i] = dv
 
 		defer func() {
@@ -382,7 +382,7 @@ func (m *lispMachine) forward() (err error) {
 				m.PutValue(dev, d)
 			}
 			if allocV && allocD {
-				returnDV(dv)
+				value.ReturnDV(dv)
 			}
 		}()
 	}
@@ -405,7 +405,7 @@ func (m *lispMachine) forward() (err error) {
 		} else {
 			machineLogf("dvBindVar0")
 			m.logf("dvBindVar0")
-			dv, ok := n.boundTo.(*dualValue)
+			dv, ok := n.boundTo.(*value.DualValue)
 			if !ok {
 				panic(fmt.Sprintf("n not dual value %v", n))
 			}
@@ -423,14 +423,14 @@ func (m *lispMachine) forward() (err error) {
 			if child.Device() != execution.CPU {
 				m.Signal() // get work to be done first
 
-				if dv, ok := n.children[0].boundTo.(*dualValue); ok {
+				if dv, ok := n.children[0].boundTo.(*value.DualValue); ok {
 					*ot.into = dv.Value
 				} else {
 					*ot.into = childVal
 				}
 
 			} else {
-				if dv, ok := childVal.(*dualValue); ok {
+				if dv, ok := childVal.(*value.DualValue); ok {
 					*ot.into = dv.Value
 				} else {
 					*ot.into = childVal
@@ -527,7 +527,7 @@ func (m *lispMachine) backward() (err error) {
 	m.watchedLogf("Inputs: %v", instr.inputs)
 	m.enterLogScope()
 	for _, in := range instr.inputs {
-		m.watchedLogf(m.valueFmt, in.boundTo.(*dualValue).d)
+		m.watchedLogf(m.valueFmt, in.boundTo.(*value.DualValue).D)
 	}
 	m.leaveLogScope()
 
@@ -538,14 +538,14 @@ func (m *lispMachine) backward() (err error) {
 
 	// Make sure that all the engines of all the values are set to use the correct engine
 	for _, in := range instr.inputs {
-		setEngine(in.boundTo, m.Engine)
+		value.SetEngine(in.boundTo, m.Engine)
 	}
-	setEngine(instr.output.boundTo, m.Engine)
+	value.SetEngine(instr.output.boundTo, m.Engine)
 
 	m.watchedLogf("After:")
 	m.enterLogScope()
 	for _, in := range instr.inputs {
-		m.watchedLogf(m.valueFmt, in.boundTo.(*dualValue).d)
+		m.watchedLogf(m.valueFmt, in.boundTo.(*value.DualValue).D)
 	}
 
 	m.leaveLogScope()
@@ -678,7 +678,7 @@ func (instr adInstr) do() error {
 	err := instr.ADOp.DoDiff(instr.ctx, instr.inputs, instr.output)
 	// logf("INPUTS:")
 	// for _, in := range instr.inputs {
-	// 	logf("%v\n", in.boundTo.(*dualValue).d)
+	// 	logf("%v\n", in.boundTo.(*value.DualValue).d)
 	// }
 	return err
 }

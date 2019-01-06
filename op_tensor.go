@@ -9,8 +9,8 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/gorgonia/internal/execution"
-	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -29,7 +29,7 @@ func (op atOp) Arity() int { return 1 }
 //		op :: Tensor a → a
 func (op atOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	tt := makeTensorType(op.d, a)
+	tt := constructor.MakeTensorType(op.d, a)
 
 	return hm.NewFnType(tt, a)
 }
@@ -55,7 +55,7 @@ func (op atOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 			return
 		}
 
-		retVal, _, _, err = primitive.AnyToValue(r)
+		retVal, _, _, err = value.AnyToValue(r)
 	default:
 		err = errors.Errorf(nyiTypeFail, "atOp.Do()", tt)
 	}
@@ -91,7 +91,7 @@ func (op sizeOp) Type() hm.Type {
 		return hm.NewFnType(a, a)
 	}
 
-	tt := makeTensorType(op.d, a)
+	tt := constructor.MakeTensorType(op.d, a)
 	return hm.NewFnType(tt, a)
 }
 
@@ -118,11 +118,11 @@ func (op sizeOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 
 	switch t := inputs[0].(type) {
 	case value.Scalar:
-		retVal = primitive.One(t.Dtype())
+		retVal = value.One(t.Dtype())
 
 		// bools are special
-		if _, ok := t.(*primitive.B); ok {
-			retVal = primitive.NewI(1)
+		if _, ok := t.(*value.B); ok {
+			retVal = value.NewI(1)
 		}
 	case tensor.Tensor:
 		sh := t.Shape()
@@ -134,11 +134,11 @@ func (op sizeOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 		// cast as ... types
 		switch t.Dtype() {
 		case tensor.Float64:
-			retVal = primitive.NewF64(float64(size))
+			retVal = value.NewF64(float64(size))
 		case tensor.Float32:
-			retVal = primitive.NewF32(float32(size))
+			retVal = value.NewF32(float32(size))
 		case tensor.Int:
-			retVal = primitive.NewI(size)
+			retVal = value.NewI(size)
 		default:
 			return nil, errors.Errorf(nyiFail, "sizeOf.Do()", t.Dtype())
 		}
@@ -217,14 +217,14 @@ func (op repeatOp) Type() hm.Type {
 	if op.arg0Dim == 0 {
 		i0t = a
 	} else {
-		i0t = makeTensorType(op.arg0Dim, a)
+		i0t = constructor.MakeTensorType(op.arg0Dim, a)
 	}
 
 	// if we know the result already, then we know the return type as well
 	if op.d == 0 && op.inputShape != nil {
 		rt = a
 	} else {
-		rt = makeTensorType(op.d, a)
+		rt = constructor.MakeTensorType(op.d, a)
 	}
 
 	var ft hm.Types
@@ -309,7 +309,7 @@ func (op repeatOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (er
 
 	xshape := xdv.Shape()
 	var d value.Value
-	d = ydv.d
+	d = ydv.D
 
 	// we make it a colVec
 	if xshape.IsVector() && !xshape.IsColVec() && !xshape.IsRowVec() {
@@ -356,8 +356,8 @@ func (op repeatOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (er
 		}
 	}
 
-	add := newEBOByType(addOpType, TypeOf(xdv.d), TypeOf(d))
-	if d, err = add.UnsafeDo(xdv.d, d); err != nil {
+	add := newEBOByType(addOpType, value.TypeOf(xdv.D), value.TypeOf(d))
+	if d, err = add.UnsafeDo(xdv.D, d); err != nil {
 		return
 	}
 
@@ -395,7 +395,7 @@ func (op repeatOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 	// process inputs[0]
 	var t tensor.Tensor
 	switch iv := inputs[0].(type) {
-	case *primitive.F64:
+	case *value.F64:
 		s := iv.Any()
 		if monotonic && incr {
 			ret := tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(reps...))
@@ -404,7 +404,7 @@ func (op repeatOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 			return
 		}
 		t = tensor.New(tensor.FromScalar(s))
-	case *primitive.F32:
+	case *value.F32:
 		s := iv.Any()
 		if monotonic && incr {
 			ret := tensor.New(tensor.Of(tensor.Float32), tensor.WithShape(reps...))
@@ -413,7 +413,7 @@ func (op repeatOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 			return
 		}
 		t = tensor.New(tensor.FromScalar(s))
-	case *primitive.I:
+	case *value.I:
 		s := iv.Any()
 		if monotonic && incr {
 			ret := tensor.New(tensor.Of(tensor.Int), tensor.WithShape(reps...))
@@ -422,7 +422,7 @@ func (op repeatOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 			return
 		}
 		t = tensor.New(tensor.FromScalar(s))
-	case *primitive.B:
+	case *value.B:
 		s := iv.Any()
 		if monotonic && incr {
 			ret := tensor.New(tensor.Of(tensor.Bool), tensor.WithShape(reps...))
@@ -509,7 +509,7 @@ func (op *sliceOp) Arity() int { return 1 }
 // The latter is in the case where the resulting dimensions is 0, returning a scalar
 func (op *sliceOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	tt := makeTensorType(op.d, a)
+	tt := constructor.MakeTensorType(op.d, a)
 
 	var selection int
 
@@ -524,7 +524,7 @@ func (op *sliceOp) Type() hm.Type {
 			return hm.NewFnType(tt, a)
 		}
 
-		tt2 := makeTensorType(op.d-1, a)
+		tt2 := constructor.MakeTensorType(op.d-1, a)
 		return hm.NewFnType(tt, tt2)
 	}
 
@@ -572,13 +572,13 @@ func (op *sliceOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (er
 
 	// var d value.Value
 	incrOp := sliceIncrOp{op}
-	if _, err = incrOp.UsePreallocDo(xdv.d, xdv.d, ydv.d); err != nil {
+	if _, err = incrOp.UsePreallocDo(xdv.D, xdv.D, ydv.D); err != nil {
 		return errors.Wrapf(err, doFail, incrOp)
 	}
 
 	// there is no need to handle scalars, because you can never slice a scalar
 	// add := newElemBinOp(addOpType, inputs[0], output)
-	// if _, err = add.UnsafeDo(xdv.d, d); err != nil {
+	// if _, err = add.UnsafeDo(xdv.D, d); err != nil {
 	// 	return errors.Wrapf(err, unsafeDoFail, add)
 	// }
 
@@ -605,7 +605,7 @@ func (op *sliceOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 			return nil, errors.Wrapf(err, sliceFail, slices)
 		}
 		if v.IsScalar() {
-			retVal, _ = primitive.AnyToScalar(v.ScalarValue())
+			retVal, _ = value.AnyToScalar(v.ScalarValue())
 		} else {
 			retVal = v
 		}
@@ -682,7 +682,7 @@ type sliceIncrOp struct {
 func (op sliceIncrOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	b := hm.TypeVariable('c')
-	tt := makeTensorType(op.d, a)
+	tt := constructor.MakeTensorType(op.d, a)
 
 	retVal := hm.NewFnType(tt, b, tt)
 	return retVal
@@ -718,18 +718,18 @@ func (op sliceIncrOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) 
 
 	// dzdx
 	add := newElemBinOp(addOpType, inputs[0], output)
-	if _, err = add.UnsafeDo(xdv.d, zdv.d); err != nil {
+	if _, err = add.UnsafeDo(xdv.D, zdv.D); err != nil {
 		return errors.Wrapf(err, unsafeDoFail, add)
 	}
 
 	// dzdy
 	var d value.Value
-	if d, err = op.sliceOp.Do(zdv.d); err != nil {
+	if d, err = op.sliceOp.Do(zdv.D); err != nil {
 		return errors.Wrapf(err, doFail, op)
 	}
 
 	add = newElemBinOp(addOpType, inputs[1], output)
-	if _, err = add.UnsafeDo(ydv.d, d); err != nil {
+	if _, err = add.UnsafeDo(ydv.D, d); err != nil {
 		return errors.Wrapf(err, doFail, add)
 	}
 	return
@@ -761,9 +761,9 @@ func (op sliceIncrOp) Do(inputs ...value.Value) (retVal value.Value, err error) 
 			return nil, errors.Wrapf(err, sliceFail, slices)
 		}
 		switch i := incr.(type) {
-		case *primitive.F64:
+		case *value.F64:
 			tensor.Add(v, i.Any(), tensor.UseUnsafe())
-		case *primitive.F32:
+		case *value.F32:
 			tensor.Add(v, i.Any(), tensor.UseUnsafe())
 		case *tensor.Dense:
 			tensor.Add(v, i, tensor.UseUnsafe())
@@ -800,9 +800,9 @@ func (op sliceIncrOp) UsePreallocDo(prealloc value.Value, inputs ...value.Value)
 			return nil, errors.Wrapf(err, sliceFail, slices)
 		}
 		switch i := incr.(type) {
-		case *primitive.F64:
+		case *value.F64:
 			tensor.Add(v, i.Any(), tensor.UseUnsafe())
-		case *primitive.F32:
+		case *value.F32:
 			tensor.Add(v, i.Any(), tensor.UseUnsafe())
 		case *tensor.Dense:
 			tensor.Add(v, i, tensor.UseUnsafe())
@@ -877,7 +877,7 @@ func (op transposeOp) Arity() int { return 1 }
 // 		transpose :: Tensor a → Tensor a
 func (op transposeOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	tt := makeTensorType(op.d, a)
+	tt := constructor.MakeTensorType(op.d, a)
 
 	return hm.NewFnType(tt, tt)
 }
@@ -924,8 +924,8 @@ func (op transposeOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) 
 
 	var zdvdT tensor.Tensor
 	var ok bool
-	if zdvdT, ok = zdv.d.(tensor.Tensor); !ok {
-		return errors.Errorf("Expected the gradient of the output node to be a Tensor. Got %v instead", zdv.d)
+	if zdvdT, ok = zdv.D.(tensor.Tensor); !ok {
+		return errors.Errorf("Expected the gradient of the output node to be a Tensor. Got %v instead", zdv.D)
 	}
 
 	if err = zdvdT.T(newPattern...); err != nil {
@@ -935,8 +935,8 @@ func (op transposeOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) 
 	d := tensor.Materialize(zdvdT)
 	zdvdT.UT()
 
-	add := newEBOByType(addOpType, inputs[0].t, TypeOf(zdvdT))
-	if _, err = add.UnsafeDo(xdv.d, d); err != nil {
+	add := newEBOByType(addOpType, inputs[0].t, value.TypeOf(zdvdT))
+	if _, err = add.UnsafeDo(xdv.D, d); err != nil {
 		err = errors.Wrapf(err, doFail, add)
 	}
 	return
@@ -1010,7 +1010,7 @@ func (op concatOp) Arity() int { return -1 }
 // concat only works for Tensor types
 //		concat :: Tensor a → Tensor a → ... → Tensor a
 func (op concatOp) Type() hm.Type {
-	tt := makeTensorType(op.d, hm.TypeVariable('a'))
+	tt := constructor.MakeTensorType(op.d, hm.TypeVariable('a'))
 	fnt := make([]hm.Type, op.children+1)
 	for i := range fnt {
 		fnt[i] = tt
@@ -1087,8 +1087,8 @@ func (op concatOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes
 }
 
 func (op concatOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) error {
-	odv := output.boundTo.(*dualValue)
-	odvd := odv.d.(tensor.Tensor)
+	odv := output.boundTo.(*value.DualValue)
+	odvd := odv.D.(tensor.Tensor)
 
 	var start int
 	for _, in := range inputs {
@@ -1097,8 +1097,8 @@ func (op concatOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) err
 		}
 		end := in.shape[op.axis] + start
 
-		idv := in.boundTo.(*dualValue)
-		idvd := idv.d.(tensor.Tensor)
+		idv := in.boundTo.(*value.DualValue)
+		idvd := idv.D.(tensor.Tensor)
 
 		sliced, err := odvd.Slice(S(start, end))
 		if err != nil {
@@ -1128,9 +1128,9 @@ func (op reshapeOp) Arity() int { return 1 }
 func (op reshapeOp) Type() hm.Type {
 	if op.from.Dims() != op.to.Dims() {
 		fr := op.from.Dims()
-		frT := newTensorType(fr, hm.TypeVariable('a'))
+		frT := constructor.NewTensorType(fr, hm.TypeVariable('a'))
 		to := op.to.Dims()
-		toT := newTensorType(to, hm.TypeVariable('a'))
+		toT := constructor.NewTensorType(to, hm.TypeVariable('a'))
 		return hm.NewFnType(frT, toT)
 	}
 	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'))
@@ -1143,7 +1143,7 @@ func (op reshapeOp) Do(vals ...value.Value) (value.Value, error) {
 	}
 	var val value.Value
 	var err error
-	if val, err = CloneValue(vals[0]); err != nil {
+	if val, err = value.CloneValue(vals[0]); err != nil {
 		return nil, errors.Wrapf(err, cloneFail, vals[0])
 	}
 	if !val.Shape().Eq(op.from) {
@@ -1213,7 +1213,7 @@ func (op reshapeOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (e
 		return
 	}
 	input := inputs[0]
-	dv := input.boundTo.(*dualValue)
+	dv := input.boundTo.(*value.DualValue)
 	return dv.SetDeriv(T)
 }
 

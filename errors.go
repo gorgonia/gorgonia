@@ -72,7 +72,7 @@ func nondiffErr(op Op) error {
 }
 
 // checkErrSetDeriv sets the deriv if the error is a value.Valuer. Helper function for linalg operations
-func checkErrSetDeriv(err error, dv *dualValue) error {
+func checkErrSetDeriv(err error, dv *value.DualValue) error {
 	if ver, ok := err.(value.Valuer); ok {
 		return dv.SetDeriv(ver.Value())
 	}

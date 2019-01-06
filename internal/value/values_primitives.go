@@ -1,4 +1,4 @@
-package primitive
+package value
 
 import (
 	"bytes"
@@ -8,7 +8,6 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
-	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
@@ -83,48 +82,48 @@ func (v *U8) Shape() tensor.Shape { return scalarShape }
 // Shape returns a scalar shape for all scalar values
 func (v *B) Shape() tensor.Shape { return scalarShape }
 
-// Size returns 0 for all scalar value.Values
+// Size returns 0 for all scalar Values
 func (v *F64) Size() int { return 0 }
 
-// Size returns 0 for all scalar value.Values
+// Size returns 0 for all scalar Values
 func (v *F32) Size() int { return 0 }
 
-// Size returns 0 for all scalar value.Values
+// Size returns 0 for all scalar Values
 func (v *I) Size() int { return 0 }
 
-// Size returns 0 for all scalar value.Values
+// Size returns 0 for all scalar Values
 func (v *I64) Size() int { return 0 }
 
-// Size returns 0 for all scalar value.Values
+// Size returns 0 for all scalar Values
 func (v *I32) Size() int { return 0 }
 
-// Size returns 0 for all scalar value.Values
+// Size returns 0 for all scalar Values
 func (v *U8) Size() int { return 0 }
 
-// Size returns 0 for all scalar value.Values
+// Size returns 0 for all scalar Values
 func (v *B) Size() int { return 0 }
 
 /* Data() */
 
-// Data returns the original representation of the value.Value
+// Data returns the original representation of the Value
 func (v *F64) Data() interface{} { return v.Any() }
 
-// Data returns the original representation of the value.Value
+// Data returns the original representation of the Value
 func (v *F32) Data() interface{} { return v.Any() }
 
-// Data returns the original representation of the value.Value
+// Data returns the original representation of the Value
 func (v *I) Data() interface{} { return v.Any() }
 
-// Data returns the original representation of the value.Value
+// Data returns the original representation of the Value
 func (v *I64) Data() interface{} { return v.Any() }
 
-// Data returns the original representation of the value.Value
+// Data returns the original representation of the Value
 func (v *I32) Data() interface{} { return v.Any() }
 
-// Data returns the original representation of the value.Value
+// Data returns the original representation of the Value
 func (v *U8) Data() interface{} { return v.Any() }
 
-// Data returns the original representation of the value.Value
+// Data returns the original representation of the Value
 func (v *B) Data() interface{} { return v.Any() }
 
 // Any ...
@@ -286,7 +285,7 @@ func (v *U8) Pointer() unsafe.Pointer { return unsafe.Pointer(v) }
 // Pointer returns the pointer as an unsafe.Pointer. Satisfies the tensor.Memory interface
 func (v *B) Pointer() unsafe.Pointer { return unsafe.Pointer(v) }
 
-func formatScalar(v value.Scalar, s fmt.State, c rune) {
+func formatScalar(v Scalar, s fmt.State, c rune) {
 	var buf bytes.Buffer
 	var ok bool
 
@@ -332,9 +331,9 @@ func formatScalar(v value.Scalar, s fmt.State, c rune) {
 }
 
 // AnyToScalar turns any compatible value into a scalar
-func AnyToScalar(any interface{}) (value.Scalar, tensor.Dtype) {
+func AnyToScalar(any interface{}) (Scalar, tensor.Dtype) {
 	switch at := any.(type) {
-	case value.Scalar:
+	case Scalar:
 		return at, at.Dtype()
 	case float64:
 		return NewF64(at), tensor.Float64
@@ -356,11 +355,11 @@ func AnyToScalar(any interface{}) (value.Scalar, tensor.Dtype) {
 }
 
 // AnyToValue ...
-func AnyToValue(any interface{}) (val value.Value, t hm.Type, dt tensor.Dtype, err error) {
+func AnyToValue(any interface{}) (val Value, t hm.Type, dt tensor.Dtype, err error) {
 	switch a := any.(type) {
-	case value.Value:
+	case Value:
 		val = a
-		t = value.TypeOf(a)
+		t = TypeOf(a)
 		dt = a.Dtype()
 		return
 	case float64, float32, int, int64, int32, byte, bool:
@@ -383,7 +382,7 @@ func AnyToValue(any interface{}) (val value.Value, t hm.Type, dt tensor.Dtype, e
 		return NewB(bool(a)), tensor.Bool, tensor.Bool, nil
 	case tensor.Tensor:
 		val = a
-		t = value.TypeOf(a)
+		t = TypeOf(a)
 		dt = a.Dtype()
 		return
 	default:
@@ -393,7 +392,7 @@ func AnyToValue(any interface{}) (val value.Value, t hm.Type, dt tensor.Dtype, e
 }
 
 // One ...
-func One(dt tensor.Dtype) value.Scalar {
+func One(dt tensor.Dtype) Scalar {
 	switch dt {
 	case tensor.Float64:
 		return NewF64(float64(1))
@@ -415,7 +414,7 @@ func One(dt tensor.Dtype) value.Scalar {
 }
 
 // Zero returns the zero value or the given type
-func Zero(dt tensor.Dtype) value.Scalar {
+func Zero(dt tensor.Dtype) Scalar {
 	switch dt {
 	case tensor.Float64:
 		return NewF64(float64(0))

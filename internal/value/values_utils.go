@@ -1,24 +1,22 @@
-package gorgonia
+package value
 
 import (
 	"fmt"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
-	"gorgonia.org/gorgonia/internal/primitive"
-	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/tensor"
 )
 
-// TypeOf returns the Type of the value
-func TypeOf(v value.Value) hm.Type {
+func typeCheckTypeOf(v Value) hm.Type {
 	switch t := v.(type) {
 	case tensor.Tensor:
 		dt, dim := tensorInfo(t)
-		return makeTensorType(dim, dt)
-	case value.Scalar:
+		return constructor.NewTensorType(dim, dt)
+	case Scalar:
 		return t.Dtype()
-	case value.Typer:
+	case Typer:
 		return t.Type()
 
 	default:
@@ -26,29 +24,14 @@ func TypeOf(v value.Value) hm.Type {
 	}
 }
 
-func typeCheckTypeOf(v value.Value) hm.Type {
-	switch t := v.(type) {
-	case tensor.Tensor:
-		dt, dim := tensorInfo(t)
-		return newTensorType(dim, dt)
-	case value.Scalar:
-		return t.Dtype()
-	case value.Typer:
-		return t.Type()
-
-	default:
-		panic(fmt.Sprintf("TypeOf Not yet implemented for %v %T", v, v))
-	}
-}
-
-// ValueEq is the equality function for values
-func ValueEq(a, b value.Value) bool {
+// Eq is the equality function for values
+func Eq(a, b Value) bool {
 	if a == nil && b == nil {
 		return true
 	}
 	switch at := a.(type) {
-	case value.Scalar:
-		if bt, ok := b.(value.Scalar); ok {
+	case Scalar:
+		if bt, ok := b.(Scalar); ok {
 			return scalarEq(at, bt)
 		}
 		return false
@@ -57,22 +40,22 @@ func ValueEq(a, b value.Value) bool {
 			return at.Eq(bt)
 		}
 		return false
-	case value.ValueEqualer:
+	case ValueEqualer:
 		return at.ValueEq(b)
 	default:
 		panic(fmt.Sprintf("Not implemented yet, %T", a))
 	}
 }
 
-// ValueClose checks whether two values are close to one another. It's predominantly used as an alternative equality test for floats
-func ValueClose(a, b value.Value) bool {
+// Close checks whether two values are close to one another. It's predominantly used as an alternative equality test for floats
+func Close(a, b Value) bool {
 	if a == nil && b == nil {
 		return true
 	}
 
 	switch at := a.(type) {
-	case value.Scalar:
-		if bt, ok := b.(value.Scalar); ok {
+	case Scalar:
+		if bt, ok := b.(Scalar); ok {
 			return scalarClose(at, bt)
 		}
 		return false
@@ -81,7 +64,7 @@ func ValueClose(a, b value.Value) bool {
 			return tensorClose(at, bt)
 		}
 		return false
-	case value.ValueCloser:
+	case ValueCloser:
 		return at.ValueClose(b)
 	default:
 		panic("Not implemented yet")
@@ -89,76 +72,76 @@ func ValueClose(a, b value.Value) bool {
 }
 
 // CloneValue clones a value. For scalars, since Go copies scalars, it returns itself
-func CloneValue(v value.Value) (value.Value, error) {
+func CloneValue(v Value) (Value, error) {
 	switch vt := v.(type) {
-	case *primitive.F64:
+	case *F64:
 		retVal := *vt
 		return &retVal, nil
-	case *primitive.F32:
+	case *F32:
 		retVal := *vt
 		return &retVal, nil
-	case *primitive.I:
+	case *I:
 		retVal := *vt
 		return &retVal, nil
-	case *primitive.I32:
+	case *I32:
 		retVal := *vt
 		return &retVal, nil
-	case *primitive.I64:
+	case *I64:
 		retVal := *vt
 		return &retVal, nil
-	case *primitive.U8:
+	case *U8:
 		retVal := *vt
 		return &retVal, nil
-	case *primitive.B:
+	case *B:
 		retVal := *vt
 		return &retVal, nil
 	case tensor.Tensor:
 		return vt.Clone().(*tensor.Dense), nil
-	case value.CloneErrorer:
+	case CloneErrorer:
 		ret, err := vt.Clone()
 		if err != nil {
 			return nil, err
 		}
-		retVal, ok := ret.(value.Value)
+		retVal, ok := ret.(Value)
 		if !ok {
 			return nil, errors.Errorf("Cloner is not a value: %v %T", v, v)
 		}
 		return retVal, nil
-	case value.Cloner:
-		return vt.Clone().(value.Value), nil
+	case Cloner:
+		return vt.Clone().(Value), nil
 	default:
 		return nil, errors.Errorf("Unable to clone value of type %T", v)
 	}
 }
 
 // ZeroValue returns the zero value of a type
-func ZeroValue(v value.Value) value.Value {
+func ZeroValue(v Value) Value {
 	switch vt := v.(type) {
-	case *primitive.F64:
+	case *F64:
 		*vt = 0
 		return vt
-	case *primitive.F32:
+	case *F32:
 		*vt = 0
 		return vt
-	case *primitive.I:
+	case *I:
 		*vt = 0
 		return vt
-	case *primitive.I32:
+	case *I32:
 		*vt = 0
 		return vt
-	case *primitive.I64:
+	case *I64:
 		*vt = 0
 		return vt
-	case *primitive.U8:
+	case *U8:
 		*vt = 0
 		return vt
-	case *primitive.B:
+	case *B:
 		*vt = false
 		return vt
 	case tensor.Tensor:
 		vt.Zero()
 		return vt
-	case value.ZeroValuer:
+	case ZeroValuer:
 		return vt.ZeroValue()
 	default:
 		panic(fmt.Sprintf("Cannot return zero value of %T", v))
@@ -166,54 +149,54 @@ func ZeroValue(v value.Value) value.Value {
 }
 
 // Copy copies the src values into dest values. For scalars, it just returns itself
-func Copy(dest, src value.Value) (value.Value, error) {
+func Copy(dest, src Value) (Value, error) {
 	var ok bool
 	switch srcT := src.(type) {
-	case *primitive.F64:
-		var destS *primitive.F64
-		if destS, ok = dest.(*primitive.F64); !ok {
-			return nil, errors.Errorf("Expected dest to be *primitive.F64. Got %T instead", dest)
+	case *F64:
+		var destS *F64
+		if destS, ok = dest.(*F64); !ok {
+			return nil, errors.Errorf("Expected dest to be *F64. Got %T instead", dest)
 		}
 		*destS = *srcT
 		return destS, nil
-	case *primitive.F32:
-		var destS *primitive.F32
-		if destS, ok = dest.(*primitive.F32); !ok {
-			return nil, errors.Errorf("Expected dest to be *primitive.F32. Got %T instead", dest)
+	case *F32:
+		var destS *F32
+		if destS, ok = dest.(*F32); !ok {
+			return nil, errors.Errorf("Expected dest to be *F32. Got %T instead", dest)
 		}
 		*destS = *srcT
 		return destS, nil
-	case *primitive.I:
-		var destS *primitive.I
-		if destS, ok = dest.(*primitive.I); !ok {
+	case *I:
+		var destS *I
+		if destS, ok = dest.(*I); !ok {
 			return nil, errors.Errorf("Expected dest to be *I) . Got %T instead", dest)
 		}
 		*destS = *srcT
 		return destS, nil
-	case *primitive.I64:
-		var destS *primitive.I64
-		if destS, ok = dest.(*primitive.I64); !ok {
+	case *I64:
+		var destS *I64
+		if destS, ok = dest.(*I64); !ok {
 			return nil, errors.Errorf("Expected dest to be *I64. Got %T instead", dest)
 		}
 		*destS = *srcT
 		return destS, nil
-	case *primitive.I32:
-		var destS *primitive.I32
-		if destS, ok = dest.(*primitive.I32); !ok {
+	case *I32:
+		var destS *I32
+		if destS, ok = dest.(*I32); !ok {
 			return nil, errors.Errorf("Expected dest to be *I32. Got %T instead", dest)
 		}
 		*destS = *srcT
 		return destS, nil
-	case *primitive.U8:
-		var destS *primitive.U8
-		if destS, ok = dest.(*primitive.U8); !ok {
+	case *U8:
+		var destS *U8
+		if destS, ok = dest.(*U8); !ok {
 			return nil, errors.Errorf("Expected dest to be *U8). Got %T instead", dest)
 		}
 		*destS = *srcT
 		return destS, nil
-	case *primitive.B:
-		var destS *primitive.B
-		if destS, ok = dest.(*primitive.B); !ok {
+	case *B:
+		var destS *B
+		if destS, ok = dest.(*B); !ok {
 			return nil, errors.Errorf("Expected dest to be *B) . Got %T instead", dest)
 		}
 		*destS = *srcT
@@ -225,12 +208,12 @@ func Copy(dest, src value.Value) (value.Value, error) {
 		}
 		err := tensor.Copy(destT, srcT)
 		return dest, err
-	case value.CopierTo:
+	case CopierTo:
 		err := srcT.CopyTo(dest)
 		return dest, err
 	default:
-		var copyFrom value.CopierFrom
-		if copyFrom, ok = dest.(value.CopierFrom); ok {
+		var copyFrom CopierFrom
+		if copyFrom, ok = dest.(CopierFrom); ok {
 			err := copyFrom.CopyFrom(src)
 			return dest, err
 		}
@@ -238,11 +221,12 @@ func Copy(dest, src value.Value) (value.Value, error) {
 	}
 }
 
-func setEngine(v value.Value, e tensor.Engine) {
+// SetEngine ...
+func SetEngine(v Value, e tensor.Engine) {
 	switch vv := v.(type) {
-	case *dualValue:
-		setEngine(vv.Value, e)
-		setEngine(vv.d, e)
+	case *DualValue:
+		SetEngine(vv.Value, e)
+		SetEngine(vv.D, e)
 	case tensor.Tensor:
 		tensor.WithEngine(e)(vv)
 	}

@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"github.com/chewxy/hm"
+	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/gorgonia/internal/execution"
 )
 
@@ -47,8 +48,8 @@ var āBinOpTypes = [maxĀBinaryOperator]func() hm.Type{
 // For the moment only floats are allowed
 func matVecMulType() hm.Type {
 	a := hm.TypeVariable('a')
-	v := makeTensorType(1, a)
-	m := makeTensorType(2, a)
+	v := constructor.MakeTensorType(1, a)
+	m := constructor.MakeTensorType(2, a)
 
 	return hm.NewFnType(m, v, v)
 }
@@ -59,7 +60,7 @@ func matVecMulType() hm.Type {
 // For the moment only floats are allowed
 func matMulType() hm.Type {
 	a := hm.TypeVariable('a')
-	m := makeTensorType(2, a)
+	m := constructor.MakeTensorType(2, a)
 
 	return hm.NewFnType(m, m, m)
 }
@@ -70,7 +71,7 @@ func matMulType() hm.Type {
 // For the moment only floats are allowed
 func vecDotType() hm.Type {
 	a := hm.TypeVariable('a')
-	v := makeTensorType(1, a)
+	v := constructor.MakeTensorType(1, a)
 
 	return hm.NewFnType(v, v, a)
 }
@@ -81,14 +82,14 @@ func vecDotType() hm.Type {
 // For the moment only floats are allowed
 func outerProdType() hm.Type {
 	a := hm.TypeVariable('a')
-	v := makeTensorType(1, a)
-	m := makeTensorType(2, a)
+	v := constructor.MakeTensorType(1, a)
+	m := constructor.MakeTensorType(2, a)
 
 	return hm.NewFnType(v, v, m)
 }
 
 func batchedMatMulType() hm.Type {
 	a := hm.TypeVariable('a')
-	t := makeTensorType(3, a)
+	t := constructor.MakeTensorType(3, a)
 	return hm.NewFnType(t, t, t)
 }

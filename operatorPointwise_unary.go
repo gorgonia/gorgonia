@@ -233,7 +233,7 @@ func absDiff(x, y *Node) (err error) {
 		}
 
 		mul := newElemBinOp(mulOpType, y, x)
-		err = mul.IncrDo(xdv.d, d, ydv.d)
+		err = mul.IncrDo(xdv.D, d, ydv.D)
 		if err = checkErrSetDeriv(err, xdv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
@@ -268,7 +268,7 @@ func sinDiff(x, y *Node) (err error) {
 		}
 
 		mul := newElemBinOp(mulOpType, x, y)
-		err = mul.IncrDo(xdv.d, d, ydv.d)
+		err = mul.IncrDo(xdv.D, d, ydv.D)
 		if err = checkErrSetDeriv(err, xdv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
@@ -310,7 +310,7 @@ func cosDiff(x, y *Node) (err error) {
 		neg := newElemUnaryOp(negOpType, x)
 		if d, err = neg.UnsafeDo(d); err == nil {
 			mul := newElemBinOp(mulOpType, x, y)
-			err = mul.IncrDo(xdv.d, d, ydv.d)
+			err = mul.IncrDo(xdv.D, d, ydv.D)
 			if err = checkErrSetDeriv(err, xdv); err != nil {
 				return errors.Wrapf(err, autodiffFail, x)
 			}
@@ -328,7 +328,7 @@ func expDiff(x, y *Node) (err error) {
 	xdv, ydv := getDV(x, y)
 
 	mul := newElemBinOp(mulOpType, x, y)
-	err = mul.IncrDo(xdv.d, ydv.Value, ydv.d)
+	err = mul.IncrDo(xdv.D, ydv.Value, ydv.D)
 	if err = checkErrSetDeriv(err, xdv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}
@@ -346,7 +346,7 @@ func lnDiff(x, y *Node) (err error) {
 
 	div := newElemBinOp(divOpType, y, x)
 
-	err = div.IncrDo(xdv.d, ydv.d, xdv.Value)
+	err = div.IncrDo(xdv.D, ydv.D, xdv.Value)
 	if err = checkErrSetDeriv(err, xdv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}
@@ -390,7 +390,7 @@ func log2Diff(x, y *Node) (err error) {
 	}
 
 	div := newElemBinOp(divOpType, y, x)
-	err = div.IncrDo(xdv.d, ydv.d, d)
+	err = div.IncrDo(xdv.D, ydv.D, d)
 	if err = checkErrSetDeriv(err, xdv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}
@@ -406,7 +406,7 @@ func negDiff(x, y *Node) (err error) {
 	xdv, ydv := getDV(x, y)
 
 	sub := newElemBinOp(subOpType, x, y)
-	_, err = sub.UnsafeDo(xdv.d, ydv.d)
+	_, err = sub.UnsafeDo(xdv.D, ydv.D)
 	if err = checkErrSetDeriv(err, xdv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}
@@ -449,7 +449,7 @@ func squareDiff(x, y *Node) (err error) {
 			defer returnTensor(dT)
 		}
 
-		err = mul.IncrDo(xdv.d, d, ydv.d)
+		err = mul.IncrDo(xdv.D, d, ydv.D)
 		if err = checkErrSetDeriv(err, xdv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
@@ -492,7 +492,7 @@ func sqrtDiff(x, y *Node) (err error) {
 		}
 
 		div := newElemBinOp(divOpType, y, x)
-		err = div.IncrDo(xdv.d, ydv.d, d)
+		err = div.IncrDo(xdv.D, ydv.D, d)
 		if err = checkErrSetDeriv(err, xdv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
@@ -537,7 +537,7 @@ func inverseDiff(x, y *Node) (err error) {
 	}
 
 	mul := newElemBinOp(mulOpType, y, y)
-	err = mul.IncrDo(xdv.d, d, ydv.d)
+	err = mul.IncrDo(xdv.D, d, ydv.D)
 	if err = checkErrSetDeriv(err, xdv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}
@@ -580,12 +580,12 @@ func inverseSqrtDiff(x, y *Node) (err error) {
 	}
 
 	div := newElemBinOp(divOpType, y, x)
-	if d, err = div.Do(ydv.d, d); err != nil {
+	if d, err = div.Do(ydv.D, d); err != nil {
 		return errors.Wrapf(err, doFail, div)
 	}
 
 	sub := newElemBinOp(subOpType, x, y)
-	if d, err = sub.Do(xdv.d, d); err != nil {
+	if d, err = sub.Do(xdv.D, d); err != nil {
 		return errors.Wrapf(err, doFail, sub)
 	}
 	return nil
@@ -636,7 +636,7 @@ func cubeDiff(x, y *Node) (err error) {
 		return errors.Wrapf(err, unsafeDoFail, mul)
 	}
 
-	err = mul.IncrDo(xdv.d, d, ydv.d)
+	err = mul.IncrDo(xdv.D, d, ydv.D)
 	if err = checkErrSetDeriv(err, xdv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}
@@ -691,7 +691,7 @@ func tanhDiff(x, y *Node) (err error) {
 	}
 
 	mul := newElemBinOp(mulOpType, x, y)
-	err = mul.IncrDo(xdv.d, d, ydv.d)
+	err = mul.IncrDo(xdv.D, d, ydv.D)
 	if err = checkErrSetDeriv(err, xdv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}
@@ -745,7 +745,7 @@ func sigmoidDiff(x, y *Node) (err error) {
 		return errors.Wrapf(err, unsafeDoFail, mul)
 	}
 
-	err = mul.IncrDo(xdv.d, d, ydv.d)
+	err = mul.IncrDo(xdv.D, d, ydv.D)
 	if err = checkErrSetDeriv(err, xdv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}
@@ -791,7 +791,7 @@ func log1pDiff(x, y *Node) (err error) {
 	}
 
 	div := newElemBinOp(divOpType, y, x)
-	err = div.IncrDo(xdv.d, ydv.d, d)
+	err = div.IncrDo(xdv.D, ydv.D, d)
 	if err = checkErrSetDeriv(err, xdv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}
@@ -821,7 +821,7 @@ func expm1Diff(x, y *Node) (err error) {
 	}
 
 	mul := newElemBinOp(mulOpType, x, y)
-	err = mul.IncrDo(xdv.d, d, ydv.d)
+	err = mul.IncrDo(xdv.D, d, ydv.D)
 	if err = checkErrSetDeriv(err, xdv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}
@@ -851,7 +851,7 @@ func softplusDiff(x, y *Node) (err error) {
 	}
 
 	mul := newElemBinOp(mulOpType, x, y)
-	err = mul.IncrDo(xdv.d, d, ydv.d)
+	err = mul.IncrDo(xdv.D, d, ydv.D)
 	if err = checkErrSetDeriv(err, xdv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}

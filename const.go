@@ -156,3 +156,28 @@ func constants(g *ExprGraph, s string, dt tensor.Dtype) (*Node, error) {
 	}
 	return nil, nil
 }
+
+var (
+	// Represents the types that Nodes can take in Gorgonia
+
+	// Float64 ...
+	Float64 = tensor.Float64
+	// Float32 ...
+	Float32 = tensor.Float32
+	// Int ...
+	Int = tensor.Int
+	// Int64 ...
+	Int64 = tensor.Int64
+	// Int32 ...
+	Int32 = tensor.Int32
+	// Byte ...
+	Byte = tensor.Uint8
+	// Bool ...
+	Bool = tensor.Bool
+
+	// Ptr ...
+	Ptr = tensor.UnsafePointer // equivalent to interface{}. Ugh Ugh Ugh
+
+)
+
+var acceptableDtypes = [...]tensor.Dtype{tensor.Float64, tensor.Float32, tensor.Int, tensor.Int64, tensor.Int32, tensor.Byte, tensor.Bool}

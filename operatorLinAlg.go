@@ -115,13 +115,13 @@ func matMulDiff(ctx execution.Context, transA, transB bool, x, y, z *Node) (err 
 		op.transB = transB
 
 		// dzdx
-		err = op.IncrDo(xdv.d, ydv.Value, zdv.d)
+		err = op.IncrDo(xdv.D, ydv.Value, zdv.D)
 		if err = checkErrSetDeriv(err, xdv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
 
 		// dzdy
-		err = op.IncrDo(ydv.d, zdv.d, xdv.Value)
+		err = op.IncrDo(ydv.D, zdv.D, xdv.Value)
 		if err = checkErrSetDeriv(err, ydv); err != nil {
 			return errors.Wrapf(err, autodiffFail, y)
 		}
@@ -130,14 +130,14 @@ func matMulDiff(ctx execution.Context, transA, transB bool, x, y, z *Node) (err 
 
 	case !transA && transB:
 		// dzdx
-		err = op.IncrDo(xdv.d, zdv.d, ydv.Value)
+		err = op.IncrDo(xdv.D, zdv.D, ydv.Value)
 		if err = checkErrSetDeriv(err, xdv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
 
 		// dzdy
 		op.transA = true
-		err = op.IncrDo(ydv.d, zdv.d, xdv.Value)
+		err = op.IncrDo(ydv.D, zdv.D, xdv.Value)
 		if err = checkErrSetDeriv(err, ydv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
@@ -147,7 +147,7 @@ func matMulDiff(ctx execution.Context, transA, transB bool, x, y, z *Node) (err 
 	case transA && !transB:
 		// dzdx
 		op.transB = true
-		err = op.IncrDo(xdv.d, ydv.Value, zdv.d)
+		err = op.IncrDo(xdv.D, ydv.Value, zdv.D)
 		if err = checkErrSetDeriv(err, xdv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
@@ -155,21 +155,21 @@ func matMulDiff(ctx execution.Context, transA, transB bool, x, y, z *Node) (err 
 		// dzdy
 		op.transA = false
 		op.transB = false
-		err = op.IncrDo(ydv.d, xdv.Value, zdv.d)
+		err = op.IncrDo(ydv.D, xdv.Value, zdv.D)
 		if err = checkErrSetDeriv(err, ydv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
 		return
 	case !transA && !transB:
 		op.transB = true
-		err = op.IncrDo(xdv.d, zdv.d, ydv.Value)
+		err = op.IncrDo(xdv.D, zdv.D, ydv.Value)
 		if err = checkErrSetDeriv(err, xdv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
 
 		op.transA = true
 		op.transB = false
-		err = op.IncrDo(ydv.d, xdv.Value, zdv.d)
+		err = op.IncrDo(ydv.D, xdv.Value, zdv.D)
 		if err = checkErrSetDeriv(err, ydv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
@@ -210,9 +210,9 @@ func matVecMulDiff(ctx execution.Context, transA, transB bool, x, y, z *Node) (e
 	}
 
 	if transA {
-		err = op.IncrDo(xdv.d, ydv.Value, zdv.d)
+		err = op.IncrDo(xdv.D, ydv.Value, zdv.D)
 	} else {
-		err = op.IncrDo(xdv.d, zdv.d, ydv.Value)
+		err = op.IncrDo(xdv.D, zdv.D, ydv.Value)
 	}
 	if err = checkErrSetDeriv(err, xdv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
@@ -223,7 +223,7 @@ func matVecMulDiff(ctx execution.Context, transA, transB bool, x, y, z *Node) (e
 		transA:          !transA,
 	}
 
-	err = op.IncrDo(ydv.d, xdv.Value, zdv.d)
+	err = op.IncrDo(ydv.D, xdv.Value, zdv.D)
 	if err = checkErrSetDeriv(err, ydv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}
@@ -248,12 +248,12 @@ func vecDotDiff(ctx execution.Context, transA, transB bool, x, y, z *Node) (err 
 	xdv, ydv, zdv := getDV3(x, y, z)
 
 	mul := newElemBinOp(mulOpType, x, z)
-	err = mul.IncrDo(xdv.d, ydv.Value, zdv.d)
+	err = mul.IncrDo(xdv.D, ydv.Value, zdv.D)
 	if err = checkErrSetDeriv(err, xdv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}
 
-	err = mul.IncrDo(ydv.d, xdv.Value, zdv.d)
+	err = mul.IncrDo(ydv.D, xdv.Value, zdv.D)
 	if err = checkErrSetDeriv(err, ydv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}
@@ -278,13 +278,13 @@ func outerProdDiff(ctx execution.Context, transA, transB bool, x, y, z *Node) (e
 	xdv, ydv, zdv := getDV3(x, y, z)
 
 	mul := newElemBinOp(mulOpType, x, z)
-	err = mul.IncrDo(xdv.d, xdv.Value, zdv.d)
-	err = mul.IncrDo(xdv.d, ydv.Value, zdv.d)
+	err = mul.IncrDo(xdv.D, xdv.Value, zdv.D)
+	err = mul.IncrDo(xdv.D, ydv.Value, zdv.D)
 	if err = checkErrSetDeriv(err, xdv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}
 
-	err = mul.IncrDo(ydv.d, ydv.Value, zdv.d)
+	err = mul.IncrDo(ydv.D, ydv.Value, zdv.D)
 	if err = checkErrSetDeriv(err, ydv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}
@@ -357,13 +357,13 @@ func batchedMatMulDiff(ctx execution.Context, transA, transB bool, x, y, z *Node
 		op.transB = transB
 
 		// dzdx
-		err = op.IncrDo(xdv.d, ydv.Value, zdv.d)
+		err = op.IncrDo(xdv.D, ydv.Value, zdv.D)
 		if err = checkErrSetDeriv(err, xdv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
 
 		// dzdy
-		err = op.IncrDo(ydv.d, zdv.d, xdv.Value)
+		err = op.IncrDo(ydv.D, zdv.D, xdv.Value)
 		if err = checkErrSetDeriv(err, ydv); err != nil {
 			return errors.Wrapf(err, autodiffFail, y)
 		}
@@ -372,14 +372,14 @@ func batchedMatMulDiff(ctx execution.Context, transA, transB bool, x, y, z *Node
 
 	case !transA && transB:
 		// dzdx
-		err = op.IncrDo(xdv.d, zdv.d, ydv.Value)
+		err = op.IncrDo(xdv.D, zdv.D, ydv.Value)
 		if err = checkErrSetDeriv(err, xdv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
 
 		// dzdy
 		op.transA = true
-		err = op.IncrDo(ydv.d, zdv.d, xdv.Value)
+		err = op.IncrDo(ydv.D, zdv.D, xdv.Value)
 		if err = checkErrSetDeriv(err, ydv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
@@ -389,7 +389,7 @@ func batchedMatMulDiff(ctx execution.Context, transA, transB bool, x, y, z *Node
 	case transA && !transB:
 		// dzdx
 		op.transB = true
-		err = op.IncrDo(xdv.d, ydv.Value, zdv.d)
+		err = op.IncrDo(xdv.D, ydv.Value, zdv.D)
 		if err = checkErrSetDeriv(err, xdv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
@@ -397,21 +397,21 @@ func batchedMatMulDiff(ctx execution.Context, transA, transB bool, x, y, z *Node
 		// dzdy
 		op.transA = false
 		op.transB = false
-		err = op.IncrDo(ydv.d, xdv.Value, zdv.d)
+		err = op.IncrDo(ydv.D, xdv.Value, zdv.D)
 		if err = checkErrSetDeriv(err, ydv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
 		return
 	case !transA && !transB:
 		op.transB = true
-		err = op.IncrDo(xdv.d, zdv.d, ydv.Value)
+		err = op.IncrDo(xdv.D, zdv.D, ydv.Value)
 		if err = checkErrSetDeriv(err, xdv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}
 
 		op.transA = true
 		op.transB = false
-		err = op.IncrDo(ydv.d, xdv.Value, zdv.d)
+		err = op.IncrDo(ydv.D, xdv.Value, zdv.D)
 		if err = checkErrSetDeriv(err, ydv); err != nil {
 			return errors.Wrapf(err, autodiffFail, x)
 		}

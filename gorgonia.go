@@ -5,7 +5,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
-	"gorgonia.org/gorgonia/internal/primitive"
+	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -25,7 +25,7 @@ func Must(n *Node, err error, opts ...NodeConsOpt) *Node {
 
 // NodeFromAny creates a Node from a tensor.Tensor, automatically filling in shape and type info
 func (g *ExprGraph) NodeFromAny(any interface{}, opts ...NodeConsOpt) *Node {
-	v, t, dt, err := primitive.AnyToValue(any)
+	v, t, dt, err := value.AnyToValue(any)
 	if err != nil {
 		panic(err)
 	}
@@ -35,7 +35,7 @@ func (g *ExprGraph) NodeFromAny(any interface{}, opts ...NodeConsOpt) *Node {
 	switch t.(type) {
 	case tensor.Dtype:
 		return g.NewScalar(dt, opts...)
-	case TensorType:
+	case constructor.TensorType:
 		opts = append(opts, nil)
 		copy(opts[1:], opts[0:len(opts)-1])
 		opts[0] = WithShape(v.Shape()...)
@@ -58,7 +58,7 @@ func (g *ExprGraph) NewScalar(t tensor.Dtype, opts ...NodeConsOpt) *Node {
 
 // NewVector creates a Node representing a variable that holds a vector (nx1 matrix)
 func (g *ExprGraph) NewVector(t tensor.Dtype, opts ...NodeConsOpt) *Node {
-	tt := makeTensorType(1, t)
+	tt := constructor.MakeTensorType(1, t)
 	curOpts := []NodeConsOpt{WithType(tt)}
 	curOpts = append(curOpts, opts...)
 	n := g.NewNode().(*Node)
@@ -70,7 +70,7 @@ func (g *ExprGraph) NewVector(t tensor.Dtype, opts ...NodeConsOpt) *Node {
 
 // NewMatrix creates a Node representing a variable that holds a matrix (nxm)
 func (g *ExprGraph) NewMatrix(t tensor.Dtype, opts ...NodeConsOpt) *Node {
-	tt := makeTensorType(2, t)
+	tt := constructor.MakeTensorType(2, t)
 	curOpts := []NodeConsOpt{WithType(tt)}
 	curOpts = append(curOpts, opts...)
 	n := g.NewNode().(*Node)
@@ -82,7 +82,7 @@ func (g *ExprGraph) NewMatrix(t tensor.Dtype, opts ...NodeConsOpt) *Node {
 
 // NewTensor creates a Node representing a variable that holds a tensor (any n-dimensional array with dimensions greater than 2)
 func (g *ExprGraph) NewTensor(t tensor.Dtype, dims int, opts ...NodeConsOpt) *Node {
-	tt := makeTensorType(dims, t)
+	tt := constructor.MakeTensorType(dims, t)
 	curOpts := []NodeConsOpt{WithType(tt)}
 	curOpts = append(curOpts, opts...)
 	n := g.NewNode().(*Node)
@@ -100,7 +100,7 @@ func (g *ExprGraph) NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 	var s tensor.Shape
 	var val value.Value
 
-	val, t, _, err := primitive.AnyToValue(v)
+	val, t, _, err := value.AnyToValue(v)
 	if err != nil {
 		panic(err)
 	}
@@ -137,7 +137,7 @@ func UniformRandomNode(g *ExprGraph, dt tensor.Dtype, low, high float64, shape .
 	if s.Eq(scalarShape) {
 		t = dt
 	} else {
-		t = makeTensorType(s.Dims(), dt)
+		t = constructor.MakeTensorType(s.Dims(), dt)
 	}
 	n := g.NewNode().(*Node)
 	WithType(t)(n)
@@ -157,7 +157,7 @@ func GaussianRandomNode(g *ExprGraph, dt tensor.Dtype, mean, stdev float64, shap
 	if s.Eq(scalarShape) {
 		t = dt
 	} else {
-		t = makeTensorType(s.Dims(), dt)
+		t = constructor.MakeTensorType(s.Dims(), dt)
 	}
 	n := g.NewNode().(*Node)
 	WithType(t)(n)
@@ -180,7 +180,7 @@ func BinomialRandomNode(g *ExprGraph, dt tensor.Dtype, trials, prob float64, sha
 	if s.Eq(scalarShape) {
 		t = dt
 	} else {
-		t = makeTensorType(s.Dims(), dt)
+		t = constructor.MakeTensorType(s.Dims(), dt)
 	}
 
 	n := g.NewNode().(*Node)
@@ -287,7 +287,7 @@ func UnsafeLet(n *Node, be interface{}) error {
 	default:
 		var val value.Value
 		var err error
-		if val, _, _, err = primitive.AnyToValue(be); err != nil {
+		if val, _, _, err = value.AnyToValue(be); err != nil {
 			return errors.Wrapf(err, anyToValueFail, be, be)
 		}
 

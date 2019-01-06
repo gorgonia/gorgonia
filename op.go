@@ -248,7 +248,7 @@ type constantScalar struct {
 }
 
 func (c constantScalar) Arity() int                                   { return 0 }
-func (c constantScalar) Type() hm.Type                                { return TypeOf(c.v) }
+func (c constantScalar) Type() hm.Type                                { return value.TypeOf(c.v) }
 func (c constantScalar) InferShape(...DimSizer) (tensor.Shape, error) { return scalarShape, nil }
 func (c constantScalar) ReturnsPtr() bool                             { return false }
 func (c constantScalar) CallsExtern() bool                            { return false }
@@ -260,7 +260,7 @@ func (c constantScalar) Do(...value.Value) (value.Value, error) { return c.v, ni
 func (c constantScalar) String() string                         { return fmt.Sprintf("const %s", c.v) }
 
 func (c constantScalar) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "const %v: %v", TypeOf(c.v), c.v)
+	fmt.Fprintf(h, "const %v: %v", value.TypeOf(c.v), c.v)
 }
 
 func (c constantScalar) Hashcode() uint32 {
@@ -277,7 +277,7 @@ type constantTensor struct {
 }
 
 func (c constantTensor) Arity() int                                   { return 1 }
-func (c constantTensor) Type() hm.Type                                { return TypeOf(c.v) }
+func (c constantTensor) Type() hm.Type                                { return value.TypeOf(c.v) }
 func (c constantTensor) InferShape(...DimSizer) (tensor.Shape, error) { return c.v.Shape(), nil }
 
 // danger! The only reason why this is the case is because matrices may be too large. copying is costly.
@@ -288,7 +288,7 @@ func (c constantTensor) CallsExtern() bool                          { return fal
 func (c constantTensor) DiffWRT(i int) []bool                       { return nil }
 func (c constantTensor) SymDiff(Nodes, *Node, *Node) (Nodes, error) { return nil, nil }
 func (c constantTensor) Do(...value.Value) (value.Value, error)     { return c.v, nil }
-func (c constantTensor) String() string                             { return fmt.Sprintf("const %s", TypeOf(c.v)) }
+func (c constantTensor) String() string                             { return fmt.Sprintf("const %s", value.TypeOf(c.v)) }
 
 func (c constantTensor) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "const %v:%v", c.Type(), c.v)

@@ -6,7 +6,6 @@ import (
 	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/execution"
-	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -45,8 +44,8 @@ func (o scalarBinOp) Do(same bool, vals ...value.Value) (retVal value.Value, err
 		return
 	}
 
-	at := TypeOf(vals[0])
-	bt := TypeOf(vals[1])
+	at := value.TypeOf(vals[0])
+	bt := value.TypeOf(vals[1])
 	if !at.Eq(bt) {
 		err = errors.Errorf("Type Mismatch: %v != %v", at, bt)
 		return
@@ -54,231 +53,231 @@ func (o scalarBinOp) Do(same bool, vals ...value.Value) (retVal value.Value, err
 
 	var r interface{} // float or bool only plz
 	switch a := vals[0].(type) {
-	case *primitive.F64:
-		b := vals[1].(*primitive.F64)
+	case *value.F64:
+		b := vals[1].(*value.F64)
 		switch o.ʘBinaryOperatorType {
 		case addOpType:
-			r = primitive.NewF64(a.Any() + b.Any())
+			r = value.NewF64(a.Any() + b.Any())
 		case subOpType:
-			r = primitive.NewF64(a.Any() - b.Any())
+			r = value.NewF64(a.Any() - b.Any())
 		case mulOpType:
-			r = primitive.NewF64(a.Any() * b.Any())
+			r = value.NewF64(a.Any() * b.Any())
 		case divOpType:
-			r = primitive.NewF64(a.Any() / b.Any())
+			r = value.NewF64(a.Any() / b.Any())
 		case powOpType:
-			r = primitive.NewF64(math.Pow(a.Any(), b.Any()))
+			r = value.NewF64(math.Pow(a.Any(), b.Any()))
 		case ltOpType:
-			r = primitive.NewB(a.Any() < b.Any())
+			r = value.NewB(a.Any() < b.Any())
 		case gtOpType:
-			r = primitive.NewB(a.Any() > b.Any())
+			r = value.NewB(a.Any() > b.Any())
 		case lteOpType:
-			r = primitive.NewB(a.Any() <= b.Any())
+			r = value.NewB(a.Any() <= b.Any())
 		case gteOpType:
-			r = primitive.NewB(a.Any() >= b.Any())
+			r = value.NewB(a.Any() >= b.Any())
 		case eqOpType:
-			r = primitive.NewB(a.Any() == b.Any())
+			r = value.NewB(a.Any() == b.Any())
 		case neOpType:
-			r = primitive.NewB(a.Any() != b.Any())
+			r = value.NewB(a.Any() != b.Any())
 		default:
 			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float64", o.ʘBinaryOperatorType)
 		}
 
 		if same && !o.isArith() {
-			if *(r.(*primitive.B)) {
-				r = primitive.NewF64(1.0)
+			if *(r.(*value.B)) {
+				r = value.NewF64(1.0)
 			} else {
-				r = primitive.NewF64(0.0)
+				r = value.NewF64(0.0)
 			}
 		}
 
-	case *primitive.F32:
-		b := vals[1].(*primitive.F32)
+	case *value.F32:
+		b := vals[1].(*value.F32)
 		switch o.ʘBinaryOperatorType {
 		case addOpType:
-			r = primitive.NewF32(a.Any() + b.Any())
+			r = value.NewF32(a.Any() + b.Any())
 		case subOpType:
-			r = primitive.NewF32(a.Any() - b.Any())
+			r = value.NewF32(a.Any() - b.Any())
 		case mulOpType:
-			r = primitive.NewF32(a.Any() * b.Any())
+			r = value.NewF32(a.Any() * b.Any())
 		case divOpType:
-			r = primitive.NewF32(a.Any() / b.Any())
+			r = value.NewF32(a.Any() / b.Any())
 		case powOpType:
-			r = primitive.NewF32(math32.Pow(float32(a.Any()), float32(b.Any())))
+			r = value.NewF32(math32.Pow(float32(a.Any()), float32(b.Any())))
 		case ltOpType:
-			r = primitive.NewB(a.Any() < b.Any())
+			r = value.NewB(a.Any() < b.Any())
 		case gtOpType:
-			r = primitive.NewB(a.Any() > b.Any())
+			r = value.NewB(a.Any() > b.Any())
 		case lteOpType:
-			r = primitive.NewB(a.Any() <= b.Any())
+			r = value.NewB(a.Any() <= b.Any())
 		case gteOpType:
-			r = primitive.NewB(a.Any() >= b.Any())
+			r = value.NewB(a.Any() >= b.Any())
 		case eqOpType:
-			r = primitive.NewB(a.Any() == b.Any())
+			r = value.NewB(a.Any() == b.Any())
 		case neOpType:
-			r = primitive.NewB(a.Any() != b.Any())
+			r = value.NewB(a.Any() != b.Any())
 		default:
 			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float32", o.ʘBinaryOperatorType)
 		}
 
 		if same && !o.isArith() {
-			if *(r.(*primitive.B)) {
-				r = primitive.F32(1)
+			if *(r.(*value.B)) {
+				r = value.F32(1)
 			} else {
-				r = primitive.F32(0)
+				r = value.F32(0)
 			}
 		}
 
-	case *primitive.I:
-		b := vals[1].(*primitive.I)
+	case *value.I:
+		b := vals[1].(*value.I)
 		switch o.ʘBinaryOperatorType {
 		case addOpType:
-			r = primitive.NewI(a.Any() + b.Any())
+			r = value.NewI(a.Any() + b.Any())
 		case subOpType:
-			r = primitive.NewI(a.Any() - b.Any())
+			r = value.NewI(a.Any() - b.Any())
 		case mulOpType:
-			r = primitive.NewI(a.Any() * b.Any())
+			r = value.NewI(a.Any() * b.Any())
 		case divOpType:
-			r = primitive.NewI(a.Any() / b.Any())
+			r = value.NewI(a.Any() / b.Any())
 		// case powOpType:
 		// 	r = math.Pow(a, b)
 		case ltOpType:
-			r = primitive.NewB(a.Any() < b.Any())
+			r = value.NewB(a.Any() < b.Any())
 		case gtOpType:
-			r = primitive.NewB(a.Any() > b.Any())
+			r = value.NewB(a.Any() > b.Any())
 		case lteOpType:
-			r = primitive.NewB(a.Any() <= b.Any())
+			r = value.NewB(a.Any() <= b.Any())
 		case gteOpType:
-			r = primitive.NewB(a.Any() >= b.Any())
+			r = value.NewB(a.Any() >= b.Any())
 		case eqOpType:
-			r = primitive.NewB(a.Any() == b.Any())
+			r = value.NewB(a.Any() == b.Any())
 		case neOpType:
-			r = primitive.NewB(a.Any() != b.Any())
+			r = value.NewB(a.Any() != b.Any())
 		default:
 			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Int", o.ʘBinaryOperatorType)
 		}
 
 		if same && !o.isArith() {
-			if *(r.(*primitive.B)) {
-				r = primitive.I(1)
+			if *(r.(*value.B)) {
+				r = value.I(1)
 			} else {
-				r = primitive.I(0)
+				r = value.I(0)
 			}
 		}
-	case *primitive.I32:
-		b := vals[1].(*primitive.I32)
+	case *value.I32:
+		b := vals[1].(*value.I32)
 		switch o.ʘBinaryOperatorType {
 		case addOpType:
-			r = primitive.NewI32(a.Any() + b.Any())
+			r = value.NewI32(a.Any() + b.Any())
 		case subOpType:
-			r = primitive.NewI32(a.Any() - b.Any())
+			r = value.NewI32(a.Any() - b.Any())
 		case mulOpType:
-			r = primitive.NewI32(a.Any() * b.Any())
+			r = value.NewI32(a.Any() * b.Any())
 		case divOpType:
-			r = primitive.NewI32(a.Any() / b.Any())
+			r = value.NewI32(a.Any() / b.Any())
 		// case powOpType:
 		// 	r = math.Pow(a, b)
 		case ltOpType:
-			r = primitive.NewB(a.Any() < b.Any())
+			r = value.NewB(a.Any() < b.Any())
 		case gtOpType:
-			r = primitive.NewB(a.Any() > b.Any())
+			r = value.NewB(a.Any() > b.Any())
 		case lteOpType:
-			r = primitive.NewB(a.Any() <= b.Any())
+			r = value.NewB(a.Any() <= b.Any())
 		case gteOpType:
-			r = primitive.NewB(a.Any() >= b.Any())
+			r = value.NewB(a.Any() >= b.Any())
 		case eqOpType:
-			r = primitive.NewB(a.Any() == b.Any())
+			r = value.NewB(a.Any() == b.Any())
 		case neOpType:
-			r = primitive.NewB(a.Any() != b.Any())
+			r = value.NewB(a.Any() != b.Any())
 		default:
 			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Int32", o.ʘBinaryOperatorType)
 		}
 
 		if same && !o.isArith() {
-			if *(r.(*primitive.B)) {
-				r = primitive.I32(1)
+			if *(r.(*value.B)) {
+				r = value.I32(1)
 			} else {
-				r = primitive.I32(0)
+				r = value.I32(0)
 			}
 		}
-	case *primitive.I64:
-		b := vals[1].(*primitive.I64)
+	case *value.I64:
+		b := vals[1].(*value.I64)
 		switch o.ʘBinaryOperatorType {
 		case addOpType:
-			r = primitive.NewI64(a.Any() + b.Any())
+			r = value.NewI64(a.Any() + b.Any())
 		case subOpType:
-			r = primitive.NewI64(a.Any() - b.Any())
+			r = value.NewI64(a.Any() - b.Any())
 		case mulOpType:
-			r = primitive.NewI64(a.Any() * b.Any())
+			r = value.NewI64(a.Any() * b.Any())
 		case divOpType:
-			r = primitive.NewI64(a.Any() / b.Any())
+			r = value.NewI64(a.Any() / b.Any())
 		// case powOpType:
 		// 	r = math.Pow(a, b)
 		case ltOpType:
-			r = primitive.NewB(a.Any() < b.Any())
+			r = value.NewB(a.Any() < b.Any())
 		case gtOpType:
-			r = primitive.NewB(a.Any() > b.Any())
+			r = value.NewB(a.Any() > b.Any())
 		case lteOpType:
-			r = primitive.NewB(a.Any() <= b.Any())
+			r = value.NewB(a.Any() <= b.Any())
 		case gteOpType:
-			r = primitive.NewB(a.Any() >= b.Any())
+			r = value.NewB(a.Any() >= b.Any())
 		case eqOpType:
-			r = primitive.NewB(a.Any() == b.Any())
+			r = value.NewB(a.Any() == b.Any())
 		case neOpType:
-			r = primitive.NewB(a.Any() != b.Any())
+			r = value.NewB(a.Any() != b.Any())
 		default:
 			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Int64", o.ʘBinaryOperatorType)
 		}
 
 		if same && !o.isArith() {
-			if *(r.(*primitive.B)) {
-				r = primitive.I64(1)
+			if *(r.(*value.B)) {
+				r = value.I64(1)
 			} else {
-				r = primitive.I64(0)
+				r = value.I64(0)
 			}
 		}
-	case *primitive.U8:
-		b := vals[1].(*primitive.U8)
+	case *value.U8:
+		b := vals[1].(*value.U8)
 		switch o.ʘBinaryOperatorType {
 		case addOpType:
-			r = primitive.NewU8(a.Any() + b.Any())
+			r = value.NewU8(a.Any() + b.Any())
 		case subOpType:
-			r = primitive.NewU8(a.Any() - b.Any())
+			r = value.NewU8(a.Any() - b.Any())
 		case mulOpType:
-			r = primitive.NewU8(a.Any() * b.Any())
+			r = value.NewU8(a.Any() * b.Any())
 		case divOpType:
-			r = primitive.NewU8(a.Any() / b.Any())
+			r = value.NewU8(a.Any() / b.Any())
 		// case powOpType:
 		// 	r = math.Pow(a, b)
 		case ltOpType:
-			r = primitive.NewB(a.Any() < b.Any())
+			r = value.NewB(a.Any() < b.Any())
 		case gtOpType:
-			r = primitive.NewB(a.Any() > b.Any())
+			r = value.NewB(a.Any() > b.Any())
 		case lteOpType:
-			r = primitive.NewB(a.Any() <= b.Any())
+			r = value.NewB(a.Any() <= b.Any())
 		case gteOpType:
-			r = primitive.NewB(a.Any() >= b.Any())
+			r = value.NewB(a.Any() >= b.Any())
 		case eqOpType:
-			r = primitive.NewB(a.Any() == b.Any())
+			r = value.NewB(a.Any() == b.Any())
 		case neOpType:
-			r = primitive.NewB(a.Any() != b.Any())
+			r = value.NewB(a.Any() != b.Any())
 		default:
 			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Byte", o.ʘBinaryOperatorType)
 		}
 
 		if same && !o.isArith() {
-			if *(r.(*primitive.B)) {
-				r = primitive.U8(1)
+			if *(r.(*value.B)) {
+				r = value.U8(1)
 			} else {
-				r = primitive.U8(0)
+				r = value.U8(0)
 			}
 		}
-	case *primitive.B:
-		b := vals[1].(*primitive.B)
+	case *value.B:
+		b := vals[1].(*value.B)
 		switch o.ʘBinaryOperatorType {
 		case eqOpType:
-			r = primitive.NewB(a.Any() == b.Any())
+			r = value.NewB(a.Any() == b.Any())
 		case neOpType:
-			r = primitive.NewB(a.Any() != b.Any())
+			r = value.NewB(a.Any() != b.Any())
 		default:
 			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Bool", o.ʘBinaryOperatorType)
 		}
@@ -291,7 +290,7 @@ func (o scalarBinOp) Do(same bool, vals ...value.Value) (retVal value.Value, err
 		return
 	}
 
-	retVal, _ = primitive.AnyToScalar(r)
+	retVal, _ = value.AnyToScalar(r)
 	return
 }
 
@@ -350,7 +349,7 @@ func (o tBinOp) IncrDo(incr value.Value, retSame bool, inputs ...value.Value) (e
 
 	}
 
-	add := newEBOByType(addOpType, TypeOf(incr), TypeOf(retVal))
+	add := newEBOByType(addOpType, value.TypeOf(incr), value.TypeOf(retVal))
 	if retVal, err = add.UnsafeDo(incr, retVal); err != nil {
 		return errors.Wrapf(err, unsafeDoFail, add)
 	}
@@ -383,9 +382,9 @@ func (o tBinOp) do(vals []value.Value, opts ...tensor.FuncOpt) (retVal value.Val
 		// a = t
 
 		switch other := vals[1].(type) {
-		case *primitive.F64:
+		case *value.F64:
 			b = other.Any()
-		case *primitive.F32:
+		case *value.F32:
 			b = other.Any()
 		case tensor.Tensor:
 			b = tensor.Materialize(other)
@@ -400,9 +399,9 @@ func (o tBinOp) do(vals []value.Value, opts ...tensor.FuncOpt) (retVal value.Val
 		b = tensor.Materialize(t)
 
 		switch other := vals[0].(type) {
-		case *primitive.F64:
+		case *value.F64:
 			a = other.Any()
-		case *primitive.F32:
+		case *value.F32:
 			a = other.Any()
 		case tensor.Tensor:
 			a = tensor.Materialize(other)
@@ -723,7 +722,7 @@ func hadamardProdDiff(ctx execution.Context, x, y, z *Node) (err error) {
 		if xdIncr, err = makeValueFromMem(z.t, zd.Shape(), memIncr); err != nil {
 			return errors.Wrapf(err, makeValueFail, z.t, zd.Shape())
 		}
-		xdIncr.(tensor.Tensor).Memset(xdv.d.Data())
+		xdIncr.(tensor.Tensor).Memset(xdv.D.Data())
 
 		mul.Prealloc = xd2
 		mul.Incr = xdIncr
@@ -791,7 +790,7 @@ dzdy:
 		if ydIncr, err = makeValueFromMem(z.t, zd.Shape(), memIncr); err != nil {
 			return errors.Wrapf(err, makeValueFail, z.t, zd.Shape())
 		}
-		ydIncr.(tensor.Tensor).Memset(ydv.d.Data())
+		ydIncr.(tensor.Tensor).Memset(ydv.D.Data())
 
 		mul.Prealloc = yd2
 		mul.Incr = ydIncr
@@ -835,8 +834,8 @@ func hadamardDivDiff(ctx execution.Context, x, y, z *Node) (err error) {
 	xdv, ydv, zdv := getDV3(x, y, z)
 
 	// dzdx = 1/y * dz
-	div := newEBOByType(divOpType, TypeOf(zdv.d), TypeOf(ydv.Value))
-	err = div.IncrDo(xdv.d, zdv.d, ydv.Value)
+	div := newEBOByType(divOpType, value.TypeOf(zdv.D), value.TypeOf(ydv.Value))
+	err = div.IncrDo(xdv.D, zdv.D, ydv.Value)
 	if err != nil {
 		var ver value.Valuer
 		var ok bool
@@ -849,9 +848,9 @@ func hadamardDivDiff(ctx execution.Context, x, y, z *Node) (err error) {
 
 	//dzdy = -x/y^2
 	// TODO: investigate if this can be done (if no other node uses z):
-	//		unsafe do : neg zdv.d
-	// 		unsafe do : mul zdv.d, zdv.Value
-	//		incr do   : <incr: ydv.d> div zdv.d, ydv.Value
+	//		unsafe do : neg zdv.D
+	// 		unsafe do : mul zdv.D, zdv.Value
+	//		incr do   : <incr: ydv.D> div zdv.D, ydv.Value
 	var d value.Value
 	if d, err = div.Do(zdv.Value, ydv.Value); err != nil {
 		return errors.Wrapf(err, doFail, div)
@@ -863,7 +862,7 @@ func hadamardDivDiff(ctx execution.Context, x, y, z *Node) (err error) {
 	}
 
 	mul := newElemBinOp(mulOpType, z, y)
-	err = mul.IncrDo(ydv.d, zdv.d, d)
+	err = mul.IncrDo(ydv.D, zdv.D, d)
 	if err != nil {
 		var ver value.Valuer
 		var ok bool
@@ -936,10 +935,10 @@ func hadamardPowDiff(ctx execution.Context, x, y, z *Node) (err error) {
 
 	var ym1 value.Value
 	switch ydvt := ydv.Value.(type) {
-	case *primitive.F64:
-		ym1 = primitive.NewF64(ydvt.Any() - float64(1))
-	case *primitive.F32:
-		ym1 = primitive.NewF32(ydvt.Any() - float32(1))
+	case *value.F64:
+		ym1 = value.NewF64(ydvt.Any() - float64(1))
+	case *value.F32:
+		ym1 = value.NewF32(ydvt.Any() - float32(1))
 	case *tensor.Dense:
 		var one interface{}
 		switch ydvt.Dtype() {
@@ -958,17 +957,17 @@ func hadamardPowDiff(ctx execution.Context, x, y, z *Node) (err error) {
 
 	// dzdx
 	var pow value.Value
-	powOp := newEBOByType(powOpType, TypeOf(xdv.Value), TypeOf(ym1))
+	powOp := newEBOByType(powOpType, value.TypeOf(xdv.Value), value.TypeOf(ym1))
 	if pow, err = powOp.Do(xdv.Value, ym1); err != nil {
 		return
 	}
 
-	mul := newEBOByType(mulOpType, TypeOf(ydv.Value), TypeOf(xdv.Value))
+	mul := newEBOByType(mulOpType, value.TypeOf(ydv.Value), value.TypeOf(xdv.Value))
 	if pow, err = mul.UnsafeDo(pow, ydv.Value); err != nil {
 		return
 	}
 
-	if err = mul.IncrDo(xdv.d, pow, zdv.d); err != nil {
+	if err = mul.IncrDo(xdv.D, pow, zdv.D); err != nil {
 		var ver value.Valuer
 		var ok bool
 		if ver, ok = err.(value.Valuer); !ok {
@@ -987,7 +986,7 @@ func hadamardPowDiff(ctx execution.Context, x, y, z *Node) (err error) {
 	if logx, err = mul.Do(zdv.Value, logx); err != nil {
 		return
 	}
-	if err = mul.IncrDo(ydv.d, logx, zdv.d); err != nil {
+	if err = mul.IncrDo(ydv.D, logx, zdv.D); err != nil {
 		var ver value.Valuer
 		var ok bool
 		if ver, ok = err.(value.Valuer); !ok {

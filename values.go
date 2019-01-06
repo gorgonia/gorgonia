@@ -6,7 +6,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
-	"gorgonia.org/gorgonia/internal/primitive"
+	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -21,24 +21,24 @@ func makeValue(t hm.Type, s tensor.Shape) (retVal value.Value, err error) {
 	if s.IsScalar() {
 		switch dt {
 		case tensor.Float64:
-			return primitive.NewF64(0), nil
+			return value.NewF64(0), nil
 		case tensor.Float32:
-			return primitive.NewF32(0), nil
+			return value.NewF32(0), nil
 		case tensor.Int:
-			return primitive.NewI(0), nil
+			return value.NewI(0), nil
 		case tensor.Int64:
-			return primitive.NewI64(0), nil
+			return value.NewI64(0), nil
 		case tensor.Int32:
-			return primitive.NewI32(0), nil
+			return value.NewI32(0), nil
 		case tensor.Byte:
-			return primitive.NewU8(0), nil
+			return value.NewU8(0), nil
 		case tensor.Bool:
-			return primitive.NewB(false), nil
+			return value.NewB(false), nil
 		}
 	}
 
 	switch tt := t.(type) {
-	case TensorType:
+	case constructor.TensorType:
 		return tensor.New(tensor.Of(dt), tensor.WithShape(s...)), nil
 	default:
 		err = errors.Errorf(nyiTypeFail, "MakeValue", tt)
@@ -56,7 +56,7 @@ func makeValueFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal valu
 	}
 
 	switch tt := t.(type) {
-	case TensorType:
+	case constructor.TensorType:
 		memsize := calcMemSize(dt, s)
 		return tensor.New(tensor.Of(dt), tensor.WithShape(s...), tensor.FromMemory(mem.Uintptr(), uintptr(memsize))), nil
 	case tensor.Dtype:
@@ -70,19 +70,19 @@ func makeValueFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal valu
 func makeScalarFromMem(dt tensor.Dtype, mem tensor.Memory) (retVal value.Value, err error) {
 	switch dt {
 	case tensor.Float64:
-		retVal = (*primitive.F64)(unsafe.Pointer(mem.Uintptr()))
+		retVal = (*value.F64)(unsafe.Pointer(mem.Uintptr()))
 	case tensor.Float32:
-		retVal = (*primitive.F32)(unsafe.Pointer(mem.Uintptr()))
+		retVal = (*value.F32)(unsafe.Pointer(mem.Uintptr()))
 	case tensor.Int:
-		retVal = (*primitive.I)(unsafe.Pointer(mem.Uintptr()))
+		retVal = (*value.I)(unsafe.Pointer(mem.Uintptr()))
 	case tensor.Int64:
-		retVal = (*primitive.I64)(unsafe.Pointer(mem.Uintptr()))
+		retVal = (*value.I64)(unsafe.Pointer(mem.Uintptr()))
 	case tensor.Int32:
-		retVal = (*primitive.I32)(unsafe.Pointer(mem.Uintptr()))
+		retVal = (*value.I32)(unsafe.Pointer(mem.Uintptr()))
 	case tensor.Byte:
-		retVal = (*primitive.U8)(unsafe.Pointer(mem.Uintptr()))
+		retVal = (*value.U8)(unsafe.Pointer(mem.Uintptr()))
 	case tensor.Bool:
-		retVal = (*primitive.B)(unsafe.Pointer(mem.Uintptr()))
+		retVal = (*value.B)(unsafe.Pointer(mem.Uintptr()))
 	default:
 		err = errors.Errorf(nyiTypeFail, "makeScalarFromMem", dt)
 	}
@@ -109,7 +109,7 @@ func calcMemSize(dt tensor.Dtype, s tensor.Shape) int64 {
 
 // ScalarAsTensor returns the tensor representation of a scalar. It is particularly useful as a "reshape" of tensors of sorts
 //
-// The value.Value passed in are either value.Scalar, tensor.Tensor, or *dualValue. Anything else will panic.
+// The value.Value passed in are either value.Scalar, tensor.Tensor, or *value.DualValue. Anything else will panic.
 func ScalarAsTensor(v value.Value, dims int, e tensor.Engine) value.Value {
 	switch a := v.(type) {
 	case value.Scalar:
@@ -120,10 +120,10 @@ func ScalarAsTensor(v value.Value, dims int, e tensor.Engine) value.Value {
 		return tensor.New(tensor.WithShape(sh...), tensor.Of(a.Dtype()), tensor.FromMemory(a.Uintptr(), a.MemSize()), tensor.WithEngine(e))
 	case tensor.Tensor:
 		return a
-	case *dualValue:
-		b := new(dualValue)
+	case *value.DualValue:
+		b := new(value.DualValue)
 		b.Value = ScalarAsTensor(a.Value, dims, e)
-		b.d = ScalarAsTensor(a.d, dims, e)
+		b.D = ScalarAsTensor(a.D, dims, e)
 		return b
 	case nil:
 		return nil

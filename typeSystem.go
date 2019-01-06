@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/tensor"
 )
 
@@ -81,7 +82,7 @@ func isScalarType(t hm.Type) bool {
 	switch tt := t.(type) {
 	case tensor.Dtype:
 		return true
-	case TensorType:
+	case constructor.TensorType:
 		if tt.Dims == 0 {
 			return true
 		}
@@ -97,7 +98,7 @@ func dtypeOf(t hm.Type) (retVal tensor.Dtype, err error) {
 	switch p := t.(type) {
 	case tensor.Dtype:
 		retVal = p
-	case TensorType:
+	case constructor.TensorType:
 		return dtypeOf(p.Of)
 	case hm.TypeVariable:
 		err = errors.Errorf("instance %v does not have a dtype", p)

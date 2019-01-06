@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/tensor"
 )
 
@@ -438,7 +439,7 @@ func SizeOf(axis int, x *Node) (retVal *Node, err error) {
 
 // Slice slices a *Node. For T[:] slices, pass in nil. Will error out if node's type is not a Tensor
 func Slice(n *Node, slices ...tensor.Slice) (retVal *Node, err error) {
-	if _, ok := n.t.(TensorType); !ok {
+	if _, ok := n.t.(constructor.TensorType); !ok {
 		return nil, errors.Errorf("Cannot slice on non Tensor tensor. Got %T", n.t)
 	}
 

@@ -154,7 +154,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 		node.bind(v)
 	}
 
-	// this is a gradient node then, we should also bind the value to the node's dualValue
+	// this is a gradient node then, we should also bind the value to the node's value.DualValue
 	if m.bindDV() && node.derivOf != nil {
 		for _, src := range node.derivOf {
 			if len(m.bindNodesDV) > 0 && !m.bindNodesDV.Contains(src) {

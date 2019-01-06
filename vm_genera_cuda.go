@@ -108,11 +108,11 @@ func (m *lispMachine) execDevTrans(op devTrans, n *Node, children Nodes) (err er
 	child := children[0]
 	m.logf("DevTrans: %v | %v | %v", op, n.boundTo, child.boundTo)
 
-	var dv *dualValue
+	var dv *value.DualValue
 	var cv, cd, v, d value.Value
 	if child.boundTo != nil {
 		var ok bool
-		if dv, ok = child.boundTo.(*dualValue); ok {
+		if dv, ok = child.boundTo.(*value.DualValue); ok {
 			cv = dv.Value
 			cd = dv.d
 		} else {
@@ -150,7 +150,7 @@ func (m *lispMachine) execDevTrans(op devTrans, n *Node, children Nodes) (err er
 		m.Signal()
 	}
 
-	dv = new(dualValue)
+	dv = new(value.DualValue)
 	dv.Value = v
 	dv.d = d
 	n.boundTo = dv

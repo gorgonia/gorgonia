@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/internal/execution"
-	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -53,17 +52,17 @@ func valuesToInts(values []value.Value) (retVal []int, err error) {
 	for i, v := range values {
 		var intV int
 		switch sv := v.(type) {
-		case *primitive.F64:
+		case *value.F64:
 			intV = int(float64(*sv))
-		case *primitive.F32:
+		case *value.F32:
 			intV = int(float32(*sv))
-		case *primitive.I:
+		case *value.I:
 			intV = int(*sv)
-		case *primitive.I32:
+		case *value.I32:
 			intV = int(int32(*sv))
-		case *primitive.I64:
+		case *value.I64:
 			intV = int(int64(*sv))
-		case *primitive.U8:
+		case *value.U8:
 			intV = int(byte(*sv))
 		case value.Scalar:
 			return nil, errors.Errorf(nyiTypeFail, "valueToInts", v)
@@ -115,17 +114,17 @@ func intRange(start, end int) []int {
 
 func ones(dt tensor.Dtype, sizes ...int) (retVal value.Value) {
 	if len(sizes) == 0 {
-		return primitive.One(dt)
+		return value.One(dt)
 	}
 	return tensor.Ones(dt, sizes...)
 }
 
 func hasInf(v value.Value, dev execution.Device) bool {
 	switch vt := v.(type) {
-	case *primitive.F64:
+	case *value.F64:
 		return false
 		return math.IsInf(float64(*vt), 0)
-	case *primitive.F32:
+	case *value.F32:
 		return false
 		return math32.IsInf(float32(*vt), 0)
 	case tensor.Tensor:
@@ -155,8 +154,8 @@ func hasInf(v value.Value, dev execution.Device) bool {
 			}
 		}
 		return false
-	case *dualValue:
-		return hasInf(vt.Value, dev) || hasInf(vt.d, dev)
+	case *value.DualValue:
+		return hasInf(vt.Value, dev) || hasInf(vt.D, dev)
 	default:
 		err := nyi("hasInf", v)
 		panic(err)
@@ -165,10 +164,10 @@ func hasInf(v value.Value, dev execution.Device) bool {
 
 func hasNaN(v value.Value, dev execution.Device) bool {
 	switch vt := v.(type) {
-	case *primitive.F64:
+	case *value.F64:
 		return false
 		return math.IsNaN(float64(*vt))
-	case *primitive.F32:
+	case *value.F32:
 		return false
 		return math32.IsNaN(float32(*vt))
 	case tensor.Tensor:
@@ -200,8 +199,8 @@ func hasNaN(v value.Value, dev execution.Device) bool {
 			}
 		}
 		return false
-	case *dualValue:
-		return hasNaN(vt.Value, dev) || hasNaN(vt.d, dev)
+	case *value.DualValue:
+		return hasNaN(vt.Value, dev) || hasNaN(vt.D, dev)
 	default:
 		err := nyi("hasNaN", vt)
 		panic(err)
@@ -214,7 +213,7 @@ func setZero(val value.Value) (retVal value.Value) {
 		v.Zero()
 		return v
 	case value.Scalar:
-		return primitive.Zero(v.Dtype())
+		return value.Zero(v.Dtype())
 	default:
 		panic(fmt.Sprintf("setZero not implemented yet for %T", v))
 	}
@@ -251,12 +250,12 @@ func simpleHash(op hashWriter) uint32 {
 	return h.Sum32()
 }
 
-func getDV(x, y *Node) (xdv, ydv *dualValue) {
-	return x.boundTo.(*dualValue), y.boundTo.(*dualValue)
+func getDV(x, y *Node) (xdv, ydv *value.DualValue) {
+	return x.boundTo.(*value.DualValue), y.boundTo.(*value.DualValue)
 }
 
-func getDV3(x, y, z *Node) (xdv, ydv, zdv *dualValue) {
-	return x.boundTo.(*dualValue), y.boundTo.(*dualValue), z.boundTo.(*dualValue)
+func getDV3(x, y, z *Node) (xdv, ydv, zdv *value.DualValue) {
+	return x.boundTo.(*value.DualValue), y.boundTo.(*value.DualValue), z.boundTo.(*value.DualValue)
 }
 
 func getConst(x *Node, constant string) (retVal *Node, err error) {

@@ -72,7 +72,7 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) VM {
 	it := m.p.g.Nodes()
 	for it.Next() {
 		n := it.Node().(*Node)
-		setEngine(n.boundTo, m.Engine)
+		value.SetEngine(n.boundTo, m.Engine)
 	}
 
 	runtime.SetFinalizer(m, finalizeTapeMachine) // a "defer" to deinitialize CUDA stuff (if using CUDA build)
@@ -529,7 +529,7 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 	if err != nil {
 		return
 	}
-	setEngine(v, m.getEngine(dev))
+	value.SetEngine(v, m.getEngine(dev))
 	if vt, ok := v.(tensor.Tensor); ok {
 		m.watchedLogf("%x | %T", v.Uintptr(), vt.Engine())
 	} else {
@@ -591,7 +591,7 @@ func (instr loadArg) exec(m *tapeMachine) error {
 	}
 
 	var v value.Value
-	if dv, ok := node.boundTo.(*dualValue); ok {
+	if dv, ok := node.boundTo.(*value.DualValue); ok {
 		v = dv.Value
 	} else {
 		v = node.boundTo
@@ -692,7 +692,7 @@ func (instr *readInstr) exec(m *tapeMachine) (err error) {
 		return nyi("value of nil", "readInstr.exec")
 	}
 
-	v2, err := CloneValue(v)
+	v2, err := value.CloneValue(v)
 	if err != nil {
 		return errors.Wrap(err, cloneFail)
 	}

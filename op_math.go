@@ -21,8 +21,8 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/gorgonia/internal/execution"
-	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -46,7 +46,7 @@ func newEBOByType(ot ʘBinaryOperatorType, at, bt hm.Type) elemBinOp {
 				ʘBinaryOperatorType: ot,
 				t:                   att,
 			}
-		case TensorType:
+		case constructor.TensorType:
 			binOp = tBinOp{
 				ʘBinaryOperatorType: ot,
 				tensorLeft:          false,
@@ -54,7 +54,7 @@ func newEBOByType(ot ʘBinaryOperatorType, at, bt hm.Type) elemBinOp {
 		default:
 			panic(fmt.Sprintf("Unsupported type of b %v!", bt))
 		}
-	case TensorType:
+	case constructor.TensorType:
 		binOp = tBinOp{
 			ʘBinaryOperatorType: ot,
 			tensorLeft:          true,
@@ -99,21 +99,21 @@ func (op elemBinOp) Type() hm.Type {
 	var a0, a1, retType hm.Type
 	var arg0Dims int
 	switch arg0 := op.arg0.(type) {
-	case TensorType:
+	case constructor.TensorType:
 		arg0Dims = arg0.Dims
-		a0 = makeFromTensorType(arg0, a)
-		retType = makeFromTensorType(arg0, a)
+		a0 = constructor.MakeFromTensorType(arg0, a)
+		retType = constructor.MakeFromTensorType(arg0, a)
 	default:
 		a0 = a
 		retType = a
 	}
 
 	switch arg1 := op.arg1.(type) {
-	case TensorType:
+	case constructor.TensorType:
 		if arg1.Dims >= arg0Dims {
-			retType = makeFromTensorType(arg1, a)
+			retType = constructor.MakeFromTensorType(arg1, a)
 		}
-		a1 = makeFromTensorType(arg1, a)
+		a1 = constructor.MakeFromTensorType(arg1, a)
 	default:
 		a1 = a
 	}
@@ -123,7 +123,7 @@ func (op elemBinOp) Type() hm.Type {
 	}
 
 	switch rt := retType.(type) {
-	case TensorType:
+	case constructor.TensorType:
 		rt.Of = Bool
 		retType = rt
 	default:
@@ -262,9 +262,9 @@ func (op elemBinOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (e
 
 	//handle scalar gradients
 	for _, in := range inputs {
-		indv := in.boundTo.(*dualValue)
-		if _, ok := indv.d.(value.Scalar); in.IsScalar() && !ok {
-			indvdT := indv.d.(tensor.Tensor)
+		indv := in.boundTo.(*value.DualValue)
+		if _, ok := indv.D.(value.Scalar); in.IsScalar() && !ok {
+			indvdT := indv.D.(tensor.Tensor)
 			defer returnTensor(indvdT)
 
 			var d value.Value
@@ -274,7 +274,7 @@ func (op elemBinOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (e
 			}
 			defer returnTensor(t)
 
-			d, _ = primitive.AnyToScalar(t.ScalarValue())
+			d, _ = value.AnyToScalar(t.ScalarValue())
 			indv.SetDeriv(d)
 		}
 	}
@@ -284,11 +284,11 @@ func (op elemBinOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (e
 func (op elemBinOp) ReturnsPtr() bool { return true }
 
 func (op elemBinOp) OverwritesInput() int {
-	if _, ok := op.arg0.(TensorType); ok {
+	if _, ok := op.arg0.(constructor.TensorType); ok {
 		return 0
 	}
 
-	if _, ok := op.arg1.(TensorType); ok {
+	if _, ok := op.arg1.(constructor.TensorType); ok {
 		return 1
 	}
 	return -1
@@ -317,7 +317,7 @@ func (op elemBinOp) UsePreallocDo(prealloc value.Value, inputs ...value.Value) (
 	if retVal, err = op.Do(inputs...); err != nil {
 		return
 	}
-	return Copy(prealloc, retVal)
+	return value.Copy(prealloc, retVal)
 }
 
 // Fulfils UnsafeDoer interface
@@ -344,7 +344,7 @@ func (op elemBinOp) IncrDo(incr value.Value, inputs ...value.Value) (err error) 
 		return errors.Wrapf(err, doFail, op)
 	}
 
-	add := newEBOByType(addOpType, TypeOf(incr), TypeOf(retVal))
+	add := newEBOByType(addOpType, value.TypeOf(incr), value.TypeOf(retVal))
 	if retVal, err = add.UnsafeDo(incr, retVal); err != nil {
 		return errors.Wrapf(err, unsafeDoFail, add)
 	}
@@ -373,7 +373,7 @@ func newElemUnaryOp(op ʘUnaryOperatorType, a *Node) elemUnaryOp {
 		panic(err)
 	}
 
-	_, isTensor := a.t.(TensorType)
+	_, isTensor := a.t.(constructor.TensorType)
 
 	var operator ʘUnaryOperator
 	switch dt {
@@ -498,15 +498,15 @@ func (op elemUnaryOp) do(a value.Value, opts ...tensor.FuncOpt) (retVal value.Va
 		vt := v.Dtype()
 		switch vt {
 		case tensor.Float32:
-			vs := v.(*primitive.F32)
+			vs := v.(*value.F32)
 			f := float32(*vs)
 			opFn := op.ʘUnaryOperator.(*sf32UnaryOperator)
-			retVal, _ = primitive.AnyToScalar((*opFn)(f))
+			retVal, _ = value.AnyToScalar((*opFn)(f))
 		case tensor.Float64:
-			vs := v.(*primitive.F64)
+			vs := v.(*value.F64)
 			f := float64(*vs)
 			opFn := op.ʘUnaryOperator.(*sf64UnaryOperator)
-			retVal, _ = primitive.AnyToScalar((*opFn)(f))
+			retVal, _ = value.AnyToScalar((*opFn)(f))
 		default:
 			return nil, errors.Errorf(nyiFail, "elemUnaryOp.do", vt)
 		}
@@ -698,7 +698,7 @@ func (op linAlgBinOp) IncrDo(incr value.Value, inputs ...value.Value) (err error
 		return errors.Wrapf(err, doFail, op)
 	}
 
-	add := newEBOByType(addOpType, TypeOf(incr), TypeOf(retVal))
+	add := newEBOByType(addOpType, value.TypeOf(incr), value.TypeOf(retVal))
 	if retVal, err = add.UnsafeDo(incr, retVal); err != nil {
 		return errors.Wrapf(err, unsafeDoFail, add)
 	}
@@ -757,7 +757,7 @@ func (op linAlgBinOp) do(inputs []value.Value, opts ...tensor.FuncOpt) (retVal v
 		if ret, err = tensor.Inner(a, b); err != nil {
 			return nil, errors.Wrapf(err, "Failed to carry out linalgBinOp operation %v", op)
 		}
-		retVal, _ = primitive.AnyToScalar(ret)
+		retVal, _ = value.AnyToScalar(ret)
 	case outerProdOperator:
 		retVal, err = tensor.Outer(a, b, opts...)
 	case batchedMatMulOperator:
@@ -788,9 +788,9 @@ type tensordotOp struct {
 func (op tensordotOp) Arity() int { return 2 }
 
 func (op tensordotOp) Type() hm.Type {
-	tRet := newTensorType(op.retDims, hm.TypeVariable('a'))
-	ta := newTensorType(op.aDims, hm.TypeVariable('a'))
-	tb := newTensorType(op.bDims, hm.TypeVariable('a'))
+	tRet := constructor.NewTensorType(op.retDims, hm.TypeVariable('a'))
+	ta := constructor.NewTensorType(op.aDims, hm.TypeVariable('a'))
+	tb := constructor.NewTensorType(op.bDims, hm.TypeVariable('a'))
 
 	return hm.NewFnType(ta, tb, tRet)
 }
@@ -867,8 +867,8 @@ func (op tensordotOp) String() string {
 }
 
 func (op tensordotOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) error {
-	odv := output.boundTo.(*dualValue)
-	odvd := odv.d.(tensor.Tensor)
+	odv := output.boundTo.(*value.DualValue)
+	odvd := odv.D.(tensor.Tensor)
 
 	for inNr, in := range inputs {
 		// abuse of language below: "i" up front will refer to current "in"
@@ -877,23 +877,23 @@ func (op tensordotOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) 
 		// Who's derivative are we calculating?
 		var iAxes []int
 		var otherAxes []int
-		var otherdv *dualValue
+		var otherdv *value.DualValue
 		var iWasFirstArgument bool
 
 		if 0 == inNr {
 			iAxes = op.aAxes
 			otherAxes = op.bAxes
-			otherdv = inputs[1].boundTo.(*dualValue)
+			otherdv = inputs[1].boundTo.(*value.DualValue)
 			iWasFirstArgument = true
 		} else {
 			iAxes = op.bAxes
 			otherAxes = op.aAxes
-			otherdv = inputs[0].boundTo.(*dualValue)
+			otherdv = inputs[0].boundTo.(*value.DualValue)
 			iWasFirstArgument = false
 		}
 
-		idv := in.boundTo.(*dualValue)
-		idvd := idv.d.(tensor.Tensor)
+		idv := in.boundTo.(*value.DualValue)
+		idvd := idv.D.(tensor.Tensor)
 
 		otherdvv := otherdv.Value.(tensor.Tensor)
 

@@ -73,7 +73,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	// TODO: type and shape checks
 
 	// Write
-	setEngine(v, m.Engine)
+	value.SetEngine(v, m.Engine)
 	dest := instr.writeTo.id
 	m.cpumem[dest] = v
 	node := m.p.g.Node(instr.id).(*Node)
@@ -86,7 +86,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 		node.bind(v)
 	}
 
-	// this is a gradient node then, we should also bind the value to the node's dualValue
+	// this is a gradient node then, we should also bind the value to the node's value.DualValue
 	if m.bindDV() && node.derivOf != nil {
 		for _, src := range node.derivOf {
 			if len(m.bindNodesDV) > 0 && !m.bindNodesDV.Contains(src) {
@@ -96,9 +96,9 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 			if src.boundTo != nil {
 				dv := dvUnit(src.boundTo)
 
-				add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
+				add := newEBOByType(addOpType, value.TypeOf(dv.D), value.TypeOf(v))
 
-				if d, err := add.UnsafeDo(dv.d, v); err == nil {
+				if d, err := add.UnsafeDo(dv.D, v); err == nil {
 					dv.SetDeriv(d)
 					src.bind(dv)
 				} else {

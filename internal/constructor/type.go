@@ -4,7 +4,43 @@ import (
 	"fmt"
 
 	"github.com/chewxy/hm"
+	"gorgonia.org/tensor"
 )
+
+var (
+	// Represents the types that Nodes can take in Gorgonia
+
+	// Float64 ...
+	Float64 = tensor.Float64
+	// Float32 ...
+	Float32 = tensor.Float32
+	// Int ...
+	Int = tensor.Int
+	// Int64 ...
+	Int64 = tensor.Int64
+	// Int32 ...
+	Int32 = tensor.Int32
+	// Byte ...
+	Byte = tensor.Uint8
+	// Bool ...
+	Bool = tensor.Bool
+
+	// Ptr ...
+	Ptr = tensor.UnsafePointer // equivalent to interface{}. Ugh Ugh Ugh
+
+	vecF64  = &TensorType{Dims: 1, Of: tensor.Float64}
+	vecF32  = &TensorType{Dims: 1, Of: tensor.Float32}
+	matF64  = &TensorType{Dims: 2, Of: tensor.Float64}
+	matF32  = &TensorType{Dims: 2, Of: tensor.Float32}
+	ten3F64 = &TensorType{Dims: 3, Of: tensor.Float64}
+	ten3F32 = &TensorType{Dims: 3, Of: tensor.Float32}
+
+	// removes the need for type checking
+	f64T hm.Type = tensor.Float64
+	f32T hm.Type = tensor.Float32
+)
+
+var acceptableDtypes = [...]tensor.Dtype{tensor.Float64, tensor.Float32, tensor.Int, tensor.Int64, tensor.Int32, tensor.Byte, tensor.Bool}
 
 // TensorType is a type constructor for tensors.
 //
@@ -30,6 +66,28 @@ func MakeTensorType(dims int, typ hm.Type) TensorType {
 		Dims: dims,
 		Of:   typ,
 	}
+}
+
+// NewTensorType ...
+func NewTensorType(dims int, typ hm.Type) *TensorType {
+	switch {
+	case dims == 1 && typ == f64T:
+		return vecF64
+	case dims == 1 && typ == f32T:
+		return vecF32
+	case dims == 2 && typ == f64T:
+		return matF64
+	case dims == 2 && typ == f32T:
+		return matF32
+	case dims == 3 && typ == f64T:
+		return ten3F64
+	case dims == 3 && typ == f32T:
+		return ten3F32
+	}
+	t := borrowTensorType()
+	t.Dims = dims
+	t.Of = typ
+	return t
 }
 
 // Name returns the name of the type, which will always be "Tensor". Satisfies the hm.Type interface.

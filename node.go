@@ -12,8 +12,8 @@ import (
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/debugger"
 	"gorgonia.org/gorgonia/distro"
+	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/gorgonia/internal/execution"
-	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -124,7 +124,7 @@ func WithName(name string) NodeConsOpt {
 //	- Gorgonia was unable to convert interface{} into a value.Value.
 //	- The type of the value.Value does not match the type of the nodes.
 func WithValue(any interface{}) NodeConsOpt {
-	v, t, _, err := primitive.AnyToValue(any)
+	v, t, _, err := value.AnyToValue(any)
 	if err != nil {
 		panic(err)
 	}
@@ -148,7 +148,7 @@ func WithValue(any interface{}) NodeConsOpt {
 //	- There isn't already a value associated with the node (.boundTo == nil)
 //	- The type of the value.Value does not match the value of the node.
 func WithGrad(any interface{}) NodeConsOpt {
-	v, t, _, err := primitive.AnyToValue(any)
+	v, t, _, err := value.AnyToValue(any)
 	if err != nil {
 		panic(err)
 	}
@@ -156,16 +156,16 @@ func WithGrad(any interface{}) NodeConsOpt {
 		if n.boundTo == nil {
 			panic("No value already bound to node")
 		}
-		if !TypeOf(n.boundTo).Eq(t) {
+		if !value.TypeOf(n.boundTo).Eq(t) {
 			panic("Different types ")
 		}
 
-		if dv, ok := n.boundTo.(*dualValue); !ok {
-			if err := n.bind(&dualValue{Value: n.boundTo, d: v}); err != nil {
+		if dv, ok := n.boundTo.(*value.DualValue); !ok {
+			if err := n.bind(&value.DualValue{Value: n.boundTo, D: v}); err != nil {
 				panic(err)
 			}
 		} else {
-			dv.d = v
+			dv.D = v
 		}
 	}
 	return f
@@ -263,7 +263,7 @@ func (n *Node) IsScalar() bool { _, ok := n.t.(tensor.Dtype); return ok }
 
 // IsVector indicates if a node represents a vector value. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsVector() bool {
-	if t, ok := n.t.(TensorType); ok {
+	if t, ok := n.t.(constructor.TensorType); ok {
 		return t.Dims == 1
 	}
 
@@ -272,7 +272,7 @@ func (n *Node) IsVector() bool {
 
 // IsColVec indicates if a node represents a Column Vector. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsColVec() bool {
-	if _, ok := n.t.(TensorType); ok {
+	if _, ok := n.t.(constructor.TensorType); ok {
 		if n.shape != nil {
 			return n.shape.IsColVec()
 		}
@@ -282,7 +282,7 @@ func (n *Node) IsColVec() bool {
 
 // IsRowVec indicates if a node represents a Row Vector. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsRowVec() bool {
-	if _, ok := n.t.(TensorType); ok {
+	if _, ok := n.t.(constructor.TensorType); ok {
 		if n.shape != nil {
 			return n.shape.IsRowVec()
 		}
@@ -292,7 +292,7 @@ func (n *Node) IsRowVec() bool {
 
 // IsMatrix indicates if a node represents a matrix. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsMatrix() bool {
-	if _, ok := n.t.(TensorType); ok {
+	if _, ok := n.t.(constructor.TensorType); ok {
 		return n.shape.Dims() == 2
 	}
 	return false
@@ -362,7 +362,7 @@ func (n *Node) Value() value.Value {
 	if n.isConstant() {
 		return n.op.(constant).Value()
 	}
-	if dv, ok := n.boundTo.(*dualValue); ok {
+	if dv, ok := n.boundTo.(*value.DualValue); ok {
 		return dv.Value
 	}
 	return n.boundTo
@@ -370,8 +370,8 @@ func (n *Node) Value() value.Value {
 
 // Grad returns the gradient if there is one.
 func (n *Node) Grad() (value.Value, error) {
-	if dv, ok := n.boundTo.(*dualValue); ok {
-		return dv.d, nil
+	if dv, ok := n.boundTo.(*value.DualValue); ok {
+		return dv.D, nil
 	}
 	if n.deriv != nil {
 		return n.deriv.Value(), nil
@@ -386,7 +386,7 @@ func (n *Node) Dims() int {
 		return n.shape.Dims()
 	}
 	switch nt := n.t.(type) {
-	case TensorType:
+	case constructor.TensorType:
 		return nt.Dims
 	case tensor.Dtype:
 		return 0
@@ -414,7 +414,7 @@ func (n *Node) Shape() tensor.Shape { return n.shape.Clone() }
 func (n *Node) Strides() []int {
 	if n.boundTo != nil {
 		switch v := n.boundTo.(type) {
-		case *dualValue:
+		case *value.DualValue:
 			return v.Value.(tensor.Tensor).Strides()
 		case tensor.Tensor:
 			return v.Strides()
@@ -509,7 +509,7 @@ func (n *Node) String() string {
 
 // private methods
 
-// TODO: check type, check shape, check if needsGrad -> promote to dualValue
+// TODO: check type, check shape, check if needsGrad -> promote to value.DualValue
 func (n *Node) bind(v value.Value) error {
 	// pc, _, _, _ := runtime.Caller(1)
 	// log.Printf("binding to %p. Called by %v", n, runtime.FuncForPC(pc).Name())
@@ -519,8 +519,8 @@ func (n *Node) bind(v value.Value) error {
 		return nil
 	}
 
-	if dv, ok := n.boundTo.(*dualValue); ok {
-		if vdv, ok := v.(*dualValue); ok {
+	if dv, ok := n.boundTo.(*value.DualValue); ok {
+		if vdv, ok := v.(*value.DualValue); ok {
 			if vdv == dv {
 				return nil
 			}
@@ -547,7 +547,7 @@ func (n *Node) bind(v value.Value) error {
 func (n *Node) bindCopy(v value.Value) (err error) {
 	if n.boundTo == nil {
 		var cloned value.Value
-		if cloned, err = CloneValue(v); err != nil {
+		if cloned, err = value.CloneValue(v); err != nil {
 			return
 		}
 		n.boundTo = cloned
@@ -555,9 +555,9 @@ func (n *Node) bindCopy(v value.Value) (err error) {
 	}
 
 	var copied value.Value
-	if dv, ok := n.boundTo.(*dualValue); ok {
+	if dv, ok := n.boundTo.(*value.DualValue); ok {
 
-		if vdv, ok := v.(*dualValue); ok {
+		if vdv, ok := v.(*value.DualValue); ok {
 			if vdv == dv {
 				return nil // no need to copy!
 			}
@@ -568,15 +568,15 @@ func (n *Node) bindCopy(v value.Value) (err error) {
 				return nil
 			}
 
-			return errors.Errorf("Cannot yet handle bindCopy() of *dualValue into *dualValue") // TODO FIX
+			return errors.Errorf("Cannot yet handle bindCopy() of *value.DualValue into *value.DualValue") // TODO FIX
 		}
-		if copied, err = Copy(dv.Value, v); err != nil {
-			return errors.Wrapf(err, "Failed to copy while binding to node with *dualValue")
+		if copied, err = value.Copy(dv.Value, v); err != nil {
+			return errors.Wrapf(err, "Failed to copy while binding to node with *value.DualValue")
 		}
 		dv.Value = copied // in case they're scalars
 		return nil
 	}
-	if copied, err = Copy(n.boundTo, v); err != nil {
+	if copied, err = value.Copy(n.boundTo, v); err != nil {
 		return errors.Wrapf(err, "Failed to copy while binding to node")
 	}
 	n.boundTo = copied // in case it's a scalar
@@ -589,8 +589,8 @@ func (n *Node) unbind() {
 		return
 	}
 
-	if dv, ok := n.boundTo.(*dualValue); ok {
-		returnDV(dv)
+	if dv, ok := n.boundTo.(*value.DualValue); ok {
+		value.ReturnDV(dv)
 	}
 
 	if t, ok := n.boundTo.(tensor.Tensor); ok {

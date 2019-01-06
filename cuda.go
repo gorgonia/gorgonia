@@ -327,7 +327,7 @@ func (n *Node) GradOnDevice(toDev Device, extern External) (retVal value.Value, 
 	}
 
 	var d value.Value
-	if dv, ok := n.boundTo.(*dualValue); ok {
+	if dv, ok := n.boundTo.(*value.DualValue); ok {
 		d = dv.d
 	} else if n.deriv != nil {
 		return n.deriv.ValueOnDevice(toDev, extern)

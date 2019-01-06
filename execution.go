@@ -76,7 +76,7 @@ func (op *ExternalOp) Do(vals ...value.Value) (value.Value, error) {
 			if err != nil {
 				return retVal, err
 			}
-			return Copy(op.Prealloc, retVal)
+			return value.Copy(op.Prealloc, retVal)
 		case op.UseUnsafe:
 			if ud, ok := op.Op.(UnsafeDoer); ok {
 				return ud.UnsafeDo(vals...)
@@ -95,7 +95,7 @@ func (op *ExternalOp) Do(vals ...value.Value) (value.Value, error) {
 				return nil, err
 			}
 
-			add := newEBOByType(addOpType, TypeOf(op.Incr), TypeOf(v))
+			add := newEBOByType(addOpType, value.TypeOf(op.Incr), value.TypeOf(v))
 			addOp := NewExternalOp(add, op.Context, nil)
 			addOp.UseUnsafe = true
 			retVal, err := addOp.Do(op.Incr, v)

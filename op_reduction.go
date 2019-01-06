@@ -14,8 +14,8 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/gorgonia/internal/execution"
-	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -36,14 +36,14 @@ func (op maxOp) Arity() int { return 1 }
 
 func (op maxOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	t := makeTensorType(op.d, a)
+	t := constructor.MakeTensorType(op.d, a)
 
 	var retType hm.Type
 	if op.d == 1 || len(op.along) == 0 || len(op.along) == op.d {
 		// then it redueces down
 		return hm.NewFnType(t, a)
 	}
-	retType = makeTensorType(op.d-1, a)
+	retType = constructor.MakeTensorType(op.d-1, a)
 	return hm.NewFnType(t, retType)
 }
 
@@ -137,7 +137,7 @@ func (op sumOp) Arity() int { return 1 }
 //		sumOp :: (Summable a) ⇒ Tensor d a → Tensor d-1 a
 func (op sumOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	t := makeTensorType(op.d, a)
+	t := constructor.MakeTensorType(op.d, a)
 
 	if op.inputShape.IsVector() {
 		return hm.NewFnType(t, a)
@@ -148,7 +148,7 @@ func (op sumOp) Type() hm.Type {
 		return hm.NewFnType(t, a)
 	}
 
-	retType := makeTensorType(op.d-1, a)
+	retType := constructor.MakeTensorType(op.d-1, a)
 	return hm.NewFnType(t, retType)
 }
 
@@ -235,15 +235,15 @@ func (op sumOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err e
 	xShape := xdv.Value.Shape()
 
 	var T tensor.Tensor
-	switch ydvd := ydv.d.(type) {
+	switch ydvd := ydv.D.(type) {
 	case value.Scalar:
 		dt := ydvd.Dtype()
-		T = tensor.New(tensor.Of(dt), tensor.WithShape(xdv.d.Shape().Clone()...))
+		T = tensor.New(tensor.Of(dt), tensor.WithShape(xdv.D.Shape().Clone()...))
 		T.Memset(ydvd.Data())
 	case tensor.Tensor:
 		// handle broadcasting
-		if ydvd.Shape().Dims() == xdv.d.Shape().Dims()-len(op.along) {
-			newShape := xdv.d.Shape().Clone()
+		if ydvd.Shape().Dims() == xdv.D.Shape().Dims()-len(op.along) {
+			newShape := xdv.D.Shape().Clone()
 			for _, a := range op.along {
 				newShape[a] = 1
 			}
@@ -252,12 +252,12 @@ func (op sumOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err e
 
 		T = ydvd
 	default:
-		err = errors.Errorf(nyiTypeFail, "sumOp.DoDiff()", ydv.d)
+		err = errors.Errorf(nyiTypeFail, "sumOp.DoDiff()", ydv.D)
 		return
 	}
 
 	var val value.Value
-	if !T.Shape().Eq(xdv.d.Shape()) {
+	if !T.Shape().Eq(xdv.D.Shape()) {
 		// TO DO: Optimize: figure out a way to bunch it all up so you can repeat in one call
 		for _, a := range op.along {
 			if xShape[a] == 1 {
@@ -274,7 +274,7 @@ func (op sumOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err e
 	}
 
 	// then just add the two
-	add := newEBOByType(addOpType, TypeOf(xdv.d), TypeOf(val))
+	add := newEBOByType(addOpType, value.TypeOf(xdv.D), value.TypeOf(val))
 	addOp := NewExternalOp(add, ctx, nil)
 	addOp.UseUnsafe = true
 	addOp.Device = x.Device()
@@ -321,7 +321,7 @@ func (op sumOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 		var ret *tensor.Dense
 		if ret, err = t.Sum(op.along...); err == nil {
 			if ret.IsScalar() {
-				retVal, _ = primitive.AnyToScalar(ret.ScalarValue())
+				retVal, _ = value.AnyToScalar(ret.ScalarValue())
 			} else {
 				retVal = ret
 			}

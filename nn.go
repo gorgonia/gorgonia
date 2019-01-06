@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/distro"
-	"gorgonia.org/gorgonia/internal/primitive"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
@@ -78,11 +77,11 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 	var opp, pr value.Value // opp = 1 per p
 	switch dt {
 	case Float64:
-		opp, _ = primitive.AnyToScalar(1.0 / prob)
-		pr, _ = primitive.AnyToScalar(prob)
+		opp, _ = value.AnyToScalar(1.0 / prob)
+		pr, _ = value.AnyToScalar(prob)
 	case Float32:
-		opp, _ = primitive.AnyToScalar(float32(1.0 / prob))
-		pr, _ = primitive.AnyToScalar(float32(prob))
+		opp, _ = value.AnyToScalar(float32(1.0 / prob))
+		pr, _ = value.AnyToScalar(float32(prob))
 	default:
 		return nil, errors.Errorf(nyiTypeFail, "Dropout()", dt)
 	}
@@ -300,8 +299,8 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 	variance := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	ma := tensor.New(tensor.Of(dt), tensor.WithShape(1))
 
-	meanB := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
-	varianceB := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	meanT := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	varianceT := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	tmp := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
 	xNorm := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
 	batchSumMultiplier := tensor.New(tensor.Of(dt), tensor.WithShape(batches))
@@ -331,9 +330,9 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 		variance: variance,
 		ma:       ma,
 
-		mean_:                meanB,
-		variance_:            varianceB,
-		tmp_:                 tmp,
+		meanT:                meanT,
+		varianceT:            varianceT,
+		tmpT:                 tmp,
 		xNorm:                xNorm,
 		batchSumMultiplier:   batchSumMultiplier,
 		numByChans:           numByChans,
