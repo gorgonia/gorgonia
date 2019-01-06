@@ -18,7 +18,7 @@ func binOpNode(op BinaryOp, a, b *Node) (retVal *Node, err error) {
 	enterLogScope()
 	defer leaveLogScope()
 	// maybe make stabilization a build tag?
-	if stabilization {
+	if Stabilization {
 		enterLogScope()
 		if ebo, ok := op.(elemBinOp); ok {
 			ot := ebo.binOpType()
@@ -108,7 +108,7 @@ func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
 	stabLogf("Creating node for %v, a: %p %v", op, a, a)
 	enterLogScope()
 	defer leaveLogScope()
-	if stabilization {
+	if Stabilization {
 
 		// do optimization/stabilization
 		// TODO: maybe recursively stabilize?
