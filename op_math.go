@@ -24,6 +24,7 @@ import (
 	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/node"
 	"gorgonia.org/tensor"
 )
 
@@ -367,13 +368,13 @@ type elemUnaryOp struct {
 	numericResult bool // indicate if boolean results should be converted to 1 and 0 in the respective Dtype
 }
 
-func newElemUnaryOp(op ʘUnaryOperatorType, a *Node) elemUnaryOp {
-	dt, err := dtypeOf(a.t)
+func newElemUnaryOp(op ʘUnaryOperatorType, a node.Node) elemUnaryOp {
+	dt, err := dtypeOf(a.Type())
 	if err != nil {
 		panic(err)
 	}
 
-	_, isTensor := a.t.(constructor.TensorType)
+	_, isTensor := a.Type().(constructor.TensorType)
 
 	var operator ʘUnaryOperator
 	switch dt {

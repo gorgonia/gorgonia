@@ -169,6 +169,50 @@ type CUDAADOp interface {
 	CUDADoDiff(extern execution.External, dev execution.Device, inputs Nodes, output *Node) error
 }
 
+// ApplyOp op to the node n. The children are extracted from the Graph g
+func (g *ExprGraph) ApplyOp(op Op, n *Node) error {
+	var children []*Node
+	child := getOrderedChildren(g, n)
+	if child != nil {
+		//child := g.From(n.ID())
+		children = make([]*Node, child.Len())
+		for i := 0; child.Next(); i++ {
+			children[i] = child.Node().(*Node)
+		}
+	}
+
+	// TODO get children from the node
+	// typecheck  before creating
+	typeSysLogf("Inferring node type of %v :: %v with children: %#Y", op, op.Type(), Nodes(children))
+	enterLogScope()
+	defer leaveLogScope()
+	var retType hm.Type
+	retType, err := inferNodeType(op, children...)
+	if err != nil {
+		return errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())
+	}
+	typeSysLogf("Done inferring. Return type is: %#v(%T)", retType, retType)
+
+	// infer shapes, but print errors instead of returning
+	shapeLogf("op: %v(%T) inferring shape", op, op)
+	err = checkArity(op, len(children))
+	if err != nil {
+		return err
+	}
+
+	ds := Nodes(children).dimSizers()
+	s, err := op.InferShape(ds...)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to infer shape. Op: %v", op)
+	}
+	shapeLogf("inferred shape %v", s)
+	WithType(retType)(n)
+	WithOp(op)(n)
+	WithShape(s...)(n)
+	returnDimSizers(ds)
+	return nil
+}
+
 // ApplyOp is the generic function application - for when no specialization is required
 func ApplyOp(op Op, children ...*Node) (*Node, error) {
 	var g *ExprGraph
@@ -188,39 +232,44 @@ func ApplyOp(op Op, children ...*Node) (*Node, error) {
 		return nil, errors.New("Not all children have the same graph")
 	}
 
-	// typecheck  before creating
-	typeSysLogf("Inferring node type of %v :: %v with children: %#Y", op, op.Type(), Nodes(children))
-	enterLogScope()
-	defer leaveLogScope()
-	var retType hm.Type
-	retType, err := inferNodeType(op, children...)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())
-	}
-	typeSysLogf("Done inferring. Return type is: %#v(%T)", retType, retType)
+	/*
+		// typecheck  before creating
+		typeSysLogf("Inferring node type of %v :: %v with children: %#Y", op, op.Type(), Nodes(children))
+		enterLogScope()
+		defer leaveLogScope()
+		var retType hm.Type
+		retType, err := inferNodeType(op, children...)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())
+		}
+		typeSysLogf("Done inferring. Return type is: %#v(%T)", retType, retType)
 
-	// infer shapes, but print errors instead of returning
-	shapeLogf("op: %v(%T) inferring shape", op, op)
-	err = checkArity(op, len(children))
-	if err != nil {
-		return nil, err
-	}
+		// infer shapes, but print errors instead of returning
+		shapeLogf("op: %v(%T) inferring shape", op, op)
+		err = checkArity(op, len(children))
+		if err != nil {
+			return nil, err
+		}
 
-	ds := Nodes(children).dimSizers()
-	s, err := op.InferShape(ds...)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to infer shape. Op: %v", op)
-	}
-	shapeLogf("inferred shape %v", s)
+		ds := Nodes(children).dimSizers()
+		s, err := op.InferShape(ds...)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Failed to infer shape. Op: %v", op)
+		}
+		shapeLogf("inferred shape %v", s)
+	*/
 	n := g.NewNode().(*Node)
-	WithType(retType)(n)
-	WithOp(op)(n)
-	WithShape(s...)(n)
-	returnDimSizers(ds)
-	g.AddNode(n)
 	for i, child := range children {
 		g.SetWeightedEdge(g.NewWeightedEdge(n, child, float64(i)))
 	}
+	g.ApplyOp(op, n)
+	/*
+		WithType(retType)(n)
+		WithOp(op)(n)
+		WithShape(s...)(n)
+		returnDimSizers(ds)
+		g.AddNode(n)
+	*/
 	return n, nil
 }
 
