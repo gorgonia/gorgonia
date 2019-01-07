@@ -5,6 +5,7 @@ package gorgonia
 import (
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
+	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
 )
 
@@ -163,12 +164,12 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 
 			if src.boundTo != nil {
 				dv := dvUnit(src.boundTo)
-				cudaLogf("dv.d 0x%x v 0x%x | writeTo: %v", dv.d.Uintptr(), v.Uintptr(), instr.writeTo)
+				cudaLogf("dv.d 0x%x v 0x%x | writeTo: %v", dv.D.Uintptr(), v.Uintptr(), instr.writeTo)
 				dev := instr.writeTo.device
-				add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
+				add := newEBOByType(addOpType, TypeOf(dv.D), TypeOf(v))
 				switch dev {
 				case CPU:
-					if d, err := add.UnsafeDo(dv.d, v); err == nil {
+					if d, err := add.UnsafeDo(dv.D, v); err == nil {
 						dv.SetDeriv(d)
 						src.bind(dv)
 					} else {
@@ -178,8 +179,8 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 					// temporarily allocate a valu
 					ctx := m.Contexts()[int(dev)]
 
-					dt := dv.d.Dtype()
-					shp := dv.d.Shape()
+					dt := dv.D.Dtype()
+					shp := dv.D.Shape()
 					memsize := calcMemSize(dt, shp)
 
 					var mem tensor.Memory
@@ -193,14 +194,14 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 					}
 
 					// copy dv.d to d
-					ctx.MemcpyHtoD(mem.(cu.DevicePtr), dv.d.Pointer(), memsize)
+					ctx.MemcpyHtoD(mem.(cu.DevicePtr), dv.D.Pointer(), memsize)
 
 					// perform  the op
 					if _, err = add.CUDADo(m, dev, d, d, v); err != nil {
 						return
 					}
-					// copy the value back into dv.d
-					ctx.MemcpyDtoH(dv.d.Pointer(), mem.(cu.DevicePtr), memsize)
+					// copy the value back into dv.D
+					ctx.MemcpyDtoH(dv.D.Pointer(), mem.(cu.DevicePtr), memsize)
 					m.Put(dev, mem, memsize) // then free it
 
 					src.bind(dv)
