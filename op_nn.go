@@ -187,7 +187,7 @@ func (op im2colOp) Type() hm.Type {
 }
 
 func (op im2colOp) InferShape(shapes ...ops.DimSizer) (retVal tensor.Shape, err error) {
-	if err = checkArity(op, len(shapes)); err != nil {
+	if err = ops.CheckArity(op, len(shapes)); err != nil {
 		return
 	}
 
@@ -198,7 +198,7 @@ func (op im2colOp) InferShape(shapes ...ops.DimSizer) (retVal tensor.Shape, err 
 }
 
 func (op im2colOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -230,7 +230,7 @@ func (op im2colOp) String() string {
 func (op im2colOp) DiffWRT(i int) []bool { return []bool{true} }
 
 func (op im2colOp) SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 	im := inputs[0]
@@ -258,7 +258,7 @@ func (op im2colOp) SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err 
 }
 
 func (op im2colOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -445,7 +445,7 @@ func (op col2imOp) InferShape(shapes ...ops.DimSizer) (retVal tensor.Shape, err 
 }
 
 func (op col2imOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -475,7 +475,7 @@ func (op col2imOp) String() string {
 }
 
 func (op col2imOp) UsePreallocDo(prealloc value.Value, inputs ...value.Value) (value.Value, error) {
-	if err := checkArity(op, len(inputs)); err != nil {
+	if err := ops.CheckArity(op, len(inputs)); err != nil {
 		return nil, err
 	}
 	return op.do(prealloc, inputs[0])
@@ -726,7 +726,7 @@ func (op *maxPoolOp) UsePreallocDo(prealloc value.Value, inputs ...value.Value) 
 func (op *maxPoolOp) DiffWRT(inputs int) []bool { return []bool{true} }
 
 func (op *maxPoolOp) SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 	input := inputs[0]
@@ -743,7 +743,7 @@ func (op *maxPoolOp) SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, er
 }
 
 func (op *maxPoolOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 	input := inputs[0]
@@ -760,7 +760,7 @@ func (op *maxPoolOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (
 }
 
 func (op *maxPoolOp) checkInput(inputs ...value.Value) (tensor.Tensor, error) {
-	if err := checkArity(op, len(inputs)); err != nil {
+	if err := ops.CheckArity(op, len(inputs)); err != nil {
 		return nil, err
 	}
 
@@ -961,7 +961,7 @@ func (op *maxPoolDiffOp) UsePreallocDo(prealloc value.Value, inputs ...value.Val
 }
 
 func (op *maxPoolDiffOp) checkInput(inputs ...value.Value) (in, pooled, pooledGrad tensor.Tensor, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -1128,7 +1128,7 @@ func (op *BatchNormOp) Type() hm.Type {
 
 // InferShape ...
 func (op *BatchNormOp) InferShape(ns ...ops.DimSizer) (tensor.Shape, error) {
-	if err := checkArity(op, len(ns)); err != nil {
+	if err := ops.CheckArity(op, len(ns)); err != nil {
 		return nil, errors.Wrapf(err, "batchNorm")
 	}
 
@@ -1137,7 +1137,7 @@ func (op *BatchNormOp) InferShape(ns ...ops.DimSizer) (tensor.Shape, error) {
 
 // Do ...
 func (op *BatchNormOp) Do(values ...value.Value) (retVal value.Value, err error) {
-	if err := checkArity(op, len(values)); err != nil {
+	if err := ops.CheckArity(op, len(values)); err != nil {
 		return nil, errors.Wrapf(err, "batchNorm Do")
 	}
 	var v, out value.Value
@@ -1182,7 +1182,7 @@ func (op *BatchNormOp) DiffWRT(inputs int) []bool { return []bool{true} }
 
 // SymDiff ...
 func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 	input := inputs[0]
@@ -1416,7 +1416,7 @@ func (op *batchnormDiffOp) Type() hm.Type {
 }
 
 func (op *batchnormDiffOp) InferShape(ns ...ops.DimSizer) (tensor.Shape, error) {
-	if err := checkArity(op, len(ns)); err != nil {
+	if err := ops.CheckArity(op, len(ns)); err != nil {
 		return nil, errors.Wrapf(err, "batchNorm")
 	}
 

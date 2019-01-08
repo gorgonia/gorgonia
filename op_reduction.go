@@ -52,7 +52,7 @@ func (op maxOp) InferShape(...ops.DimSizer) (tensor.Shape, error) { return scala
 func (op maxOp) DiffWRT(i int) []bool                             { return []bool{true} }
 
 func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -82,7 +82,7 @@ func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 }
 
 func (op maxOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -198,7 +198,7 @@ func (op sumOp) InferShape(inputs ...ops.DimSizer) (shape tensor.Shape, err erro
 func (op sumOp) DiffWRT(i int) []bool { return []bool{true} }
 
 func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -227,7 +227,7 @@ func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 }
 
 func (op sumOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -312,7 +312,7 @@ func (op sumOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err e
 }
 
 func (op sumOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 

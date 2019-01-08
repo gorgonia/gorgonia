@@ -21,7 +21,7 @@ const (
 func (op elemUnaryOp) CallsExtern() bool { return true }
 
 func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc value.Value, inputs ...Value) (retVal value.Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -87,7 +87,7 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc value.Value, 
 func (op elemBinOp) CallsExtern() bool { return true }
 
 func (op elemBinOp) CUDADo(extern External, dev Device, prealloc value.Value, inputs ...Value) (retVal value.Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 	cudaLogf("CUDADoing %v", op)
@@ -182,7 +182,7 @@ func (op elemBinOp) ssop(a, b, prealloc value.Value, e *cuda.Engine) (retVal val
 func (op linAlgBinOp) CallsExtern() bool { return true }
 
 func (op linAlgBinOp) CUDADo(extern External, dev Device, prealloc value.Value, inputs ...Value) (retVal value.Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 

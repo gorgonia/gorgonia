@@ -45,8 +45,7 @@ func DimSizersToShapes(ds []DimSizer) ([]tensor.Shape, error) {
 type Op interface {
 	/* Graph Building Related Methods */
 
-	// Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime
-	Arity() int
+	Arityer
 
 	// Informs the type of the Op (not the node). This will be used by the type system to infer the final type of the node
 	Type() hm.Type
@@ -141,4 +140,10 @@ type CUDADoer interface {
 // CLDoer uses OpenCL to perform the Op. As of now, there are NO Ops that support OpenCL
 type CLDoer interface {
 	CLDo(inputs ...value.Value) (value.Value, error)
+}
+
+//Arityer is any object that knows its arity
+type Arityer interface {
+	// Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime
+	Arity() int
 }

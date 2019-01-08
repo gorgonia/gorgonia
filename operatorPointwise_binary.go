@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -40,7 +41,7 @@ func (o scalarBinOp) isArith() bool                  { return o.ʘBinaryOperator
 func (o scalarBinOp) String() string                 { return o.ʘBinaryOperatorType.String() }
 
 func (o scalarBinOp) Do(same bool, vals ...value.Value) (retVal value.Value, err error) {
-	if err = checkArity(o, len(vals)); err != nil {
+	if err = ops.CheckArity(o, len(vals)); err != nil {
 		return
 	}
 
@@ -359,7 +360,7 @@ func (o tBinOp) IncrDo(incr value.Value, retSame bool, inputs ...value.Value) (e
 }
 
 func (o tBinOp) do(vals []value.Value, opts ...tensor.FuncOpt) (retVal value.Value, err error) {
-	if err = checkArity(o, len(vals)); err != nil {
+	if err = ops.CheckArity(o, len(vals)); err != nil {
 		return
 	}
 

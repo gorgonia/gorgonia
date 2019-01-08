@@ -219,13 +219,6 @@ func setZero(val value.Value) (retVal value.Value) {
 	}
 }
 
-func checkArity(op arityer, inputs int) error {
-	if inputs != op.Arity() && op.Arity() >= 0 {
-		return errors.Errorf("%v has an arity of %d. Got %d instead", op, op.Arity(), inputs)
-	}
-	return nil
-}
-
 func maxInt(a, b int) int {
 	if a > b {
 		return a

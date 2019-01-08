@@ -220,7 +220,7 @@ func (op elemBinOp) DiffWRT(inputs int) []bool {
 }
 
 func (op elemBinOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -250,7 +250,7 @@ func (op elemBinOp) Do(values ...value.Value) (value.Value, error) {
 }
 
 func (op elemBinOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -425,7 +425,7 @@ func (op elemUnaryOp) DiffWRT(inputs int) []bool {
 }
 
 func (op elemUnaryOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -440,7 +440,7 @@ func (op elemUnaryOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Node
 }
 
 func (op elemUnaryOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -449,7 +449,7 @@ func (op elemUnaryOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) 
 }
 
 func (op elemUnaryOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 	return op.do(inputs[0])
@@ -480,7 +480,7 @@ func (op elemUnaryOp) Hashcode() uint32 { return simpleHash(op) }
 
 // fulfils UnsafeDoer interface
 func (op elemUnaryOp) UnsafeDo(inputs ...value.Value) (value.Value, error) {
-	if err := checkArity(op, len(inputs)); err != nil {
+	if err := ops.CheckArity(op, len(inputs)); err != nil {
 		return nil, err
 	}
 	return op.do(inputs[0], tensor.UseUnsafe())
@@ -605,7 +605,7 @@ func (op linAlgBinOp) InferShape(inputs ...ops.DimSizer) (retVal tensor.Shape, e
 }
 
 func (op linAlgBinOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -622,7 +622,7 @@ func (op linAlgBinOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Node
 }
 
 func (op linAlgBinOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -727,7 +727,7 @@ func (op linAlgBinOp) IsBinary() bool { return true }
 /* PRIVATE METHODS */
 
 func (op linAlgBinOp) do(inputs []value.Value, opts ...tensor.FuncOpt) (retVal value.Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -771,7 +771,7 @@ func (op linAlgBinOp) do(inputs []value.Value, opts ...tensor.FuncOpt) (retVal v
 }
 
 func (op linAlgBinOp) preallocBatchMatMul(incr bool, prealloc value.Value, inputs ...value.Value) (retVal value.Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 	a, b := inputs[0].(tensor.Tensor), inputs[1].(tensor.Tensor)
@@ -798,7 +798,7 @@ func (op tensordotOp) Type() hm.Type {
 }
 
 func (op tensordotOp) InferShape(ds ...ops.DimSizer) (tensor.Shape, error) {
-	if err := checkArity(op, len(ds)); err != nil {
+	if err := ops.CheckArity(op, len(ds)); err != nil {
 		return nil, errors.Wrap(err, "tensordot")
 	}
 
@@ -837,7 +837,7 @@ func (op tensordotOp) InferShape(ds ...ops.DimSizer) (tensor.Shape, error) {
 }
 
 func (op tensordotOp) Do(vals ...value.Value) (value.Value, error) {
-	if err := checkArity(op, len(vals)); err != nil {
+	if err := ops.CheckArity(op, len(vals)); err != nil {
 		return nil, errors.Wrap(err, "tensordot")
 	}
 
@@ -1050,7 +1050,7 @@ func (op tensordotOp) DiffWRT(inputs int) []bool {
 }
 
 func (op tensordotOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 

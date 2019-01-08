@@ -13,11 +13,6 @@ import (
 	"gorgonia.org/tensor"
 )
 
-// DimSizer is any type (typically a tensor.Shape) that allows querying for a dimension size given an input dimension.
-type DimSizer interface {
-	DimSize(int) (int, error)
-}
-
 // ShapesToDimSizers is a convenience function to convert a slice of tensor.Shape to a slice of DimSizer
 func ShapesToDimSizers(shapes []tensor.Shape) []ops.DimSizer {
 	retVal := make([]ops.DimSizer, len(shapes))
@@ -150,7 +145,7 @@ func (g *ExprGraph) ApplyOp(op ops.Op, n *Node) error {
 
 	// infer shapes, but print errors instead of returning
 	shapeLogf("op: %v(%T) inferring shape", op, op)
-	err = checkArity(op, len(children))
+	err = ops.CheckArity(op, len(children))
 	if err != nil {
 		return err
 	}
@@ -201,7 +196,7 @@ func ApplyOp(op ops.Op, children ...*Node) (*Node, error) {
 
 		// infer shapes, but print errors instead of returning
 		shapeLogf("op: %v(%T) inferring shape", op, op)
-		err = checkArity(op, len(children))
+		err = ops.CheckArity(op, len(children))
 		if err != nil {
 			return nil, err
 		}
@@ -251,14 +246,14 @@ type constantScalar struct {
 	v value.Scalar
 }
 
-func (c constantScalar) Arity() int                                   { return 0 }
-func (c constantScalar) Type() hm.Type                                { return value.TypeOf(c.v) }
+func (c constantScalar) Arity() int                                       { return 0 }
+func (c constantScalar) Type() hm.Type                                    { return value.TypeOf(c.v) }
 func (c constantScalar) InferShape(...ops.DimSizer) (tensor.Shape, error) { return scalarShape, nil }
-func (c constantScalar) ReturnsPtr() bool                             { return false }
-func (c constantScalar) CallsExtern() bool                            { return false }
-func (c constantScalar) OverwritesInput() int                         { return -1 }
-func (c constantScalar) DiffWRT(i int) []bool                         { return nil }
-func (c constantScalar) SymDiff(Nodes, *Node, *Node) (Nodes, error)   { return nil, nil }
+func (c constantScalar) ReturnsPtr() bool                                 { return false }
+func (c constantScalar) CallsExtern() bool                                { return false }
+func (c constantScalar) OverwritesInput() int                             { return -1 }
+func (c constantScalar) DiffWRT(i int) []bool                             { return nil }
+func (c constantScalar) SymDiff(Nodes, *Node, *Node) (Nodes, error)       { return nil, nil }
 
 func (c constantScalar) Do(...value.Value) (value.Value, error) { return c.v, nil }
 func (c constantScalar) String() string                         { return fmt.Sprintf("const %s", c.v) }
@@ -280,8 +275,8 @@ type constantTensor struct {
 	v tensor.Tensor
 }
 
-func (c constantTensor) Arity() int                                   { return 1 }
-func (c constantTensor) Type() hm.Type                                { return value.TypeOf(c.v) }
+func (c constantTensor) Arity() int                                       { return 1 }
+func (c constantTensor) Type() hm.Type                                    { return value.TypeOf(c.v) }
 func (c constantTensor) InferShape(...ops.DimSizer) (tensor.Shape, error) { return c.v.Shape(), nil }
 
 // danger! The only reason why this is the case is because matrices may be too large. copying is costly.

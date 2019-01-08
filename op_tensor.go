@@ -44,7 +44,7 @@ func (op atOp) SymDiff(Nodes, *Node, *Node) (Nodes, error)                  { re
 func (op atOp) String() string                                              { return fmt.Sprintf("At(%v)", op.coordinates) }
 
 func (op atOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -113,7 +113,7 @@ func (op sizeOp) SymDiff(inputs Nodes, output, gradNode *Node) (Nodes, error) {
 }
 
 func (op sizeOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -293,7 +293,7 @@ func (op repeatOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, 
 }
 
 func (op repeatOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 	xdv, ydv := getDV(inputs[0], output)
@@ -374,7 +374,7 @@ func (op repeatOp) String() string { return fmt.Sprintf("Repeat%v", op.along) }
 // Do performs a repeat on the value.
 // TODO(anyone): implement for other types
 func (op repeatOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -553,7 +553,7 @@ func (op *sliceOp) DiffWRT(i int) []bool {
 }
 
 func (op *sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nodes, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -566,7 +566,7 @@ func (op *sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nod
 }
 
 func (op *sliceOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 	xdv, ydv := getDV(inputs[0], output)
@@ -587,7 +587,7 @@ func (op *sliceOp) DoDiff(ctx execution.Context, inputs Nodes, output *Node) (er
 }
 
 func (op *sliceOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -697,7 +697,7 @@ func (op sliceIncrOp) InferShape(inputs ...ops.DimSizer) (retVal tensor.Shape, e
 }
 
 func (op sliceIncrOp) DiffWRT(i int) []bool {
-	if err := checkArity(op, i); err != nil {
+	if err := ops.CheckArity(op, i); err != nil {
 		panic(err)
 	}
 
@@ -741,7 +741,7 @@ func (op sliceIncrOp) Do(inputs ...value.Value) (retVal value.Value, err error) 
 	enterLogScope()
 	defer leaveLogScope()
 
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -783,7 +783,7 @@ func (op sliceIncrOp) UsePreallocDo(prealloc value.Value, inputs ...value.Value)
 	enterLogScope()
 	defer leaveLogScope()
 
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 	incr := inputs[1]
@@ -896,7 +896,7 @@ func (op transposeOp) InferShape(inputs ...ops.DimSizer) (retVal tensor.Shape, e
 }
 
 func (op transposeOp) DiffWRT(i int) []bool {
-	if err := checkArity(op, i); err != nil {
+	if err := ops.CheckArity(op, i); err != nil {
 		panic(err)
 	}
 
@@ -948,7 +948,7 @@ func (op transposeOp) Do(inputs ...value.Value) (retVal value.Value, err error) 
 	enterLogScope()
 	defer leaveLogScope()
 
-	if err = checkArity(op, len(inputs)); err != nil {
+	if err = ops.CheckArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -1139,7 +1139,7 @@ func (op reshapeOp) Type() hm.Type {
 func (op reshapeOp) InferShape(ds ...ops.DimSizer) (tensor.Shape, error) { return op.to.Clone(), nil }
 
 func (op reshapeOp) Do(vals ...value.Value) (value.Value, error) {
-	if err := checkArity(op, len(vals)); err != nil {
+	if err := ops.CheckArity(op, len(vals)); err != nil {
 		return nil, err
 	}
 	var val value.Value
@@ -1177,7 +1177,7 @@ func (op reshapeOp) Hashcode() uint32 { return simpleHash(op) }
 func (op reshapeOp) String() string { return fmt.Sprintf("Reshape%v", op.to) }
 
 func (op reshapeOp) CUDADo(extern execution.External, dev execution.Device, prealloc value.Value, vals ...value.Value) (retVal value.Value, err error) {
-	if err := checkArity(op, len(vals)); err != nil {
+	if err := ops.CheckArity(op, len(vals)); err != nil {
 		return nil, err
 	}
 	val := vals[0]
