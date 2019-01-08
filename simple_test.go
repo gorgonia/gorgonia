@@ -35,20 +35,7 @@ func TestAdd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if z.Value().Data().(float64) != float64(9) {
+	if z.Value().Data().(float64) != float64(8) {
 		t.Fatalf("1 result: %v", z.Value())
 	}
-	// change the order of the inputs
-
-	/*
-		machine.Reset()
-		// Run the program
-		err = machine.RunAll()
-		if err != nil {
-			t.Fatal(err)
-		}
-		if z.Value().Data().(float64) != float64(9) {
-			t.Fatalf("2 result: %v", z.Value())
-		}
-	*/
 }

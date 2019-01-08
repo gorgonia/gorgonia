@@ -87,6 +87,7 @@ func getOrderedChildren(g graph.WeightedDirected, n graph.Node) *iterator.Ordere
 	for i := 0; children.Next(); i++ {
 		edges[i] = g.WeightedEdge(n.ID(), children.Node().ID())
 	}
+	sort.Sort(byWeight(edges))
 
 	children.Reset()
 	orderWeightedEdges := iterator.NewOrderedWeightedEdges(edges)
@@ -96,3 +97,11 @@ func getOrderedChildren(g graph.WeightedDirected, n graph.Node) *iterator.Ordere
 	}
 	return iterator.NewOrderedNodes(nodes)
 }
+
+type byWeight []graph.WeightedEdge
+
+func (c byWeight) Len() int { return len(c) }
+func (c byWeight) Less(i, j int) bool {
+	return c[i].Weight() < c[j].Weight()
+}
+func (c byWeight) Swap(i, j int) { c[i], c[j] = c[j], c[i] }

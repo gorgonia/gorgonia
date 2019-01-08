@@ -51,7 +51,7 @@ func {{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}) (*Node, error) {
 
 // {{.FnName}}Op ...
 var {{.FnName}}Op = func(g graph.DirectedWeightedBuilder, n node.Node) (ops.Op, error) {
-	it := g.From(n.ID())
+	it := getOrderedChildren(g, n)
 	children := make([]*Node, it.Len())
 	for i := 0; it.Next(); i++ {
 		children[i] = it.Node().(*Node)
