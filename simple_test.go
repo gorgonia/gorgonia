@@ -7,7 +7,7 @@ import (
 func TestAdd(t *testing.T) {
 	g := NewGraph()
 
-	// define the expression
+	// Build the graph
 	x := g.NewScalar(Float64, WithName("x"))
 	g.AddNode(x)
 	y := g.NewScalar(Float64, WithName("y"))
@@ -16,9 +16,9 @@ func TestAdd(t *testing.T) {
 	g.AddNode(z)
 	g.SetWeightedEdge(g.NewWeightedEdge(z, x, 1.0))
 	g.SetWeightedEdge(g.NewWeightedEdge(z, y, 2.0))
-	err := g.ApplyOp(newElemBinOp(addOpType, x, y), z)
-	//z, err := gorgonia.Add(x, y)
 
+	// Apply an operation on the node z
+	err := g.ApplyOp(PowOp, z)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,13 +28,27 @@ func TestAdd(t *testing.T) {
 
 	// set initial values then run
 	Let(x, 2.0)
-	Let(y, 2.5)
+	Let(y, 3.0)
+
+	// Run the program
 	err = machine.RunAll()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if z.Value().Data().(float64) != float64(4.5) {
-		t.Fatalf("result: %v", z.Value())
+	if z.Value().Data().(float64) != float64(9) {
+		t.Fatalf("1 result: %v", z.Value())
 	}
+	// change the order of the inputs
 
+	/*
+		machine.Reset()
+		// Run the program
+		err = machine.RunAll()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if z.Value().Data().(float64) != float64(9) {
+			t.Fatalf("2 result: %v", z.Value())
+		}
+	*/
 }

@@ -2,6 +2,7 @@ package node
 
 import (
 	"github.com/chewxy/hm"
+	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/tensor"
@@ -9,6 +10,7 @@ import (
 
 // Node is an abstration of a node of the ExprGraph
 type Node interface {
+	graph.Node
 	// Device returns the device the data will be on
 	Device() execution.Device
 	// Dims indicates how many dimensions the node's result has

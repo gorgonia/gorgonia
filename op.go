@@ -59,8 +59,8 @@ type CUDAADOp interface {
 	CUDADoDiff(extern execution.External, dev execution.Device, inputs Nodes, output *Node) error
 }
 
-// ApplyOp op to the node n. The children are extracted from the Graph g
-func (g *ExprGraph) ApplyOp(op ops.Op, n *Node) error {
+func (g *ExprGraph) applyOp(op ops.Op, n *Node) error {
+
 	var children []*Node
 	child := getOrderedChildren(g, n)
 	if child != nil {
@@ -103,6 +103,15 @@ func (g *ExprGraph) ApplyOp(op ops.Op, n *Node) error {
 	return nil
 }
 
+// ApplyOp op to the node n. The children are extracted from the Graph g
+func (g *ExprGraph) ApplyOp(operation Operation, n *Node) error {
+	op, err := operation(g, n)
+	if err != nil {
+		return err
+	}
+	return g.applyOp(op, n)
+}
+
 // ApplyOp is the generic function application - for when no specialization is required
 func ApplyOp(op ops.Op, children ...*Node) (*Node, error) {
 	var g *ExprGraph
@@ -126,7 +135,7 @@ func ApplyOp(op ops.Op, children ...*Node) (*Node, error) {
 	for i, child := range children {
 		g.SetWeightedEdge(g.NewWeightedEdge(n, child, float64(i)))
 	}
-	g.ApplyOp(op, n)
+	g.applyOp(op, n)
 	return n, nil
 }
 

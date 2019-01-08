@@ -48,6 +48,16 @@ func {{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}) (*Node, error) {
 	return binOpNode(op, a, b)
 {{end -}}
 }
+
+// {{.FnName}}Op ...
+var {{.FnName}}Op = func(g graph.DirectedWeightedBuilder, n node.Node) (ops.Op, error) {
+	it := g.From(n.ID())
+	children := make([]*Node, it.Len())
+	for i := 0; it.Next(); i++ {
+		children[i] = it.Node().(*Node)
+	}
+	return newElemBinOp({{.OpType}}, children[0], children[1]), nil
+}
 `
 
 func init() {
