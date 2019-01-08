@@ -50,7 +50,7 @@ func {{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}) (*Node, error) {
 }
 
 // {{.FnName}}Op ...
-var {{.FnName}}Op = func(g graph.DirectedWeightedBuilder, n node.Node) (ops.Op, error) {
+var {{.FnName}}Op = func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 	it := getOrderedChildren(g, n)
 	children := make([]*Node, it.Len())
 	for i := 0; it.Next(); i++ {
@@ -181,7 +181,18 @@ func main() {
 		log.Fatal(err)
 	}
 	defer outFile.Close()
-	fmt.Fprintf(outFile, "package gorgonia\n\n%v\n\n", genmsg)
+	fmt.Fprintf(outFile, `package gorgonia 
+
+import (
+	"gonum.org/v1/gonum/graph"
+	"gorgonia.org/gorgonia/node"
+	"gorgonia.org/gorgonia/ops"
+)
+
+%v
+
+`, genmsg)
+
 	generateUnary(outFile)
 	generateBinary(outFile)
 }
