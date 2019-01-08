@@ -51,7 +51,7 @@ func {{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}) (*Node, error) {
 
 // {{.FnName}}Op ...
 func New{{.FnName}}Operation() Operation {
-	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
+	return func(g graph.WeightedDirected, n graph.Node) (ops.Op, error) {
 		it := getOrderedChildren(g, n)
 		children := make([]*Node, it.Len())
 		for i := 0; it.Next(); i++ {
@@ -187,7 +187,6 @@ func main() {
 
 import (
 	"gonum.org/v1/gonum/graph"
-	"gorgonia.org/gorgonia/node"
 	"gorgonia.org/gorgonia/ops"
 )
 
