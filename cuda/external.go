@@ -157,6 +157,7 @@ func (e *Engine) doInit(size int64) (err error) {
 		return errors.Wrapf(err, "Failed to allocate %v bytes of managed memory for %v", allocsize, e.d)
 	}
 	e.a.reserve(uintptr(ptr), allocsize)
+	e.n = *(cudnn.NewContext())
 	go e.Run()
 	return nil
 }
@@ -228,7 +229,6 @@ func (e *Engine) Run() {
 
 	// finish initialization
 	e.b.Init(cublas.WithContext(&e.c))
-	e.n = *(cudnn.NewContext())
 
 	e.finishChan2 <- struct{}{}
 
