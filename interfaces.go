@@ -7,9 +7,13 @@ import (
 	"io"
 	"unsafe"
 
+	"gonum.org/v1/gonum/graph"
+	"gorgonia.org/gorgonia/node"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
+// Tensor is ... a tensor!
 type Tensor interface {
 	// info about the ndarrayN
 	Shape() tensor.Shape
@@ -72,3 +76,6 @@ type hashWriter interface {
 type arityer interface {
 	Arity() int
 }
+
+// Operation is any op that can be applied to a node n of the graph g
+type Operation func(g graph.DirectedWeightedBuilder, n node.Node) (ops.Op, error)
