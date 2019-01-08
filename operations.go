@@ -14,7 +14,7 @@ import (
 // 		func (...) (*Node, error)
 
 /* BINARY FUNCTIONS */
-func binOpNode(op BinaryOp, a, b *Node) (retVal *Node, err error) {
+func binOpNode(op ops.BinaryOp, a, b *Node) (retVal *Node, err error) {
 	stabLogf("Creating node for %v, a: %p, b: %p", op, a, b)
 	enterLogScope()
 	defer leaveLogScope()
@@ -57,7 +57,7 @@ func Mul(a, b *Node) (retVal *Node, err error) {
 		return HadamardProd(a, b)
 	}
 
-	var op BinaryOp
+	var op ops.BinaryOp
 	switch {
 	case a.IsVector() && b.IsVector():
 		op = linAlgBinOp{āBinaryOperator: vecDotOperator}

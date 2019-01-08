@@ -60,7 +60,7 @@ func (op *ExternalOp) Do(vals ...value.Value) (value.Value, error) {
 	if op.Device == execution.CPU {
 		switch {
 		case op.Incr != nil:
-			if id, ok := op.Op.(IncrDoer); ok {
+			if id, ok := op.Op.(ops.IncrDoer); ok {
 				if err := id.IncrDo(op.Incr, vals...); err != nil {
 					if ver, ok := err.(value.Valuer); ok {
 						return ver.Value(), nil
@@ -70,7 +70,7 @@ func (op *ExternalOp) Do(vals ...value.Value) (value.Value, error) {
 				return op.Incr, nil
 			}
 		case op.Prealloc != nil:
-			if pd, ok := op.Op.(UsePreallocDoer); ok {
+			if pd, ok := op.Op.(ops.UsePreallocDoer); ok {
 				pd.UsePreallocDo(op.Prealloc, vals...)
 			}
 			retVal, err := op.Op.Do(vals...)
@@ -79,7 +79,7 @@ func (op *ExternalOp) Do(vals ...value.Value) (value.Value, error) {
 			}
 			return value.Copy(op.Prealloc, retVal)
 		case op.UseUnsafe:
-			if ud, ok := op.Op.(UnsafeDoer); ok {
+			if ud, ok := op.Op.(ops.UnsafeDoer); ok {
 				return ud.UnsafeDo(vals...)
 			}
 			fallthrough
@@ -89,7 +89,7 @@ func (op *ExternalOp) Do(vals ...value.Value) (value.Value, error) {
 	}
 
 	switch o := op.Op.(type) {
-	case CUDADoer:
+	case ops.CUDADoer:
 		if op.Incr != nil {
 			v, err := o.CUDADo(op.External, op.Device, op.Prealloc, vals...)
 			if err != nil {
@@ -103,8 +103,8 @@ func (op *ExternalOp) Do(vals ...value.Value) (value.Value, error) {
 			return retVal, err
 		}
 		return o.CUDADo(op.External, op.Device, op.Prealloc, vals...)
-	case CLDoer:
-	case IncrDoer:
+	case ops.CLDoer:
+	case ops.IncrDoer:
 		if op.Incr != nil {
 			if err := o.IncrDo(op.Incr, vals...); err != nil {
 				if ver, ok := err.(value.Valuer); ok {
@@ -115,12 +115,12 @@ func (op *ExternalOp) Do(vals ...value.Value) (value.Value, error) {
 			return op.Incr, nil
 		}
 		return op.Op.Do(vals...)
-	case UsePreallocDoer:
+	case ops.UsePreallocDoer:
 		if op.Prealloc != nil {
 			return o.UsePreallocDo(op.Prealloc, vals...)
 		}
 		return op.Op.Do(vals...)
-	case UnsafeDoer:
+	case ops.UnsafeDoer:
 		if op.UseUnsafe {
 			return o.UnsafeDo(vals...)
 		}

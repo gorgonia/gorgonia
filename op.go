@@ -34,34 +34,6 @@ func DimSizersToShapes(ds []ops.DimSizer) ([]tensor.Shape, error) {
 	return retVal, nil
 }
 
-// A UnaryOp is an Op that takes only one input
-type UnaryOp interface {
-	ops.Op
-
-	IsUnary() bool
-}
-
-// A BinaryOp is an Op that takes only two inputs
-type BinaryOp interface {
-	ops.Op
-
-	IsBinary() bool
-}
-
-// BestDoer ...
-type BestDoer interface {
-	ops.Op
-
-	BestDo(prealloc value.Value, vals ...value.Value) (value.Value, error)
-}
-
-// A NoRetOp is an Op that reads a value, but does not return any value. It's a representation of a not-pure function
-type NoRetOp interface {
-	ops.Op
-
-	ReturnsNothing() bool
-}
-
 // An ADOp is an Op that supports automatic differentiation.
 type ADOp interface {
 	ops.Op
@@ -79,38 +51,6 @@ type SDOp interface {
 
 	// SymDiff symbolically differentiates the op
 	SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err error)
-}
-
-// ReductionOp changes the shape of the node
-type ReductionOp interface {
-	ops.Op
-
-	IsReduction() bool
-}
-
-// IncrDoer increments the toIncr with the result of doing
-type IncrDoer interface {
-	IncrDo(toIncr value.Value, inputs ...value.Value) error
-}
-
-// UsePreallocDoer is an op that works when a preallocated value is provided
-type UsePreallocDoer interface {
-	UsePreallocDo(prealloc value.Value, inputs ...value.Value) (value.Value, error)
-}
-
-// UnsafeDoer is an op that will overwrite the underlying value.
-type UnsafeDoer interface {
-	UnsafeDo(inputs ...value.Value) (value.Value, error)
-}
-
-// CUDADoer uses CUDA to perform the Op.
-type CUDADoer interface {
-	CUDADo(extern execution.External, dev execution.Device, prealloc value.Value, inputs ...value.Value) (retVal value.Value, err error)
-}
-
-// CLDoer uses OpenCL to perform the Op. As of now, there are NO Ops that support OpenCL
-type CLDoer interface {
-	CLDo(inputs ...value.Value) (value.Value, error)
 }
 
 // CUDAADOp ...
@@ -182,44 +122,11 @@ func ApplyOp(op ops.Op, children ...*Node) (*Node, error) {
 		return nil, errors.New("Not all children have the same graph")
 	}
 
-	/*
-		// typecheck  before creating
-		typeSysLogf("Inferring node type of %v :: %v with children: %#Y", op, op.Type(), Nodes(children))
-		enterLogScope()
-		defer leaveLogScope()
-		var retType hm.Type
-		retType, err := inferNodeType(op, children...)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())
-		}
-		typeSysLogf("Done inferring. Return type is: %#v(%T)", retType, retType)
-
-		// infer shapes, but print errors instead of returning
-		shapeLogf("op: %v(%T) inferring shape", op, op)
-		err = ops.CheckArity(op, len(children))
-		if err != nil {
-			return nil, err
-		}
-
-		ds := Nodes(children).dimSizers()
-		s, err := op.InferShape(ds...)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Failed to infer shape. Op: %v", op)
-		}
-		shapeLogf("inferred shape %v", s)
-	*/
 	n := g.NewNode().(*Node)
 	for i, child := range children {
 		g.SetWeightedEdge(g.NewWeightedEdge(n, child, float64(i)))
 	}
 	g.ApplyOp(op, n)
-	/*
-		WithType(retType)(n)
-		WithOp(op)(n)
-		WithShape(s...)(n)
-		returnDimSizers(ds)
-		g.AddNode(n)
-	*/
 	return n, nil
 }
 

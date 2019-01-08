@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -38,7 +39,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	var v value.Value
 	switch {
 	case instr.preAllocated:
-		if pd, ok := instr.op.(UsePreallocDoer); ok {
+		if pd, ok := instr.op.(ops.UsePreallocDoer); ok {
 			p := m.cpumem[instr.writeTo.id]
 			if v, err = pd.UsePreallocDo(p, inputs...); err != nil {
 				return errors.Wrapf(err, "Happened while attempting to execute %v. Node is %x. Register was: %v ", instr, instr.id, instr.writeTo.id)
@@ -50,7 +51,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 			}
 		}
 	case instr.useUnsafe:
-		if ud, ok := instr.op.(UnsafeDoer); ok {
+		if ud, ok := instr.op.(ops.UnsafeDoer); ok {
 			if v, err = ud.UnsafeDo(inputs...); err != nil {
 				return errors.Wrap(err, "Failed to carry UnsafeDo()")
 			}

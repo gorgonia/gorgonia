@@ -6,6 +6,7 @@ import (
 	"github.com/xtgo/set"
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/ops"
 )
 
 // this file holds all the code that relates to register allocation
@@ -200,9 +201,9 @@ func (ra *regalloc) allocMutableOp(node *Node, nInterv *interval) {
 	overwrites := node.op.OverwritesInput()
 	var onDev bool
 	switch node.op.(type) {
-	case CUDADoer:
+	case ops.CUDADoer:
 		onDev = true
-	case CLDoer:
+	case ops.CLDoer:
 		onDev = true
 	default:
 	}
@@ -280,7 +281,7 @@ func (ra *regalloc) allocImmutableOp(node *Node, nInterv *interval) {
 	}
 
 	compileLogf("NodeID: %x does not returns pointer", node.ID())
-	if _, ok := node.op.(CUDADoer); ok {
+	if _, ok := node.op.(ops.CUDADoer); ok {
 		writeTo = ra.newReg(execution.Device(0))
 	} else {
 		writeTo = ra.newReg(execution.CPU)

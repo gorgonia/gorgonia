@@ -627,7 +627,7 @@ func (instr *execOp) reads() []register { return instr.readFrom }
 func (instr *execOp) writes() register  { return instr.writeTo }
 
 func newExecOp(n *Node) *execOp {
-	_, useGPU := n.op.(CUDADoer)
+	_, useGPU := n.op.(ops.CUDADoer)
 	compileLogf("op %v uses GPU %v", n.op, useGPU)
 	dt, err := dtypeOf(n.t)
 	if err != nil {

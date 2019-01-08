@@ -202,7 +202,7 @@ func dvBind0(op ops.Op, retVal *value.DualValue, inputs []*value.DualValue) (err
 	vals := idValue(inputs)
 
 	var ret value.Value
-	if pd, ok := op.(UsePreallocDoer); ok {
+	if pd, ok := op.(ops.UsePreallocDoer); ok {
 		if ret, err = pd.UsePreallocDo(prealloc, vals...); err == nil {
 			goto next
 		}
@@ -230,7 +230,7 @@ func dvBindVar0(op ops.Op, retVal *value.DualValue, inputs []*value.DualValue) (
 	vals := idValue(inputs)
 
 	var ret value.Value
-	if pd, ok := op.(UsePreallocDoer); ok {
+	if pd, ok := op.(ops.UsePreallocDoer); ok {
 		ret, err = pd.UsePreallocDo(prealloc, vals...)
 	} else {
 		if ret, err = op.Do(vals...); err != nil {

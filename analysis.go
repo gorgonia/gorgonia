@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/ops"
 )
 
 // dataflow analysis
@@ -53,11 +54,11 @@ func (df *dataflow) vn(n *Node) (retVal *Node, unique bool) {
 // Currently it will only use Device 0. In the future, we can be smart about which device to use
 func (df *dataflow) analyzeDevice(n *Node) {
 	switch n.op.(type) {
-	case CUDADoer:
+	case ops.CUDADoer:
 		if n.dataOn == execution.CPU {
 			n.dataOn = execution.Device(0)
 		}
-	case CLDoer:
+	case ops.CLDoer:
 		if n.dataOn == execution.CPU {
 			n.dataOn = execution.Device(0)
 		}

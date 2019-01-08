@@ -433,18 +433,18 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 				op = lastWriteNode.op
 			}
 			switch op.(type) {
-			case CUDADoer:
+			case ops.CUDADoer:
 				onDev = execution.Device(0)
-			case CLDoer:
+			case ops.CLDoer:
 				onDev = execution.Device(0)
 			default:
 				onDev = execution.CPU
 			}
 
 			switch node.op.(type) {
-			case CUDADoer:
+			case ops.CUDADoer:
 				nodeOnDev = execution.Device(0)
-			case CLDoer:
+			case ops.CLDoer:
 				nodeOnDev = execution.Device(0)
 			default:
 				nodeOnDev = execution.CPU
