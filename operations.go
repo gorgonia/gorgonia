@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/internal/constructor"
+	"gorgonia.org/gorgonia/node"
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
@@ -524,6 +526,45 @@ func Concat(axis int, ns ...*Node) (retVal *Node, err error) {
 
 	op := concatOp{axis: axis, d: d, children: len(ns)}
 	return ApplyOp(op, ns...)
+}
+
+// NewReshapeOperation change the shape of the node into s
+func NewReshapeOperation(s tensor.Shape) Operation {
+	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
+		// check shape
+		var negs int
+		var infer int
+		for i, s := range s {
+			if s < 0 {
+				negs++
+				infer = i
+			}
+		}
+		if negs > 1 {
+			return nil, errors.Errorf("Unfortunately, inference of reshape parameters only allow for one variable (a negative number). Got %v instead", s)
+		}
+
+		if negs == 1 {
+			prod := 1
+			for i, s := range s {
+				if i == infer {
+					continue
+				}
+				prod *= s
+			}
+			inferred, rem := divmod(n.Shape().TotalSize(), prod)
+			if rem != 0 {
+				return nil, errors.Errorf("Cannot reshape %v to %v", n.Shape(), s)
+			}
+			s[infer] = inferred
+		}
+
+		op := reshapeOp{
+			from: n.Shape(),
+			to:   s,
+		}
+		return op, nil
+	}
 }
 
 // Reshape reshapes a node and returns a new node with the new shape

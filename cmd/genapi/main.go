@@ -40,7 +40,7 @@ func {{.FnName}}(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp({{.
 
 // {{.FnName}}Op ...
 func New{{.FnName}}Operation() Operation {
-	return func(g graph.WeightedDirected, n graph.Node) (ops.Op, error) {
+	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 		it := getOrderedChildren(g, n)
 		if it.Len() != 1 {
 			return nil, errors.New("Unexpected number of children")
@@ -67,7 +67,7 @@ func {{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}) (*Node, error) {
 
 // {{.FnName}}Op ...
 func New{{.FnName}}Operation() Operation {
-	return func(g graph.WeightedDirected, n graph.Node) (ops.Op, error) {
+	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 		it := getOrderedChildren(g, n)
 		if it.Len() != 2 {
 			return nil, errors.New("Unexpected number of children")
@@ -207,6 +207,7 @@ func main() {
 import (
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
+	"gorgonia.org/gorgonia/node"
 	"gorgonia.org/gorgonia/ops"
 )
 
