@@ -18,7 +18,7 @@ func TestAdd(t *testing.T) {
 	g.SetWeightedEdge(g.NewWeightedEdge(z, y, 2.0))
 
 	// Apply an operation on the node z
-	err := g.ApplyOp(PowOp, z)
+	err := g.ApplyOp(NewPowOperation(), z)
 	if err != nil {
 		t.Fatal(err)
 	}
