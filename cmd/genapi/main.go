@@ -37,6 +37,22 @@ var (
 
 const unaryTemplateRaw = ` // {{.FnName}} performs a pointwise {{lower .FnName}}.
 func {{.FnName}}(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp({{.OpType}}, a), a) }
+
+// {{.FnName}}Op ...
+func New{{.FnName}}Operation() Operation {
+	return func(g graph.WeightedDirected, n graph.Node) (ops.Op, error) {
+		it := getOrderedChildren(g, n)
+		if it.Len() != 1 {
+			return nil, errors.New("Unexpected number of children")
+		}
+		children := make([]*Node, it.Len())
+		for i := 0; it.Next(); i++ {
+			children[i] = it.Node().(*Node)
+		}
+		return newElemUnaryOp({{.OpType}}, children[0]), nil
+	}
+}
+
 `
 
 const binaryTemplateRaw = `// {{.FnName}} perfors a pointwise {{lower .FnName}} operation.
@@ -53,6 +69,9 @@ func {{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}) (*Node, error) {
 func New{{.FnName}}Operation() Operation {
 	return func(g graph.WeightedDirected, n graph.Node) (ops.Op, error) {
 		it := getOrderedChildren(g, n)
+		if it.Len() != 2 {
+			return nil, errors.New("Unexpected number of children")
+		}
 		children := make([]*Node, it.Len())
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
@@ -186,6 +205,7 @@ func main() {
 	fmt.Fprintf(outFile, `package gorgonia 
 
 import (
+	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/ops"
 )
