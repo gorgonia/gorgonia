@@ -6,6 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/xtgo/set"
+	"gorgonia.org/gorgonia/ops"
 )
 
 // Nodes is a slice of nodes, but it also acts as a set of nodes by implementing the Sort interface
@@ -198,7 +199,7 @@ func (ns Nodes) remove(what *Node) Nodes {
 	return ns
 }
 
-func (ns Nodes) dimSizers() []DimSizer {
+func (ns Nodes) dimSizers() []ops.DimSizer {
 	retVal := borrowDimSizers(len(ns))
 	for i, n := range ns {
 		if s, ok := n.op.(sizeOp); ok {

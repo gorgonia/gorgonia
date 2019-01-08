@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/constructor"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -104,7 +105,7 @@ func Div(a, b *Node) (retVal *Node, err error) {
 
 /* UNARY STUFF */
 
-func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
+func unaryOpNode(op ops.Op, a *Node) (retVal *Node, err error) {
 	stabLogf("Creating node for %v, a: %p %v", op, a, a)
 	enterLogScope()
 	defer leaveLogScope()

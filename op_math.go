@@ -25,6 +25,7 @@ import (
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/gorgonia/node"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -138,7 +139,7 @@ func (op elemBinOp) Type() hm.Type {
 // 		op :: () → () → ()
 //		op :: () → (...) → (...)
 //		op :: (...) → () → (...)
-func (op elemBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
+func (op elemBinOp) InferShape(inputs ...ops.DimSizer) (retVal tensor.Shape, err error) {
 	shapeLogf("Inferring shape of %v", op)
 	enterLogScope()
 	defer leaveLogScope()
@@ -399,7 +400,7 @@ func (op elemUnaryOp) Type() hm.Type {
 	return hm.NewFnType(a, a)
 }
 
-func (op elemUnaryOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
+func (op elemUnaryOp) InferShape(inputs ...ops.DimSizer) (retVal tensor.Shape, err error) {
 	if inputs[0] == nil {
 		return nil, errors.Errorf(nyiFail, "inferShape", "nil shape")
 	}
@@ -524,7 +525,7 @@ type linAlgBinOp struct {
 
 func (op linAlgBinOp) Arity() int { return 2 }
 
-func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
+func (op linAlgBinOp) InferShape(inputs ...ops.DimSizer) (retVal tensor.Shape, err error) {
 	shapeLogf("Inferring shape of %v", op)
 	enterLogScope()
 	defer leaveLogScope()
@@ -796,7 +797,7 @@ func (op tensordotOp) Type() hm.Type {
 	return hm.NewFnType(ta, tb, tRet)
 }
 
-func (op tensordotOp) InferShape(ds ...DimSizer) (tensor.Shape, error) {
+func (op tensordotOp) InferShape(ds ...ops.DimSizer) (tensor.Shape, error) {
 	if err := checkArity(op, len(ds)); err != nil {
 		return nil, errors.Wrap(err, "tensordot")
 	}

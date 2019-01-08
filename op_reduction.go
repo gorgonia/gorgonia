@@ -17,6 +17,7 @@ import (
 	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -47,8 +48,8 @@ func (op maxOp) Type() hm.Type {
 	return hm.NewFnType(t, retType)
 }
 
-func (op maxOp) InferShape(...DimSizer) (tensor.Shape, error) { return scalarShape, nil } // TODO, THIS IS INCORRECT
-func (op maxOp) DiffWRT(i int) []bool                         { return []bool{true} }
+func (op maxOp) InferShape(...ops.DimSizer) (tensor.Shape, error) { return scalarShape, nil } // TODO, THIS IS INCORRECT
+func (op maxOp) DiffWRT(i int) []bool                             { return []bool{true} }
 
 func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
@@ -152,7 +153,7 @@ func (op sumOp) Type() hm.Type {
 	return hm.NewFnType(t, retType)
 }
 
-func (op sumOp) InferShape(inputs ...DimSizer) (shape tensor.Shape, err error) {
+func (op sumOp) InferShape(inputs ...ops.DimSizer) (shape tensor.Shape, err error) {
 	in := inputs[0].(tensor.Shape)
 	shapeLogf("input shape: %v", in)
 	switch {

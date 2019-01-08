@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/internal/execution"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -421,7 +422,7 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 	for _, read := range reads {
 		if lastWriteNode, ok := cg.lastWrites[read]; ok {
 			instrID := cg.sorted.index(lastWriteNode)
-			var op Op
+			var op ops.Op
 			var onDev, nodeOnDev execution.Device
 
 			_, isDevTrans := lastWriteNode.Op().(devTrans)

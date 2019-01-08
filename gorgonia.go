@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -94,7 +95,7 @@ func (g *ExprGraph) NewTensor(t tensor.Dtype, dims int, opts ...NodeConsOpt) *No
 
 // NewConstant takes in any reasonable value and makes it a constant node.
 func (g *ExprGraph) NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
-	var op Op
+	var op ops.Op
 	var t hm.Type
 	var name string
 	var s tensor.Shape

@@ -10,7 +10,7 @@ func (g *ExprGraph) Apply(operation Operation, n node.Node) error {
 	if err != nil {
 		return err
 	}
-	g.ApplyOp(op.(Op), n.(*Node))
+	g.ApplyOp(op, n.(*Node))
 
 	return nil
 }

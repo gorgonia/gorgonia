@@ -5,6 +5,7 @@ import (
 
 	"gorgonia.org/gorgonia/internal/perf"
 	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -62,19 +63,19 @@ func returnValue(v value.Value) {
 
 var dimSizerPool = make(map[int]*sync.Pool)
 
-func borrowDimSizers(size int) []DimSizer {
+func borrowDimSizers(size int) []ops.DimSizer {
 	pool, ok := dimSizerPool[size]
 	if !ok {
 		s := size
 		pool = &sync.Pool{
-			New: func() interface{} { return make([]DimSizer, s, s) },
+			New: func() interface{} { return make([]ops.DimSizer, s, s) },
 		}
 		dimSizerPool[size] = pool
 	}
-	return pool.Get().([]DimSizer)
+	return pool.Get().([]ops.DimSizer)
 }
 
-func returnDimSizers(ds []DimSizer) {
+func returnDimSizers(ds []ops.DimSizer) {
 	pool, ok := dimSizerPool[cap(ds)]
 	if !ok {
 		return

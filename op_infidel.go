@@ -7,6 +7,7 @@ import (
 	"github.com/chewxy/hm"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -18,7 +19,7 @@ Since they're not adherents to the Church of Lambda, they are INFIDELS! A fatwa 
 */
 
 type stmtOp interface {
-	Op
+	ops.Op
 	isStmt() bool
 }
 
@@ -31,7 +32,7 @@ func (op letOp) Type() hm.Type                                                  
 func (op letOp) ReturnsPtr() bool                                                { return true }
 func (op letOp) OverwritesInput() int                                            { return 0 }
 func (op letOp) CallsExtern() bool                                               { return false }
-func (op letOp) InferShape(...DimSizer) (tensor.Shape, error)                    { return nil, nil }
+func (op letOp) InferShape(...ops.DimSizer) (tensor.Shape, error)                    { return nil, nil }
 func (op letOp) DiffWRT(int) []bool                                              { return nil }
 func (op letOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (Nodes, error) { return nil, nil }
 func (op letOp) Do(vals ...value.Value) (value.Value, error)                     { return nil, nil }
@@ -51,7 +52,7 @@ func (op readOp) Type() hm.Type                                                 
 func (op readOp) ReturnsPtr() bool                                                { return true }
 func (op readOp) OverwritesInput() int                                            { return 0 }
 func (op readOp) CallsExtern() bool                                               { return false }
-func (op readOp) InferShape(...DimSizer) (tensor.Shape, error)                    { return nil, nil }
+func (op readOp) InferShape(...ops.DimSizer) (tensor.Shape, error)                    { return nil, nil }
 func (op readOp) DiffWRT(int) []bool                                              { return nil }
 func (op readOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (Nodes, error) { return nil, nil }
 func (op readOp) Do(vals ...value.Value) (value.Value, error)                     { return nil, nil }
@@ -69,7 +70,7 @@ type devTrans struct {
 
 func (op devTrans) Arity() int                                   { panic("not implemented") }
 func (op devTrans) Type() hm.Type                                { panic("not implemented") }
-func (op devTrans) InferShape(...DimSizer) (tensor.Shape, error) { panic("not implemented") }
+func (op devTrans) InferShape(...ops.DimSizer) (tensor.Shape, error) { panic("not implemented") }
 func (op devTrans) Do(...value.Value) (value.Value, error)       { panic("not implemented") }
 func (op devTrans) ReturnsPtr() bool                             { return false }
 func (op devTrans) CallsExtern() bool                            { return true }

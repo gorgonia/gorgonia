@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -18,8 +19,8 @@ type DimSizer interface {
 }
 
 // ShapesToDimSizers is a convenience function to convert a slice of tensor.Shape to a slice of DimSizer
-func ShapesToDimSizers(shapes []tensor.Shape) []DimSizer {
-	retVal := make([]DimSizer, len(shapes))
+func ShapesToDimSizers(shapes []tensor.Shape) []ops.DimSizer {
+	retVal := make([]ops.DimSizer, len(shapes))
 	for i, s := range shapes {
 		retVal[i] = s
 	}
@@ -27,7 +28,7 @@ func ShapesToDimSizers(shapes []tensor.Shape) []DimSizer {
 }
 
 // DimSizersToShapes is a convenience function to convert a slice of DimSizer to a slice of tensor.Shape. It will return an error if any of them isn't a tensor.Shape
-func DimSizersToShapes(ds []DimSizer) ([]tensor.Shape, error) {
+func DimSizersToShapes(ds []ops.DimSizer) ([]tensor.Shape, error) {
 	retVal := make([]tensor.Shape, len(ds))
 	var ok bool
 	for i, d := range ds {
@@ -38,90 +39,44 @@ func DimSizersToShapes(ds []DimSizer) ([]tensor.Shape, error) {
 	return retVal, nil
 }
 
-// An Op is a symbolic representation of an operation
-// Think of them as functions, taking an input (or multiple), and outputting something
-//
-// All Ops have type signatures that look like this:
-//		OpName :: (Floats a) ⇒ Tensor a → Tensor a → Tensor a
-type Op interface {
-	/* Graph Building Related Methods */
-
-	// Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime
-	Arity() int
-
-	// Informs the type of the Op (not the node). This will be used by the type system to infer the final type of the node
-	Type() hm.Type
-
-	// returns the output shape as a function of the inputs
-	InferShape(...DimSizer) (tensor.Shape, error)
-
-	/* Machine related */
-
-	// executes the op
-	Do(...value.Value) (value.Value, error)
-
-	/* Analysis Related Methods */
-
-	// indicates if the Op will return a pointer (allowing possible inplace edits) or by value
-	// if it's false, the return value of the Op will be a copy of its input
-	ReturnsPtr() bool
-
-	// Does this op potentially call external (cgo or cuda) functions (thereby requiring extra overhead for Go's trampolining thing)
-	CallsExtern() bool
-
-	// overwriteInput() is a method which states which input the output will be overwriting.
-	// This allows for some efficiency gains as the underlying arrays wouldn't have to be re-allocated.
-	// The method returns an int instead of a bool because potentially different operations may be allowed
-	// to overwrite certain inputs. For example, consider an operation to increment a value:
-	// the IncrementOp would be a unary operator, and assuming we would like to overwrite the input,
-	// the retVal of overwriteInput() will be 0 (inputs[0]).
-	// -1 is returned if overwriting of input is disallowed
-	OverwritesInput() int
-
-	/* Other methods */
-	WriteHash(h hash.Hash)
-	Hashcode() uint32
-	fmt.Stringer
-}
-
 // A UnaryOp is an Op that takes only one input
 type UnaryOp interface {
-	Op
+	ops.Op
 
 	IsUnary() bool
 }
 
 // A BinaryOp is an Op that takes only two inputs
 type BinaryOp interface {
-	Op
+	ops.Op
 
 	IsBinary() bool
 }
 
 // BestDoer ...
 type BestDoer interface {
-	Op
+	ops.Op
 
 	BestDo(prealloc value.Value, vals ...value.Value) (value.Value, error)
 }
 
 // A NoRetOp is an Op that reads a value, but does not return any value. It's a representation of a not-pure function
 type NoRetOp interface {
-	Op
+	ops.Op
 
 	ReturnsNothing() bool
 }
 
 // An ADOp is an Op that supports automatic differentiation.
 type ADOp interface {
-	Op
+	ops.Op
 
 	DoDiff(ctx execution.Context, inputs Nodes, output *Node) error
 }
 
 // A SDOp is an Op that supports symbolic differentiation
 type SDOp interface {
-	Op
+	ops.Op
 
 	// DiffWRT indicates if the op is differentiable with regards to the given number of inputs
 	// returns []bool to indicate which input it is differentiable to
@@ -133,7 +88,7 @@ type SDOp interface {
 
 // ReductionOp changes the shape of the node
 type ReductionOp interface {
-	Op
+	ops.Op
 
 	IsReduction() bool
 }
@@ -170,7 +125,7 @@ type CUDAADOp interface {
 }
 
 // ApplyOp op to the node n. The children are extracted from the Graph g
-func (g *ExprGraph) ApplyOp(op Op, n *Node) error {
+func (g *ExprGraph) ApplyOp(op ops.Op, n *Node) error {
 	var children []*Node
 	child := getOrderedChildren(g, n)
 	if child != nil {
@@ -214,7 +169,7 @@ func (g *ExprGraph) ApplyOp(op Op, n *Node) error {
 }
 
 // ApplyOp is the generic function application - for when no specialization is required
-func ApplyOp(op Op, children ...*Node) (*Node, error) {
+func ApplyOp(op ops.Op, children ...*Node) (*Node, error) {
 	var g *ExprGraph
 
 	for _, child := range children {
@@ -274,7 +229,7 @@ func ApplyOp(op Op, children ...*Node) (*Node, error) {
 }
 
 // ApplyOpWithName applies the op, and then gives the node the given name
-func ApplyOpWithName(op Op, name string, children ...*Node) (retVal *Node, err error) {
+func ApplyOpWithName(op ops.Op, name string, children ...*Node) (retVal *Node, err error) {
 	if retVal, err = ApplyOp(op, children...); err == nil {
 		WithName(name)(retVal)
 	} else {
@@ -286,7 +241,7 @@ func ApplyOpWithName(op Op, name string, children ...*Node) (retVal *Node, err e
 // a constant is an unchanging value. I think everyone would know what a constant is
 // a constant op is an op that creates a constant. It is also a value.Value of a constant value
 type constant interface {
-	Op
+	ops.Op
 
 	isconstant() bool
 	Value() value.Value
@@ -298,7 +253,7 @@ type constantScalar struct {
 
 func (c constantScalar) Arity() int                                   { return 0 }
 func (c constantScalar) Type() hm.Type                                { return value.TypeOf(c.v) }
-func (c constantScalar) InferShape(...DimSizer) (tensor.Shape, error) { return scalarShape, nil }
+func (c constantScalar) InferShape(...ops.DimSizer) (tensor.Shape, error) { return scalarShape, nil }
 func (c constantScalar) ReturnsPtr() bool                             { return false }
 func (c constantScalar) CallsExtern() bool                            { return false }
 func (c constantScalar) OverwritesInput() int                         { return -1 }
@@ -327,7 +282,7 @@ type constantTensor struct {
 
 func (c constantTensor) Arity() int                                   { return 1 }
 func (c constantTensor) Type() hm.Type                                { return value.TypeOf(c.v) }
-func (c constantTensor) InferShape(...DimSizer) (tensor.Shape, error) { return c.v.Shape(), nil }
+func (c constantTensor) InferShape(...ops.DimSizer) (tensor.Shape, error) { return c.v.Shape(), nil }
 
 // danger! The only reason why this is the case is because matrices may be too large. copying is costly.
 // constants should return value but for the sake of memory, we're going to return pointers

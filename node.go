@@ -15,6 +15,7 @@ import (
 	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -25,7 +26,7 @@ type Node struct {
 	shape tensor.Shape
 
 	// this node is the result of applying the op to the children
-	op       Op
+	op       ops.Op
 	children Nodes // shortcut, instead of having to go through the graph. It is set by the compiler
 
 	// For nicely grouping stuff in graphviz.
@@ -96,7 +97,7 @@ func WithChildren(children Nodes) NodeConsOpt {
 // a check will be made to see if the provided Op and the one already specified in the `*Node` is the same -
 // do note that comparison of Ops is done using the `Hashcode()` method of Ops, and hash collisions MAY occur -
 // If both ops are different, this function will panic.
-func WithOp(op Op) NodeConsOpt {
+func WithOp(op ops.Op) NodeConsOpt {
 	f := func(n *Node) {
 		if n.op != nil {
 			if op.Hashcode() != n.op.Hashcode() {
@@ -429,7 +430,7 @@ func (n *Node) Strides() []int {
 func (n *Node) Device() execution.Device { return n.dataOn }
 
 // Op returns the Op of the node
-func (n *Node) Op() Op { return n.op }
+func (n *Node) Op() ops.Op { return n.op }
 
 // IsVec returns whether this node is a vector
 func (n *Node) IsVec() bool { return n.IsVector() }

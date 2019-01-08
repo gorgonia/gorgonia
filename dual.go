@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -162,7 +163,7 @@ func idValue(inputs []*value.DualValue) (retVals []value.Value) {
 }
 
 // dvBind applies an op to the inputs, and returns a *value.DualValue
-func dvBind(op Op, inputs []*value.DualValue) (retVal *value.DualValue, err error) {
+func dvBind(op ops.Op, inputs []*value.DualValue) (retVal *value.DualValue, err error) {
 	enterLogScope()
 	defer leaveLogScope()
 
@@ -180,7 +181,7 @@ func dvBind(op Op, inputs []*value.DualValue) (retVal *value.DualValue, err erro
 
 // dvBindVar returns a dvUnitVar instead of dvUnit (which zeroes the derivative).
 // The default derivative of a variable wrt itself is 1 (dx/dx == 1)
-func dvBindVar(op Op, inputs []*value.DualValue) (retVal *value.DualValue, err error) {
+func dvBindVar(op ops.Op, inputs []*value.DualValue) (retVal *value.DualValue, err error) {
 	vals := idValue(inputs)
 
 	var ret value.Value
@@ -196,7 +197,7 @@ func dvBindVar(op Op, inputs []*value.DualValue) (retVal *value.DualValue, err e
 //TODO test vecvecdot divBind0
 
 // doesn't alloc a value.DualValue, and reuses whatever that is there, and zeroes out the deriv
-func dvBind0(op Op, retVal *value.DualValue, inputs []*value.DualValue) (err error) {
+func dvBind0(op ops.Op, retVal *value.DualValue, inputs []*value.DualValue) (err error) {
 	prealloc := retVal.Value
 	vals := idValue(inputs)
 
@@ -223,7 +224,7 @@ next:
 	return
 }
 
-func dvBindVar0(op Op, retVal *value.DualValue, inputs []*value.DualValue) (err error) {
+func dvBindVar0(op ops.Op, retVal *value.DualValue, inputs []*value.DualValue) (err error) {
 	prealloc := retVal.Value
 
 	vals := idValue(inputs)

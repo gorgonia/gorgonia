@@ -12,6 +12,7 @@ import (
 	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -34,13 +35,13 @@ func (op atOp) Type() hm.Type {
 	return hm.NewFnType(tt, a)
 }
 
-func (op atOp) ReturnsPtr() bool                                        { return false }
-func (op atOp) OverwritesInput() int                                    { return -1 }
-func (op atOp) CallsExtern() bool                                       { return false }
-func (op atOp) InferShape(...DimSizer) (retVal tensor.Shape, err error) { return scalarShape, nil }
-func (op atOp) DiffWRT(i int) []bool                                    { return make([]bool, i) }
-func (op atOp) SymDiff(Nodes, *Node, *Node) (Nodes, error)              { return nil, nondiffErr(op) }
-func (op atOp) String() string                                          { return fmt.Sprintf("At(%v)", op.coordinates) }
+func (op atOp) ReturnsPtr() bool                                            { return false }
+func (op atOp) OverwritesInput() int                                        { return -1 }
+func (op atOp) CallsExtern() bool                                           { return false }
+func (op atOp) InferShape(...ops.DimSizer) (retVal tensor.Shape, err error) { return scalarShape, nil }
+func (op atOp) DiffWRT(i int) []bool                                        { return make([]bool, i) }
+func (op atOp) SymDiff(Nodes, *Node, *Node) (Nodes, error)                  { return nil, nondiffErr(op) }
+func (op atOp) String() string                                              { return fmt.Sprintf("At(%v)", op.coordinates) }
 
 func (op atOp) Do(inputs ...value.Value) (retVal value.Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
@@ -95,11 +96,11 @@ func (op sizeOp) Type() hm.Type {
 	return hm.NewFnType(tt, a)
 }
 
-func (op sizeOp) ReturnsPtr() bool                             { return false }
-func (op sizeOp) OverwritesInput() int                         { return -1 }
-func (op sizeOp) CallsExtern() bool                            { return false }
-func (op sizeOp) InferShape(...DimSizer) (tensor.Shape, error) { return scalarShape, nil } // TODO: return error
-func (op sizeOp) DiffWRT(i int) []bool                         { return []bool{false} }
+func (op sizeOp) ReturnsPtr() bool                                 { return false }
+func (op sizeOp) OverwritesInput() int                             { return -1 }
+func (op sizeOp) CallsExtern() bool                                { return false }
+func (op sizeOp) InferShape(...ops.DimSizer) (tensor.Shape, error) { return scalarShape, nil } // TODO: return error
+func (op sizeOp) DiffWRT(i int) []bool                             { return []bool{false} }
 func (op sizeOp) String() string {
 	if op.val != 0 {
 		return fmt.Sprintf("SizeOf=%d", op.val)
@@ -241,7 +242,7 @@ func (op repeatOp) ReturnsPtr() bool     { return true }
 func (op repeatOp) OverwritesInput() int { return -1 }
 func (op repeatOp) CallsExtern() bool    { return false }
 
-func (op repeatOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
+func (op repeatOp) InferShape(inputs ...ops.DimSizer) (retVal tensor.Shape, err error) {
 	input := inputs[0].(tensor.Shape)
 	repeats := inputs[1:]
 
@@ -531,7 +532,7 @@ func (op *sliceOp) Type() hm.Type {
 	return hm.NewFnType(tt, tt)
 }
 
-func (op *sliceOp) InferShape(inputs ...DimSizer) (s tensor.Shape, err error) {
+func (op *sliceOp) InferShape(inputs ...ops.DimSizer) (s tensor.Shape, err error) {
 	input := inputs[0].(tensor.Shape)
 	slices := make([]tensor.Slice, op.along+1)
 	slices[op.along] = op.Slice
@@ -690,7 +691,7 @@ func (op sliceIncrOp) Type() hm.Type {
 
 func (op sliceIncrOp) Arity() int { return 2 }
 
-func (op sliceIncrOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
+func (op sliceIncrOp) InferShape(inputs ...ops.DimSizer) (retVal tensor.Shape, err error) {
 	retVal = inputs[0].(tensor.Shape)
 	return
 }
@@ -882,7 +883,7 @@ func (op transposeOp) Type() hm.Type {
 	return hm.NewFnType(tt, tt)
 }
 
-func (op transposeOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
+func (op transposeOp) InferShape(inputs ...ops.DimSizer) (retVal tensor.Shape, err error) {
 	input := inputs[0].(tensor.Shape)
 	if input.IsScalar() {
 		return nil, errors.Errorf(undefinedOnShape, op, input)
@@ -1019,7 +1020,7 @@ func (op concatOp) Type() hm.Type {
 	return hm.NewFnType(fnt...)
 }
 
-func (op concatOp) InferShape(ds ...DimSizer) (tensor.Shape, error) {
+func (op concatOp) InferShape(ds ...ops.DimSizer) (tensor.Shape, error) {
 	if len(ds) == 0 {
 		return nil, errors.Errorf("No shapes passed in!")
 	}
@@ -1135,7 +1136,7 @@ func (op reshapeOp) Type() hm.Type {
 	}
 	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'))
 }
-func (op reshapeOp) InferShape(ds ...DimSizer) (tensor.Shape, error) { return op.to.Clone(), nil }
+func (op reshapeOp) InferShape(ds ...ops.DimSizer) (tensor.Shape, error) { return op.to.Clone(), nil }
 
 func (op reshapeOp) Do(vals ...value.Value) (value.Value, error) {
 	if err := checkArity(op, len(vals)); err != nil {

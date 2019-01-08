@@ -13,25 +13,26 @@ import (
 	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 	"gorgonia.org/vecf32"
 	"gorgonia.org/vecf64"
 )
 
 var (
-	_ SDOp = im2colOp{}
-	_ Op   = col2imOp{}
-	_ Op   = &maxPoolOp{}
-	_ Op   = &maxPoolDiffOp{}
-	_ Op   = &BatchNormOp{}
-	_ Op   = &batchnormDiffOp{}
+	_ SDOp   = im2colOp{}
+	_ ops.Op = col2imOp{}
+	_ ops.Op = &maxPoolOp{}
+	_ ops.Op = &maxPoolDiffOp{}
+	_ ops.Op = &BatchNormOp{}
+	_ ops.Op = &batchnormDiffOp{}
 )
 
 /*
-	This file contains all the Ops related to building a neural network.
+	This file contains all the ops.Ops related to building a neural network.
 
 	Bear in mind that not all things that are related to a neural network are here, as not everything
-	are encoded as Ops the way theano does it.
+	are encoded as ops.Ops the way theano does it.
 
 	See also: nn.go for functions that relate to neural networks
 */
@@ -74,7 +75,7 @@ func (op randomOp) Type() hm.Type {
 	return tt
 }
 
-func (op randomOp) InferShape(...DimSizer) (tensor.Shape, error) { return op.shape, nil }
+func (op randomOp) InferShape(...ops.DimSizer) (tensor.Shape, error) { return op.shape, nil }
 
 func (op randomOp) Do(...value.Value) (retVal value.Value, err error) {
 	if op.shape.IsScalar() {
@@ -185,7 +186,7 @@ func (op im2colOp) Type() hm.Type {
 	return hm.NewFnType(t, t)
 }
 
-func (op im2colOp) InferShape(shapes ...DimSizer) (retVal tensor.Shape, err error) {
+func (op im2colOp) InferShape(shapes ...ops.DimSizer) (retVal tensor.Shape, err error) {
 	if err = checkArity(op, len(shapes)); err != nil {
 		return
 	}
@@ -439,7 +440,7 @@ func (op col2imOp) Type() hm.Type {
 	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'))
 }
 
-func (op col2imOp) InferShape(shapes ...DimSizer) (retVal tensor.Shape, err error) {
+func (op col2imOp) InferShape(shapes ...ops.DimSizer) (retVal tensor.Shape, err error) {
 	return tensor.Shape{op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW}, nil
 }
 
@@ -673,7 +674,7 @@ func (op *maxPoolOp) Type() hm.Type {
 	t := constructor.NewTensorType(4, a)
 	return hm.NewFnType(t, t)
 }
-func (op *maxPoolOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
+func (op *maxPoolOp) InferShape(inputs ...ops.DimSizer) (tensor.Shape, error) {
 	if s, ok := inputs[0].(tensor.Shape); ok {
 		return op.calcShape(s), nil
 	}
@@ -912,7 +913,7 @@ func (op *maxPoolDiffOp) Type() hm.Type {
 	return hm.NewFnType(t, t, t, t)
 }
 
-func (op *maxPoolDiffOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
+func (op *maxPoolDiffOp) InferShape(inputs ...ops.DimSizer) (tensor.Shape, error) {
 	s := inputs[0].(tensor.Shape).Clone()
 	return s, nil
 }
@@ -1076,7 +1077,7 @@ func (op *clampOp) Type() hm.Type {
 	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'))
 }
 
-func (op *clampOp) InferShape(shps ...DimSizer) (tensor.Shape, error) {
+func (op *clampOp) InferShape(shps ...ops.DimSizer) (tensor.Shape, error) {
 	return shps[0].(tensor.Shape), nil
 }
 
@@ -1126,7 +1127,7 @@ func (op *BatchNormOp) Type() hm.Type {
 }
 
 // InferShape ...
-func (op *BatchNormOp) InferShape(ns ...DimSizer) (tensor.Shape, error) {
+func (op *BatchNormOp) InferShape(ns ...ops.DimSizer) (tensor.Shape, error) {
 	if err := checkArity(op, len(ns)); err != nil {
 		return nil, errors.Wrapf(err, "batchNorm")
 	}
@@ -1414,7 +1415,7 @@ func (op *batchnormDiffOp) Type() hm.Type {
 	return hm.NewFnType(t, t, t)
 }
 
-func (op *batchnormDiffOp) InferShape(ns ...DimSizer) (tensor.Shape, error) {
+func (op *batchnormDiffOp) InferShape(ns ...ops.DimSizer) (tensor.Shape, error) {
 	if err := checkArity(op, len(ns)); err != nil {
 		return nil, errors.Wrapf(err, "batchNorm")
 	}

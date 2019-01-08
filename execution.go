@@ -4,11 +4,12 @@ import (
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/ops"
 )
 
 // ExternalOp is an op that contains an external context. This allows for ops to be run without needing a VM
 type ExternalOp struct {
-	Op
+	ops.Op
 	execution.Context
 
 	Prealloc  value.Value
@@ -17,7 +18,7 @@ type ExternalOp struct {
 }
 
 // NewExternalOp creates a new *ExternalOp.
-func NewExternalOp(op Op, ctx execution.Context, prealloc value.Value) *ExternalOp {
+func NewExternalOp(op ops.Op, ctx execution.Context, prealloc value.Value) *ExternalOp {
 	retVal := &ExternalOp{
 		Op:        op,
 		Context:   ctx,

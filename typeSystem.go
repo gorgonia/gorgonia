@@ -4,6 +4,7 @@ import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/constructor"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -22,7 +23,7 @@ func inferType(expr interface{}) (retVal hm.Type, err error) {
 		}
 
 		return inferNodeType(e.op, e.children...)
-	case Op:
+	case ops.Op:
 		return e.Type(), nil
 	case float32:
 		return Float32, nil
@@ -43,7 +44,7 @@ func inferType(expr interface{}) (retVal hm.Type, err error) {
 }
 
 // Instead of using hm's Infer function, since all the nodes are pretty much hm.Apply, we write our own.
-func inferNodeType(op Op, children ...*Node) (retVal hm.Type, err error) {
+func inferNodeType(op ops.Op, children ...*Node) (retVal hm.Type, err error) {
 	fnType := op.Type()
 	if fnt, ok := fnType.(*hm.FunctionType); ok {
 		defer hm.ReturnFnType(fnt)

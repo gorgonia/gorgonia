@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -608,7 +609,7 @@ func (instr loadArg) String() string {
 }
 
 type execOp struct {
-	op Op
+	op ops.Op
 
 	id int64
 

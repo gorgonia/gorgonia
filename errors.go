@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/ops"
 )
 
 // NoOpError is an error returned when an operation does nothing.
@@ -47,7 +48,7 @@ func (e oomError) Reserved() int64  { return e.res }
 func (e oomError) Allocated() int64 { return e.allocated }
 func (e oomError) Error() string    { return fmt.Sprintf("allocated/reserved: %v/%v", e.allocated, e.res) }
 
-// AutoDiffError is an error which should be passed if the function is not differentiable. This is useful for Op implementations
+// AutoDiffError is an error which should be passed if the function is not differentiable. This is useful for ops.Op implementations
 type AutoDiffError struct{}
 
 func (err AutoDiffError) Error() string { return "AutoDiffError" }
@@ -67,7 +68,7 @@ func nyi(what string, implFor interface{}) error {
 	return errors.Errorf(nyiFail, what, implFor)
 }
 
-func nondiffErr(op Op) error {
+func nondiffErr(op ops.Op) error {
 	return errors.Errorf("%s is a non-differentiable function", op)
 }
 
