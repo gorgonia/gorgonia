@@ -105,9 +105,13 @@ func (g *ExprGraph) applyOp(op ops.Op, n *Node) error {
 
 // ApplyOp op to the node n. The children are extracted from the Graph g
 func (g *ExprGraph) ApplyOp(operation Operation, n *Node) error {
-	op, err := operation(g, n)
+	opfn, err := operation(g, n)
 	if err != nil {
 		return err
+	}
+	op, ok := opfn.(ops.Op)
+	if !ok {
+		return errors.New("Cannot cast operator")
 	}
 	return g.applyOp(op, n)
 }
