@@ -112,7 +112,7 @@ func manualRMSProp32(t *testing.T, s *RMSPropSolver, model []ValueGrad) {
 	eps := float32(s.eps)
 	clip := float32(s.clip)
 
-	// NOTE: THIS IS NAUGHTY. A proper comparsion using 1e-5  should be used but that causes errors.
+	// NOTE: THIS IS NAUGHTY. A proper comparison using 1e-5  should be used but that causes errors.
 	closef32 := func(a, b float32) bool {
 		return dawson.ToleranceF32(a, b, 1e-4)
 	}
