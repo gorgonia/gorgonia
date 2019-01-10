@@ -9,102 +9,182 @@ import (
 
  // Abs performs a pointwise abs.
 func Abs(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewAbsOperation(), retval)
+	return retval, err
 }
 
  // Sign performs a pointwise sign.
 func Sign(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewSignOperation(), retval)
+	return retval, err
 }
 
  // Ceil performs a pointwise ceil.
 func Ceil(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewCeilOperation(), retval)
+	return retval, err
 }
 
  // Floor performs a pointwise floor.
 func Floor(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewFloorOperation(), retval)
+	return retval, err
 }
 
  // Sin performs a pointwise sin.
 func Sin(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewSinOperation(), retval)
+	return retval, err
 }
 
  // Cos performs a pointwise cos.
 func Cos(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewCosOperation(), retval)
+	return retval, err
 }
 
  // Exp performs a pointwise exp.
 func Exp(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewExpOperation(), retval)
+	return retval, err
 }
 
  // Log performs a pointwise log.
 func Log(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewLogOperation(), retval)
+	return retval, err
 }
 
  // Log2 performs a pointwise log2.
 func Log2(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewLog2Operation(), retval)
+	return retval, err
 }
 
  // Neg performs a pointwise neg.
 func Neg(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewNegOperation(), retval)
+	return retval, err
 }
 
  // Square performs a pointwise square.
 func Square(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewSquareOperation(), retval)
+	return retval, err
 }
 
  // Sqrt performs a pointwise sqrt.
 func Sqrt(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewSqrtOperation(), retval)
+	return retval, err
 }
 
  // Inverse performs a pointwise inverse.
 func Inverse(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewInverseOperation(), retval)
+	return retval, err
 }
 
  // InverseSqrt performs a pointwise inversesqrt.
 func InverseSqrt(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewInverseSqrtOperation(), retval)
+	return retval, err
 }
 
  // Cube performs a pointwise cube.
 func Cube(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewCubeOperation(), retval)
+	return retval, err
 }
 
  // Tanh performs a pointwise tanh.
 func Tanh(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewTanhOperation(), retval)
+	return retval, err
 }
 
  // Sigmoid performs a pointwise sigmoid.
 func Sigmoid(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewSigmoidOperation(), retval)
+	return retval, err
 }
 
  // Log1p performs a pointwise log1p.
 func Log1p(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewLog1pOperation(), retval)
+	return retval, err
 }
 
  // Expm1 performs a pointwise expm1.
 func Expm1(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewExpm1Operation(), retval)
+	return retval, err
 }
 
  // Softplus performs a pointwise softplus.
 func Softplus(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.NewSoftplusOperation(), retval)
+	return retval, err
 }
 
 // Add perfoms a pointwise add operation.

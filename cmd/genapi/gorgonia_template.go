@@ -12,7 +12,11 @@ import (
 `
 const gorgoniaUnaryTemplateRaw = ` // {{.FnName}} performs a pointwise {{lower .FnName}}.
 func {{.FnName}}(g *Graph, a node.Node) (node.Node, error) { 
-	return nil, nil
+	retval := g.g.NewNode().(*engine.Node)
+	g.g.AddNode(retval)
+	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
+	err := g.g.ApplyOp(engine.New{{.FnName}}Operation(), retval)
+	return retval, err
 }
 
 `

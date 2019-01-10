@@ -3,8 +3,6 @@ package main
 const onnxHeader = `package onnx 
 
 import (
-	"errors"
-
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/internal/engine"
 )
@@ -30,7 +28,7 @@ type {{.FnName}} struct{}
 // Constructor to fulfil the interface ...
 func (a *{{.FnName}}) Constructor() func(g graph.WeightedDirected, n graph.Node) (interface{}, error) {
 	return func(g graph.WeightedDirected, n graph.Node) (interface{}, error) {
-		return engine.New{{.FnName}}Operation()(g, n.(*engine.Node))
+		return engine.New{{.FnName}}Operation({{if .AsSame}}false{{end}})(g, n.(*engine.Node))
 	}
 }
 

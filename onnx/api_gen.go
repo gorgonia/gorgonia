@@ -1,8 +1,6 @@
 package onnx 
 
 import (
-	"errors"
-
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/internal/engine"
 )
@@ -265,7 +263,7 @@ type Lt struct{}
 // Constructor to fulfil the interface ...
 func (a *Lt) Constructor() func(g graph.WeightedDirected, n graph.Node) (interface{}, error) {
 	return func(g graph.WeightedDirected, n graph.Node) (interface{}, error) {
-		return engine.NewLtOperation()(g, n.(*engine.Node))
+		return engine.NewLtOperation(false)(g, n.(*engine.Node))
 	}
 }
 
@@ -275,7 +273,7 @@ type Gt struct{}
 // Constructor to fulfil the interface ...
 func (a *Gt) Constructor() func(g graph.WeightedDirected, n graph.Node) (interface{}, error) {
 	return func(g graph.WeightedDirected, n graph.Node) (interface{}, error) {
-		return engine.NewGtOperation()(g, n.(*engine.Node))
+		return engine.NewGtOperation(false)(g, n.(*engine.Node))
 	}
 }
 
@@ -285,7 +283,7 @@ type Lte struct{}
 // Constructor to fulfil the interface ...
 func (a *Lte) Constructor() func(g graph.WeightedDirected, n graph.Node) (interface{}, error) {
 	return func(g graph.WeightedDirected, n graph.Node) (interface{}, error) {
-		return engine.NewLteOperation()(g, n.(*engine.Node))
+		return engine.NewLteOperation(false)(g, n.(*engine.Node))
 	}
 }
 
@@ -295,7 +293,7 @@ type Gte struct{}
 // Constructor to fulfil the interface ...
 func (a *Gte) Constructor() func(g graph.WeightedDirected, n graph.Node) (interface{}, error) {
 	return func(g graph.WeightedDirected, n graph.Node) (interface{}, error) {
-		return engine.NewGteOperation()(g, n.(*engine.Node))
+		return engine.NewGteOperation(false)(g, n.(*engine.Node))
 	}
 }
 
@@ -305,7 +303,7 @@ type Eq struct{}
 // Constructor to fulfil the interface ...
 func (a *Eq) Constructor() func(g graph.WeightedDirected, n graph.Node) (interface{}, error) {
 	return func(g graph.WeightedDirected, n graph.Node) (interface{}, error) {
-		return engine.NewEqOperation()(g, n.(*engine.Node))
+		return engine.NewEqOperation(false)(g, n.(*engine.Node))
 	}
 }
 
@@ -315,7 +313,7 @@ type Ne struct{}
 // Constructor to fulfil the interface ...
 func (a *Ne) Constructor() func(g graph.WeightedDirected, n graph.Node) (interface{}, error) {
 	return func(g graph.WeightedDirected, n graph.Node) (interface{}, error) {
-		return engine.NewNeOperation()(g, n.(*engine.Node))
+		return engine.NewNeOperation(false)(g, n.(*engine.Node))
 	}
 }
 
