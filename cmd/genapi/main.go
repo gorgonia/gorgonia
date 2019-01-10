@@ -98,7 +98,7 @@ func init() {
 			log.Fatal("You need to define a $GOPATH")
 		}
 	}
-	gorgonialoc = path.Join(gopath, "src/gorgonia.org/gorgonia")
+	gorgonialoc = path.Join(gopath, "src/gorgonia.org/gorgonia/internal/engine")
 	unaryTemplate = template.Must(template.New("Unary").Funcs(funcmap).Parse(unaryTemplateRaw))
 	binaryTemplate = template.Must(template.New("Binary").Funcs(funcmap).Parse(binaryTemplateRaw))
 }
@@ -202,7 +202,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer outFile.Close()
-	fmt.Fprintf(outFile, `package gorgonia 
+	fmt.Fprintf(outFile, `package engine 
 
 import (
 	"github.com/pkg/errors"

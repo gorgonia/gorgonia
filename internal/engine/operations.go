@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/internal/constructor"
+	"gorgonia.org/gorgonia/node"
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
@@ -529,7 +530,7 @@ func Concat(axis int, ns ...*Node) (retVal *Node, err error) {
 
 // NewReshapeOperation change the shape of the node into s
 func NewReshapeOperation(s tensor.Shape) Operation {
-	return func(g graph.WeightedDirected, nn graph.Node) (interface{}, error) {
+	return func(g graph.WeightedDirected, nn node.Node) (ops.Op, error) {
 		n := nn.(*Node)
 		// check shape
 		var negs int
