@@ -1,4 +1,4 @@
-package onnnx
+package onnx
 
 import (
 	"errors"
@@ -25,14 +25,4 @@ func (g Graph) ONNXGetOperationFromName(s string) (interface{}, error) {
 // ONNXApply ...
 func (g Graph) ONNXApply(operation func(g graph.WeightedDirected, n graph.Node) (interface{}, error), n graph.Node) error {
 	return g.ApplyOp(engine.Operation(operation), n.(*engine.Node))
-}
-
-// Add ...
-type Add struct{}
-
-// Constructor to fulfill the ONNXOperation interface
-func (a *Add) Constructor() func(g graph.WeightedDirected, n graph.Node) (interface{}, error) {
-	return func(g graph.WeightedDirected, n graph.Node) (interface{}, error) {
-		return engine.NewAddOperation()(g, n)
-	}
 }

@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	gopath, gorgonialoc string
+	gopath, engineloc, onnxloc, gorgonialoc string
 )
 
 var funcmap = template.FuncMap{
@@ -31,55 +31,13 @@ var funcmap = template.FuncMap{
 }
 
 var (
-	unaryTemplate  *template.Template
-	binaryTemplate *template.Template
+	onnxUnaryTemplate      *template.Template
+	onnxBinaryTemplate     *template.Template
+	gorgoniaUnaryTemplate  *template.Template
+	gorgoniaBinaryTemplate *template.Template
+	engineUnaryTemplate    *template.Template
+	engineBinaryTemplate   *template.Template
 )
-
-const unaryTemplateRaw = ` // {{.FnName}} performs a pointwise {{lower .FnName}}.
-func {{.FnName}}(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp({{.OpType}}, a), a) }
-
-// {{.FnName}}Op ...
-func New{{.FnName}}Operation() Operation {
-	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
-		it := getOrderedChildren(g, n)
-		if it.Len() != 1 {
-			return nil, errors.New("Unexpected number of children")
-		}
-		children := make([]*Node, it.Len())
-		for i := 0; it.Next(); i++ {
-			children[i] = it.Node().(*Node)
-		}
-		return newElemUnaryOp({{.OpType}}, children[0]), nil
-	}
-}
-
-`
-
-const binaryTemplateRaw = `// {{.FnName}} perfors a pointwise {{lower .FnName}} operation.
-{{if .AsSame -}}//	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
-{{end -}}
-func {{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}) (*Node, error) { {{if not .AsSame -}}return binOpNode(newElemBinOp({{.OpType}}, a, b), a, b) {{else -}}
-	op := newElemBinOp({{.OpType}}, a, b)
-	op.retSame = retSame
-	return binOpNode(op, a, b)
-{{end -}}
-}
-
-// {{.FnName}}Op ...
-func New{{.FnName}}Operation() Operation {
-	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
-		it := getOrderedChildren(g, n)
-		if it.Len() != 2 {
-			return nil, errors.New("Unexpected number of children")
-		}
-		children := make([]*Node, it.Len())
-		for i := 0; it.Next(); i++ {
-			children[i] = it.Node().(*Node)
-		}
-		return newElemBinOp({{.OpType}}, children[0], children[1]), nil
-	}
-}
-`
 
 func init() {
 	gopath = os.Getenv("GOPATH")
@@ -98,14 +56,20 @@ func init() {
 			log.Fatal("You need to define a $GOPATH")
 		}
 	}
-	gorgonialoc = path.Join(gopath, "src/gorgonia.org/gorgonia/internal/engine")
-	unaryTemplate = template.Must(template.New("Unary").Funcs(funcmap).Parse(unaryTemplateRaw))
-	binaryTemplate = template.Must(template.New("Binary").Funcs(funcmap).Parse(binaryTemplateRaw))
+	engineloc = path.Join(gopath, "src/gorgonia.org/gorgonia/internal/engine")
+	gorgonialoc = path.Join(gopath, "src/gorgonia.org/gorgonia")
+	onnxloc = path.Join(gopath, "src/gorgonia.org/gorgonia/onnx")
+	engineUnaryTemplate = template.Must(template.New("Unary").Funcs(funcmap).Parse(engineUnaryTemplateRaw))
+	engineBinaryTemplate = template.Must(template.New("Binary").Funcs(funcmap).Parse(engineBinaryTemplateRaw))
+	onnxUnaryTemplate = template.Must(template.New("Unary").Funcs(funcmap).Parse(onnxUnaryTemplateRaw))
+	onnxBinaryTemplate = template.Must(template.New("Binary").Funcs(funcmap).Parse(onnxBinaryTemplateRaw))
+	gorgoniaUnaryTemplate = template.Must(template.New("Unary").Funcs(funcmap).Parse(gorgoniaUnaryTemplateRaw))
+	gorgoniaBinaryTemplate = template.Must(template.New("Binary").Funcs(funcmap).Parse(gorgoniaBinaryTemplateRaw))
 }
 
-func generateUnary(outFile io.Writer) {
+func generateUnary(tmpl *template.Template, outFile io.Writer) {
 	// parse operator_unary_const.go
-	filename := path.Join(gorgonialoc, unaryOps)
+	filename := path.Join(engineloc, unaryOps)
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, filename, nil, parser.AllErrors)
 	if err != nil {
@@ -120,13 +84,13 @@ func generateUnary(outFile io.Writer) {
 			apiName = "Log"
 		}
 		data := struct{ FnName, OpType string }{apiName, v}
-		unaryTemplate.Execute(outFile, data)
+		tmpl.Execute(outFile, data)
 	}
 
 }
-func generateBinary(outFile io.Writer) {
+func generateBinary(tmpl *template.Template, outFile io.Writer) {
 	// parse operator_binary_const.go
-	filename := path.Join(gorgonialoc, binaryOps)
+	filename := path.Join(engineloc, binaryOps)
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, filename, nil, parser.AllErrors)
 	if err != nil {
@@ -152,7 +116,7 @@ func generateBinary(outFile io.Writer) {
 		case "Lt", "Gt", "Lte", "Gte", "Eq", "Ne":
 			data.AsSame = true
 		}
-		binaryTemplate.Execute(outFile, data)
+		tmpl.Execute(outFile, data)
 	}
 }
 
@@ -196,25 +160,40 @@ func constTypes(decls []ast.Decl, accept, max string) (names []string) {
 }
 
 func main() {
-	outFileName := path.Join(gorgonialoc, apigenOut)
-	outFile, err := os.OpenFile(outFileName, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	var outFileName string
+	var err error
+	var outFile *os.File
+
+	outFileName = path.Join(engineloc, apigenOut)
+	outFile, err = os.OpenFile(outFileName, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer outFile.Close()
-	fmt.Fprintf(outFile, `package engine 
+	fmt.Fprintf(outFile, engineHeader, genmsg)
 
-import (
-	"github.com/pkg/errors"
-	"gonum.org/v1/gonum/graph"
-	"gorgonia.org/gorgonia/node"
-	"gorgonia.org/gorgonia/ops"
-)
+	generateUnary(engineUnaryTemplate, outFile)
+	generateBinary(engineBinaryTemplate, outFile)
+	outFile.Close()
 
-%v
+	outFileName = path.Join(onnxloc, apigenOut)
+	outFile, err = os.OpenFile(outFileName, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Fprintf(outFile, onnxHeader, genmsg)
 
-`, genmsg)
+	generateUnary(onnxUnaryTemplate, outFile)
+	generateBinary(onnxBinaryTemplate, outFile)
+	outFile.Close()
 
-	generateUnary(outFile)
-	generateBinary(outFile)
+	outFileName = path.Join(gorgonialoc, apigenOut)
+	outFile, err = os.OpenFile(outFileName, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Fprintf(outFile, gorgoniaHeader, genmsg)
+
+	generateUnary(gorgoniaUnaryTemplate, outFile)
+	generateBinary(gorgoniaBinaryTemplate, outFile)
+	outFile.Close()
 }

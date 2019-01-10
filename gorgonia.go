@@ -73,16 +73,6 @@ func Let(n node.Node, be interface{}) error {
 	return engine.Let(n.(*engine.Node), be)
 }
 
-// Add a and b and create a new node
-func Add(g *Graph, a, b node.Node) (node.Node, error) {
-	retval := g.g.NewNode().(*engine.Node)
-	g.g.AddNode(retval)
-	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
-	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, b, 2.0))
-	err := g.g.ApplyOp(engine.NewAddOperation(), retval)
-	return retval, err
-}
-
 // WithType is a node construction option to set a node to the specified type.
 // Types in *Node are immutable once set. If the type has already been specified in the node,
 // a check will be made to see if the both types are the same. If it isn't, it will panic.

@@ -12,6 +12,7 @@ import (
  // Abs performs a pointwise abs.
 func Abs(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(absOpType, a), a) }
 
+
 // AbsOp ...
 func NewAbsOperation() Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
@@ -29,6 +30,7 @@ func NewAbsOperation() Operation {
 
  // Sign performs a pointwise sign.
 func Sign(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(signOpType, a), a) }
+
 
 // SignOp ...
 func NewSignOperation() Operation {
@@ -48,6 +50,7 @@ func NewSignOperation() Operation {
  // Ceil performs a pointwise ceil.
 func Ceil(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(ceilOpType, a), a) }
 
+
 // CeilOp ...
 func NewCeilOperation() Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
@@ -65,6 +68,7 @@ func NewCeilOperation() Operation {
 
  // Floor performs a pointwise floor.
 func Floor(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(floorOpType, a), a) }
+
 
 // FloorOp ...
 func NewFloorOperation() Operation {
@@ -84,6 +88,7 @@ func NewFloorOperation() Operation {
  // Sin performs a pointwise sin.
 func Sin(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(sinOpType, a), a) }
 
+
 // SinOp ...
 func NewSinOperation() Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
@@ -101,6 +106,7 @@ func NewSinOperation() Operation {
 
  // Cos performs a pointwise cos.
 func Cos(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(cosOpType, a), a) }
+
 
 // CosOp ...
 func NewCosOperation() Operation {
@@ -120,6 +126,7 @@ func NewCosOperation() Operation {
  // Exp performs a pointwise exp.
 func Exp(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(expOpType, a), a) }
 
+
 // ExpOp ...
 func NewExpOperation() Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
@@ -137,6 +144,7 @@ func NewExpOperation() Operation {
 
  // Log performs a pointwise log.
 func Log(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(lnOpType, a), a) }
+
 
 // LogOp ...
 func NewLogOperation() Operation {
@@ -156,6 +164,7 @@ func NewLogOperation() Operation {
  // Log2 performs a pointwise log2.
 func Log2(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(log2OpType, a), a) }
 
+
 // Log2Op ...
 func NewLog2Operation() Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
@@ -173,6 +182,7 @@ func NewLog2Operation() Operation {
 
  // Neg performs a pointwise neg.
 func Neg(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(negOpType, a), a) }
+
 
 // NegOp ...
 func NewNegOperation() Operation {
@@ -192,6 +202,7 @@ func NewNegOperation() Operation {
  // Square performs a pointwise square.
 func Square(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(squareOpType, a), a) }
 
+
 // SquareOp ...
 func NewSquareOperation() Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
@@ -209,6 +220,7 @@ func NewSquareOperation() Operation {
 
  // Sqrt performs a pointwise sqrt.
 func Sqrt(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(sqrtOpType, a), a) }
+
 
 // SqrtOp ...
 func NewSqrtOperation() Operation {
@@ -228,6 +240,7 @@ func NewSqrtOperation() Operation {
  // Inverse performs a pointwise inverse.
 func Inverse(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(inverseOpType, a), a) }
 
+
 // InverseOp ...
 func NewInverseOperation() Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
@@ -245,6 +258,7 @@ func NewInverseOperation() Operation {
 
  // InverseSqrt performs a pointwise inversesqrt.
 func InverseSqrt(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(inverseSqrtOpType, a), a) }
+
 
 // InverseSqrtOp ...
 func NewInverseSqrtOperation() Operation {
@@ -264,6 +278,7 @@ func NewInverseSqrtOperation() Operation {
  // Cube performs a pointwise cube.
 func Cube(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(cubeOpType, a), a) }
 
+
 // CubeOp ...
 func NewCubeOperation() Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
@@ -281,6 +296,7 @@ func NewCubeOperation() Operation {
 
  // Tanh performs a pointwise tanh.
 func Tanh(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(tanhOpType, a), a) }
+
 
 // TanhOp ...
 func NewTanhOperation() Operation {
@@ -300,6 +316,7 @@ func NewTanhOperation() Operation {
  // Sigmoid performs a pointwise sigmoid.
 func Sigmoid(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(sigmoidOpType, a), a) }
 
+
 // SigmoidOp ...
 func NewSigmoidOperation() Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
@@ -317,6 +334,7 @@ func NewSigmoidOperation() Operation {
 
  // Log1p performs a pointwise log1p.
 func Log1p(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(log1pOpType, a), a) }
+
 
 // Log1pOp ...
 func NewLog1pOperation() Operation {
@@ -336,6 +354,7 @@ func NewLog1pOperation() Operation {
  // Expm1 performs a pointwise expm1.
 func Expm1(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(expm1OpType, a), a) }
 
+
 // Expm1Op ...
 func NewExpm1Operation() Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
@@ -353,6 +372,7 @@ func NewExpm1Operation() Operation {
 
  // Softplus performs a pointwise softplus.
 func Softplus(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp(softplusOpType, a), a) }
+
 
 // SoftplusOp ...
 func NewSoftplusOperation() Operation {
@@ -383,8 +403,7 @@ func NewAddOperation() Operation {
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
 		}
-		return newElemBinOp(addOpType, children[0], children[1]), nil
-	}
+		return newElemBinOp(addOpType, children[0], children[1]), nil }
 }
 // Sub perfors a pointwise sub operation.
 func Sub(a, b *Node) (*Node, error) { return binOpNode(newElemBinOp(subOpType, a, b), a, b) }
@@ -400,8 +419,7 @@ func NewSubOperation() Operation {
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
 		}
-		return newElemBinOp(subOpType, children[0], children[1]), nil
-	}
+		return newElemBinOp(subOpType, children[0], children[1]), nil }
 }
 // HadamardProd perfors a pointwise hadamardprod operation.
 func HadamardProd(a, b *Node) (*Node, error) { return binOpNode(newElemBinOp(mulOpType, a, b), a, b) }
@@ -417,8 +435,7 @@ func NewHadamardProdOperation() Operation {
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
 		}
-		return newElemBinOp(mulOpType, children[0], children[1]), nil
-	}
+		return newElemBinOp(mulOpType, children[0], children[1]), nil }
 }
 // HadamardDiv perfors a pointwise hadamarddiv operation.
 func HadamardDiv(a, b *Node) (*Node, error) { return binOpNode(newElemBinOp(divOpType, a, b), a, b) }
@@ -434,8 +451,7 @@ func NewHadamardDivOperation() Operation {
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
 		}
-		return newElemBinOp(divOpType, children[0], children[1]), nil
-	}
+		return newElemBinOp(divOpType, children[0], children[1]), nil }
 }
 // Pow perfors a pointwise pow operation.
 func Pow(a, b *Node) (*Node, error) { return binOpNode(newElemBinOp(powOpType, a, b), a, b) }
@@ -451,8 +467,7 @@ func NewPowOperation() Operation {
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
 		}
-		return newElemBinOp(powOpType, children[0], children[1]), nil
-	}
+		return newElemBinOp(powOpType, children[0], children[1]), nil }
 }
 // Lt perfors a pointwise lt operation.
 //	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
@@ -462,7 +477,7 @@ func Lt(a, b *Node, retSame bool) (*Node, error) { op := newElemBinOp(ltOpType, 
 }
 
 // LtOp ...
-func NewLtOperation() Operation {
+func NewLtOperation( retSame bool) Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 		it := getOrderedChildren(g, n)
 		if it.Len() != 2 {
@@ -472,8 +487,10 @@ func NewLtOperation() Operation {
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
 		}
-		return newElemBinOp(ltOpType, children[0], children[1]), nil
-	}
+		op:= newElemBinOp(ltOpType, children[0], children[1])
+		op.retSame = retSame
+		return op,nil
+		}
 }
 // Gt perfors a pointwise gt operation.
 //	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
@@ -483,7 +500,7 @@ func Gt(a, b *Node, retSame bool) (*Node, error) { op := newElemBinOp(gtOpType, 
 }
 
 // GtOp ...
-func NewGtOperation() Operation {
+func NewGtOperation( retSame bool) Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 		it := getOrderedChildren(g, n)
 		if it.Len() != 2 {
@@ -493,8 +510,10 @@ func NewGtOperation() Operation {
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
 		}
-		return newElemBinOp(gtOpType, children[0], children[1]), nil
-	}
+		op:= newElemBinOp(gtOpType, children[0], children[1])
+		op.retSame = retSame
+		return op,nil
+		}
 }
 // Lte perfors a pointwise lte operation.
 //	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
@@ -504,7 +523,7 @@ func Lte(a, b *Node, retSame bool) (*Node, error) { op := newElemBinOp(lteOpType
 }
 
 // LteOp ...
-func NewLteOperation() Operation {
+func NewLteOperation( retSame bool) Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 		it := getOrderedChildren(g, n)
 		if it.Len() != 2 {
@@ -514,8 +533,10 @@ func NewLteOperation() Operation {
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
 		}
-		return newElemBinOp(lteOpType, children[0], children[1]), nil
-	}
+		op:= newElemBinOp(lteOpType, children[0], children[1])
+		op.retSame = retSame
+		return op,nil
+		}
 }
 // Gte perfors a pointwise gte operation.
 //	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
@@ -525,7 +546,7 @@ func Gte(a, b *Node, retSame bool) (*Node, error) { op := newElemBinOp(gteOpType
 }
 
 // GteOp ...
-func NewGteOperation() Operation {
+func NewGteOperation( retSame bool) Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 		it := getOrderedChildren(g, n)
 		if it.Len() != 2 {
@@ -535,8 +556,10 @@ func NewGteOperation() Operation {
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
 		}
-		return newElemBinOp(gteOpType, children[0], children[1]), nil
-	}
+		op:= newElemBinOp(gteOpType, children[0], children[1])
+		op.retSame = retSame
+		return op,nil
+		}
 }
 // Eq perfors a pointwise eq operation.
 //	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
@@ -546,7 +569,7 @@ func Eq(a, b *Node, retSame bool) (*Node, error) { op := newElemBinOp(eqOpType, 
 }
 
 // EqOp ...
-func NewEqOperation() Operation {
+func NewEqOperation( retSame bool) Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 		it := getOrderedChildren(g, n)
 		if it.Len() != 2 {
@@ -556,8 +579,10 @@ func NewEqOperation() Operation {
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
 		}
-		return newElemBinOp(eqOpType, children[0], children[1]), nil
-	}
+		op:= newElemBinOp(eqOpType, children[0], children[1])
+		op.retSame = retSame
+		return op,nil
+		}
 }
 // Ne perfors a pointwise ne operation.
 //	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
@@ -567,7 +592,7 @@ func Ne(a, b *Node, retSame bool) (*Node, error) { op := newElemBinOp(neOpType, 
 }
 
 // NeOp ...
-func NewNeOperation() Operation {
+func NewNeOperation( retSame bool) Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 		it := getOrderedChildren(g, n)
 		if it.Len() != 2 {
@@ -577,6 +602,8 @@ func NewNeOperation() Operation {
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
 		}
-		return newElemBinOp(neOpType, children[0], children[1]), nil
-	}
+		op:= newElemBinOp(neOpType, children[0], children[1])
+		op.retSame = retSame
+		return op,nil
+		}
 }
