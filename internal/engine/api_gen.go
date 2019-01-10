@@ -470,7 +470,7 @@ func NewPowOperation() Operation {
 		return newElemBinOp(powOpType, children[0], children[1]), nil }
 }
 // Lt perfors a pointwise lt operation.
-//	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
+// retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
 func Lt(a, b *Node, retSame bool) (*Node, error) { op := newElemBinOp(ltOpType, a, b)
 	op.retSame = retSame
 	return binOpNode(op, a, b)
@@ -493,7 +493,7 @@ func NewLtOperation( retSame bool) Operation {
 		}
 }
 // Gt perfors a pointwise gt operation.
-//	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
+// retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
 func Gt(a, b *Node, retSame bool) (*Node, error) { op := newElemBinOp(gtOpType, a, b)
 	op.retSame = retSame
 	return binOpNode(op, a, b)
@@ -516,7 +516,7 @@ func NewGtOperation( retSame bool) Operation {
 		}
 }
 // Lte perfors a pointwise lte operation.
-//	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
+// retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
 func Lte(a, b *Node, retSame bool) (*Node, error) { op := newElemBinOp(lteOpType, a, b)
 	op.retSame = retSame
 	return binOpNode(op, a, b)
@@ -539,7 +539,7 @@ func NewLteOperation( retSame bool) Operation {
 		}
 }
 // Gte perfors a pointwise gte operation.
-//	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
+// retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
 func Gte(a, b *Node, retSame bool) (*Node, error) { op := newElemBinOp(gteOpType, a, b)
 	op.retSame = retSame
 	return binOpNode(op, a, b)
@@ -562,7 +562,7 @@ func NewGteOperation( retSame bool) Operation {
 		}
 }
 // Eq perfors a pointwise eq operation.
-//	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
+// retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
 func Eq(a, b *Node, retSame bool) (*Node, error) { op := newElemBinOp(eqOpType, a, b)
 	op.retSame = retSame
 	return binOpNode(op, a, b)
@@ -585,7 +585,7 @@ func NewEqOperation( retSame bool) Operation {
 		}
 }
 // Ne perfors a pointwise ne operation.
-//	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
+// retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
 func Ne(a, b *Node, retSame bool) (*Node, error) { op := newElemBinOp(neOpType, a, b)
 	op.retSame = retSame
 	return binOpNode(op, a, b)

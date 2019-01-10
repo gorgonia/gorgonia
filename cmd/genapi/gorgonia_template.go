@@ -22,7 +22,7 @@ func {{.FnName}}(g *Graph, a node.Node) (node.Node, error) {
 `
 
 const gorgoniaBinaryTemplateRaw = `// {{.FnName}} perfoms a pointwise {{lower .FnName}} operation.
-{{if .AsSame -}}//	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
+{{if .AsSame -}}// retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
 {{end -}}
 func {{.FnName}}(g *Graph, a, b node.Node{{if .AsSame}}, retSame bool{{end}}) (node.Node, error) { 
 	retval := g.g.NewNode().(*engine.Node)

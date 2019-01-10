@@ -34,7 +34,7 @@ func New{{.FnName}}Operation() Operation {
 `
 
 const engineBinaryTemplateRaw = `// {{.FnName}} perfors a pointwise {{lower .FnName}} operation.
-{{if .AsSame -}}//	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
+{{if .AsSame -}}// retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
 {{end -}}
 func {{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}) (*Node, error) { {{if not .AsSame -}}return binOpNode(newElemBinOp({{.OpType}}, a, b), a, b) {{else -}}
 	op := newElemBinOp({{.OpType}}, a, b)
