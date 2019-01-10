@@ -29,11 +29,11 @@ func {{.FnName}}(g *Graph, a, b node.Node{{if .AsSame}}, retSame bool{{end}}) (n
 	g.g.AddNode(retval)
 	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, a, 1.0))
 	g.g.SetWeightedEdge(g.g.NewWeightedEdge(retval, b, 2.0))
-{{if not .AsSame -}}
+	{{if not .AsSame -}}
 	err := g.g.ApplyOp(engine.New{{ .FnName}}Operation(), retval)
-{{else -}}
+	{{else -}}
 	err := g.g.ApplyOp(engine.New{{ .FnName}}Operation(retSame), retval)
-{{end -}}
+	{{end -}}
 	return retval, err
 }
 
