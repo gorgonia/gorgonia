@@ -5,6 +5,8 @@ import (
 
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/internal/engine"
+	"gorgonia.org/gorgonia/node"
+	"gorgonia.org/gorgonia/ops"
 )
 
 // Graph ...
@@ -24,5 +26,9 @@ func (g Graph) ONNXGetOperationFromName(s string) (interface{}, error) {
 
 // ONNXApply ...
 func (g Graph) ONNXApply(operation func(g graph.WeightedDirected, n graph.Node) (interface{}, error), n graph.Node) error {
-	return g.ApplyOp(engine.Operation(operation), n.(*engine.Node))
+	oper := func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
+		output, err := operation(g, n)
+		return output.(ops.Op), err
+	}
+	return g.ApplyOp(engine.Operation(oper), n.(*engine.Node))
 }
