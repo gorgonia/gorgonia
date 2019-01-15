@@ -73,7 +73,7 @@ Once created, an Operation can be applied to a node of the graph via a call to t
 which itself calls the application of the `Op`
 
 .code internal/engine/op.go /START_APPLY OMIT/,/END_APPLY OMIT/
-M
+
 * Examples
 
 ** Creating an `Op`
