@@ -8,6 +8,8 @@ import (
 	"gorgonia.org/tensor"
 )
 
+// START_NODE_DEF OMIT
+
 // Node is an abstration of a node of the ExprGraph
 type Node interface {
 	graph.Node
@@ -46,3 +48,5 @@ type Node interface {
 	// ValueOnDevice gets the value of the node as a value.Value but on the desired device. In this build the device is always CPU, so it's equivalent to calling .Value()
 	ValueOnDevice(dev execution.Device, extern execution.External) (retVal value.Value, allocOnExtern bool, err error)
 }
+
+// END_NODE_DEF OMIT

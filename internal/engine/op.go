@@ -19,6 +19,7 @@ func ShapesToDimSizers(shapes []tensor.Shape) []ops.DimSizer {
 	for i, s := range shapes {
 		retVal[i] = s
 	}
+	// END_OPERATION OMIT
 	return retVal
 }
 
@@ -59,6 +60,7 @@ type CUDAADOp interface {
 	CUDADoDiff(extern execution.External, dev execution.Device, inputs Nodes, output *Node) error
 }
 
+// START_APPLY OMIT
 func (g *ExprGraph) applyOp(op ops.Op, n *Node) error {
 
 	var children []*Node
@@ -103,6 +105,10 @@ func (g *ExprGraph) applyOp(op ops.Op, n *Node) error {
 	return nil
 }
 
+// END_APPLY OMIT
+
+// START_APPLYOP OMIT
+
 // ApplyOp op to the node n. The children are extracted from the Graph g
 func (g *ExprGraph) ApplyOp(operation Operation, n *Node) error {
 	opfn, err := operation(g, n)
@@ -115,6 +121,8 @@ func (g *ExprGraph) ApplyOp(operation Operation, n *Node) error {
 	}
 	return g.applyOp(op, n)
 }
+
+// END_APPLYOP OMIT
 
 // ApplyOp is the generic function application - for when no specialization is required
 func ApplyOp(op ops.Op, children ...*Node) (*Node, error) {

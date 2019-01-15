@@ -9,6 +9,8 @@ import (
 	"gorgonia.org/gorgonia/ops"
 )
 
+//START_DOC OMIT
+
 // Graph ...
 type Graph struct {
 	*engine.ExprGraph
@@ -25,10 +27,12 @@ func (g Graph) ONNXGetOperationFromName(s string) (interface{}, error) {
 }
 
 // ONNXApply ...
-func (g Graph) ONNXApply(operation func(g graph.WeightedDirected, n graph.Node) (interface{}, error), n graph.Node) error {
+func (g Graph) ONNXApply(operation func(g graph.WeightedDirected, n graph.Node) (interface{}, error), n graph.Node) error { // HL
 	oper := func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 		output, err := operation(g, n)
 		return output.(ops.Op), err
 	}
 	return g.ApplyOp(engine.Operation(oper), n.(*engine.Node))
 }
+
+// END_DOC OMIT

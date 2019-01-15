@@ -1,4 +1,4 @@
-package onnx 
+package onnx
 
 import (
 	"gonum.org/v1/gonum/graph"
@@ -207,6 +207,8 @@ func (a *Softplus) Constructor() func(g graph.WeightedDirected, n graph.Node) (i
 	}
 }
 
+// START_ADD OMIT
+
 // Add performs a pointwise add.
 type Add struct{}
 
@@ -216,6 +218,8 @@ func (a *Add) Constructor() func(g graph.WeightedDirected, n graph.Node) (interf
 		return engine.NewAddOperation()(g, n.(*engine.Node))
 	}
 }
+
+// END_ADD OMIT
 
 // Sub performs a pointwise sub.
 type Sub struct{}
@@ -316,4 +320,3 @@ func (a *Ne) Constructor() func(g graph.WeightedDirected, n graph.Node) (interfa
 		return engine.NewNeOperation(false)(g, n.(*engine.Node))
 	}
 }
-

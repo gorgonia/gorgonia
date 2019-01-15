@@ -10,6 +10,8 @@ import (
 	"gonum.org/v1/gonum/graph/simple"
 )
 
+// START_EXPR_DEF OMIT
+
 // ExprGraph is a data structure for a directed acyclic graph (of expressions). This structure is the main entry point
 // for Gorgonia.
 type ExprGraph struct {
@@ -25,6 +27,8 @@ type ExprGraph struct {
 	roots     Nodes
 	counter   uint
 }
+
+// END_EXPR_DEF OMIT
 
 // Graphconopt is a construction function of a graph
 type Graphconopt func(g *ExprGraph)

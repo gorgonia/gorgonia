@@ -19,6 +19,8 @@ import (
 	"gorgonia.org/tensor"
 )
 
+// START_DEF_NODE OMIT
+
 // A Node is a node in the computation graph
 type Node struct {
 	// metadata of the node
@@ -55,6 +57,8 @@ type Node struct {
 	isStmt        bool // is this a statement node
 	ofInterest    bool // is this node of particular interest? (for debugging)
 }
+
+// END_DEF_NODE OMIT
 
 // SetName of the node
 func (n *Node) SetName(name string) {

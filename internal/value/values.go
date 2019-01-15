@@ -8,6 +8,8 @@ import (
 	"gorgonia.org/tensor"
 )
 
+// START_DEF_VALUE OMIT
+
 // Value represents a value that Gorgonia accepts. At this point it is implemented by:
 //		- all scalar value types (F64, F32... etc)
 // 		- *tensor.Dense
@@ -27,6 +29,8 @@ type Value interface {
 	tensor.Memory
 	fmt.Formatter
 }
+
+// END_DEF_VALUE OMIT
 
 // Valuer is any type that can return a Value
 type Valuer interface {

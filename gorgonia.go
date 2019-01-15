@@ -10,6 +10,8 @@ import (
 	"gorgonia.org/tensor"
 )
 
+// START_GRAPH OMIT
+
 // Graph ...
 type Graph struct {
 	g *engine.ExprGraph
@@ -19,6 +21,8 @@ type Graph struct {
 func NewGraph() *Graph {
 	return &Graph{g: engine.NewGraph()}
 }
+
+// END_GRAPH OMIT
 
 // NewScalar creates a Node representing a variable that holds a scalar value
 func NewScalar(g *Graph, t tensor.Dtype, opts ...engine.NodeConsOpt) node.Node {

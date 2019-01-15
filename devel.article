@@ -1,0 +1,137 @@
+A Guide to Gorgonia API
+15:04 14 Jan 2019
+Tags: gorgonia, go, dev
+
+The Gorgonia Authors
+https://gorgonia.org
+@gorgoniaml
+
+* About
+
+# Core concepts
+
+** The graph
+
+The top structure of Gorgonia is the `ExprGraph` defined in the file `internal/engine/graph.go`
+For commodity, the `ExprGraph` is, by now, exposed in an internal package an is therefore not accessible to any other projet outside of Gorgonia.
+
+.code internal/engine/graph.go /START_EXPR_DEF OMIT/,/END_EXPR_DEF OMIT/
+
+This structure has an embedded `WeightedDirectedGraph` which will carry the internal structure of the graph.
+The `ExprGraph` itself fulfils the `DirectedWeightedBuilder` as well as the `WeightedDirected` interfaces of the `gonum/graph` package.
+
+** The nodes
+
+All the methods of the `ExprGraph` are expecting or returning a `node.Node` type, which is an interface defined in its own package `node`.
+This package is accessible from the outside world because it gives the opportunity to any third party library such as ONNX to check for type inference.
+
+.code node/interface.go /START_NODE_DEF OMIT/,/END_NODE_DEF OMIT/
+
+The implementation of the `node` interface is carried by the `Node` structure defined in the `engine` package.
+
+_Note_ this structure should probably be unexported
+
+.code internal/engine/node.go /START_DEF_NODE OMIT/,/END_DEF_NODE OMIT/
+
+*** Specialization of a node
+
+To turn the graph into a computation graph representing an equation, it is mandatory to set values and operators to the nodes.
+
+Applying an `operator` or `setting` a value to a node *does not* create a new node anymore; it is the responsibility of the builder to 
+create the node first via a call to the `NewNode()` and `AddNode(node.Node)` methods of the expr graph.
+
+**** Values
+
+A value is any value that gorgonia accepts. It is defined as an interface into a `value` package under the `internal` subdirectory because there is no 
+need to expose this concept outside of Gorgonia for now.
+
+.code internal/value/values.go /START_DEF_VALUE OMIT/,/END_DEF_VALUE OMIT/
+
+**** Operators
+
+An operator is a mathematical operation that, once applied *and* executed, can transform the value of a node.
+It is defined as an interface in the `ops` package 
+
+.code ops/op.go /START_DEF_OP OMIT/,/END_DEF_OP OMIT/
+
+_Note_ the actual execution of the operator is made via a call to the `Do()` method and is part of the compilation and execution process.
+
+Depending on the type of the operator (commutative or not), the order of the input is important. This order is defined in the creation of the graph
+by creating a weight to the edges of the children of the node. For example, the first argument will weight 0, the second will weigth 1, etc...
+
+Sometimes, the creation of the operator itself is dependend of the structure of the graph. It can depend of the shape and type of the children for example to trigger some specialization. 
+To achieve this, an `Operation` interface has been created. 
+
+.code internal/engine/interfaces.go /START_OPERATION OMIT/,/END_OPERATION OMIT/
+
+This is simply a function that will allow the analysis of the current graph to return an instance of `ops.Op`
+ 
+Once created, an Operation can be applied to a node of the graph via a call to the `ApplyOp` method:
+
+.code internal/engine/op.go /START_APPLYOP OMIT/,/END_APPLYOP OMIT/
+
+which itself calls the application of the `Op`
+
+.code internal/engine/op.go /START_APPLY OMIT/,/END_APPLY OMIT/
+M
+* Examples
+
+** Creating an `Op`
+
+To create an Op, we need to set a kind of constructor that returns an Operation.
+.code internal/engine/api_gen.go /START_ADDOP OMIT/,/END_ADDOP OMIT/
+
+Then to use it, you should build a graph and apply the operation. For example
+
+.code internal/engine/simple_test.go
+
+* Keeping gorgonia simple...
+
+Now that everything is in an internal subpackage, we can build a higher level api with an abstraction of all this mechanism in the `gorgonia` package.
+
+We create a graph that encapsulate the `ExprGraph` in an unexported field:
+
+.code gorgonia.go /START_GRAPH OMIT/,/END_GRAPH OMIT/
+
+And we can create independent functions to build the graph step by step and operation by operation:
+
+.code api_gen.go /START_ADD OMIT/,/END_ADD OMIT/
+
+which lead to this example:
+
+.code simple_test.go 
+
+* About ONNX
+
+I have coded a function to unmarshal the ONNX model proto into a WeightedGraphBuilder.
+While decoding it checks if the graph is also of certain types. If it fulfils a `ONNX Backend` interface, I call the corresponding methods.
+
+For example I have tried this which is called with success:
+
+.code onnx/onnx.go /START_DOC OMIT/,/END_DOC OMIT/
+
+You see in the hightlighted code that I do not want any dependency with gorgonia in ONNX which remains independent; Gorgonia is "one of" the possible Go backends.
+
+The parameters of the operators are passed as objects. 
+
+Those objects must fulfil a `OpConstructor` interface which is a simple method `Constructor()` that returns 
+
+  func(g graph.WeightedDirected, n graph.Node) (interface{}, error)
+
+which is used by the `ONNXApply` method.
+
+To deal with operators that requires some arguments (padding for example), I have created an attribute Unmarshaler with special tags to be set on an operator.
+
+This is why the `ONNXGetOperationFromName` function returns an Object. This object is passed to the UnmarshalAttribute method when decoding the graph.
+
+_Note_ I may also implement an unmarshaler interface, so the backend can implement their own methods.
+
+This is an example of the `Conv` operator with its special tags that correspond to what ONNX gives:
+
+.code onnx/conv.go /START_CONV OMIT/,/END_CONV OMIT/
+
+And the constructor of the `Add` method:
+
+.code onnx/api_gen.go /START_ADD OMIT/,/END_ADD OMIT/
+
+

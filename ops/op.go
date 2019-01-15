@@ -37,6 +37,8 @@ func DimSizersToShapes(ds []DimSizer) ([]tensor.Shape, error) {
 	return retVal, nil
 }
 
+// START_DEF_OP OMIT
+
 // An Op is a symbolic representation of an operation
 // Think of them as functions, taking an input (or multiple), and outputting something
 //
@@ -56,7 +58,7 @@ type Op interface {
 	/* Machine related */
 
 	// executes the op
-	Do(...value.Value) (value.Value, error)
+	Do(...value.Value) (value.Value, error) // HL
 
 	/* Analysis Related Methods */
 
@@ -81,6 +83,8 @@ type Op interface {
 	Hashcode() uint32
 	fmt.Stringer
 }
+
+// END_DEF_OP OMIT
 
 // A UnaryOp is an Op that takes only one input
 type UnaryOp interface {
