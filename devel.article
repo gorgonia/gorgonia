@@ -60,7 +60,7 @@ Depending on the type of the operator (commutative or not), the order of the inp
 by creating a weight to the edges of the children of the node. For example, the first argument will weight 0, the second will weigth 1, etc...
 
 Sometimes, the creation of the operator itself is dependend of the structure of the graph. It can depend of the shape and type of the children for example to trigger some specialization. 
-To achieve this, an `Operation` interface has been created. 
+To achieve this, an `Operation` type has been created. 
 
 .code internal/engine/interfaces.go /START_OPERATION OMIT/,/END_OPERATION OMIT/
 
@@ -133,5 +133,10 @@ This is an example of the `Conv` operator with its special tags that correspond 
 And the constructor of the `Add` method:
 
 .code onnx/api_gen.go /START_ADD OMIT/,/END_ADD OMIT/
+
+* Graphviz export
+
+The graphviz export is not part of the graph anymore but is now using the capability of `gonum/encoding`
+
 
 
