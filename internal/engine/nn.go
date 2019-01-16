@@ -228,7 +228,7 @@ func NewConv2d(kernelShape tensor.Shape, pad, stride, dilation []int) Operation 
 		}
 		_, ok = g.(graph.EdgeRemover)
 		if !ok {
-			return nil, errors.Errorf("Conv2d needs to modify the graph but is not a DirectedWeightedBuilder")
+			return nil, errors.Errorf("Conv2d needs to modify the graph but is not an EdgeRemover")
 		}
 		// Create the node that will receive the result of im2col
 		colIm := builder.NewNode().(*Node)
