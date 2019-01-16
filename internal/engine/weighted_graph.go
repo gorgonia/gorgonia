@@ -84,3 +84,8 @@ func (g *ExprGraph) Weight(xid, yid int64) (w float64, ok bool) {
 func (g *ExprGraph) WeightedEdge(uid, vid int64) graph.WeightedEdge {
 	return g.w.WeightedEdge(uid, vid)
 }
+
+// RemoveEdge removes the edge with the given end point IDs from the graph, leaving the terminal nodes. If the edge does not exist it is a no-op.
+func (g *ExprGraph) RemoveEdge(fid, tid int64) {
+	g.w.RemoveEdge(fid, tid)
+}
