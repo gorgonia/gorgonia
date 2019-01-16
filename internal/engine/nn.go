@@ -273,6 +273,7 @@ func NewConv2d(kernelShape tensor.Shape, pad, stride, dilation []int) Operation 
 		builder.AddNode(colImLayer)
 		// Link it to the input tensor
 		builder.SetWeightedEdge(builder.NewWeightedEdge(colImLayer, patch, 0.0))
+		builder.SetWeightedEdge(builder.NewWeightedEdge(colImLayer, flattened, 1.0))
 
 		err = g.(*ExprGraph).ApplyOp(NewReshapeOperation(tensor.Shape{batch * m * nn, z}), patch)
 		if err != nil {
@@ -307,7 +308,8 @@ func NewConv2d(kernelShape tensor.Shape, pad, stride, dilation []int) Operation 
 		// And create the new links
 		builder.SetWeightedEdge(builder.NewWeightedEdge(n, res, 0.0))
 
-		return NewTransposeOperation(0, 3, 1, 2)(g, n)
+		bla, err := NewTransposeOperation(0, 3, 1, 2)(g, n)
+		return bla, err
 	}
 }
 

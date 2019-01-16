@@ -476,9 +476,11 @@ func NewTransposeOperation(axes ...int) Operation {
 	return func(g graph.WeightedDirected, nn node.Node) (ops.Op, error) {
 		n := nn.(*Node)
 		// prep axes
-		if len(axes) > 0 && len(axes) != n.Dims() {
-			return nil, errors.Errorf("n has %d dims, while requested transposes is %d", n.Dims(), len(axes))
-		}
+		/*
+			if len(axes) > 0 && len(axes) != n.Dims() {
+				return nil, errors.Errorf("n has %d dims, while requested transposes is %d", n.Dims(), len(axes))
+			}
+		*/
 		dims := len(n.shape)
 		if len(axes) == 0 || axes == nil {
 			axes = make([]int, dims)
