@@ -2,8 +2,11 @@ package engine
 
 import (
 	"github.com/pkg/errors"
+	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/distro"
 	"gorgonia.org/gorgonia/internal/value"
+	"gorgonia.org/gorgonia/node"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -134,43 +137,44 @@ func Rectify(x *Node) (retVal *Node, err error) {
 	return HadamardProd(x, retVal)
 }
 
-// Im2Col converts a BCHW image block to columns. The kernel, pad and stride parameter must be shape of size 2, no more no less
+// NewIm2Col converts a BCHW image block to columns. The kernel, pad and stride parameter must be shape of size 2, no more no less
 // This poor naming scheme clearly comes from matlab
-func Im2Col(n *Node, kernel, pad, stride, dilation tensor.Shape) (retVal *Node, err error) {
-	if kernel.Dims() != 2 {
-		return nil, errors.Errorf("kernel shape is supposed to have a dim of 2")
-	}
-	if pad.Dims() != 2 {
-		return nil, errors.Errorf("pad is supposed to have a dim of 2")
-	}
-	if stride.Dims() != 2 {
-		return nil, errors.Errorf("strides is supposed to have a dim of 2")
-	}
-	if dilation.Dims() != 2 {
-		return nil, errors.Errorf("dilation is supposed to have a dim of 2")
-	}
+func NewIm2Col(kernel, pad, stride, dilation tensor.Shape) Operation {
+	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
+		if kernel.Dims() != 2 {
+			return nil, errors.Errorf("kernel shape is supposed to have a dim of 2")
+		}
+		if pad.Dims() != 2 {
+			return nil, errors.Errorf("pad is supposed to have a dim of 2")
+		}
+		if stride.Dims() != 2 {
+			return nil, errors.Errorf("strides is supposed to have a dim of 2")
+		}
+		if dilation.Dims() != 2 {
+			return nil, errors.Errorf("dilation is supposed to have a dim of 2")
+		}
 
-	if kernel[0] <= 0 || kernel[1] <= 0 {
-		return nil, errors.Errorf("cannot have negative or 0 in kernel shape")
-	}
+		if kernel[0] <= 0 || kernel[1] <= 0 {
+			return nil, errors.Errorf("cannot have negative or 0 in kernel shape")
+		}
 
-	if stride[0] <= 0 || stride[1] <= 0 {
-		return nil, errors.Errorf("cannot have negative or 0 in stride: %v", stride)
-	}
+		if stride[0] <= 0 || stride[1] <= 0 {
+			return nil, errors.Errorf("cannot have negative or 0 in stride: %v", stride)
+		}
 
-	if pad[0] < 0 || pad[1] < 0 {
-		return nil, errors.Errorf("cannot have negative padding")
-	}
+		if pad[0] < 0 || pad[1] < 0 {
+			return nil, errors.Errorf("cannot have negative padding")
+		}
 
-	if dilation[0] <= 0 || dilation[1] <= 0 {
-		return nil, errors.Errorf("canot have negative or 0 in dilation. %v", dilation)
-	}
+		if dilation[0] <= 0 || dilation[1] <= 0 {
+			return nil, errors.Errorf("canot have negative or 0 in dilation. %v", dilation)
+		}
 
-	op := makeIm2ColOp(kernel[0], kernel[1], pad[0], pad[1], stride[0], stride[1], dilation[0], dilation[1])
-	return ApplyOp(op, n)
+		return makeIm2ColOp(kernel[0], kernel[1], pad[0], pad[1], stride[0], stride[1], dilation[0], dilation[1]), nil
+	}
 }
 
-// Conv2d is a simple 2D convoution, to be used for CPU computation only. If CuDNN is used, use the CUDAConv2D function.
+// NewConv2d returns a simple 2D convoution, to be used for CPU computation only. If CuDNN is used, use the CUDAConv2D function.
 // These are the properties the inputs must fulfil:
 //
 // im: must have 4D shape. Expected format is BCHW (batch, channel, height, width)
@@ -179,6 +183,136 @@ func Im2Col(n *Node, kernel, pad, stride, dilation tensor.Shape) (retVal *Node, 
 // pad: len(pad) == 2
 // stride: len(stride) == 2
 // dilation: len(dilation) == 2
+func NewConv2d(kernelShape tensor.Shape, pad, stride, dilation []int) Operation {
+	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
+		it := getOrderedChildren(g, n)
+		if it.Len() != 2 {
+			return nil, errors.New("Unexpected number of children")
+		}
+		children := make([]*Node, it.Len())
+		for i := 0; it.Next(); i++ {
+			children[i] = it.Node().(*Node)
+		}
+		im := children[0]
+		filter := children[1]
+		// niceness for defaults
+		if pad == nil {
+			pad = []int{0, 0}
+		}
+		if dilation == nil {
+			dilation = []int{1, 1}
+		}
+
+		// checks
+		for _, s := range stride {
+			if s <= 0 {
+				return nil, errors.Errorf("Cannot use strides of less than or equal 0: %v", stride)
+			}
+		}
+
+		for _, p := range pad {
+			if p < 0 {
+				return nil, errors.Errorf("Cannot use padding of less than 0: %v", pad)
+			}
+		}
+
+		for _, d := range dilation {
+			if d <= 0 {
+				return nil, errors.Errorf("Cannot use dilation less than or eq 0 %v", dilation)
+			}
+		}
+		// check if the graph is a weighted builder
+		builder, ok := g.(graph.DirectedWeightedBuilder)
+		if !ok {
+			return nil, errors.Errorf("Conv2d needs to modify the graph but is not a DirectedWeightedBuilder")
+		}
+		_, ok = g.(graph.EdgeRemover)
+		if !ok {
+			return nil, errors.Errorf("Conv2d needs to modify the graph but is not a DirectedWeightedBuilder")
+		}
+		// Create the node that will receive the result of im2col
+		colIm := builder.NewNode().(*Node)
+		builder.AddNode(colIm)
+		// Link it to the input tensor
+		builder.SetWeightedEdge(builder.NewWeightedEdge(colIm, im, 0.0))
+
+		err := g.(*ExprGraph).ApplyOp(NewIm2Col(kernelShape, pad, stride, dilation), colIm)
+		if err != nil {
+			return nil, err
+		}
+
+		layer := filter.Shape()[0]
+		kernel := filter.Shape()[1]
+		row := filter.Shape()[2]
+		col := filter.Shape()[3]
+
+		// Create the node that will receive the result of the reshape of the filter
+		flattened := builder.NewNode().(*Node)
+		builder.AddNode(flattened)
+		// Link it to the input tensor
+		builder.SetWeightedEdge(builder.NewWeightedEdge(flattened, filter, 0.0))
+
+		err = g.(*ExprGraph).ApplyOp(NewReshapeOperation(tensor.Shape{layer, kernel * row * col}), flattened)
+		if err != nil {
+			return nil, err
+		}
+
+		// extract patch
+		batch := colIm.Shape()[0]
+		m := colIm.Shape()[1]
+		nn := colIm.Shape()[2]
+		z := colIm.Shape()[3]
+
+		// Create the nodes for patch and colImLayer
+		patch := builder.NewNode().(*Node)
+		builder.AddNode(patch)
+		// Link it to the input tensor
+		builder.SetWeightedEdge(builder.NewWeightedEdge(patch, colIm, 0.0))
+
+		colImLayer := builder.NewNode().(*Node)
+		builder.AddNode(colImLayer)
+		// Link it to the input tensor
+		builder.SetWeightedEdge(builder.NewWeightedEdge(colImLayer, patch, 0.0))
+
+		err = g.(*ExprGraph).ApplyOp(NewReshapeOperation(tensor.Shape{batch * m * nn, z}), patch)
+		if err != nil {
+			return nil, err
+		}
+
+		op := linAlgBinOp{
+			āBinaryOperator: matMulOperator,
+			transA:          false,
+			transB:          true,
+		}
+
+		err = g.(*ExprGraph).ApplyOp(newLinAlgBinOperation(op), colImLayer)
+		if err != nil {
+			return nil, err
+		}
+
+		// now reshape and transpose the values back into the original order
+		res := builder.NewNode().(*Node)
+		builder.AddNode(res)
+		// Link it to the input tensor
+		builder.SetWeightedEdge(builder.NewWeightedEdge(res, colImLayer, 0.0))
+
+		err = g.(*ExprGraph).ApplyOp(NewReshapeOperation(tensor.Shape{batch, m, nn, layer}), res)
+		if err != nil {
+			return nil, err
+		}
+
+		// Now remove the original links from n -> children[0] and n -> children[1]
+		g.(graph.EdgeRemover).RemoveEdge(n.ID(), filter.ID())
+		g.(graph.EdgeRemover).RemoveEdge(n.ID(), im.ID())
+		// And create the new links
+		builder.SetWeightedEdge(builder.NewWeightedEdge(n, res, 0.0))
+
+		return NewTransposeOperation(0, 3, 1, 2)(g, n)
+	}
+}
+
+/*
+// Conv2d ...
 func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []int) (retVal *Node, err error) {
 	// niceness for defaults
 	if pad == nil {
@@ -250,11 +384,14 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []
 	}
 	return Transpose(res, 0, 3, 1, 2)
 }
+*/
 
+/*
 // Conv1d is a 1D convlution. It relies on Conv2D
 func Conv1d(in, filter *Node, kernel, pad, stride, dilation int) (*Node, error) {
 	return Conv2d(in, filter, tensor.Shape{1, kernel}, []int{0, pad}, []int{1, stride}, []int{1, dilation})
 }
+*/
 
 // MaxPool2D ...
 func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {

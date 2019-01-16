@@ -21,6 +21,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/gorgonia/internal/execution"
 	"gorgonia.org/gorgonia/internal/value"
@@ -517,6 +518,12 @@ func (op elemUnaryOp) do(a value.Value, opts ...tensor.FuncOpt) (retVal value.Va
 }
 
 /* LINEAR ALGEBRA RELATED OPERATIONS */
+
+func newLinAlgBinOperation(l linAlgBinOp) Operation {
+	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
+		return l, nil
+	}
+}
 
 type linAlgBinOp struct {
 	āBinaryOperator

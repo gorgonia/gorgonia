@@ -471,6 +471,33 @@ func Slice(n *Node, slices ...tensor.Slice) (retVal *Node, err error) {
 	return
 }
 
+// NewTransposeOperation performs a transpose on the input and provided permutation axes.
+func NewTransposeOperation(axes ...int) Operation {
+	return func(g graph.WeightedDirected, nn node.Node) (ops.Op, error) {
+		n := nn.(*Node)
+		// prep axes
+		if len(axes) > 0 && len(axes) != n.Dims() {
+			return nil, errors.Errorf("n has %d dims, while requested transposes is %d", n.Dims(), len(axes))
+		}
+		dims := len(n.shape)
+		if len(axes) == 0 || axes == nil {
+			axes = make([]int, dims)
+			for i := 0; i < dims; i++ {
+				axes[i] = dims - 1 - i
+			}
+		}
+
+		// if axes is 0, 1, 2, 3... then no op
+		if monotonic, incr1 := tensor.IsMonotonicInts(axes); monotonic && incr1 && axes[0] == 0 {
+			return nil, nil
+		}
+		return transposeOp{
+			pattern: axes,
+			d:       len(axes),
+		}, nil
+	}
+}
+
 // Transpose performs a transpose on the input and provided permutation axes.
 func Transpose(n *Node, axes ...int) (retVal *Node, err error) {
 	// prep axes

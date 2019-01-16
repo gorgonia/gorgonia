@@ -115,6 +115,10 @@ func (g *ExprGraph) ApplyOp(operation Operation, n *Node) error {
 	if err != nil {
 		return err
 	}
+	// It's a noop, return
+	if opfn == nil {
+		return nil
+	}
 	op, ok := opfn.(ops.Op)
 	if !ok {
 		return errors.New("Cannot cast operator")
