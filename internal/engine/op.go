@@ -98,9 +98,12 @@ func (g *ExprGraph) applyOp(op ops.Op, n *Node) error {
 		return errors.Wrapf(err, "Failed to infer shape. Op: %v", op)
 	}
 	shapeLogf("inferred shape %v", s)
-	WithType(retType)(n)
-	WithOp(op)(n)
-	WithShape(s...)(n)
+	n.t = retType
+	n.op = op
+	n.shape = s
+	//WithType(retType)(n)
+	//WithOp(op)(n)
+	//WithShape(s...)(n)
 	returnDimSizers(ds)
 	return nil
 }

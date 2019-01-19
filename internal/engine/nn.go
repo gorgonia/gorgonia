@@ -251,6 +251,7 @@ func NewConv2d(kernelShape tensor.Shape, pad, stride, dilation []int) Operation 
 		builder.AddNode(flattened)
 		// Link it to the input tensor
 		builder.SetWeightedEdge(builder.NewWeightedEdge(flattened, filter, 0.0))
+		flattened.shape = filter.shape
 
 		err = g.(*ExprGraph).ApplyOp(NewReshapeOperation(tensor.Shape{layer, kernel * row * col}), flattened)
 		if err != nil {

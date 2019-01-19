@@ -559,8 +559,18 @@ func Concat(axis int, ns ...*Node) (retVal *Node, err error) {
 
 // NewReshapeOperation change the shape of the node into s
 func NewReshapeOperation(s tensor.Shape) Operation {
-	return func(g graph.WeightedDirected, nn node.Node) (ops.Op, error) {
-		n := nn.(*Node)
+	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
+		it := getOrderedChildren(g, n)
+		if it.Len() != 1 {
+			return nil, errors.New("Unexpected number of children")
+		}
+		children := make([]*Node, it.Len())
+		for i := 0; it.Next(); i++ {
+			children[i] = it.Node().(*Node)
+		}
+		from := children[0]
+
+		//n := nn.(*Node)
 		// check shape
 		var negs int
 		var infer int
@@ -582,15 +592,15 @@ func NewReshapeOperation(s tensor.Shape) Operation {
 				}
 				prod *= s
 			}
-			inferred, rem := divmod(n.Shape().TotalSize(), prod)
+			inferred, rem := divmod(from.Shape().TotalSize(), prod)
 			if rem != 0 {
-				return nil, errors.Errorf("Cannot reshape %v to %v", n.Shape(), s)
+				return nil, errors.Errorf("Cannot reshape %v to %v", from.Shape(), s)
 			}
 			s[infer] = inferred
 		}
 
 		op := reshapeOp{
-			from: n.Shape(),
+			from: from.Shape(),
 			to:   s,
 		}
 		return op, nil

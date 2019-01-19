@@ -1,9 +1,11 @@
 package engine
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/gorgonia/debugger/dot"
 	"gorgonia.org/tensor"
 )
 
@@ -35,6 +37,12 @@ func TestConv2d_F32(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	gviz, err := dot.Marshal(g)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(string(gviz))
 	// logger := log.New(os.Stderr, "", 0)
 	// vm := NewTapeMachine(g, WithLogger(logger), WithWatchlist(), WithValueFmt("%#v"))
 	vm := NewTapeMachine(g)
