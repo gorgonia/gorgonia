@@ -315,8 +315,8 @@ func (m *lispMachine) forward() (err error) {
 				return errors.Wrapf(err, execFail, n.op, n)
 			}
 
-			// we wrap it in a dualValue, but don't allocate anything for the d
-			if err = n.bind(dvUnit0(v)); err != nil {
+			// we wrap it in a dualValue, but we make it a constant
+			if err = n.bind(dvUnit(v)); err != nil {
 				return errors.Wrap(err, bindFail)
 			}
 
@@ -398,7 +398,9 @@ func (m *lispMachine) forward() (err error) {
 			m.logf("dvBindVar0")
 			dv, ok := n.boundTo.(*dualValue)
 			if !ok {
-				panic(fmt.Sprintf("n not dual value %v", n))
+				dv = dvUnitVar(n.boundTo)
+				n.boundTo = dv
+				// panic(fmt.Sprintf("n not dual value %v", n))
 			}
 			if err = dvBindVar0(op, dv, inputs); err != nil {
 				return errors.Wrapf(err, execFail, op, n)
