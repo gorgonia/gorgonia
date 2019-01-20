@@ -1,6 +1,8 @@
 package gorgonia
 
 import (
+	"log"
+	"os"
 	"testing"
 
 	"github.com/chewxy/hm"
@@ -88,4 +90,15 @@ func TestOneHotVector(t *testing.T) {
 	assert.EqualValues(
 		[]int64{0, 1, 0, 0, 0, 0},
 		OneHotVector(1, 6, nd.Int64).Value().Data())
+}
+
+func TestRandomNodeBackprop(t *testing.T) {
+	g := NewGraph()
+	a := NewVector(g, Float64, WithShape(10), WithName("a"), WithInit(Zeroes()))
+	b := GaussianRandomNode(g, Float64, 0, 1, 10)
+	c := Must(Add(a, b))
+	d := Must(Sum(c))
+	vm := NewLispMachine(g, WithLogger(log.New(os.Stderr, "", 0)))
+	vm.RunAll()
+	t.Logf("d.Value %v", d.Value())
 }
