@@ -2,6 +2,9 @@ package engine
 
 import (
 	"github.com/pkg/errors"
+	"gonum.org/v1/gonum/graph"
+	"gorgonia.org/gorgonia/node"
+	"gorgonia.org/gorgonia/ops"
 )
 
 const (
@@ -24,7 +27,7 @@ const (
 type BroadcastPattern byte
 
 // NewBroadcastPattern is a helper function to create broadcast patterns
-func NewBroadcastPattern(leftAxes, rightAxes []byte) BroadcastPattern {
+func newBroadcastPattern(leftAxes, rightAxes []byte) BroadcastPattern {
 	var start byte
 	for _, a := range leftAxes {
 		a += bcAllowableAxes
@@ -58,6 +61,69 @@ func (bcpat BroadcastPattern) on() (retVal [2][]int) {
 	}
 
 	return
+}
+
+const (
+	left  byte = iota
+	right      = iota
+)
+
+// NewBroadcastOperation returns a new broadcast operation to be applied on the graph
+// Warning, it modify the graph
+func newBroadcastOperation(axe byte, broadcastOn []int) Operation {
+	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
+		// check if the graph is a weighted builder
+		builder, ok := g.(graph.DirectedWeightedBuilder)
+		if !ok {
+			return nil, errors.Errorf("Broadcast needs to modify the graph but is not a DirectedWeightedBuilder")
+		}
+		_, ok = g.(graph.EdgeRemover)
+		if !ok {
+			return nil, errors.Errorf("Broadcast needs to modify the graph but is not an EdgeRemover")
+		}
+		it := getOrderedChildren(g, n)
+		if it.Len() != 2 {
+			return nil, errors.New("Unexpected number of children")
+		}
+		children := make([]*Node, it.Len())
+		for i := 0; it.Next(); i++ {
+			children[i] = it.Node().(*Node)
+		}
+		x := children[0]
+		y := children[1]
+
+		switch axe {
+		case left:
+			// Create the node that will receive the repeat operation
+			repeat := builder.NewNode().(*Node)
+			builder.AddNode(repeat)
+			// Link it to the input tensor
+			builder.SetWeightedEdge(builder.NewWeightedEdge(n, repeat, 0.0))
+			builder.SetWeightedEdge(builder.NewWeightedEdge(repeat, x, 0.0))
+
+			// Remove the link from n to x
+			g.(graph.EdgeRemover).RemoveEdge(n.ID(), x.ID())
+
+			for i, a := range broadcastOn {
+				size := builder.NewNode().(*Node)
+				builder.AddNode(size)
+				builder.SetWeightedEdge(builder.NewWeightedEdge(size, y, float64(i+1)))
+				opSize := NewSizeOf(a)
+				err := g.(*ExprGraph).ApplyOp(opSize, size)
+				if err != nil {
+					return nil, errors.Wrap(err, operationError)
+				}
+				builder.SetWeightedEdge(builder.NewWeightedEdge(repeat, size, float64(i+1)))
+			}
+			repeatChildren := getOrderedNodes(g, repeat)
+			rep := newRepeatOp(broadcastOn, repeatChildren)
+			return rep, nil
+		case right:
+		default:
+			return nil, errors.New("Broadcast error, invalid axe")
+		}
+		return nil, nil
+	}
 }
 
 // Broadcast works somewhat like Numpy's broadcast, except it's now exposed as a function.

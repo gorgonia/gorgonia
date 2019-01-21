@@ -5,6 +5,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/internal/constructor"
 	"gorgonia.org/gorgonia/internal/value"
 	"gorgonia.org/gorgonia/ops"
@@ -321,4 +322,15 @@ func Read(n *Node, into *value.Value) *Node {
 	n.op = op // this ensures the correct pointer is written
 	n.name = name
 	return n
+}
+
+// getChildren of the node n
+func getOrderedNodes(g graph.WeightedDirected, n graph.Node) []*Node {
+	it := getOrderedChildren(g, n)
+	children := make([]*Node, it.Len())
+	for i := 0; it.Next(); i++ {
+		children[i] = it.Node().(*Node)
+	}
+	return children
+
 }

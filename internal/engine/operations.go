@@ -155,7 +155,7 @@ func SoftMax(a *Node) (retVal *Node, err error) {
 			if sum.IsScalar() {
 				return HadamardDiv(exp, sum)
 			}
-			return Broadcast(divOpType, exp, sum, NewBroadcastPattern(nil, []byte{1}))
+			return Broadcast(divOpType, exp, sum, newBroadcastPattern(nil, []byte{1}))
 		}
 		return nil, errors.Wrap(err, operationError)
 	}
@@ -424,6 +424,27 @@ func ReduceMul(nodes Nodes, opts ...NodeConsOpt) (retVal *Node, err error) {
 }
 
 /* Shape related operations */
+
+// NewSizeOf returns the size of a value along an axis
+func NewSizeOf(axis int) Operation {
+	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
+		children := getOrderedNodes(g, n)
+		if len(children) != 1 {
+			return nil, errors.New("Unexpected number of children")
+		}
+		x := children[0]
+		op := sizeOp{
+			axis: axis,
+			d:    x.Dims(),
+		}
+
+		// if the shape is known
+		if x.shape != nil {
+			op.val = x.shape[axis]
+		}
+		return op, nil
+	}
+}
 
 // SizeOf returns the size of a value along an axis
 func SizeOf(axis int, x *Node) (retVal *Node, err error) {

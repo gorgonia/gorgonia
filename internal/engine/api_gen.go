@@ -374,8 +374,8 @@ func Add(a, b *Node) (*Node, error) { return binOpNode(newElemBinOp(addOpType, a
 
 // START_ADDOP OMIT
 
-// AddOp ...
-func NewAddOperation() Operation {
+// AddOp is broadcastable...
+func NewAddOperation(leftAxes, rightAxes []byte) Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 		it := getOrderedChildren(g, n)
 		if it.Len() != 2 {
@@ -384,6 +384,18 @@ func NewAddOperation() Operation {
 		children := make([]*Node, it.Len())
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
+		}
+
+		if leftAxes != nil || rightAxes != nil {
+			pattern := newBroadcastPattern(leftAxes, rightAxes)
+			broadcastOn := pattern.on()
+			switch {
+			case len(broadcastOn[0]) != 0:
+
+				newBroadcastOperation(left, broadcastOn[0])
+			case len(broadcastOn[1]) != 0:
+				newBroadcastOperation(right, broadcastOn[1])
+			}
 		}
 		return newElemBinOp(addOpType, children[0], children[1]), nil
 	}
