@@ -26,10 +26,44 @@ func TestBroadcast_BCHW(t *testing.T) {
 	g.AddNode(x)
 
 	y := g.NodeFromAny(tensor.New(
-		tensor.WithShape(2, 1, 1),
+		tensor.WithShape(1, 2, 1, 1),
 		tensor.WithBacking([]float32{100, 100})),
 		WithName("y"))
 	g.AddNode(y)
+	/*
+		reshapedY := g.NewNode().(*Node)
+		g.AddNode(reshapedY)
+		g.SetWeightedEdge(g.NewWeightedEdge(reshapedY, y, 1.0))
+		reshapeOp := NewReshapeOperation(tensor.Shape([]int{1, 2, 1, 1}))
+		err := g.ApplyOp(reshapeOp, reshapedY)
+		if err != nil {
+			t.Fatal(err)
+		}
+	*/
+	sum := g.NewNode().(*Node)
+	g.AddNode(sum)
+	g.SetWeightedEdge(g.NewWeightedEdge(sum, x, 0.0))
+	//g.SetWeightedEdge(g.NewWeightedEdge(sum, reshapedY, 1.0))
+	g.SetWeightedEdge(g.NewWeightedEdge(sum, y, 1.0))
+	op := NewAddOperation(nil, []byte{0, 2, 3})
+
+	/*
+		gviz, err := dot.Marshal(g)
+		if err != nil {
+			t.Fatal(err)
+		}
+		fmt.Println(string(gviz))
+	*/
+
+	err := g.ApplyOp(op, sum)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	machine := NewTapeMachine(g)
+	if err = machine.RunAll(); err != nil {
+		t.Fatal(err)
+	}
 
 	sumT := tensor.New(
 		tensor.WithShape(1, 2, 3, 3),
@@ -41,22 +75,6 @@ func TestBroadcast_BCHW(t *testing.T) {
 			111, 112, 113,
 			114, 115, 116,
 		}))
-
-	sum := g.NewNode().(*Node)
-	g.AddNode(sum)
-	g.SetWeightedEdge(g.NewWeightedEdge(sum, x, 0.0))
-	g.SetWeightedEdge(g.NewWeightedEdge(sum, y, 1.0))
-	op := NewAddOperation(nil, []byte{0, 2, 3})
-
-	err := g.ApplyOp(op, sum)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	machine := NewTapeMachine(g)
-	if err = machine.RunAll(); err != nil {
-		t.Fatal(err)
-	}
 
 	assert.Equal(sumT.Shape(), sum.Shape(), "Tensors should be the same")
 	assert.InDeltaSlice(sumT.Data(), sum.Value().Data(), 1e-5, "Tensors should be the same")

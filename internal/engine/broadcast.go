@@ -64,13 +64,13 @@ func (bcpat BroadcastPattern) on() (retVal [2][]int) {
 }
 
 const (
-	left  byte = iota
-	right      = iota
+	first byte = iota
+	second
 )
 
 // NewBroadcastOperation returns a new broadcast operation to be applied on the graph
 // Warning, it modify the graph
-func newBroadcastOperation(axe byte, broadcastOn []int) Operation {
+func newBroadcastOperation(from byte, broadcastOn []int) Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 		// check if the graph is a weighted builder
 		builder, ok := g.(graph.DirectedWeightedBuilder)
@@ -83,46 +83,37 @@ func newBroadcastOperation(axe byte, broadcastOn []int) Operation {
 		}
 		it := getOrderedChildren(g, n)
 		if it.Len() != 2 {
-			return nil, errors.New("Unexpected number of children")
+			return nil, errors.New("Broadcast: Unexpected number of children")
 		}
 		children := make([]*Node, it.Len())
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
 		}
-		x := children[0]
-		y := children[1]
-
-		switch axe {
-		case left:
-			// Create the node that will receive the repeat operation
-			repeat := builder.NewNode().(*Node)
-			builder.AddNode(repeat)
-			// Link it to the input tensor
-			builder.SetWeightedEdge(builder.NewWeightedEdge(n, repeat, 0.0))
-			builder.SetWeightedEdge(builder.NewWeightedEdge(repeat, x, 0.0))
-
-			// Remove the link from n to x
-			g.(graph.EdgeRemover).RemoveEdge(n.ID(), x.ID())
-
-			for i, a := range broadcastOn {
-				size := builder.NewNode().(*Node)
-				builder.AddNode(size)
-				builder.SetWeightedEdge(builder.NewWeightedEdge(size, y, float64(i+1)))
-				opSize := NewSizeOf(a)
-				err := g.(*ExprGraph).ApplyOp(opSize, size)
-				if err != nil {
-					return nil, errors.Wrap(err, operationError)
-				}
-				builder.SetWeightedEdge(builder.NewWeightedEdge(repeat, size, float64(i+1)))
-			}
-			repeatChildren := getOrderedNodes(g, repeat)
-			rep := newRepeatOp(broadcastOn, repeatChildren)
-			return rep, nil
-		case right:
-		default:
-			return nil, errors.New("Broadcast error, invalid axe")
+		firstArg := children[0]
+		secondArg := children[1]
+		sizeFrom := firstArg
+		arg2 := secondArg
+		if from == second {
+			arg2 = firstArg
+			sizeFrom = secondArg
 		}
-		return nil, nil
+
+		for i, a := range broadcastOn {
+			size := builder.NewNode().(*Node)
+			builder.AddNode(size)
+			builder.SetWeightedEdge(builder.NewWeightedEdge(size, sizeFrom, float64(i)))
+			opSize := NewSizeOf(a)
+			err := g.(*ExprGraph).ApplyOp(opSize, size)
+			if err != nil {
+				return nil, errors.Wrap(err, operationError)
+			}
+
+			g.(graph.EdgeRemover).RemoveEdge(n.ID(), arg2.ID())
+			builder.SetWeightedEdge(builder.NewWeightedEdge(n, size, float64(i+2)))
+		}
+		repeatChildren := getOrderedNodes(g, n)
+		rep := newRepeatOp(broadcastOn, repeatChildren)
+		return rep, nil
 	}
 }
 

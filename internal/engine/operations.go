@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
@@ -430,7 +431,7 @@ func NewSizeOf(axis int) Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 		children := getOrderedNodes(g, n)
 		if len(children) != 1 {
-			return nil, errors.New("Unexpected number of children")
+			return nil, errors.New("SizeOf: Unexpected number of children")
 		}
 		x := children[0]
 		op := sizeOp{
@@ -440,6 +441,8 @@ func NewSizeOf(axis int) Operation {
 
 		// if the shape is known
 		if x.shape != nil {
+			log.Println(x.shape)
+			log.Println(axis)
 			op.val = x.shape[axis]
 		}
 		return op, nil
@@ -583,7 +586,7 @@ func NewReshapeOperation(s tensor.Shape) Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 		it := getOrderedChildren(g, n)
 		if it.Len() != 1 {
-			return nil, errors.New("Unexpected number of children")
+			return nil, errors.New("Reshape: Unexpected number of children")
 		}
 		children := make([]*Node, it.Len())
 		for i := 0; it.Next(); i++ {

@@ -57,7 +57,7 @@ func TestConv2d_F32(t *testing.T) {
 		18, 27, 27, 27, 18,
 		14, 21, 21, 21, 14,
 	}
-	t.Logf("%v", z.Value())
+	//t.Logf("%v", z.Value())
 
 	assert.Equal(t, correct, z.Value().Data())
 }
