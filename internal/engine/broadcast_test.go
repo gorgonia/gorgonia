@@ -1,9 +1,11 @@
 package engine
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/gorgonia/debugger/dot"
 	"gorgonia.org/tensor"
 )
 
@@ -47,18 +49,15 @@ func TestBroadcast_BCHW(t *testing.T) {
 	g.SetWeightedEdge(g.NewWeightedEdge(sum, y, 1.0))
 	op := NewAddOperation(nil, []byte{0, 2, 3})
 
-	/*
-		gviz, err := dot.Marshal(g)
-		if err != nil {
-			t.Fatal(err)
-		}
-		fmt.Println(string(gviz))
-	*/
-
 	err := g.ApplyOp(op, sum)
 	if err != nil {
 		t.Fatal(err)
 	}
+	gviz, err := dot.Marshal(g)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(string(gviz))
 
 	machine := NewTapeMachine(g)
 	if err = machine.RunAll(); err != nil {

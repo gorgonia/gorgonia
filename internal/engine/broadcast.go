@@ -92,9 +92,9 @@ func newBroadcastOperation(from byte, broadcastOn []int) Operation {
 		firstArg := children[0]
 		secondArg := children[1]
 		sizeFrom := firstArg
-		arg2 := secondArg
+		//arg2 := secondArg
 		if from == second {
-			arg2 = firstArg
+			//arg2 = firstArg
 			sizeFrom = secondArg
 		}
 
@@ -108,7 +108,7 @@ func newBroadcastOperation(from byte, broadcastOn []int) Operation {
 				return nil, errors.Wrap(err, operationError)
 			}
 
-			g.(graph.EdgeRemover).RemoveEdge(n.ID(), arg2.ID())
+			g.(graph.EdgeRemover).RemoveEdge(n.ID(), sizeFrom.ID())
 			builder.SetWeightedEdge(builder.NewWeightedEdge(n, size, float64(i+2)))
 		}
 		repeatChildren := getOrderedNodes(g, n)

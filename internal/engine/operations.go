@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
@@ -441,8 +440,6 @@ func NewSizeOf(axis int) Operation {
 
 		// if the shape is known
 		if x.shape != nil {
-			log.Println(x.shape)
-			log.Println(axis)
 			op.val = x.shape[axis]
 		}
 		return op, nil

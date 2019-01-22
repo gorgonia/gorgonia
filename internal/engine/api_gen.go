@@ -1,8 +1,6 @@
 package engine
 
 import (
-	"log"
-
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/node"
@@ -402,7 +400,6 @@ func NewAddOperation(leftAxes, rightAxes []byte) Operation {
 
 			pattern := newBroadcastPattern(leftAxes, rightAxes)
 			broadcastOn := pattern.on()
-			log.Println(broadcastOn)
 			switch {
 			case len(broadcastOn[0]) != 0:
 				// Remove the link from n to x
