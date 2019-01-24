@@ -99,18 +99,18 @@ func newBroadcastOperation(from byte, broadcastOn []int) Operation {
 		}
 
 		for i, a := range broadcastOn {
-			size := builder.NewNode().(*Node)
-			builder.AddNode(size)
-			builder.SetWeightedEdge(builder.NewWeightedEdge(size, sizeFrom, float64(i)))
+			size := g.(graph.DirectedWeightedBuilder).NewNode().(*Node)
+			size.name = n.(*Node).name + "_size"
+			g.(graph.DirectedWeightedBuilder).AddNode(size)
+			g.(graph.DirectedWeightedBuilder).SetWeightedEdge(builder.NewWeightedEdge(size, sizeFrom, float64(i+2)))
 			opSize := NewSizeOf(a)
 			err := g.(*ExprGraph).ApplyOp(opSize, size)
 			if err != nil {
 				return nil, errors.Wrap(err, operationError)
 			}
-
-			g.(graph.EdgeRemover).RemoveEdge(n.ID(), sizeFrom.ID())
-			builder.SetWeightedEdge(builder.NewWeightedEdge(n, size, float64(i+2)))
+			g.(graph.DirectedWeightedBuilder).SetWeightedEdge(builder.NewWeightedEdge(n, size, float64(i+2)))
 		}
+		g.(graph.EdgeRemover).RemoveEdge(n.ID(), sizeFrom.ID())
 		repeatChildren := getOrderedNodes(g, n)
 		rep := newRepeatOp(broadcastOn, repeatChildren)
 		return rep, nil

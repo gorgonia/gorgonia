@@ -115,5 +115,5 @@ func TypeOf(v Value) hm.Type {
 // the Scalar interface. The main reason is primarily due to optimizations with regards to memory allocation and copying for device interoperability.
 type Scalar interface {
 	Value
-	IsScalar() bool
+	IsScalarValue() bool
 }

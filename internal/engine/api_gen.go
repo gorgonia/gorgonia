@@ -405,6 +405,7 @@ func NewAddOperation(leftAxes, rightAxes []byte) Operation {
 				// Remove the link from n to x
 				g.(graph.EdgeRemover).RemoveEdge(n.ID(), x.ID())
 				broadcastedX := builder.NewNode().(*Node)
+				broadcastedX.name = n.(*Node).name + "_broadcastedX"
 				builder.AddNode(broadcastedX)
 				// Link it to the input tensor
 				builder.SetWeightedEdge(builder.NewWeightedEdge(n, broadcastedX, 0.0))
@@ -416,11 +417,12 @@ func NewAddOperation(leftAxes, rightAxes []byte) Operation {
 				if err != nil {
 					return nil, err
 				}
-				x = broadcastedX
+				//x = broadcastedX
 			case len(broadcastOn[1]) != 0:
 				// Remove the link from n to x
 				g.(graph.EdgeRemover).RemoveEdge(n.ID(), y.ID())
 				broadcastedY := builder.NewNode().(*Node)
+				broadcastedY.name = n.(*Node).name + "_broadcastedY"
 				builder.AddNode(broadcastedY)
 				// Link it to the input tensor
 				builder.SetWeightedEdge(builder.NewWeightedEdge(n, broadcastedY, 0.0))
@@ -432,10 +434,18 @@ func NewAddOperation(leftAxes, rightAxes []byte) Operation {
 				if err != nil {
 					return nil, err
 				}
-				y = broadcastedY
+				//y = broadcastedY
 			}
 		}
-		return newElemBinOp(addOpType, x, y), nil
+		it = getOrderedChildren(g, n)
+		if it.Len() != 2 {
+			return nil, errors.New("AddOperation: Unexpected number of children")
+		}
+		children = make([]*Node, it.Len())
+		for i := 0; it.Next(); i++ {
+			children[i] = it.Node().(*Node)
+		}
+		return newElemBinOp(addOpType, children[0], children[1]), nil
 	}
 }
 
