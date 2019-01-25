@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/xtgo/set"
+	"gonum.org/v1/gonum/graph"
 )
 
 // this file holds all the code that relates to register allocation
@@ -184,7 +185,7 @@ func (ra *regalloc) allocMutableOp(node *Node, nInterv *interval) {
 	compileLogf("Read %v", reads)
 
 	var letStmts Nodes
-	for _, parent := range node.g.To(node.ID()) {
+	for _, parent := range graph.NodesOf(node.g.To(node.ID())) {
 		n := parent.(*Node)
 		compileLogf("Parent: %v | %T", n, n.op)
 		if n.isStmt {

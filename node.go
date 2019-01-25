@@ -11,6 +11,7 @@ import (
 	"github.com/awalterschulze/gographviz"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/tensor"
 )
 
@@ -537,7 +538,7 @@ func (n *Node) RestrictedToDot(up, down int) string {
 		origLen := len(upQ)
 		for i := 0; i < origLen; i++ {
 			qn := upQ[i]
-			toQN := graphNodeToNode(g.To(qn.ID()))
+			toQN := graphNodeToNode(graph.NodesOf(g.To(qn.ID())))
 			upQ = append(upQ, toQN...)
 			ns = append(ns, toQN...)
 		}
