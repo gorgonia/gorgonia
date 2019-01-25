@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"gonum.org/v1/gonum/graph"
+	"gonum.org/v1/gonum/graph/iterator"
 	"gonum.org/v1/gonum/graph/topo"
 	"gorgonia.org/tensor"
 )
@@ -45,8 +46,8 @@ func TestGraphBasics(t *testing.T) {
 	assert.Equal(correctTo, g.to[x])
 
 	correctTo = Nodes{xy}
-	assert.Equal(correctTo, graphNodeToNode(graph.NodesOf(g.To(y.ID()))))
-	assert.Equal(correctTo, graphNodeToNode(graph.NodesOf(g.To(x.ID()))))
+	assert.Equal(correctTo, sliceNodesToNodes(graph.NodesOf(g.To(y.ID()))))
+	assert.Equal(correctTo, sliceNodesToNodes(graph.NodesOf(g.To(x.ID()))))
 
 	assert.Equal(3, g.Nodes().Len())
 
@@ -56,7 +57,10 @@ func TestGraphBasics(t *testing.T) {
 	assert.Equal(g, xy1.g)
 
 	var containsOne bool
-	for _, node := range graph.NodesOf(g.Nodes()) {
+
+	it := g.Nodes()
+	for it.Next() {
+		node := it.Node()
 		n := node.(*Node)
 		if n.Hashcode() == onef64.Hashcode() {
 			containsOne = true
@@ -98,7 +102,7 @@ func TestGraphSort(t *testing.T) {
 	}
 
 	// this is to remind myself how this thing sorts:
-	t.Logf("%v", graphNodeToNode(sortedNodes))
+	t.Logf("%v", graphNodeToNode(iterator.NewOrderedNodes(sortedNodes)))
 }
 
 // test that collisions are handled correctly

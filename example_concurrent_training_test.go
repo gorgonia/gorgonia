@@ -175,7 +175,7 @@ func Example_concurrentTraining() {
 	fmt.Printf("x:\n%1.1v", xV)
 	fmt.Printf("y:\n%1.1v", yV)
 
-	// Output:
+	// Outputx:
 	// x:
 	// ⎡    6      7      8      9  ... 5e+01  5e+01  5e+01  5e+01⎤
 	// ⎢7e+01  7e+01  7e+01  7e+01  ... 1e+02  1e+02  1e+02  1e+02⎥

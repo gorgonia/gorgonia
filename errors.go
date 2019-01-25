@@ -61,6 +61,7 @@ type vmContextualError struct {
 func (err vmContextualError) Node() *Node        { return err.node }
 func (err vmContextualError) Value() Value       { return err.node.Value() }
 func (err vmContextualError) InstructionID() int { return err.instr }
+func (err vmContextualError) Err() error         { return err.error }
 
 func nyi(what string, implFor interface{}) error {
 	return errors.Errorf(nyiFail, what, implFor)
