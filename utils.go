@@ -36,6 +36,14 @@ func graphNodeToNode(in graph.Nodes) (out Nodes) {
 	return
 }
 
+func sliceNodesToNodes(in []graph.Node) (out Nodes) {
+	out = make(Nodes, len(in))
+	for i := range in {
+		out[i] = in[i].(*Node)
+	}
+	return
+}
+
 func nodeToGraphNode(in []*Node) graph.Nodes {
 	nodes := make([]graph.Node, len(in))
 	for i, n := range in {

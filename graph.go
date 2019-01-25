@@ -6,7 +6,6 @@ import (
 
 	"github.com/awalterschulze/gographviz"
 	"gonum.org/v1/gonum/graph"
-	"gonum.org/v1/gonum/graph/iterator"
 )
 
 // ExprGraph is a data structure for a directed acyclic graph (of expressions). This structure is the main entry point
@@ -526,8 +525,7 @@ func (g *ExprGraph) Nodes() graph.Nodes {
 	// nodes := make([]graph.Node, len(g.from))
 	ns := g.AllNodes()
 
-	nodes := nodeToGraphNode(ns)
-	return iterator.NewOrderedNodes(nodes)
+	return nodeToGraphNode(ns)
 }
 
 // AllNodes is like Nodes, but returns Nodes instead of []graph.Node.
@@ -537,7 +535,7 @@ func (g *ExprGraph) AllNodes() Nodes { return g.all }
 // From returns all nodes in g that can be reached directly from n.
 func (g *ExprGraph) From(nodeid int64) graph.Nodes {
 	if n := g.node(nodeid); n != nil {
-		return iterator.NewOrderedNodes(nodeToGraphNode(n.children))
+		return nodeToGraphNode(n.children)
 	}
 	return nil
 }
@@ -594,7 +592,7 @@ func (g *ExprGraph) To(nid int64) graph.Nodes {
 	ns := g.to[n]
 	ns = ns.Set()
 	g.to[n] = ns
-	return iterator.NewOrderedNodes(nodeToGraphNode(ns))
+	return nodeToGraphNode(ns)
 }
 
 // subgraph is basically a subset of nodes. This is useful for compiling sub sections of the graph

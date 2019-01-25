@@ -46,8 +46,8 @@ func TestGraphBasics(t *testing.T) {
 	assert.Equal(correctTo, g.to[x])
 
 	correctTo = Nodes{xy}
-	assert.Equal(correctTo, graphNodeToNode(graph.NodesOf(g.To(y.ID()))))
-	assert.Equal(correctTo, graphNodeToNode(graph.NodesOf(g.To(x.ID()))))
+	assert.Equal(correctTo, sliceNodesToNodes(graph.NodesOf(g.To(y.ID()))))
+	assert.Equal(correctTo, sliceNodesToNodes(graph.NodesOf(g.To(x.ID()))))
 
 	assert.Equal(3, g.Nodes().Len())
 
