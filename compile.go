@@ -18,8 +18,12 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	enterLogScope()
 	defer leaveLogScope()
 
-	if len(g.AllNodes()) == 0 {
+	switch {
+	case len(g.AllNodes()) == 0:
 		err = errors.Errorf("Cannot compile an empty graph")
+		return
+	case g.Inputs().Len() == 0:
+		err = errors.Errorf("Cannot compile a graph that has no input nodes")
 		return
 	}
 

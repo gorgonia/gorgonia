@@ -187,6 +187,7 @@ func (ra *regalloc) allocMutableOp(node *Node, nInterv *interval) {
 	it := node.g.To(node.ID())
 	for it.Next() {
 		parent := it.Node()
+
 		n := parent.(*Node)
 		compileLogf("Parent: %v | %T", n, n.op)
 		if n.isStmt {

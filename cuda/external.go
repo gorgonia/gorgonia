@@ -93,7 +93,7 @@ func (e *Engine) Init(device cu.Device, size int64) (err error) {
 		e.Unlock()
 		err2 := e.Close()
 		if err2 != nil {
-			return errors.Wrapf(err, "Failed to initialize CUDA Engine with size %d for device %v. Additionally, there were errors that occured when cleaning up %v", size, device, err)
+			return errors.Wrapf(err, "Failed to initialize CUDA Engine with size %d for device %v. Additionally, there were errors that occurred when cleaning up %v", size, device, err)
 		}
 		return errors.Wrapf(err, "Failed to initialize CUDA Engine with size %d for device %v", size, device)
 	}
@@ -138,9 +138,6 @@ func (e *Engine) doInit(size int64) (err error) {
 	e.mbdy = attrs[6]
 	e.mbdz = attrs[7]
 
-	e.b.Init(cublas.WithContext(&e.c))
-
-	e.n = *(cudnn.NewContext())
 	e.m = make(map[string]cu.Module)
 	e.f = make(map[string]cu.Function)
 
@@ -160,6 +157,7 @@ func (e *Engine) doInit(size int64) (err error) {
 		return errors.Wrapf(err, "Failed to allocate %v bytes of managed memory for %v", allocsize, e.d)
 	}
 	e.a.reserve(uintptr(ptr), allocsize)
+	e.n = *(cudnn.NewContext())
 	go e.Run()
 	return nil
 }
@@ -168,6 +166,9 @@ func (e *Engine) Close() error {
 	e.Lock()
 	defer e.Unlock()
 	e.c.Cleanup() // frees all ancillary allocations in C land
+	if e.c.Context == nil {
+		return nil
+	}
 	cu.SetCurrentContext(e.c.Context.CUDAContext())
 
 	// Unload all modules (and consequently all functions)
@@ -226,6 +227,10 @@ func (e *Engine) Run() {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
+	// finish initialization
+	e.b.Init(cublas.WithContext(&e.c))
+
+	// finishChan2 blocks any external commands to engine (like Close) until it's ready to finish.
 	e.finishChan2 <- struct{}{}
 
 loop:
