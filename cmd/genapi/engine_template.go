@@ -27,6 +27,7 @@ func New{{.FnName}}Operation() Operation {
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
 		}
+
 		return newElemUnaryOp({{.OpType}}, children[0]), nil
 	}
 }
@@ -44,7 +45,7 @@ func {{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}) (*Node, error) {
 }
 
 // {{.FnName}}Op ...
-func New{{.FnName}}Operation({{if .AsSame}} retSame bool{{end}}) Operation {
+func New{{.FnName}}Operation(leftAxes, rightAxes []byte{{if .AsSame}}, retSame bool{{end}}) Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 		it := getOrderedChildren(g, n)
 		if it.Len() != 2 {
@@ -54,7 +55,67 @@ func New{{.FnName}}Operation({{if .AsSame}} retSame bool{{end}}) Operation {
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
 		}
-		{{if not .AsSame -}}return newElemBinOp({{.OpType}}, children[0], children[1]), nil {{else -}}
+		{{if not .AsSame -}}x := children[0]
+		y := children[1]
+
+		if leftAxes != nil || rightAxes != nil {
+			builder, ok := g.(graph.DirectedWeightedBuilder)
+			if !ok {
+				return nil, errors.Errorf("Broadcast needs to modify the graph but is not a DirectedWeightedBuilder")
+			}
+			_, ok = g.(graph.EdgeRemover)
+			if !ok {
+				return nil, errors.Errorf("Broadcast needs to modify the graph but is not an EdgeRemover")
+			}
+
+			pattern := newBroadcastPattern(leftAxes, rightAxes)
+			broadcastOn := pattern.on()
+			switch {
+			case len(broadcastOn[0]) != 0:
+				// Remove the link from n to x
+				g.(graph.EdgeRemover).RemoveEdge(n.ID(), x.ID())
+				broadcastedX := builder.NewNode().(*Node)
+				broadcastedX.name = n.(*Node).name + "_broadcastedX"
+				builder.AddNode(broadcastedX)
+				// Link it to the input tensor
+				builder.SetWeightedEdge(builder.NewWeightedEdge(n, broadcastedX, 0.0))
+				builder.SetWeightedEdge(builder.NewWeightedEdge(broadcastedX, x, 0.0))
+				builder.SetWeightedEdge(builder.NewWeightedEdge(broadcastedX, y, 1.0))
+
+				bcastOp := newBroadcastOperation(second, broadcastOn[0])
+				err := g.(*ExprGraph).ApplyOp(bcastOp, broadcastedX)
+				if err != nil {
+					return nil, err
+				}
+				//x = broadcastedX
+			case len(broadcastOn[1]) != 0:
+				// Remove the link from n to x
+				g.(graph.EdgeRemover).RemoveEdge(n.ID(), y.ID())
+				broadcastedY := builder.NewNode().(*Node)
+				broadcastedY.name = n.(*Node).name + "_broadcastedY"
+				builder.AddNode(broadcastedY)
+				// Link it to the input tensor
+				builder.SetWeightedEdge(builder.NewWeightedEdge(n, broadcastedY, 0.0))
+				builder.SetWeightedEdge(builder.NewWeightedEdge(broadcastedY, x, 0.0))
+				builder.SetWeightedEdge(builder.NewWeightedEdge(broadcastedY, y, 1.0))
+
+				bcastOp := newBroadcastOperation(first, broadcastOn[1])
+				err := g.(*ExprGraph).ApplyOp(bcastOp, broadcastedY)
+				if err != nil {
+					return nil, err
+				}
+				//y = broadcastedY
+			}
+		}
+		it = getOrderedChildren(g, n)
+		if it.Len() != 2 {
+			return nil, errors.New("AddOperation: Unexpected number of children")
+		}
+		children = make([]*Node, it.Len())
+		for i := 0; it.Next(); i++ {
+			children[i] = it.Node().(*Node)
+		}
+		return newElemBinOp({{.OpType}}, children[0], children[1]), nil {{else -}}
 		op:= newElemBinOp({{.OpType}}, children[0], children[1])
 		op.retSame = retSame
 		return op,nil
