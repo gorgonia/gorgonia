@@ -165,7 +165,9 @@ func (c *convDiffIm) Type() hm.Type {
 	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'))
 }
 
-func (c *convDiffIm) InferShape(...G.DimSizer) (tensor.Shape, error) { return c.inShape.Clone(), nil }
+func (c *convDiffIm) InferShape(shps ...G.DimSizer) (tensor.Shape, error) {
+	return c.inShape.Clone(), nil
+}
 
 func (c *convDiffIm) Do(...G.Value) (G.Value, error) {
 	panic("not implemented")
@@ -220,7 +222,7 @@ func (c *convDiffFilter) Type() hm.Type {
 }
 
 func (c *convDiffFilter) InferShape(...G.DimSizer) (tensor.Shape, error) {
-	return c.inShape.Clone(), nil
+	return c.filterShape.Clone(), nil
 }
 
 func (c *convDiffFilter) Do(...G.Value) (G.Value, error) {

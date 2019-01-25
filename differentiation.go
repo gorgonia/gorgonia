@@ -105,7 +105,7 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 			for _, child := range n.children {
 				parents := graph.NodesOf(g.To(child.ID()))
 
-				symdiffLogf("parents of %v: %v", child, graphNodeToNode(parents))
+				// symdiffLogf("parents of %v: %v", child, graphNodeToNode(parents))
 				if len(parents) == 1 && len(child.children) > 0 {
 					leaveLogScope()
 					return nil, errors.Errorf("Being unable to differentiate %v would leave a portion of the graph unreachable. Unable to continue", n)

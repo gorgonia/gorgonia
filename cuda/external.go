@@ -230,6 +230,7 @@ func (e *Engine) Run() {
 	// finish initialization
 	e.b.Init(cublas.WithContext(&e.c))
 
+	// finishChan2 blocks any external commands to engine (like Close) until it's ready to finish.
 	e.finishChan2 <- struct{}{}
 
 loop:
