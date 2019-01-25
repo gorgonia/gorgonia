@@ -26,6 +26,7 @@ type ExprGraph struct {
 	counter   uint
 }
 
+// graphconopt sets options
 type graphconopt func(g *ExprGraph)
 
 // WithGraphName is a ExprGraph construction option that provides a name.
