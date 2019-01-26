@@ -109,7 +109,6 @@ func (g *ExprGraph) applyOp(op ops.Op, n *Node) error {
 }
 
 // END_APPLY OMIT
-
 // START_APPLYOP OMIT
 
 // ApplyOp op to the node n. The children are extracted from the Graph g
