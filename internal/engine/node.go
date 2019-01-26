@@ -733,8 +733,12 @@ func (n *Node) Group() debugger.GroupID {
 
 // ApplyTensor to a node
 func (n *Node) ApplyTensor(t tensor.Tensor) error {
-	n.t = t.Dtype()
-	n.shape = t.Shape()
-	WithValue(t.Data())(n)
+	v, ht, _, err := value.AnyToValue(t)
+	if err != nil {
+		return err
+	}
+	n.t = ht
+	n.bind(v)
+	n.shape = v.Shape()
 	return nil
 }
