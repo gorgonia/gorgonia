@@ -24,7 +24,12 @@ func (r *Reshape) Constructor() func(g graph.WeightedDirected, n graph.Node) (in
 			children[i] = it.Node().(*engine.Node)
 		}
 		shape := children[1]
-		log.Println("DEBUG", shape)
-		return engine.NewReshapeOperation(shape.Shape())(g, n.(*engine.Node))
+		log.Println(shape.Value().Data())
+		var s []int
+		for _, v := range shape.Value().Data().([]int64) {
+			s = append(s, int(v))
+		}
+
+		return engine.NewReshapeOperation(s)(g, n.(*engine.Node))
 	}
 }
