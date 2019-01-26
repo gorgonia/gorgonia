@@ -582,9 +582,9 @@ func Concat(axis int, ns ...*Node) (retVal *Node, err error) {
 func NewReshapeOperation(s tensor.Shape) Operation {
 	return func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 		it := getOrderedChildren(g, n)
-		if it.Len() != 1 {
-			return nil, errors.New("Reshape: Unexpected number of children")
-		}
+		//if it.Len() != 1 {
+		//	return nil, errors.New("Reshape: Unexpected number of children")
+		//}
 		children := make([]*Node, it.Len())
 		for i := 0; it.Next(); i++ {
 			children[i] = it.Node().(*Node)
