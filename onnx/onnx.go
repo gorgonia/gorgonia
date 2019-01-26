@@ -14,9 +14,16 @@ type Graph struct {
 	*engine.ExprGraph
 }
 
+// NewGraph ...
+func NewGraph() *Graph {
+	return &Graph{engine.NewGraph()}
+}
+
 // ONNXGetOperationFromName ...
 func (g Graph) ONNXGetOperationFromName(s string) (interface{}, error) {
 	switch s {
+	case "Reshape":
+		return &Reshape{}, nil
 	case "Abs":
 		return &Abs{}, nil
 	case "Sign":
