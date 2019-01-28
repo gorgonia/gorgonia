@@ -73,38 +73,45 @@ func (g *ExprGraph) applyOp(op ops.Op, n *Node) error {
 		}
 	}
 
-	// TODO get children from the node
-	// typecheck  before creating
-	typeSysLogf("Inferring node type of %v :: %v with children: %#Y", op, op.Type(), Nodes(children))
-	enterLogScope()
-	defer leaveLogScope()
-	var retType hm.Type
-	retType, err := inferNodeType(op, children...)
-	if err != nil {
-		return errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())
-	}
-	typeSysLogf("Done inferring. Return type is: %#v(%T)", retType, retType)
+	switch op.Arity() {
+	// Special case if operator as an arity of 1, but has other childre as argument
+	// such as the reshape operator
+	case 1:
+		n.t = children[0].t
+		n.op = op
+		n.shape = children[0].shape
+	default:
+		var retType hm.Type
+		// TODO get children from the node
+		// typecheck  before creating
+		typeSysLogf("Inferring node type of %v :: %v with children: %#Y", op, op.Type(), Nodes(children))
+		enterLogScope()
+		defer leaveLogScope()
+		retType, err := inferNodeType(op, children...)
+		if err != nil {
+			return errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())
+		}
+		typeSysLogf("Done inferring. Return type is: %#v(%T)", retType, retType)
 
-	// infer shapes, but print errors instead of returning
-	shapeLogf("op: %v(%T) inferring shape", op, op)
-	err = ops.CheckArity(op, len(children))
-	if err != nil {
-		return err
-	}
+		// infer shapes, but print errors instead of returning
+		shapeLogf("op: %v(%T) inferring shape", op, op)
+		err = ops.CheckArity(op, len(children))
+		if err != nil {
+			return err
+		}
 
-	ds := Nodes(children).dimSizers()
-	s, err := op.InferShape(ds...)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to infer shape. Op: %v", op)
+		ds := Nodes(children).dimSizers()
+		s, err := op.InferShape(ds...)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to infer shape. Op: %v", op)
+		}
+		shapeLogf("inferred shape %v", s)
+
+		n.t = retType
+		n.op = op
+		n.shape = s
+		returnDimSizers(ds)
 	}
-	shapeLogf("inferred shape %v", s)
-	n.t = retType
-	n.op = op
-	n.shape = s
-	//WithType(retType)(n)
-	//WithOp(op)(n)
-	//WithShape(s...)(n)
-	returnDimSizers(ds)
 	return nil
 }
 
