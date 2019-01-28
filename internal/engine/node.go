@@ -737,8 +737,12 @@ func (n *Node) ApplyTensor(t tensor.Tensor) error {
 	if err != nil {
 		return err
 	}
-	n.t = ht
+	if n.t == nil {
+		n.t = ht
+	}
 	n.bind(v)
-	n.shape = v.Shape()
+	if n.shape == nil {
+		n.shape = v.Shape()
+	}
 	return nil
 }
