@@ -22,6 +22,8 @@ func NewGraph() *Graph {
 // ONNXGetOperationFromName ...
 func (g Graph) ONNXGetOperationFromName(s string) (interface{}, error) {
 	switch s {
+	case "Conv":
+		return NewConv(), nil
 	case "Reshape":
 		return &Reshape{}, nil
 	case "Abs":
@@ -97,6 +99,9 @@ func (g Graph) ONNXGetOperationFromName(s string) (interface{}, error) {
 func (g Graph) ONNXApply(operation func(g graph.WeightedDirected, n graph.Node) (interface{}, error), n graph.Node) error { // HL
 	oper := func(g graph.WeightedDirected, n node.Node) (ops.Op, error) {
 		output, err := operation(g, n)
+		if output == nil {
+			panic(err)
+		}
 		return output.(ops.Op), err
 	}
 	return g.ApplyOp(engine.Operation(oper), n.(*engine.Node))
