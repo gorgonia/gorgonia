@@ -2,7 +2,6 @@ package onnx
 
 import (
 	"errors"
-	"log"
 
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/internal/engine"
@@ -24,7 +23,6 @@ func (r *Reshape) Constructor() func(g graph.WeightedDirected, n graph.Node) (in
 			children[i] = it.Node().(*engine.Node)
 		}
 		shape := children[1]
-		log.Println(shape.Value().Data())
 		var s []int
 		for _, v := range shape.Value().Data().([]int64) {
 			s = append(s, int(v))
