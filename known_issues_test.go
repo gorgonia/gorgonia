@@ -87,10 +87,9 @@ func TestIssue182(t *testing.T) {
 // }
 
 func TestIssue268_im2col(t *testing.T) {
-	assert := assert.New(t)
 	g := NewGraph()
 	x := NewTensor(g, tensor.Float32, 4, WithShape(1, 2, 5, 5), WithInit(RangedFrom(0)))
-	yT := tensor.New(tensor.WithShape(1, 5, 5, 18), tensor.WithBacking([]float64{
+	yT := tensor.New(tensor.WithShape(1, 5, 5, 18), tensor.WithBacking([]float32{
 		0, 0, 0, 0, 0, 1, 0, 5, 6, 0, 0, 0, 0, 25, 26, 0, 30, 31, 0, 0, 0, 0, 1, 2, 5, 6, 7, 0, 0, 0, 25, 26, 27, 30,
 		31, 32, 0, 0, 0, 1, 2, 3, 6, 7, 8, 0, 0, 0, 26, 27, 28, 31, 32, 33, 0, 0, 0, 2, 3, 4, 7, 8, 9, 0, 0, 0, 27, 28,
 		29, 32, 33, 34, 0, 0, 0, 3, 4, 0, 8, 9, 0, 0, 0, 0, 28, 29, 0, 33, 34, 0, 0, 0, 1, 0, 5, 6, 0, 10, 11, 0, 25,
@@ -113,8 +112,8 @@ func TestIssue268_im2col(t *testing.T) {
 	if err = machine.RunAll(); err != nil {
 		t.Fatal(err)
 	}
-	assert.Equal(yT.Shape(), y.Shape(), "Tensors should be the same")
-	assert.InDeltaSlice(yT.Data(), y.Value().Data(), 1e-5, "Tensors should be the same")
+	assert.Equal(t, yT.Shape(), y.Shape(), "Tensors should be the same")
+	assert.InDeltaSlice(t, yT.Data(), y.Value().Data(), 1e-5, "Tensors should be the same")
 }
 
 func TestIssue233_F32(t *testing.T) {
