@@ -364,27 +364,29 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 }
 
 func (op im2colOp) f64s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float64) {
-	var colIdx int
-	for ch := 0; ch < chans; ch, im = ch+1, im[chanStride:] {
-		for r := 0; r < retHeight; r++ {
-			for c := 0; c < retWidth; c++ {
-				for kr := 0; kr < op.h; kr++ {
-					inRow := -op.padH + kr*op.dilationH + r*op.strideH
-					for kc := 0; kc < op.w; kc++ {
-						inCol := -op.padW + kc*op.dilationW + c*op.strideW
-						var val float64
-
-						switch {
-						case inRow < 0:
-						case inCol < 0:
-						case inRow*inRowStride+inCol >= len(im):
-						case inCol >= inRowStride:
-						default:
-							val = im[inRow*inRowStride+inCol]
+	colIdx := 0
+	var inputRow int
+	var inputCol int
+	for outputRow := 0; outputRow < retHeight; outputRow++ {
+		for outputCol := 0; outputCol < retWidth; outputCol++ {
+			for ch := 0; ch < chans; ch++ {
+				for kernelRow := 0; kernelRow < op.h; kernelRow++ {
+					inputRow = -op.padH + kernelRow*op.dilationH + outputRow*op.strideH
+					for kernelCol := 0; kernelCol < op.w; kernelCol++ {
+						if inputRow < 0 || inputRow >= height {
+							col[colIdx] = 0
+							colIdx++
+							continue
 						}
-
-						col[colIdx] = val
-						colIdx++
+						inputCol = -op.padW + kernelCol*op.dilationW + outputCol*op.strideW
+						if inputCol < 0 || inputCol >= width {
+							col[colIdx] = 0
+							colIdx++
+						} else {
+							imIdx := chanStride*ch + inputRow*width + inputCol
+							col[colIdx] = im[imIdx]
+							colIdx++
+						}
 					}
 				}
 			}
@@ -393,27 +395,29 @@ func (op im2colOp) f64s(chans, height, width, chanStride, inRowStride, retHeight
 }
 
 func (op im2colOp) f32s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float32) {
-	var colIdx int
-	for ch := 0; ch < chans; ch, im = ch+1, im[chanStride:] {
-		for r := 0; r < retHeight; r++ {
-			for c := 0; c < retWidth; c++ {
-				for kr := 0; kr < op.h; kr++ {
-					inRow := -op.padH + kr*op.dilationH + r*op.strideH
-					for kc := 0; kc < op.w; kc++ {
-						inCol := -op.padW + kc*op.dilationW + c*op.strideW
-						var val float32
-
-						switch {
-						case inRow < 0:
-						case inCol < 0:
-						case inRow*inRowStride+inCol >= len(im):
-						case inCol >= inRowStride:
-						default:
-							val = im[inRow*inRowStride+inCol]
+	colIdx := 0
+	var inputRow int
+	var inputCol int
+	for outputRow := 0; outputRow < retHeight; outputRow++ {
+		for outputCol := 0; outputCol < retWidth; outputCol++ {
+			for ch := 0; ch < chans; ch++ {
+				for kernelRow := 0; kernelRow < op.h; kernelRow++ {
+					inputRow = -op.padH + kernelRow*op.dilationH + outputRow*op.strideH
+					for kernelCol := 0; kernelCol < op.w; kernelCol++ {
+						if inputRow < 0 || inputRow >= height {
+							col[colIdx] = 0
+							colIdx++
+							continue
 						}
-
-						col[colIdx] = val
-						colIdx++
+						inputCol = -op.padW + kernelCol*op.dilationW + outputCol*op.strideW
+						if inputCol < 0 || inputCol >= width {
+							col[colIdx] = 0
+							colIdx++
+						} else {
+							imIdx := chanStride*ch + inputRow*width + inputCol
+							col[colIdx] = im[imIdx]
+							colIdx++
+						}
 					}
 				}
 			}
@@ -544,57 +548,60 @@ func (op col2imOp) do(prealloc, input Value) (retVal Value, err error) {
 
 func (op col2imOp) f64s(chans, height, width, chanStride, retHeight, retWidth int, col, im []float64) {
 	// memset im to 0
-	for i := range im {
+	for i := 0; i < len(im); i++ {
 		im[i] = 0
 	}
-	var colIdx int
-	for ch := chans; ch > 0; ch, im = ch-1, im[chanStride:] {
-		for kernelRow := 0; kernelRow < op.h; kernelRow++ {
-			for kernelCol := 0; kernelCol < op.w; kernelCol++ {
-				inRow := -op.padH + kernelRow*op.dilationH
-				for outRow := retHeight; outRow > 0; outRow-- {
-					if !(inRow >= 0 && inRow < height) {
-						colIdx += retWidth
-					} else {
-						inCol := -op.padW + kernelCol*op.dilationW
-						for outCol := retWidth; outCol > 0; outCol-- {
-							if inCol >= 0 && inCol < width {
-								im[inRow*width+inCol] += col[colIdx]
-							}
+	colIdx := 0
+	var inputRow int
+	var inputCol int
+	for outputRow := 0; outputRow < retHeight; outputRow++ {
+		for outputCol := 0; outputCol < retWidth; outputCol++ {
+			for ch := 0; ch < chans; ch++ {
+				for kernelRow := 0; kernelRow < op.h; kernelRow++ {
+					inputRow = -op.padH + kernelRow*op.dilationH + outputRow*op.strideH
+					for kernelCol := 0; kernelCol < op.w; kernelCol++ {
+						if inputRow < 0 || inputRow >= height {
 							colIdx++
-							inCol += op.strideW
+							continue
 						}
+						inputCol = -op.padW + kernelCol*op.dilationW + outputCol*op.strideW
+						if inputCol >= 0 && inputCol < width {
+							imIdx := chanStride*ch + inputRow*width + inputCol
+							im[imIdx] += col[colIdx]
+						}
+						colIdx++
 					}
-					inRow += op.strideH
 				}
 			}
 		}
 	}
 }
+
 func (op col2imOp) f32s(chans, height, width, chanStride, retHeight, retWidth int, col, im []float32) {
 	// memset im to 0
-	for i := range im {
+	for i := 0; i < len(im); i++ {
 		im[i] = 0
 	}
-	var colIdx int
-	for ch := chans; ch > 0; ch, im = ch-1, im[chanStride:] {
-		for kernelRow := 0; kernelRow < op.h; kernelRow++ {
-			for kernelCol := 0; kernelCol < op.w; kernelCol++ {
-				inRow := -op.padH + kernelRow*op.dilationH
-				for outRow := retHeight; outRow > 0; outRow-- {
-					if !(inRow >= 0 && inRow < height) {
-						colIdx += retWidth
-					} else {
-						inCol := -op.padW + kernelCol*op.dilationW
-						for outCol := retWidth; outCol > 0; outCol-- {
-							if inCol >= 0 && inCol < width {
-								im[inRow*width+inCol] += col[colIdx]
-							}
+	colIdx := 0
+	var inputRow int
+	var inputCol int
+	for outputRow := 0; outputRow < retHeight; outputRow++ {
+		for outputCol := 0; outputCol < retWidth; outputCol++ {
+			for ch := 0; ch < chans; ch++ {
+				for kernelRow := 0; kernelRow < op.h; kernelRow++ {
+					inputRow = -op.padH + kernelRow*op.dilationH + outputRow*op.strideH
+					for kernelCol := 0; kernelCol < op.w; kernelCol++ {
+						if inputRow < 0 || inputRow >= height {
 							colIdx++
-							inCol += op.strideW
+							continue
 						}
+						inputCol = -op.padW + kernelCol*op.dilationW + outputCol*op.strideW
+						if inputCol >= 0 && inputCol < width {
+							imIdx := chanStride*ch + inputRow*width + inputCol
+							im[imIdx] += col[colIdx]
+						}
+						colIdx++
 					}
-					inRow += op.strideH
 				}
 			}
 		}
