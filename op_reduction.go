@@ -11,6 +11,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash"
+	"sort"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -37,15 +38,37 @@ func (op maxOp) Type() hm.Type {
 
 	var retType hm.Type
 	if op.d == 1 || len(op.along) == 0 || len(op.along) == op.d {
-		// then it redueces down
+		// then it reduces down
 		return hm.NewFnType(t, a)
 	}
 	retType = makeTensorType(op.d-1, a)
 	return hm.NewFnType(t, retType)
 }
 
-func (op maxOp) InferShape(...DimSizer) (tensor.Shape, error) { return scalarShape, nil } // TODO, THIS IS INCORRECT
-func (op maxOp) DiffWRT(i int) []bool                         { return []bool{true} }
+//func (op maxOp) InferShape(...DimSizer) (tensor.Shape, error) { return scalarShape, nil } // TODO, THIS IS INCORRECT
+func (op maxOp) InferShape(dimsizers ...DimSizer) (tensor.Shape, error) {
+	if len(dimsizers) != 1 {
+		return nil, fmt.Errorf("len(dimsizers)!=1")
+	}
+	if !sort.IntsAreSorted(op.along) {
+		return nil, fmt.Errorf(" !sort.IntsAreSorted(op.along)")
+	}
+	s := make(tensor.Shape, op.d)
+	ds := dimsizers[0]
+	for d := 0; d < op.d; d++ {
+		if sort.SearchInts(op.along, d) < len(op.along) {
+			s[d] = 1
+		} else {
+			size, err := ds.DimSize(d)
+			if err != nil {
+				return s, err
+			}
+			s[d] = size
+		}
+	}
+	return s, nil
+}
+func (op maxOp) DiffWRT(i int) []bool { return []bool{true} }
 
 func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
@@ -81,8 +104,12 @@ func (op maxOp) Do(inputs ...Value) (retVal Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
-
-	return nil, errors.Errorf(nyiFail, "maxOp.Do", "maxOp")
+	if arg, ok := inputs[0].(*tensor.Dense); ok {
+		retVal, err = arg.Max(op.along...)
+		return
+	} else {
+		return nil, errors.Errorf("Max arg is not a tensor")
+	}
 }
 
 func (op maxOp) ReturnsPtr() bool     { return true }
