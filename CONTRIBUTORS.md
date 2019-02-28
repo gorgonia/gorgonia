@@ -1,26 +1,38 @@
-# Significant Contributors #
+# Contributors 1 #
 
+The following contributors have contributed in ways that required knowing how Gorgonia works - essentially forming the "backbone" of expertise
 
 * Xuanyi Chew @chewxy - initial package
-* Naseer Dari @ndari - errors and error handling
+* Ethan Lin @lynic - convolution bug fixes
 * Joe  Kabaka @kabaka0 - masked array functionality
 * Jorge Landivar @docmerlin - tests, bug finding and documentation
+* Dan Kortschak @kortschak - Gonum Graphs
+* Gareth Seneque @jokebroker - Release Czar
 * Matoko Ito @ynqa - tests, documentation and bug finding
+* Naseer Dari @ndari - errors and error handling
+* Olivier Wulveryck - Gonnx  and more
+* Pascal Masschelier @pa-m - Max op
 * Siquus (@siquus) - TensorDot, contraction
 * Tan Chen (@tantanchen) - Bug finding and documentation
 
 
-# Contributors
+# Contributors 2 #
 
+The following contributors have contributed to the quality of the project
 
 * Andrew Murray | @radarhere
 * Ankit Raj | @aj0t
+* Bart Fokker | @barthr
+* Bradley J Kemp | @bradleyjkemp
 * David Soller | @3ygun
 * Davor Kapsa | @dvrkps
+* Ferhat Elmas | @ferhatelmas
+* Fransesc Campoy | @campoy
+* Harald Nordgred | @HaraldNordgren
+* Ivan Fraixedes | @ifraixedes
 * James Michael DuPont | @h4ck3rm1k3
-* Jorge Landivar | @docmerlin
+* Vadim | @trigun117
 * Yuanlin Lian | @alienchow
-* Bart Fokker | @barthr
 
 
 For more contributors, check out the [github contributors page](https://github.com/gorgonia/graphs/contributors)
