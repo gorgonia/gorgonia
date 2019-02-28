@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/tensor"
 )
 
 func TestSumOp(t *testing.T) {
@@ -194,4 +195,22 @@ func TestSumOpDiff(t *testing.T) {
 	assert.True(ValueEq(z.Value(), c.Value()))
 
 	runtime.GC()
+}
+
+func TestMaxOp(t *testing.T) {
+	assert := assert.New(t)
+	dt := Float32
+	g := NewGraph()
+	Xn := NewTensor(g, dt, 2, WithShape(2, 2))
+	max := Must(Max(Xn, 0))
+
+	xT := tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float32{1, 2, 3, 4}))
+	vm := NewTapeMachine(g)
+	defer vm.Close()
+	vm.Let(Xn, xT)
+	err := vm.RunAll()
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal([]float32{3, 4}, max.Value().(*tensor.Dense).Data())
 }
