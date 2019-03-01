@@ -116,6 +116,34 @@ func TestIssue268_im2col(t *testing.T) {
 	assert.InDeltaSlice(t, yT.Data(), y.Value().Data(), 1e-5, "Tensors should be the same")
 }
 
+func TestIssue273_maxpool_pads(t *testing.T) {
+	g := NewGraph()
+	x := NewTensor(g, tensor.Float32, 4, WithShape(1, 2, 5, 5), WithInit(RangedFrom(0)))
+	yT := tensor.New(
+		tensor.WithShape(1, 2, 7, 7),
+		tensor.WithBacking([]float32{
+			0, 1, 2, 3, 4, 4, 4, 5, 6, 7, 8, 9, 9, 9, 10, 11, 12, 13, 14, 14, 14, 15, 16,
+			17, 18, 19, 19, 19, 20, 21, 22, 23, 24, 24, 24, 20, 21, 22, 23, 24, 24, 24,
+			20, 21, 22, 23, 24, 24, 24, 25, 26, 27, 28, 29, 29, 29, 30, 31, 32, 33, 34,
+			34, 34, 35, 36, 37, 38, 39, 39, 39, 40, 41, 42, 43, 44, 44, 44, 45, 46, 47,
+			48, 49, 49, 49, 45, 46, 47, 48, 49, 49, 49, 45, 46, 47, 48, 49, 49, 49,
+		}))
+
+	y, err := MaxPool2D(x, []int{3, 3}, []int{2, 2}, []int{1, 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	machine := NewTapeMachine(g)
+	if err = machine.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, yT.Shape(), y.Shape(), "Tensors should be the same")
+	assert.InDeltaSlice(t, yT.Data(), y.Value().Data(), 1e-5, "Tensors should be the same")
+
+}
+
 func TestIssue233_F32(t *testing.T) {
 	g := NewGraph()
 	xV := tensor.New(tensor.WithShape(1, 1, 5, 5), tensor.WithBacking([]float32{

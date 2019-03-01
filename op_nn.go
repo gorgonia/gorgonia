@@ -631,7 +631,7 @@ type maxPoolOp struct {
 }
 
 func newMaxPoolOp(inputShape, kernel tensor.Shape, pad, stride []int) *maxPoolOp {
-	return &maxPoolOp{
+	maxpoolOp := &maxPoolOp{
 		// Shape of Input
 		unpaddedB: inputShape[0],
 		unpaddedC: inputShape[1],
@@ -644,9 +644,9 @@ func newMaxPoolOp(inputShape, kernel tensor.Shape, pad, stride []int) *maxPoolOp
 		padW:    pad[1],
 		strideH: stride[0],
 		strideW: stride[1],
-
-		mask: tensor.New(tensor.Of(Int), tensor.WithShape(inputShape.Clone()...)),
 	}
+	maxpoolOp.mask = tensor.New(tensor.Of(tensor.Int), tensor.WithShape(maxpoolOp.calcShape(inputShape)...))
+	return maxpoolOp
 }
 
 func (op *maxPoolOp) Arity() int { return 1 }
@@ -764,8 +764,8 @@ func (op *maxPoolOp) checkInput(inputs ...Value) (tensor.Tensor, error) {
 func (op *maxPoolOp) calcShape(s tensor.Shape) tensor.Shape {
 	b, c, h, w := s[0], s[1], s[2], s[3]
 
-	pooledH := ceilDivInt((h - op.padH - op.h + 1), op.strideH)
-	pooledW := ceilDivInt((w - op.padW - op.w + 1), op.strideW)
+	pooledH := (h+2*op.padH-(op.h-1)-1)/op.strideH + 1
+	pooledW := (w+2*op.padW-(op.w-1)-1)/op.strideW + 1
 	return tensor.Shape{b, c, pooledH, pooledW}
 }
 
