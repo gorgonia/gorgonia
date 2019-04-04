@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"fmt"
 	"runtime"
 	"testing"
 
@@ -198,19 +199,39 @@ func TestSumOpDiff(t *testing.T) {
 }
 
 func TestMaxOp(t *testing.T) {
-	assert := assert.New(t)
-	dt := Float32
-	g := NewGraph()
-	Xn := NewTensor(g, dt, 2, WithShape(2, 2))
-	max := Must(Max(Xn, 0))
-
-	xT := tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float32{1, 2, 3, 4}))
-	vm := NewTapeMachine(g)
-	defer vm.Close()
-	vm.Let(Xn, xT)
-	err := vm.RunAll()
-	if err != nil {
-		t.Error(err)
+	subTests := []struct {
+		along    []int
+		expected interface{}
+	}{
+		{along: []int{0}, expected: []float32{5, 6}},
+		{along: []int{1}, expected: []float32{2, 4, 6}},
+		{along: []int{}, expected: float32(6)},
+		{along: []int{0, 1}, expected: float32(6)},
+		{along: []int{1, 0}, expected: float32(6)},
 	}
-	assert.Equal([]float32{3, 4}, max.Value().(*tensor.Dense).Data())
+
+	dt := Float32
+	for _, subTest := range subTests {
+		t.Run(fmt.Sprintf("along %d", subTest.along), func(t *testing.T) {
+			g := NewGraph()
+			Xn := NewTensor(g, dt, 2, WithShape(2, 2))
+			max := Must(Max(Xn, subTest.along...))
+			// resShape, errShape := max.op.(*maxOp).InferShape(Xn.Shape())
+			// fmt.Printf("along %d inferShape, %s", resShape, errShape)
+
+			xT := tensor.New(tensor.WithShape(3, 2), tensor.WithBacking([]float32{
+				1, 2,
+				3, 4,
+				5, 6}))
+			vm := NewTapeMachine(g)
+			defer vm.Close()
+			vm.Let(Xn, xT)
+			err := vm.RunAll()
+			if err != nil {
+				t.Error(err)
+			}
+			assert := assert.New(t)
+			assert.Equal(subTest.expected, max.Value().(*tensor.Dense).Data())
+		})
+	}
 }
