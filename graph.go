@@ -728,6 +728,7 @@ type edge struct {
 	weight   float64
 }
 
-func (e edge) From() graph.Node { return e.from }
-func (e edge) To() graph.Node   { return e.to }
-func (e edge) Weight() float64  { return e.weight }
+func (e edge) From() graph.Node         { return e.from }
+func (e edge) To() graph.Node           { return e.to }
+func (e edge) ReversedEdge() graph.Edge { e.from, e.to = e.to, e.from; return e }
+func (e edge) Weight() float64          { return e.weight }
