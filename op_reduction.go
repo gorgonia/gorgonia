@@ -11,7 +11,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash"
-	"sort"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -50,13 +49,16 @@ func (op maxOp) InferShape(dimsizers ...DimSizer) (tensor.Shape, error) {
 	if len(dimsizers) != 1 {
 		return nil, fmt.Errorf("len(dimsizers)!=1")
 	}
-	if !sort.IntsAreSorted(op.along) {
-		return nil, fmt.Errorf(" !sort.IntsAreSorted(op.along)")
-	}
 	s := make(tensor.Shape, op.d)
 	ds := dimsizers[0]
 	for d := 0; d < op.d; d++ {
-		if sort.SearchInts(op.along, d) < len(op.along) {
+		dInAlong := false
+		for _, dim := range op.along {
+			if d == dim {
+				dInAlong = true
+			}
+		}
+		if dInAlong {
 			s[d] = 1
 		} else {
 			size, err := ds.DimSize(d)
