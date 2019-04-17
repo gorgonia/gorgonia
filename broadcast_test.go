@@ -47,7 +47,7 @@ func TestBroadcast(t *testing.T) {
 
 	assert := assert.New(t)
 	var g *ExprGraph
-	var x, y, z *Node
+	var x, y, a, b, z *Node
 	var m *lispMachine
 	var err error
 
@@ -57,7 +57,12 @@ func TestBroadcast(t *testing.T) {
 	g = NewGraph()
 	x = NewMatrix(g, Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
 	y = NewVector(g, Float64, WithShape(2), WithValue(yT), WithName("y"))
-	if z, err = Broadcast(addOpType, x, y, NewBroadcastPattern(nil, []byte{1})); err != nil {
+	if a, b, err = Broadcast(x, y, NewBroadcastPattern(nil, []byte{1})); err != nil {
+		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
+		t.Fatal(err)
+	}
+	z, err = Add(a, b)
+	if a, b, err = Broadcast(x, y, NewBroadcastPattern(nil, []byte{1})); err != nil {
 		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
 		t.Fatal(err)
 	}
@@ -72,9 +77,14 @@ func TestBroadcast(t *testing.T) {
 	g = NewGraph()
 	x = NewMatrix(g, Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
 	y = NewVector(g, Float64, WithShape(2), WithValue(yT), WithName("y"))
-	if z, err = Broadcast(addOpType, y, x, NewBroadcastPattern([]byte{1}, nil)); err != nil {
+	if a, b, err = Broadcast(y, x, NewBroadcastPattern([]byte{1}, nil)); err != nil {
 		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
 		t.Fatalf("%+v", err)
+	}
+	z, err = Add(a, b)
+	if a, b, err = Broadcast(x, y, NewBroadcastPattern(nil, []byte{1})); err != nil {
+		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
+		t.Fatal(err)
 	}
 
 	m = NewLispMachine(g, ExecuteFwdOnly())
