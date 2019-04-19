@@ -82,25 +82,30 @@ func returnValue(v Value) {
 	}
 }
 
-var dimSizerPool = make(map[int]*sync.Pool)
+var dimSizerPool = new(sync.Map)
 
 func borrowDimSizers(size int) []DimSizer {
-	pool, ok := dimSizerPool[size]
+	var pool *sync.Pool
+	p, ok := dimSizerPool.Load(size)
+
 	if !ok {
 		s := size
 		pool = &sync.Pool{
 			New: func() interface{} { return make([]DimSizer, s, s) },
 		}
-		dimSizerPool[size] = pool
+		dimSizerPool.Store(size, pool)
+	} else {
+		pool = p.(*sync.Pool)
 	}
 	return pool.Get().([]DimSizer)
 }
 
 func returnDimSizers(ds []DimSizer) {
-	pool, ok := dimSizerPool[cap(ds)]
+	p, ok := dimSizerPool.Load(cap(ds))
 	if !ok {
 		return
 	}
+	pool := p.(*sync.Pool)
 	for i := range ds {
 		ds[i] = nil
 	}
@@ -129,7 +134,7 @@ func returnTensorType(t *TensorType) {
 	tensorTypePool.Put(t)
 }
 
-// ReturnType
+// ReturnType ...
 func ReturnType(t hm.Type) {
 	switch tt := t.(type) {
 	case *TensorType:
