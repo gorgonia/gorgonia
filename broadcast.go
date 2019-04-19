@@ -58,10 +58,13 @@ func (bcpat BroadcastPattern) on() (retVal [2][]int) {
 	return
 }
 
+// Broadcast apply the pattern to the input nodes
+// and returns two nodes suitable for a binary operator.
 // Broadcast works somewhat like Numpy's broadcast, except it's now exposed as a function.
-func Broadcast(binOp ʘBinaryOperatorType, a, b *Node, pattern BroadcastPattern) (retVal *Node, err error) {
+func Broadcast(a, b *Node, pattern BroadcastPattern) (*Node, *Node, error) {
 	broadcastOn := pattern.on()
 
+	var err error
 	x := a
 	y := b
 
@@ -70,13 +73,13 @@ func Broadcast(binOp ʘBinaryOperatorType, a, b *Node, pattern BroadcastPattern)
 		for _, a := range broadcastOn[0] {
 			var size *Node
 			if size, err = SizeOf(a, y); err != nil {
-				return nil, errors.Wrap(err, operationError)
+				return nil, nil, errors.Wrap(err, operationError)
 			}
 			children = append(children, size)
 		}
 		rep := newRepeatOp(broadcastOn[0], children)
 		if x, err = ApplyOp(rep, children...); err != nil {
-			return nil, errors.Wrap(err, operationError)
+			return nil, nil, errors.Wrap(err, operationError)
 		}
 	}
 
@@ -85,16 +88,14 @@ func Broadcast(binOp ʘBinaryOperatorType, a, b *Node, pattern BroadcastPattern)
 		for _, a := range broadcastOn[1] {
 			var size *Node
 			if size, err = SizeOf(a, x); err != nil {
-				return nil, errors.Wrap(err, operationError)
+				return nil, nil, errors.Wrap(err, operationError)
 			}
 			children = append(children, size)
 		}
 		rep := newRepeatOp(broadcastOn[1], children)
 		if y, err = ApplyOp(rep, children...); err != nil {
-			return nil, errors.Wrap(err, operationError)
+			return nil, nil, errors.Wrap(err, operationError)
 		}
 	}
-
-	op := newElemBinOp(binOp, x, y)
-	return ApplyOp(op, x, y)
+	return x, y, nil
 }
