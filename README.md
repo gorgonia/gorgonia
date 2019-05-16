@@ -1,4 +1,4 @@
-![Logo](https://raw.githubusercontent.com/gorgonia/gorgonia/new-logo/media/Logo_horizontal_small.png)
+![Logo](https://raw.githubusercontent.com/gorgonia/gorgonia/master/media/Logo_horizontal_small.png)
 
 [![GoDoc](https://godoc.org/gorgonia.org/gorgonia?status.svg)](https://godoc.org/gorgonia.org/gorgonia) [![GitHub version](https://badge.fury.io/gh/gorgonia%2Fgorgonia.svg)](https://badge.fury.io/gh/gorgonia%2Fgorgonia) [![Build Status](https://travis-ci.org/gorgonia/gorgonia.svg?branch=master)](https://travis-ci.org/gorgonia/gorgonia) [![Coverage Status](https://coveralls.io/repos/github/gorgonia/gorgonia/badge.svg?branch=master)](https://coveralls.io/github/gorgonia/gorgonia?branch=master) [![Go Report Card](https://goreportcard.com/badge/gorgonia.org/gorgonia)](https://goreportcard.com/report/gorgonia.org/gorgonia) [![unstable](http://badges.github.io/stability-badges/dist/unstable.svg)](http://github.com/badges/stability-badges)
 
