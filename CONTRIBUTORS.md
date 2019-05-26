@@ -33,6 +33,6 @@ The following contributors have contributed to the quality of the project
 * James Michael DuPont | @h4ck3rm1k3
 * Vadim | @trigun117
 * Yuanlin Lian | @alienchow
-
+* Mathieu Ronse (Logo) | @WeAreBears
 
 For more contributors, check out the [github contributors page](https://github.com/gorgonia/graphs/contributors)

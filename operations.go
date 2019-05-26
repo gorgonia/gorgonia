@@ -151,7 +151,11 @@ func SoftMax(a *Node) (retVal *Node, err error) {
 			if sum.IsScalar() {
 				return HadamardDiv(exp, sum)
 			}
-			return Broadcast(divOpType, exp, sum, NewBroadcastPattern(nil, []byte{1}))
+			a, b, err := Broadcast(exp, sum, NewBroadcastPattern(nil, []byte{1}))
+			if err != nil {
+				return nil, errors.Wrap(err, operationError)
+			}
+			return Div(a, b)
 		}
 		return nil, errors.Wrap(err, operationError)
 	}

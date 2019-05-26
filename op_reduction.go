@@ -11,7 +11,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash"
-	"sort"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -50,13 +49,16 @@ func (op maxOp) InferShape(dimsizers ...DimSizer) (tensor.Shape, error) {
 	if len(dimsizers) != 1 {
 		return nil, fmt.Errorf("len(dimsizers)!=1")
 	}
-	if !sort.IntsAreSorted(op.along) {
-		return nil, fmt.Errorf(" !sort.IntsAreSorted(op.along)")
-	}
 	s := make(tensor.Shape, op.d)
 	ds := dimsizers[0]
 	for d := 0; d < op.d; d++ {
-		if sort.SearchInts(op.along, d) < len(op.along) {
+		dInAlong := false
+		for _, dim := range op.along {
+			if d == dim {
+				dInAlong = true
+			}
+		}
+		if dInAlong {
 			s[d] = 1
 		} else {
 			size, err := ds.DimSize(d)
@@ -88,13 +90,19 @@ func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 		}
 	}
 
-	var eq *Node
+	var a, b, a2, b2, eq *Node
 	bcpat := NewBroadcastPattern(leftAxes, nil)
-	if eq, err = Broadcast(eqOpType, output, t, bcpat); err != nil {
+	if a, b, err = Broadcast(output, t, bcpat); err != nil {
+		return nil, errors.Wrap(err, operationError)
+	}
+	if eq, err = Eq(a, b, false); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
 
-	if retVal[0], err = Broadcast(mulOpType, gradNode, eq, bcpat); err != nil {
+	if a2, b2, err = Broadcast(gradNode, eq, bcpat); err != nil {
+		return nil, errors.Wrap(err, operationError)
+	}
+	if retVal[0], err = Mul(a2, b2); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
 	return
@@ -107,9 +115,8 @@ func (op maxOp) Do(inputs ...Value) (retVal Value, err error) {
 	if arg, ok := inputs[0].(*tensor.Dense); ok {
 		retVal, err = arg.Max(op.along...)
 		return
-	} else {
-		return nil, errors.Errorf("Max arg is not a tensor")
 	}
+	return nil, errors.Errorf("Max arg is not a tensor")
 }
 
 func (op maxOp) ReturnsPtr() bool     { return true }
