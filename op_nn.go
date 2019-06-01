@@ -1575,5 +1575,57 @@ func (op *batchnormDiffOp) f32s(input, inGrad, outGrad *tensor.Dense) (err error
 	// pass.
 	vecf32.Div(ig, tmp)
 	return nil
+}
 
+type lrnOp struct {
+	local       int
+	alpha, beta float64
+}
+
+func (op *lrnOp) Arity() int {
+	panic("not implemented")
+}
+
+func (op *lrnOp) Type() hm.Type {
+	panic("not implemented")
+}
+
+func (op *lrnOp) InferShape(...gorgonia.DimSizer) (tensor.Shape, error) {
+	panic("not implemented")
+}
+
+func (op *lrnOp) Do(...gorgonia.Value) (gorgonia.Value, error) {
+	panic("not implemented")
+}
+
+func (op *lrnOp) ReturnsPtr() bool {
+	panic("not implemented")
+}
+
+func (op *lrnOp) CallsExtern() bool {
+	panic("not implemented")
+}
+
+func (op *lrnOp) OverwritesInput() int {
+	panic("not implemented")
+}
+
+func (op *lrnOp) WriteHash(h hash.Hash) {
+	panic("not implemented")
+}
+
+func (op *lrnOp) Hashcode() uint32 {
+	panic("not implemented")
+}
+
+func (op *lrnOp) String() string {
+	panic("not implemented")
+}
+
+func (op *lrnOp) DiffWRT(inputs int) []bool {
+	panic("not implemented")
+}
+
+func (op *lrnOp) SymDiff(inputs gorgonia.Nodes, output *gorgonia.Node, grad *gorgonia.Node) (retVal gorgonia.Nodes, err error) {
+	panic("not implemented")
 }
