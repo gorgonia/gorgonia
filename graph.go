@@ -15,6 +15,7 @@ type ExprGraph struct {
 
 	all Nodes
 
+	byId   map[int64]int
 	byHash map[uint32]*Node
 	evac   map[uint32]Nodes
 	to     map[*Node]Nodes
@@ -39,6 +40,7 @@ func WithGraphName(name string) graphconopt {
 // NewGraph creates a new graph. Duh
 func NewGraph(opts ...graphconopt) *ExprGraph {
 	g := &ExprGraph{
+		byId:   make(map[int64]int),
 		byHash: make(map[uint32]*Node),
 		evac:   make(map[uint32]Nodes),
 		to:     make(map[*Node]Nodes),
@@ -88,6 +90,7 @@ func (g *ExprGraph) Clone() interface{} {
 		}
 	}
 
+	g2.byId = make(map[int64]int)
 	g2.byHash = make(map[uint32]*Node)
 	for k, v := range g.byHash {
 		g2.byHash[k] = mapping[v]
@@ -497,17 +500,25 @@ func (g *ExprGraph) removeAllEdgesFrom(n *Node) {
 // Node returns the node in the graph with the given ID.
 func (g *ExprGraph) Node(id int64) graph.Node {
 	// n := (*Node)(unsafe.Pointer(uintptr(id)))
-	for _, n := range g.all {
-		if n.id == id {
-			return n
-		}
-	}
-	return nil
+	// for _, n := range g.all {
+	// 	if n.id == id {
+	// 		return n
+	// 	}
+	// }
+	// return nil
+	return g.node(id)
 }
 
 func (g *ExprGraph) node(id int64) *Node {
-	for _, n := range g.all {
+	if idx, ok := g.byId[id]; ok {
+		if idx >= len(g.all) {
+			return nil
+		}
+		return g.all[idx]
+	}
+	for i, n := range g.all {
 		if n.id == id {
+			g.byId[id] = i
 			return n
 		}
 	}
@@ -662,6 +673,7 @@ func (g *ExprGraph) subgraph(ns Nodes, findMissing bool, opts ...Nodes) *ExprGra
 
 	retVal := &ExprGraph{
 		all:    ns,
+		byId:   make(map[int64]int),
 		byHash: g.byHash,
 		evac:   g.evac,
 		to:     g.to,

@@ -489,6 +489,8 @@ type sliceOp struct {
 	d int // how many dimensions were the original tensor
 }
 
+func (op *sliceOp) IsSlice() tensor.Slice { return op.Slice }
+
 func newSliceOp(s tensor.Slice, along, d int) *sliceOp {
 	return &sliceOp{
 		Slice: s,

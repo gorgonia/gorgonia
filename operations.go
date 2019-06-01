@@ -83,7 +83,7 @@ func BatchedMatMul(a, b *Node) (retVal *Node, err error) {
 // OuterProd returns a Node representing the outer product of two vectors. This function will return an error if both input nodes are not vectors
 func OuterProd(a, b *Node) (retVal *Node, err error) {
 	if !a.IsVector() || !b.IsVector() {
-		return nil, errors.New("Expected only vectors to be able to do OuterProd") //for now
+		return nil, errors.Errorf("Expected only vectors to be able to do OuterProd. %v is %v. %v is %v", a, a.Shape(), b, b.Shape()) //for now
 	}
 
 	// TODO: maybe align shapes?
