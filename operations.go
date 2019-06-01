@@ -93,7 +93,7 @@ func OuterProd(a, b *Node) (retVal *Node, err error) {
 
 // Div is a shortcut function for HadamardDiv for scalar values. For matrix/tensor values, the matrix division operation is not yet handled, and will panic.
 func Div(a, b *Node) (retVal *Node, err error) {
-	if a.IsScalar() || b.IsScalar() {
+	if a.IsScalar() || b.IsScalar() || a.Shape().Eq(b.Shape()) {
 		return HadamardDiv(a, b)
 	}
 
