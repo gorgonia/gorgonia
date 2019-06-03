@@ -425,7 +425,7 @@ func TestLeakyRelu(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 			defer m.Close()
-			assert.Equal(output.Value().Data(), tst.yT)
+			assert.InDeltaSlice(tst.yT.Data(), output.Value().Data(), 1e-6, "the two tensors should be equal.")
 		})
 	}
 }
