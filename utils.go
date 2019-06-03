@@ -256,8 +256,22 @@ func minInt(a, b int) int {
 	return b
 }
 
+func floorDivInt(a, b int) int {
+	if a%b == 0 {
+		return a / b
+	}
+
+	div := a / b
+	if a < 0 && b > 0 || a > 0 && b < 0 {
+		return div - 1
+	}
+	return div
+}
 func ceilDivInt(a, b int) int {
-	return (a + b - 1) / b
+	if a%b == 0 {
+		return a / b
+	}
+	return floorDivInt(a, b) + 1
 }
 
 func simpleHash(op hashWriter) uint32 {

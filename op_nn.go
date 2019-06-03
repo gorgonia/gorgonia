@@ -621,16 +621,19 @@ type maxPoolOp struct {
 	unpaddedH int
 	unpaddedW int
 
-	h, w             int // patch height and width
-	padH, padW       int
-	strideH, strideW int
+	h, w                 int // patch height and width
+	padH, padW           int
+	strideH, strideW     int
+	dilationH, dilationW int
 
 	// execution state
 	// the mask is only filled at execution time
 	mask tensor.Tensor
+	// when True, will use ceil instead of floor to compute the output shape
+	ceilMode bool
 }
 
-func newMaxPoolOp(inputShape, kernel tensor.Shape, pad, stride []int) *maxPoolOp {
+func newMaxPoolOp(inputShape, kernel tensor.Shape, pad, stride []int, ceilMode bool) *maxPoolOp {
 	maxpoolOp := &maxPoolOp{
 		// Shape of Input
 		unpaddedB: inputShape[0],
@@ -638,12 +641,15 @@ func newMaxPoolOp(inputShape, kernel tensor.Shape, pad, stride []int) *maxPoolOp
 		unpaddedH: inputShape[2],
 		unpaddedW: inputShape[3],
 
-		h:       kernel[0],
-		w:       kernel[1],
-		padH:    pad[0],
-		padW:    pad[1],
-		strideH: stride[0],
-		strideW: stride[1],
+		h:         kernel[0],
+		w:         kernel[1],
+		padH:      pad[0],
+		padW:      pad[1],
+		strideH:   stride[0],
+		strideW:   stride[1],
+		dilationH: 1,
+		dilationW: 1,
+		ceilMode:  ceilMode,
 	}
 	maxpoolOp.mask = tensor.New(tensor.Of(tensor.Int), tensor.WithShape(maxpoolOp.calcShape(inputShape)...))
 	return maxpoolOp
@@ -764,8 +770,12 @@ func (op *maxPoolOp) checkInput(inputs ...Value) (tensor.Tensor, error) {
 func (op *maxPoolOp) calcShape(s tensor.Shape) tensor.Shape {
 	b, c, h, w := s[0], s[1], s[2], s[3]
 
-	pooledH := (h+2*op.padH-(op.h-1)-1)/op.strideH + 1
-	pooledW := (w+2*op.padW-(op.w-1)-1)/op.strideW + 1
+	divOp := floorDivInt
+	if op.ceilMode {
+		divOp = ceilDivInt
+	}
+	pooledH := divOp(h+2*op.padH-(op.h-1)*op.dilationH-1, op.strideH) + 1
+	pooledW := divOp(w+2*op.padW-(op.w-1)*op.dilationW-1, op.strideW) + 1
 	return tensor.Shape{b, c, pooledH, pooledW}
 }
 

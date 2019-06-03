@@ -136,13 +136,65 @@ func TestIm2Col(t *testing.T) {
 	}
 }
 
+func TestMaxPool2D_ceil(t *testing.T) {
+	assert := assert.New(t)
+	dts := []struct {
+		typ     tensor.Dtype
+		backing interface{}
+		res     interface{}
+	}{
+		{
+			typ:     tensor.Float32,
+			backing: []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			res:     []float32{11, 12, 15, 16},
+		},
+		{
+			typ:     tensor.Float64,
+			backing: []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			res:     []float64{11, 12, 15, 16},
+		},
+	}
+
+	for _, dt := range dts {
+		g := NewGraph()
+		xT := tensor.New(tensor.Of(dt.typ),
+			tensor.WithShape(1, 1, 4, 4),
+			tensor.WithBacking(dt.backing),
+		)
+		x := NodeFromAny(g, xT)
+		y, err := MaxPool2D(x, tensor.Shape{3, 3}, []int{0, 0}, []int{2, 2}, true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		m := NewTapeMachine(g, BindDualValues())
+		if err := m.RunAll(); err != nil {
+			t.Fatal(err)
+		}
+		m.Close()
+		yT := tensor.New(tensor.Of(dt.typ),
+			tensor.WithShape(1, 1, 2, 2),
+			tensor.WithBacking(dt.res))
+
+		if len(y.Shape()) != len(yT.Shape()) {
+			t.Fatalf("Maxpool: expected shape %v, got %v", yT.Shape(), y.Shape())
+		}
+		for i, v := range y.Shape() {
+			if v != yT.Shape()[i] {
+				t.Fatalf("Maxpool: expected shape %v, got %v", yT.Shape(), y.Shape())
+			}
+		}
+		assert.Equal(y.Value().Data(), yT.Data())
+	}
+
+}
+
 func TestMaxPool2D(t *testing.T) {
 	assert := assert.New(t)
 	dts := []tensor.Dtype{tensor.Float64, tensor.Float32}
 	for _, dt := range dts {
 		g := NewGraph()
 		x := NewTensor(g, dt, 4, WithShape(1, 2, 3, 4), WithInit(RangedFrom(0)))
-		y, err := MaxPool2D(x, tensor.Shape{2, 2}, []int{0, 0}, []int{1, 1})
+		y, err := MaxPool2D(x, tensor.Shape{2, 2}, []int{0, 0}, []int{1, 1}, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -163,7 +215,7 @@ func TestMaxPool2D(t *testing.T) {
 
 		h := NewGraph()
 		a := NewTensor(h, dt, 4, WithShape(1, 2, 3, 4), WithInit(RangedFrom(0)))
-		b, err := MaxPool2D(a, tensor.Shape{2, 2}, []int{0, 0}, []int{1, 1})
+		b, err := MaxPool2D(a, tensor.Shape{2, 2}, []int{0, 0}, []int{1, 1}, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -376,4 +428,56 @@ func TestBatchNorm_F32(t *testing.T) {
 		}
 	}
 
+}
+
+func TestLeakyRelu(t *testing.T) {
+	tests := []struct {
+		name  string
+		alpha float64
+		xT    tensor.Tensor
+		yT    tensor.Tensor
+	}{
+		{
+			name:  "simple float32",
+			alpha: 0.1,
+			xT: tensor.New(
+				tensor.WithShape(3, 4, 5),
+				tensor.WithBacking([]float32{1.7640524, 0.4001572, 0.978738, 2.2408931, 1.867558, -0.9772779, 0.95008844, -0.1513572, -0.10321885, 0.41059852, 0.14404356, 1.4542735, 0.7610377, 0.121675014, 0.44386324, 0.33367434, 1.4940791, -0.20515826, 0.3130677, -0.85409576, -2.5529897, 0.6536186, 0.8644362, -0.742165, 2.2697546, -1.4543657, 0.045758516, -0.18718386, 1.5327792, 1.4693588, 0.15494743, 0.37816253, -0.88778573, -1.9807965, -0.34791216, 0.15634897, 1.2302907, 1.2023798, -0.3873268, -0.30230275, -1.048553, -1.420018, -1.7062702, 1.9507754, -0.5096522, -0.4380743, -1.2527953, 0.7774904, -1.6138978, -0.21274029, -0.89546657, 0.3869025, -0.51080513, -1.1806322, -0.028182229, 0.42833188, 0.06651722, 0.3024719, -0.6343221, -0.36274117}),
+			),
+			yT: tensor.New(
+				tensor.WithShape(3, 4, 5),
+				tensor.WithBacking([]float32{1.7640524, 0.4001572, 0.978738, 2.2408931, 1.867558, -0.09772779, 0.95008844, -0.01513572, -0.010321885, 0.41059852, 0.14404356, 1.4542735, 0.7610377, 0.121675014, 0.44386324, 0.33367434, 1.4940791, -0.020515827, 0.3130677, -0.085409574, -0.25529897, 0.6536186, 0.8644362, -0.07421651, 2.2697546, -0.14543657, 0.045758516, -0.018718386, 1.5327792, 1.4693588, 0.15494743, 0.37816253, -0.08877858, -0.19807965, -0.034791216, 0.15634897, 1.2302907, 1.2023798, -0.03873268, -0.030230274, -0.1048553, -0.1420018, -0.17062703, 1.9507754, -0.05096522, -0.04380743, -0.12527953, 0.7774904, -0.16138978, -0.021274028, -0.08954666, 0.3869025, -0.051080514, -0.11806323, -0.0028182229, 0.42833188, 0.06651722, 0.3024719, -0.06343221, -0.036274116}),
+			),
+		},
+		{
+			name:  "simple float64",
+			alpha: 0.1,
+			xT: tensor.New(
+				tensor.WithShape(3, 4, 5),
+				tensor.WithBacking([]float64{1.7640524, 0.4001572, 0.978738, 2.2408931, 1.867558, -0.9772779, 0.95008844, -0.1513572, -0.10321885, 0.41059852, 0.14404356, 1.4542735, 0.7610377, 0.121675014, 0.44386324, 0.33367434, 1.4940791, -0.20515826, 0.3130677, -0.85409576, -2.5529897, 0.6536186, 0.8644362, -0.742165, 2.2697546, -1.4543657, 0.045758516, -0.18718386, 1.5327792, 1.4693588, 0.15494743, 0.37816253, -0.88778573, -1.9807965, -0.34791216, 0.15634897, 1.2302907, 1.2023798, -0.3873268, -0.30230275, -1.048553, -1.420018, -1.7062702, 1.9507754, -0.5096522, -0.4380743, -1.2527953, 0.7774904, -1.6138978, -0.21274029, -0.89546657, 0.3869025, -0.51080513, -1.1806322, -0.028182229, 0.42833188, 0.06651722, 0.3024719, -0.6343221, -0.36274117}),
+			),
+			yT: tensor.New(
+				tensor.WithShape(3, 4, 5),
+				tensor.WithBacking([]float64{1.7640524, 0.4001572, 0.978738, 2.2408931, 1.867558, -0.09772779, 0.95008844, -0.01513572, -0.010321885, 0.41059852, 0.14404356, 1.4542735, 0.7610377, 0.121675014, 0.44386324, 0.33367434, 1.4940791, -0.020515827, 0.3130677, -0.085409574, -0.25529897, 0.6536186, 0.8644362, -0.07421651, 2.2697546, -0.14543657, 0.045758516, -0.018718386, 1.5327792, 1.4693588, 0.15494743, 0.37816253, -0.08877858, -0.19807965, -0.034791216, 0.15634897, 1.2302907, 1.2023798, -0.03873268, -0.030230274, -0.1048553, -0.1420018, -0.17062703, 1.9507754, -0.05096522, -0.04380743, -0.12527953, 0.7774904, -0.16138978, -0.021274028, -0.08954666, 0.3869025, -0.051080514, -0.11806323, -0.0028182229, 0.42833188, 0.06651722, 0.3024719, -0.06343221, -0.036274116}),
+			),
+		},
+	}
+	for _, tst := range tests {
+		t.Run(tst.name, func(t *testing.T) {
+			g := NewGraph()
+			assert := assert.New(t)
+			x := NodeFromAny(g, tst.xT)
+			output, err := LeakyRelu(x, tst.alpha)
+
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			m := NewTapeMachine(g)
+			if err := m.RunAll(); err != nil {
+				t.Fatalf("%+v", err)
+			}
+			defer m.Close()
+			assert.InDeltaSlice(tst.yT.Data(), output.Value().Data(), 1e-6, "the two tensors should be equal.")
+		})
+	}
 }
