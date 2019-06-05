@@ -4,7 +4,7 @@ package main
 
 import (
 	"gonum.org/v1/gonum/blas/gonum"
-	. "gorgonia.org/gorgonia"
+	. "gorgonia"
 )
 
 func init() {

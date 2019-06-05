@@ -3,7 +3,7 @@
 package main
 
 import (
-	. "gorgonia.org/gorgonia"
+	. "gorgonia"
 	"gorgonia.org/gorgonia/blase"
 )
 

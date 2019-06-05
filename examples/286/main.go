@@ -10,7 +10,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/pkg/errors"
-	"gorgonia.org/gorgonia"
+	"gorgonia"
 	"gorgonia.org/tensor"
 )
 

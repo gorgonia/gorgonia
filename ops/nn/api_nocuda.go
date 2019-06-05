@@ -3,7 +3,7 @@
 package nnops
 
 import (
-	G "gorgonia.org/gorgonia"
+	G "gorgonia"
 	"gorgonia.org/tensor"
 )
 

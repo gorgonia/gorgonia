@@ -15,7 +15,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/pkg/errors"
-	"gorgonia.org/gorgonia"
+	"gorgonia"
 	"gorgonia.org/gorgonia/examples/mnist"
 	"gorgonia.org/tensor"
 

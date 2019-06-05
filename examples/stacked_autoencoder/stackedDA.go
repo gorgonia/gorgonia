@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	. "gorgonia.org/gorgonia"
+	. "gorgonia"
 	"gorgonia.org/tensor"
 )
 

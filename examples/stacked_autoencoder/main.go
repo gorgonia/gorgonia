@@ -14,7 +14,7 @@ import (
 	"runtime/pprof"
 
 	"gonum.org/v1/gonum/blas/gonum"
-	T "gorgonia.org/gorgonia"
+	T "gorgonia"
 	"gorgonia.org/gorgonia/examples/mnist"
 	"gorgonia.org/tensor"
 )

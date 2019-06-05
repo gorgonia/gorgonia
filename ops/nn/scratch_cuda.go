@@ -7,7 +7,7 @@ import (
 	"hash"
 
 	"github.com/chewxy/hm"
-	"gorgonia.org/gorgonia"
+	"gorgonia"
 	"gorgonia.org/tensor"
 )
 

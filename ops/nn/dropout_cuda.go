@@ -10,10 +10,10 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia"
 	"gorgonia.org/cu"
 	cudnn "gorgonia.org/cu/dnn"
 	t2cudnn "gorgonia.org/cu/dnn/interop"
-	"gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
 

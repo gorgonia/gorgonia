@@ -7,9 +7,9 @@ import (
 	"hash"
 
 	"github.com/chewxy/hm"
+	G "gorgonia"
 	cudnn "gorgonia.org/cu/dnn"
 	t2cudnn "gorgonia.org/cu/dnn/interop"
-	G "gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	. "gorgonia.org/gorgonia"
+	. "gorgonia"
 	"gorgonia.org/tensor"
 )
 

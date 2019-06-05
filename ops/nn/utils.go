@@ -6,7 +6,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
-	"gorgonia.org/gorgonia"
+	"gorgonia"
 	"gorgonia.org/tensor"
 )
 
