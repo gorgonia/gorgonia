@@ -1,4 +1,4 @@
-module gorgonia
+module gorgonia.org/gorgonia
 
 go 1.12
 
