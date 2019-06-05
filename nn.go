@@ -98,6 +98,60 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 	return HadamardDiv(retVal, c)
 }
 
+// LeakyRelu returns a node whose underlying value is:
+//   f(x) = alpha * x if x < 0
+//   f(x) = x for x >= 0
+// applied elementwise.
+func LeakyRelu(x *Node, alpha float64) (*Node, error) {
+	var zero *Node
+	var dt tensor.Dtype
+	var err error
+	var alphaN *Node
+
+	// which zero to use?
+	if dt, err = dtypeOf(x.t); err != nil {
+		return nil, errors.Wrap(err, dtypeOfFail)
+	}
+	switch dt {
+	case Float64:
+		zero = zerof64
+		alphaN = NewConstant(alpha)
+	case Float32:
+		zero = zerof32
+		alphaN = NewConstant(float32(alpha))
+	default:
+		return nil, errors.Errorf(nyiFail, "ReLu", dt)
+	}
+
+	gteZeroOp := newElemBinOp(gteOpType, x, zero)
+	gteZeroOp.retSame = true
+
+	xGteZeroCmp, err := ApplyOp(gteZeroOp, x, zero)
+	if err != nil {
+		return nil, errors.Wrap(err, applyOpFail)
+	}
+	ltZeroOp := newElemBinOp(ltOpType, x, zero)
+	ltZeroOp.retSame = true
+
+	xLtZeroCmp, err := ApplyOp(ltZeroOp, x, zero)
+	if err != nil {
+		return nil, errors.Wrap(err, applyOpFail)
+	}
+	xGteZero, err := HadamardProd(x, xGteZeroCmp)
+	if err != nil {
+		return nil, errors.Wrap(err, applyOpFail)
+	}
+	xLtZero, err := HadamardProd(x, xLtZeroCmp)
+	if err != nil {
+		return nil, errors.Wrap(err, applyOpFail)
+	}
+	xLtZeroAlpha, err := HadamardProd(xLtZero, alphaN)
+	if err != nil {
+		return nil, errors.Wrap(err, applyOpFail)
+	}
+	return Add(xGteZero, xLtZeroAlpha)
+}
+
 // Rectify is a convenience function for creating rectified linear units activation functions.
 // This function uses >=, which is the canonical version. If you want to use >, you can create
 // your own by just following this.
