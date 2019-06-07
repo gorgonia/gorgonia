@@ -304,7 +304,7 @@ func Conv1d(in, filter *Node, kernel, pad, stride, dilation int) (*Node, error) 
 	return Conv2d(in, filter, tensor.Shape{1, kernel}, []int{0, pad}, []int{1, stride}, []int{1, dilation})
 }
 
-func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
+func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int, ceilMode bool) (*Node, error) {
 	xShape := x.Shape()
 	h, w := xShape[2], xShape[3]
 	kh, kw := kernel[0], kernel[1]
@@ -328,12 +328,12 @@ func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 		return nil, errors.New("Impossible width/kernel/pad combination")
 	}
 
-	op := newMaxPoolOp(xShape, kernel, pad, stride)
+	op := newMaxPoolOp(xShape, kernel, pad, stride, ceilMode)
 	return ApplyOp(op, x)
 }
 
-func MaxPool1D(x *Node, kernel, pad, stride int) (*Node, error) {
-	return MaxPool2D(x, tensor.Shape{1, kernel}, []int{0, pad}, []int{1, stride})
+func MaxPool1D(x *Node, kernel, pad, stride int, ceilMode bool) (*Node, error) {
+	return MaxPool2D(x, tensor.Shape{1, kernel}, []int{0, pad}, []int{1, stride}, ceilMode)
 }
 
 func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β *Node, op *BatchNormOp, err error) {

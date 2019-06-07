@@ -136,13 +136,65 @@ func TestIm2Col(t *testing.T) {
 	}
 }
 
+func TestMaxPool2D_ceil(t *testing.T) {
+	assert := assert.New(t)
+	dts := []struct {
+		typ     tensor.Dtype
+		backing interface{}
+		res     interface{}
+	}{
+		{
+			typ:     tensor.Float32,
+			backing: []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			res:     []float32{11, 12, 15, 16},
+		},
+		{
+			typ:     tensor.Float64,
+			backing: []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			res:     []float64{11, 12, 15, 16},
+		},
+	}
+
+	for _, dt := range dts {
+		g := NewGraph()
+		xT := tensor.New(tensor.Of(dt.typ),
+			tensor.WithShape(1, 1, 4, 4),
+			tensor.WithBacking(dt.backing),
+		)
+		x := NodeFromAny(g, xT)
+		y, err := MaxPool2D(x, tensor.Shape{3, 3}, []int{0, 0}, []int{2, 2}, true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		m := NewTapeMachine(g, BindDualValues())
+		if err := m.RunAll(); err != nil {
+			t.Fatal(err)
+		}
+		m.Close()
+		yT := tensor.New(tensor.Of(dt.typ),
+			tensor.WithShape(1, 1, 2, 2),
+			tensor.WithBacking(dt.res))
+
+		if len(y.Shape()) != len(yT.Shape()) {
+			t.Fatalf("Maxpool: expected shape %v, got %v", yT.Shape(), y.Shape())
+		}
+		for i, v := range y.Shape() {
+			if v != yT.Shape()[i] {
+				t.Fatalf("Maxpool: expected shape %v, got %v", yT.Shape(), y.Shape())
+			}
+		}
+		assert.Equal(y.Value().Data(), yT.Data())
+	}
+
+}
+
 func TestMaxPool2D(t *testing.T) {
 	assert := assert.New(t)
 	dts := []tensor.Dtype{tensor.Float64, tensor.Float32}
 	for _, dt := range dts {
 		g := NewGraph()
 		x := NewTensor(g, dt, 4, WithShape(1, 2, 3, 4), WithInit(RangedFrom(0)))
-		y, err := MaxPool2D(x, tensor.Shape{2, 2}, []int{0, 0}, []int{1, 1})
+		y, err := MaxPool2D(x, tensor.Shape{2, 2}, []int{0, 0}, []int{1, 1}, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -163,7 +215,7 @@ func TestMaxPool2D(t *testing.T) {
 
 		h := NewGraph()
 		a := NewTensor(h, dt, 4, WithShape(1, 2, 3, 4), WithInit(RangedFrom(0)))
-		b, err := MaxPool2D(a, tensor.Shape{2, 2}, []int{0, 0}, []int{1, 1})
+		b, err := MaxPool2D(a, tensor.Shape{2, 2}, []int{0, 0}, []int{1, 1}, false)
 		if err != nil {
 			t.Fatal(err)
 		}

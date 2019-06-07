@@ -129,7 +129,7 @@ func TestIssue273_maxpool_pads(t *testing.T) {
 			48, 49, 49, 49, 45, 46, 47, 48, 49, 49, 49, 45, 46, 47, 48, 49, 49, 49,
 		}))
 
-	y, err := MaxPool2D(x, []int{3, 3}, []int{2, 2}, []int{1, 1})
+	y, err := MaxPool2D(x, []int{3, 3}, []int{2, 2}, []int{1, 1}, false)
 	if err != nil {
 		t.Fatal(err)
 	}
