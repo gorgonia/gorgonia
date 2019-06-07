@@ -14,6 +14,7 @@ The following contributors have contributed in ways that required knowing how Go
 * Pascal Masschelier @pa-m - Max op
 * Siquus (@siquus) - TensorDot, contraction
 * Tan Chen (@tantanchen) - Bug finding and documentation
+* Geoff Sindel (@durp) - gomod
 
 
 # Contributors 2 #
