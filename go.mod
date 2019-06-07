@@ -1,4 +1,4 @@
-module gorgonia
+module gorgonia.org/gorgonia
 
 go 1.12
 
@@ -21,7 +21,6 @@ require (
 	gopkg.in/cheggaaa/pb.v1 v1.0.27
 	gorgonia.org/cu v0.9.0-beta
 	gorgonia.org/dawson v1.1.0
-	gorgonia.org/gorgonia v0.9.1
 	gorgonia.org/tensor v0.9.0-beta
 	gorgonia.org/vecf32 v0.7.0
 	gorgonia.org/vecf64 v0.7.0
