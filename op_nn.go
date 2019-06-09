@@ -621,9 +621,11 @@ type maxPoolOp struct {
 	unpaddedH int
 	unpaddedW int
 
-	h, w             int // patch height and width
-	padH, padW       int
-	strideH, strideW int
+	h, w              int // patch height and width
+	padNorth, padWest int
+	padSouth, padEast int
+	explicitPadding   bool
+	strideH, strideW  int
 
 	// execution state
 	// the mask is only filled at execution time
@@ -631,6 +633,18 @@ type maxPoolOp struct {
 }
 
 func newMaxPoolOp(inputShape, kernel tensor.Shape, pad, stride []int) *maxPoolOp {
+	padNorth := pad[0]
+	padWest := pad[1]
+	padSouth := pad[0]
+	padEast := pad[1]
+	explicitPadding := false
+	if len(pad) == 4 {
+		explicitPadding = true
+		padNorth = pad[0]
+		padSouth = pad[1]
+		padWest = pad[2]
+		padEast = pad[3]
+	}
 	maxpoolOp := &maxPoolOp{
 		// Shape of Input
 		unpaddedB: inputShape[0],
@@ -638,12 +652,15 @@ func newMaxPoolOp(inputShape, kernel tensor.Shape, pad, stride []int) *maxPoolOp
 		unpaddedH: inputShape[2],
 		unpaddedW: inputShape[3],
 
-		h:       kernel[0],
-		w:       kernel[1],
-		padH:    pad[0],
-		padW:    pad[1],
-		strideH: stride[0],
-		strideW: stride[1],
+		h:               kernel[0],
+		w:               kernel[1],
+		padNorth:        padNorth,
+		padWest:         padWest,
+		padSouth:        padSouth,
+		padEast:         padEast,
+		explicitPadding: explicitPadding,
+		strideH:         stride[0],
+		strideW:         stride[1],
 	}
 	maxpoolOp.mask = tensor.New(tensor.Of(tensor.Int), tensor.WithShape(maxpoolOp.calcShape(inputShape)...))
 	return maxpoolOp
@@ -682,7 +699,7 @@ func (op *maxPoolOp) OverwritesInput() int { return -1 }
 func (op *maxPoolOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "MaxPool{%d, %d, %d, %d}(kernel: (%d, %d), pad: (%d, %d), stride: (%d, %d))",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
-		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+		op.h, op.w, op.padNorth, op.padWest, op.strideH, op.strideW)
 }
 
 func (op *maxPoolOp) Hashcode() uint32 { return simpleHash(op) }
@@ -690,7 +707,7 @@ func (op *maxPoolOp) Hashcode() uint32 { return simpleHash(op) }
 func (op *maxPoolOp) String() string {
 	return fmt.Sprintf("MaxPool{%d, %d, %d, %d}(kernel: (%d, %d), pad: (%d, %d), stride: (%d, %d))",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
-		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+		op.h, op.w, op.padNorth, op.padWest, op.strideH, op.strideW)
 }
 
 func (op *maxPoolOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
@@ -764,8 +781,8 @@ func (op *maxPoolOp) checkInput(inputs ...Value) (tensor.Tensor, error) {
 func (op *maxPoolOp) calcShape(s tensor.Shape) tensor.Shape {
 	b, c, h, w := s[0], s[1], s[2], s[3]
 
-	pooledH := (h+2*op.padH-(op.h-1)-1)/op.strideH + 1
-	pooledW := (w+2*op.padW-(op.w-1)-1)/op.strideW + 1
+	pooledH := (h+op.padSouth+op.padNorth-(op.h-1)-1)/op.strideH + 1
+	pooledW := (w+op.padEast+op.padWest-(op.w-1)-1)/op.strideW + 1
 	return tensor.Shape{b, c, pooledH, pooledW}
 }
 
@@ -811,13 +828,20 @@ func (op *maxPoolOp) f32s(batches, channels, outH, outW, inH, inW,
 		outData[i] = -maxFloat32
 		maskData[i] = -1
 	}
+	padH := op.padNorth
+	padW := op.padWest
+	if op.explicitPadding {
+		padH = op.padSouth
+		padW = op.padEast
+	}
 
 	for b := 0; b < batches; b++ {
 		for c := 0; c < channels; c++ {
 			for ph := 0; ph < outH; ph++ {
 				for pw := 0; pw < outW; pw++ {
-					hStart := ph*op.strideH - op.padH
-					wStart := pw*op.strideW - op.padW
+
+					hStart := ph*op.strideH - padH
+					wStart := pw*op.strideW - padW
 					hEnd := minInt(hStart+op.h, inH)
 					wEnd := minInt(wStart+op.w, inW)
 					hStart = maxInt(hStart, 0)
@@ -853,13 +877,19 @@ func (op *maxPoolOp) f64s(batches, channels, outH, outW, inH, inW,
 		outData[i] = -maxFloat64
 		maskData[i] = -1
 	}
+	padH := op.padNorth
+	padW := op.padWest
+	if op.explicitPadding {
+		padH = op.padSouth
+		padW = op.padEast
+	}
 
 	for b := 0; b < batches; b++ {
 		for c := 0; c < channels; c++ {
 			for ph := 0; ph < outH; ph++ {
 				for pw := 0; pw < outW; pw++ {
-					hStart := ph*op.strideH - op.padH
-					wStart := pw*op.strideW - op.padW
+					hStart := ph*op.strideH - padH
+					wStart := pw*op.strideW - padW
 					hEnd := minInt(hStart+op.h, inH)
 					wEnd := minInt(wStart+op.w, inW)
 					hStart = maxInt(hStart, 0)
@@ -920,7 +950,7 @@ func (op *maxPoolDiffOp) OverwritesInput() int { return -1 }
 func (op *maxPoolDiffOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "MaxPoolDiff{%d, %d, %d, %d}(kernel: (%d, %d), pad: (%d, %d), stride: (%d, %d))",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
-		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+		op.h, op.w, op.padNorth, op.padWest, op.strideH, op.strideW)
 }
 
 func (op *maxPoolDiffOp) Hashcode() uint32 { return simpleHash(op) }
@@ -928,7 +958,7 @@ func (op *maxPoolDiffOp) Hashcode() uint32 { return simpleHash(op) }
 func (op *maxPoolDiffOp) String() string {
 	return fmt.Sprintf("MaxPoolDiff{%d, %d, %d, %d}(kernel: (%d, %d), pad: (%d, %d), stride: (%d, %d))",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
-		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+		op.h, op.w, op.padNorth, op.padWest, op.strideH, op.strideW)
 }
 
 func (op *maxPoolDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
