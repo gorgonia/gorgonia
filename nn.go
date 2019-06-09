@@ -304,6 +304,16 @@ func Conv1d(in, filter *Node, kernel, pad, stride, dilation int) (*Node, error) 
 	return Conv2d(in, filter, tensor.Shape{1, kernel}, []int{0, pad}, []int{1, stride}, []int{1, dilation})
 }
 
+// MaxPool2D applies the kernel filter to the input node.
+// The pad slice can have two different lengths.
+//
+// - if len(pad) == 2, padding is assume to be symetric, and a padding is adding up *and* down to each dimension
+//   paddedOutputH = pad[0] + inputH + pad[0]
+//   paddedOutputW = pad[1] + inputW + pad[1]
+//
+// - if len(pad) == 4, padding is explicit and can be asymmetric.
+//   paddedOutputH = pad[0] + inputH + pad[1]
+//   paddedOutputW = pad[2] + inputW + pad[3]
 func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 	xShape := x.Shape()
 	h, w := xShape[2], xShape[3]

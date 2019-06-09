@@ -621,9 +621,11 @@ type maxPoolOp struct {
 	unpaddedH int
 	unpaddedW int
 
-	h, w             int // patch height and width
-	padH, padW       int
-	strideH, strideW int
+	h, w                 int // patch height and width
+	padH, padW           int
+	padHLower, padWLower int
+	explicitPadding      bool
+	strideH, strideW     int
 
 	// execution state
 	// the mask is only filled at execution time
@@ -631,6 +633,19 @@ type maxPoolOp struct {
 }
 
 func newMaxPoolOp(inputShape, kernel tensor.Shape, pad, stride []int) *maxPoolOp {
+	var padH, padHL, padW, padWL int
+	padH = pad[0]
+	padW = pad[1]
+	padHL = pad[0]
+	padWL = pad[1]
+	explicitPadding := false
+	if len(pad) == 4 {
+		explicitPadding = true
+		padH = pad[0]
+		padHL = pad[1]
+		padW = pad[2]
+		padWL = pad[3]
+	}
 	maxpoolOp := &maxPoolOp{
 		// Shape of Input
 		unpaddedB: inputShape[0],
@@ -638,12 +653,15 @@ func newMaxPoolOp(inputShape, kernel tensor.Shape, pad, stride []int) *maxPoolOp
 		unpaddedH: inputShape[2],
 		unpaddedW: inputShape[3],
 
-		h:       kernel[0],
-		w:       kernel[1],
-		padH:    pad[0],
-		padW:    pad[1],
-		strideH: stride[0],
-		strideW: stride[1],
+		h:               kernel[0],
+		w:               kernel[1],
+		padH:            padH,
+		padW:            padW,
+		padHLower:       padHL,
+		padWLower:       padWL,
+		explicitPadding: explicitPadding,
+		strideH:         stride[0],
+		strideW:         stride[1],
 	}
 	maxpoolOp.mask = tensor.New(tensor.Of(tensor.Int), tensor.WithShape(maxpoolOp.calcShape(inputShape)...))
 	return maxpoolOp
@@ -764,8 +782,8 @@ func (op *maxPoolOp) checkInput(inputs ...Value) (tensor.Tensor, error) {
 func (op *maxPoolOp) calcShape(s tensor.Shape) tensor.Shape {
 	b, c, h, w := s[0], s[1], s[2], s[3]
 
-	pooledH := (h+2*op.padH-(op.h-1)-1)/op.strideH + 1
-	pooledW := (w+2*op.padW-(op.w-1)-1)/op.strideW + 1
+	pooledH := (h+op.padHLower+op.padH-(op.h-1)-1)/op.strideH + 1
+	pooledW := (w+op.padWLower+op.padW-(op.w-1)-1)/op.strideW + 1
 	return tensor.Shape{b, c, pooledH, pooledW}
 }
 
@@ -811,13 +829,20 @@ func (op *maxPoolOp) f32s(batches, channels, outH, outW, inH, inW,
 		outData[i] = -maxFloat32
 		maskData[i] = -1
 	}
+	padH := op.padH
+	padW := op.padW
+	if op.explicitPadding {
+		padH = op.padHLower
+		padW = op.padWLower
+	}
 
 	for b := 0; b < batches; b++ {
 		for c := 0; c < channels; c++ {
 			for ph := 0; ph < outH; ph++ {
 				for pw := 0; pw < outW; pw++ {
-					hStart := ph*op.strideH - op.padH
-					wStart := pw*op.strideW - op.padW
+
+					hStart := ph*op.strideH - padH
+					wStart := pw*op.strideW - padW
 					hEnd := minInt(hStart+op.h, inH)
 					wEnd := minInt(wStart+op.w, inW)
 					hStart = maxInt(hStart, 0)
@@ -853,13 +878,19 @@ func (op *maxPoolOp) f64s(batches, channels, outH, outW, inH, inW,
 		outData[i] = -maxFloat64
 		maskData[i] = -1
 	}
+	padH := op.padH
+	padW := op.padW
+	if op.explicitPadding {
+		padH = op.padHLower
+		padW = op.padWLower
+	}
 
 	for b := 0; b < batches; b++ {
 		for c := 0; c < channels; c++ {
 			for ph := 0; ph < outH; ph++ {
 				for pw := 0; pw < outW; pw++ {
-					hStart := ph*op.strideH - op.padH
-					wStart := pw*op.strideW - op.padW
+					hStart := ph*op.strideH - padH
+					wStart := pw*op.strideW - padW
 					hEnd := minInt(hStart+op.h, inH)
 					wEnd := minInt(wStart+op.w, inW)
 					hStart = maxInt(hStart, 0)
