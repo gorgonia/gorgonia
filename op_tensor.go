@@ -1142,9 +1142,19 @@ func (op reshapeOp) Do(vals ...Value) (Value, error) {
 	}
 	var val Value
 	var err error
-	if val, err = CloneValue(vals[0]); err != nil {
-		return nil, errors.Wrapf(err, cloneFail, vals[0])
+	switch vals[0].(type) {
+	case tensor.Tensor:
+		if v, ok := vals[0].(*tensor.Dense); ok {
+			val = v.ShallowClone()
+		} else {
+			if val, err = CloneValue(vals[0]); err != nil {
+				return nil, errors.Wrapf(err, cloneFail, vals[0])
+			}
+		}
+	default:
+		return nil, errors.Errorf(nyiTypeFail, "reshape.Do", "Non tensor")
 	}
+
 	if !val.Shape().Eq(op.from) {
 		return nil, errors.Errorf("Shape mismatch. Input shape is %v. Expected %v", val.Shape(), op.from)
 	}
