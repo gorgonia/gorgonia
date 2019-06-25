@@ -893,17 +893,18 @@ func TestTensordot(t *testing.T) {
 }
 
 var reshapeTests = []struct {
-	input  tensor.Shape
-	to     tensor.Shape
-	output tensor.Shape
-	err    bool
+	testName string
+	input    tensor.Shape
+	to       tensor.Shape
+	output   tensor.Shape
+	err      bool
 }{
-	{tensor.Shape{2, 2}, tensor.Shape{4}, tensor.Shape{4}, false},
-	{tensor.Shape{3, 2}, tensor.Shape{6, -1}, tensor.Shape{6, 1}, false},
-	{tensor.Shape{3, 2}, tensor.Shape{2, -1}, tensor.Shape{2, 3}, false},
-	{tensor.Shape{3, 2}, tensor.Shape{-1, 3}, tensor.Shape{2, 3}, false},
-	{tensor.Shape{3, 2}, tensor.Shape{-1, -1}, nil, true},
-	{tensor.Shape{3, 2}, tensor.Shape{4, -1}, nil, true},
+	{"simple", tensor.Shape{2, 2}, tensor.Shape{4}, tensor.Shape{4}, false},
+	{"negative dim1 1", tensor.Shape{3, 2}, tensor.Shape{6, -1}, tensor.Shape{6, 1}, false},
+	{"negative dim1 2", tensor.Shape{3, 2}, tensor.Shape{2, -1}, tensor.Shape{2, 3}, false},
+	{"negative dim0 1", tensor.Shape{3, 2}, tensor.Shape{-1, 3}, tensor.Shape{2, 3}, false},
+	{"negative dims0.1 with error", tensor.Shape{3, 2}, tensor.Shape{-1, -1}, nil, true},
+	{"devative dim0 with error", tensor.Shape{3, 2}, tensor.Shape{4, -1}, nil, true},
 }
 
 func TestReshape(t *testing.T) {
@@ -923,5 +924,56 @@ func TestReshape(t *testing.T) {
 			assert.True(t, rst.output.Eq(T2.Shape()), "expected both to be the same")
 		}
 
+	}
+}
+func TestReshape_Dense(t *testing.T) {
+	for _, rst := range reshapeTests {
+		g := NewGraph()
+		tT := tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(rst.input.Clone()...))
+		T := NodeFromAny(g, tT)
+		T2, err := Reshape(T, rst.to.Clone())
+		switch {
+		case rst.err && err == nil:
+			t.Fatalf("Expected Error when testing %v", rst)
+		case rst.err:
+			continue
+		case err != nil:
+			t.Fatal(err)
+		default:
+			assert.True(t, rst.output.Eq(T2.Shape()), "expected both to be the same")
+		}
+		m := NewTapeMachine(g)
+		if err := m.RunAll(); err != nil {
+			t.Errorf("Error while executing %q. Err: %v", rst.testName, err)
+			continue
+		}
+
+	}
+}
+func BenchmarkReshape_Dense(b *testing.B) {
+	for _, rst := range reshapeTests {
+		b.Run(rst.testName, func(b *testing.B) {
+			g := NewGraph()
+			tT := tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(rst.input.Clone()...))
+			T := NodeFromAny(g, tT)
+			for i := 0; i < b.N; i++ {
+				T2, err := Reshape(T, rst.to.Clone())
+				switch {
+				case rst.err && err == nil:
+					b.Fatalf("Expected Error when testing %v", rst)
+				case rst.err:
+					continue
+				case err != nil:
+					b.Fatal(err)
+				default:
+					assert.True(b, rst.output.Eq(T2.Shape()), "expected both to be the same")
+				}
+			}
+			m := NewTapeMachine(g)
+			if err := m.RunAll(); err != nil {
+				b.Fatal(err)
+			}
+
+		})
 	}
 }
