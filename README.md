@@ -81,8 +81,9 @@ Whilst Gorgonia's implementation doesn't enforce the separation of thought as fa
 
 Here's an example - say you want to define a math expression `z = x + y`. Here's how you'd do it:
 
+[embedmd]:# (example_basic_test.go)
 ```go
-package main
+package gorgonia_test
 
 import (
 	"fmt"
@@ -91,7 +92,11 @@ import (
 	. "gorgonia.org/gorgonia"
 )
 
-func main() {
+// Basic example of representing mathematical equations as graphs.
+//
+// In this example, we want to represent the following equation
+//		z = x + y
+func Example_basic() {
 	g := NewGraph()
 
 	var x, y, z *Node
@@ -100,18 +105,18 @@ func main() {
 	// define the expression
 	x = NewScalar(g, Float64, WithName("x"))
 	y = NewScalar(g, Float64, WithName("y"))
-	z, err = Add(x, y)
-	if err != nil {
+	if z, err = Add(x, y); err != nil {
 		log.Fatal(err)
 	}
 
 	// create a VM to run the program on
 	machine := NewTapeMachine(g)
+	defer machine.Close()
 
 	// set initial values then run
 	Let(x, 2.0)
 	Let(y, 2.5)
-	if machine.RunAll() != nil {
+	if err = machine.RunAll(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -147,8 +152,9 @@ Runtime of course, refers to the execution of the expression graph, not the prog
 
 With the introduction to the two VMs, it's easy to see how Gorgonia can perform both symbolic and automatic differentiation. Using the same example as above, the reader should note that there was no differentiation done. Instead, let's try with a `LispMachine`:
 
+[embedmd]:# (example_autodiff_test.go)
 ```go
-package main
+package gorgonia_test
 
 import (
 	"fmt"
@@ -157,7 +163,8 @@ import (
 	. "gorgonia.org/gorgonia"
 )
 
-func main() {
+// Autodiff showcases automatic differentiation
+func Example_autodiff() {
 	g := NewGraph()
 
 	var x, y, z *Node
@@ -166,8 +173,7 @@ func main() {
 	// define the expression
 	x = NewScalar(g, Float64, WithName("x"))
 	y = NewScalar(g, Float64, WithName("y"))
-	z, err = Add(x, y)
-	if err != nil {
+	if z, err = Add(x, y); err != nil {
 		log.Fatal(err)
 	}
 
@@ -177,23 +183,20 @@ func main() {
 
 	// by default, LispMachine performs forward mode and backwards mode execution
 	m := NewLispMachine(g)
-	if m.RunAll() != nil {
+	defer m.Close()
+	if err = m.RunAll(); err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Printf("z: %v\n", z.Value())
 
-	xgrad, err := x.Grad()
-	if err != nil {
-		log.Fatal(err)
+	if xgrad, err := x.Grad(); err == nil {
+		fmt.Printf("dz/dx: %v\n", xgrad)
 	}
-	fmt.Printf("dz/dx: %v\n", xgrad)
 
-	ygrad, err := y.Grad()
-	if err != nil {
-		log.Fatal(err)
+	if ygrad, err := y.Grad(); err == nil {
+		fmt.Printf("dz/dy: %v\n", ygrad)
 	}
-	fmt.Printf("dz/dy: %v\n", ygrad)
 
 	// Output:
 	// z: 4.5
@@ -315,38 +318,38 @@ Furthermore, there are some additional requirements:
 
 1. [CUDA toolkit 9.0](https://developer.nvidia.com/cuda-toolkit) is required. Installing this installs the `nvcc` compiler which is required to run your code with CUDA.
 2. Be sure to follow the [post-installation steps](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#post-installation-actions)
-3. `go install gorgonia.org/gorgonia/cmd/cudagen`. This installs the `cudagen` program. Running `cudagen` will generate the relevant CUDA related code for Gorgonia. Note that you will need a folder at `src\gorgonia.org\gorgonia\cuda modules\target`
-4. The CUDA ops must be manually enabled in your code with the `UseCudaFor` option.
+3. `go install gorgonia.org/gorgonia/cmd/cudagen`. This installs the `cudagen` program. 
+4. Running `cudagen` will generate the relevant CUDA related code for Gorgonia. Note that you will need a folder at `src\gorgonia.org\gorgonia\cuda modules\target`
+4. Only certain ops are supported by the CUDA driver by now. They are implemented in a seperate [`ops/nn` package](https://godoc.org/github.com/gorgonia/gorgonia/ops/nn). 
 5. `runtime.LockOSThread()` must be called in the main function where the VM is running. CUDA requires thread affinity, and therefore the OS thread must be locked.
 
 Because `nvcc` only plays well with `gcc` version 6 and below (the current version is 7), this is also quite helpful: `sudo ln -s /path/to/gcc-6 /usr/local/cuda-9.0/bin/gcc` 
-
 ### Example ###
 
 So how do we use CUDA? Say we've got a file, `main.go`:
 
+[embedmd]:# (ops/nn/conv_test.go /import/ /^}$/)
 ```go
 import (
 	"fmt"
 	"log"
 	"runtime"
 
-	T "gorgonia.org/gorgonia"
+	"gorgonia.org/gorgonia"
+	nnops "gorgonia.org/gorgonia/ops/nn"
 	"gorgonia.org/tensor"
 )
 
-func main() {
-	g := T.NewGraph()
-	x := T.NewMatrix(g, T.Float32, T.WithName("x"), T.WithShape(100, 100))
-	y := T.NewMatrix(g, T.Float32, T.WithName("y"), T.WithShape(100, 100))
-	xpy := T.Must(T.Add(x, y))
-	xpy2 := T.Must(T.Tanh(xpy))
-
-	m := T.NewTapeMachine(g, T.UseCudaFor("tanh"))
-
-	T.Let(x, tensor.New(tensor.WithShape(100, 100), tensor.WithBacking(tensor.Random(tensor.Float32, 100*100))))
-	T.Let(y, tensor.New(tensor.WithShape(100, 100), tensor.WithBacking(tensor.Random(tensor.Float32, 100*100))))
-
+func ExampleConv2d() {
+	g := gorgonia.NewGraph()
+	x := gorgonia.NodeFromAny(g, tensor.New(
+		tensor.WithShape(1, 1, 7, 5),
+		tensor.WithBacking([]float32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34})))
+	filter := gorgonia.NodeFromAny(g, tensor.New(
+		tensor.WithShape(1, 1, 3, 3),
+		tensor.WithBacking([]float32{1, 1, 1, 1, 1, 1, 1, 1, 1})))
+	y := gorgonia.Must(nnops.Conv2d(x, filter, []int{3, 3}, []int{0, 0}, []int{2, 2}, []int{1, 1}))
+	m := gorgonia.NewTapeMachine(g)
 	runtime.LockOSThread()
 	for i := 0; i < 1000; i++ {
 		if err := m.RunAll(); err != nil {
@@ -355,9 +358,12 @@ func main() {
 	}
 	runtime.UnlockOSThread()
 
-	fmt.Printf("%1.1f", xpy2.Value())
+	fmt.Printf("%1.1f", y.Value())
+	// output:
+	// ⎡ 54.0   72.0⎤
+	// ⎢144.0  162.0⎥
+	// ⎣234.0  252.0⎦
 }
-
 ```
 
 If this is run normally:
