@@ -900,6 +900,7 @@ var reshapeTests = []struct {
 	err      bool
 }{
 	{"simple", tensor.Shape{2, 2}, tensor.Shape{4}, tensor.Shape{4}, false},
+	{"simple big tensor", tensor.Shape{200, 200}, tensor.Shape{200 * 200}, tensor.Shape{200 * 200}, false},
 	{"negative dim1 1", tensor.Shape{3, 2}, tensor.Shape{6, -1}, tensor.Shape{6, 1}, false},
 	{"negative dim1 2", tensor.Shape{3, 2}, tensor.Shape{2, -1}, tensor.Shape{2, 3}, false},
 	{"negative dim0 1", tensor.Shape{3, 2}, tensor.Shape{-1, 3}, tensor.Shape{2, 3}, false},
