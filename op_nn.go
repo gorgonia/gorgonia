@@ -1590,11 +1590,11 @@ func (op *lrnOp) Type() hm.Type {
 	panic("not implemented")
 }
 
-func (op *lrnOp) InferShape(...gorgonia.DimSizer) (tensor.Shape, error) {
+func (op *lrnOp) InferShape(...DimSizer) (tensor.Shape, error) {
 	panic("not implemented")
 }
 
-func (op *lrnOp) Do(...gorgonia.Value) (gorgonia.Value, error) {
+func (op *lrnOp) Do(...Value) (Value, error) {
 	panic("not implemented")
 }
 
@@ -1626,6 +1626,6 @@ func (op *lrnOp) DiffWRT(inputs int) []bool {
 	panic("not implemented")
 }
 
-func (op *lrnOp) SymDiff(inputs gorgonia.Nodes, output *gorgonia.Node, grad *gorgonia.Node) (retVal gorgonia.Nodes, err error) {
+func (op *lrnOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
 	panic("not implemented")
 }
