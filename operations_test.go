@@ -893,17 +893,19 @@ func TestTensordot(t *testing.T) {
 }
 
 var reshapeTests = []struct {
-	input  tensor.Shape
-	to     tensor.Shape
-	output tensor.Shape
-	err    bool
+	testName string
+	input    tensor.Shape
+	to       tensor.Shape
+	output   tensor.Shape
+	err      bool
 }{
-	{tensor.Shape{2, 2}, tensor.Shape{4}, tensor.Shape{4}, false},
-	{tensor.Shape{3, 2}, tensor.Shape{6, -1}, tensor.Shape{6, 1}, false},
-	{tensor.Shape{3, 2}, tensor.Shape{2, -1}, tensor.Shape{2, 3}, false},
-	{tensor.Shape{3, 2}, tensor.Shape{-1, 3}, tensor.Shape{2, 3}, false},
-	{tensor.Shape{3, 2}, tensor.Shape{-1, -1}, nil, true},
-	{tensor.Shape{3, 2}, tensor.Shape{4, -1}, nil, true},
+	{"simple", tensor.Shape{2, 2}, tensor.Shape{4}, tensor.Shape{4}, false},
+	{"simple big tensor", tensor.Shape{200, 200}, tensor.Shape{200 * 200}, tensor.Shape{200 * 200}, false},
+	{"negative dim1 1", tensor.Shape{3, 2}, tensor.Shape{6, -1}, tensor.Shape{6, 1}, false},
+	{"negative dim1 2", tensor.Shape{3, 2}, tensor.Shape{2, -1}, tensor.Shape{2, 3}, false},
+	{"negative dim0 1", tensor.Shape{3, 2}, tensor.Shape{-1, 3}, tensor.Shape{2, 3}, false},
+	{"negative dims0.1 with error", tensor.Shape{3, 2}, tensor.Shape{-1, -1}, nil, true},
+	{"devative dim0 with error", tensor.Shape{3, 2}, tensor.Shape{4, -1}, nil, true},
 }
 
 func TestReshape(t *testing.T) {
@@ -923,5 +925,51 @@ func TestReshape(t *testing.T) {
 			assert.True(t, rst.output.Eq(T2.Shape()), "expected both to be the same")
 		}
 
+	}
+}
+func TestReshape_Dense(t *testing.T) {
+	for _, rst := range reshapeTests {
+		g := NewGraph()
+		tT := tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(rst.input.Clone()...))
+		T := NodeFromAny(g, tT)
+		T2, err := Reshape(T, rst.to.Clone())
+		switch {
+		case rst.err && err == nil:
+			t.Fatalf("Expected Error when testing %v", rst)
+		case rst.err:
+			continue
+		case err != nil:
+			t.Fatal(err)
+		default:
+			assert.True(t, rst.output.Eq(T2.Shape()), "expected both to be the same")
+		}
+		m := NewTapeMachine(g)
+		if err := m.RunAll(); err != nil {
+			t.Errorf("Error while executing %q. Err: %v", rst.testName, err)
+			continue
+		}
+
+	}
+}
+
+func TestReshapeRuntime(t *testing.T) {
+	g := NewGraph()
+	x := NewMatrix(g, tensor.Float64, WithName("x"), WithShape(28, 28), WithInit(GlorotU(1)))
+	w := NewMatrix(g, tensor.Float64, WithName("W"), WithShape(50, 784), WithInit(GlorotU(1)))
+	x2 := Must(Reshape(x, tensor.Shape{784}))
+	wx := Must(Mul(w, x2))
+	wx2 := Must(Reshape(wx, tensor.Shape{5, 10}))
+
+	cost := Must(Sum(wx2))
+	if _, err := Grad(cost, w); err != nil {
+		t.Fatal(err)
+	}
+	m := NewTapeMachine(g)
+	if err := m.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+
+	if !x.Value().Shape().Eq(tensor.Shape{28, 28}) {
+		t.Errorf("A mutation of shape has occured!")
 	}
 }

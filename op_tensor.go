@@ -1142,29 +1142,31 @@ func (op reshapeOp) Do(vals ...Value) (Value, error) {
 	}
 	var val Value
 	var err error
-	if val, err = CloneValue(vals[0]); err != nil {
-		return nil, errors.Wrapf(err, cloneFail, vals[0])
-	}
-	if !val.Shape().Eq(op.from) {
-		return nil, errors.Errorf("Shape mismatch. Input shape is %v. Expected %v", val.Shape(), op.from)
-	}
-
-	switch v := val.(type) {
+	switch vals[0].(type) {
 	case tensor.Tensor:
-		if err := v.Reshape(op.to...); err != nil {
+		if v, ok := vals[0].(*tensor.Dense); ok {
+			val = v.ShallowClone()
+		} else {
+			if val, err = CloneValue(vals[0]); err != nil {
+				return nil, errors.Wrapf(err, cloneFail, vals[0])
+			}
+		}
+		if !val.Shape().Eq(op.from) {
+			return nil, errors.Errorf("Shape mismatch. Input shape is %v. Expected %v", val.Shape(), op.from)
+		}
+		if err := val.(tensor.Tensor).Reshape(op.to...); err != nil {
 			return nil, err
 		}
-		return v, nil
-	case Scalar:
-		return nil, errors.Errorf(nyiTypeFail, "reshape.Do", "Scalar")
-	}
+		return val, nil
 
-	panic("Unreachable")
+	default:
+		return nil, errors.Errorf(nyiTypeFail, "reshape.Do", "Non tensor")
+	}
 }
 
 func (op reshapeOp) ReturnsPtr() bool     { return true }
 func (op reshapeOp) CallsExtern() bool    { return false }
-func (op reshapeOp) OverwritesInput() int { return 0 }
+func (op reshapeOp) OverwritesInput() int { return -1 }
 func (op reshapeOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("reshapeOp"))
 	fmt.Fprintf(h, "from: %v, dims: %v", op.from, op.to)
