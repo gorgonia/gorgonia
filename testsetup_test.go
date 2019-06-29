@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gorgonia.org/dawson"
 	"gorgonia.org/tensor"
+
+	"testing"
 )
 
 type errorStacker interface {
@@ -161,6 +163,21 @@ func (a *assertState) True(value bool, msgAndArgs ...interface{}) {
 	}
 	a.cont = a.Assertions.True(value, msgAndArgs...)
 }
+
+func checkErr(t *testing.T, expected bool, err error, name string, id interface{}) (cont bool) {
+	switch {
+	case expected:
+		if err == nil {
+			t.Errorf("Expected error in test %v (%v)", name, id)
+		}
+		return true
+	case !expected && err != nil:
+		t.Errorf("Test %v (%v) errored: %+v", name, id, err)
+		return true
+	}
+	return false
+}
+
 
 func deepNodeEq(a, b *Node) bool {
 	if a == b {
