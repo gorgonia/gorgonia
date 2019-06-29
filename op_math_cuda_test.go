@@ -46,7 +46,7 @@ func TestCUDABasicArithmetic(t *testing.T) {
 		// if i != 5 {
 		// 	continue
 		// }
-		log.Printf("Test %d", i)
+		// log.Printf("Test %d", i)
 		if err := testOneCUDABasicArithmetic(t, bot, i); err != nil {
 			t.Fatalf("Test %d. Err %+v", i, err)
 		}

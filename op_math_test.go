@@ -354,7 +354,7 @@ func TestBasicArithmetic(t *testing.T) {
 	}
 
 	for i, bot := range binOpTests {
-		log.Printf("Test %d", i)
+		// log.Printf("Test %d", i)
 		if err := testOneArithLisp(t, bot, i); err != nil {
 			t.Fatalf("Test %d, Err: %+v", i, err)
 		}
