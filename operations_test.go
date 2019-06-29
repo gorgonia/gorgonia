@@ -951,30 +951,25 @@ func TestReshape_Dense(t *testing.T) {
 
 	}
 }
-func BenchmarkReshape_Dense(b *testing.B) {
-	for _, rst := range reshapeTests {
-		b.Run(rst.testName, func(b *testing.B) {
-			g := NewGraph()
-			tT := tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(rst.input.Clone()...))
-			T := NodeFromAny(g, tT)
-			for i := 0; i < b.N; i++ {
-				T2, err := Reshape(T, rst.to.Clone())
-				switch {
-				case rst.err && err == nil:
-					b.Fatalf("Expected Error when testing %v", rst)
-				case rst.err:
-					continue
-				case err != nil:
-					b.Fatal(err)
-				default:
-					assert.True(b, rst.output.Eq(T2.Shape()), "expected both to be the same")
-				}
-			}
-			m := NewTapeMachine(g)
-			if err := m.RunAll(); err != nil {
-				b.Fatal(err)
-			}
 
-		})
+func TestReshapeRuntime(t *testing.T) {
+	g := NewGraph()
+	x := NewMatrix(g, tensor.Float64, WithName("x"), WithShape(28, 28), WithInit(GlorotU(1)))
+	w := NewMatrix(g, tensor.Float64, WithName("W"), WithShape(50, 784), WithInit(GlorotU(1)))
+	x2 := Must(Reshape(x, tensor.Shape{784}))
+	wx := Must(Mul(w, x2))
+	wx2 := Must(Reshape(wx, tensor.Shape{5, 10}))
+
+	cost := Must(Sum(wx2))
+	if _, err := Grad(cost, w); err != nil {
+		t.Fatal(err)
+	}
+	m := NewTapeMachine(g)
+	if err := m.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+
+	if !x.Value().Shape().Eq(tensor.Shape{28, 28}) {
+		t.Errorf("A mutation of shape has occured!")
 	}
 }
