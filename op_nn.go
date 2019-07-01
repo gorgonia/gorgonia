@@ -1613,15 +1613,32 @@ func (op *batchnormDiffOp) f32s(input, inGrad, outGrad *tensor.Dense) (err error
 type globalAveragePoolOp struct{}
 
 func (g *globalAveragePoolOp) Arity() int {
-	panic("not implemented")
+	return 1
 }
 
 func (g *globalAveragePoolOp) Type() hm.Type {
-	panic("not implemented")
+	a := hm.TypeVariable('a')
+	t := newTensorType(4, a)
+	return hm.NewFnType(t, t)
 }
 
-func (g *globalAveragePoolOp) InferShape(...DimSizer) (tensor.Shape, error) {
-	panic("not implemented")
+func (g *globalAveragePoolOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
+	b, err := inputs[0].DimSize(0)
+	if err != nil {
+		return nil, err
+	}
+	c, err := inputs[0].DimSize(1)
+	if err != nil {
+		return nil, err
+	}
+	// check if the shape is correct without doing type inference
+	if _, err := inputs[0].DimSize(2); err != nil {
+		return nil, err
+	}
+	if _, err := inputs[0].DimSize(3); err != nil {
+		return nil, err
+	}
+	return tensor.Shape{b, c, 1, 1}, nil
 }
 
 func (g *globalAveragePoolOp) Do(...Value) (Value, error) {
@@ -1629,25 +1646,25 @@ func (g *globalAveragePoolOp) Do(...Value) (Value, error) {
 }
 
 func (g *globalAveragePoolOp) ReturnsPtr() bool {
-	panic("not implemented")
+	return false
 }
 
 func (g *globalAveragePoolOp) CallsExtern() bool {
-	panic("not implemented")
+	return false
 }
 
 func (g *globalAveragePoolOp) OverwritesInput() int {
-	panic("not implemented")
+	return -1
 }
 
 func (g *globalAveragePoolOp) WriteHash(h hash.Hash) {
-	panic("not implemented")
+	fmt.Fprintf(h, "GlobalAveragePool")
 }
 
 func (g *globalAveragePoolOp) Hashcode() uint32 {
-	panic("not implemented")
+	return simpleHash(g)
 }
 
 func (g *globalAveragePoolOp) String() string {
-	panic("not implemented")
+	return "GlobalAveragePool"
 }
