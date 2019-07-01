@@ -14,6 +14,7 @@ import (
 	"gorgonia.org/vecf64"
 )
 
+// Sanity checks
 var (
 	_ SDOp = im2colOp{}
 	_ Op   = col2imOp{}
@@ -21,6 +22,7 @@ var (
 	_ Op   = &maxPoolDiffOp{}
 	_ Op   = &BatchNormOp{}
 	_ Op   = &batchnormDiffOp{}
+	_ Op   = &globalAveragePoolOp{}
 )
 
 /*
@@ -1606,4 +1608,46 @@ func (op *batchnormDiffOp) f32s(input, inGrad, outGrad *tensor.Dense) (err error
 	vecf32.Div(ig, tmp)
 	return nil
 
+}
+
+type globalAveragePoolOp struct{}
+
+func (g *globalAveragePoolOp) Arity() int {
+	panic("not implemented")
+}
+
+func (g *globalAveragePoolOp) Type() hm.Type {
+	panic("not implemented")
+}
+
+func (g *globalAveragePoolOp) InferShape(...DimSizer) (tensor.Shape, error) {
+	panic("not implemented")
+}
+
+func (g *globalAveragePoolOp) Do(...Value) (Value, error) {
+	panic("not implemented")
+}
+
+func (g *globalAveragePoolOp) ReturnsPtr() bool {
+	panic("not implemented")
+}
+
+func (g *globalAveragePoolOp) CallsExtern() bool {
+	panic("not implemented")
+}
+
+func (g *globalAveragePoolOp) OverwritesInput() int {
+	panic("not implemented")
+}
+
+func (g *globalAveragePoolOp) WriteHash(h hash.Hash) {
+	panic("not implemented")
+}
+
+func (g *globalAveragePoolOp) Hashcode() uint32 {
+	panic("not implemented")
+}
+
+func (g *globalAveragePoolOp) String() string {
+	panic("not implemented")
 }
