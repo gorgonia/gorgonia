@@ -58,3 +58,48 @@ func Example_broadcasting1() {
 	// ⎣102  102⎦
 
 }
+
+func Example_creatingTriangleMatrices() {
+	// Broadcasting is useful. We can create triangular dense matrices simply
+
+	g := NewGraph()
+	a := NewMatrix(g, tensor.Float64, WithShape(3, 1), WithName("a"), WithInit(RangedFrom(0)))
+	b := NewMatrix(g, tensor.Float64, WithShape(1, 4), WithName("b"), WithInit(RangedFrom(0)))
+	tl, err := BroadcastGte(a, b, true, []byte{1}, []byte{0})
+	if err != nil {
+		log.Fatalf("uh oh. Something went wrong %v", err)
+	}
+
+	tu, err := BroadcastLt(a, b, true, []byte{1}, []byte{0})
+	if err != nil {
+		log.Fatalf("uh oh. Something went wrong %v", err)
+	}
+
+	m := NewTapeMachine(g)
+
+	// PEDAGOGICAL:
+	// Uncomment the following code if you want to see what happens behind the scenes
+	// m.Close()
+	// logger := log.New(os.Stderr, "",0)
+	// m = NewTapeMachine(g, WithLogger(logger), WithWatchlist())
+
+	defer m.Close()
+	if err = m.RunAll(); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("triangular, lower:\n%v\n", tl.Value())
+	fmt.Printf("triangular, upper:\n%v\n", tu.Value())
+
+	// Output:
+	// triangular, lower:
+	// ⎡1  0  0  0⎤
+	// ⎢1  1  0  0⎥
+	// ⎣1  1  1  0⎦
+	//
+	// triangular, upper:
+	// ⎡0  1  1  1⎤
+	// ⎢0  0  1  1⎥
+	// ⎣0  0  0  1⎦
+
+}
