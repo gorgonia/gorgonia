@@ -27,13 +27,13 @@ func S(start int, opt ...int) tensor.Slice {
 		step = 0
 	}
 
-	return sli{
+	return &sli{
 		start: start,
 		end:   end,
 		step:  step,
 	}
 }
 
-func (s sli) Start() int { return s.start }
-func (s sli) End() int   { return s.end }
-func (s sli) Step() int  { return s.step }
+func (s *sli) Start() int { return s.start }
+func (s *sli) End() int   { return s.end }
+func (s *sli) Step() int  { return s.step }

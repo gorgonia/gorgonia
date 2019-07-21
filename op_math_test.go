@@ -715,5 +715,4 @@ func TestLinearAlgebraOps(t *testing.T) {
 	if _, err := Mul(y, x); err == nil {
 		t.Error("Expect an error")
 	}
-
 }

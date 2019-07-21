@@ -86,6 +86,5 @@ func outerProdType() hm.Type {
 
 func batchedMatMulType() hm.Type {
 	a := hm.TypeVariable('a')
-	t := makeTensorType(3, a)
-	return hm.NewFnType(t, t, t)
+	return hm.NewFnType(a, a, a)
 }
