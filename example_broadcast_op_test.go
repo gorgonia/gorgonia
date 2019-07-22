@@ -1,16 +1,16 @@
-package gorgonia_test
+package gorgonia
 
 import (
 	"fmt"
 	"log"
 
-	. "gorgonia.org/gorgonia"
+	// . "gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
 
 // By default, Gorgonia operations do not perform broadcasting.
 // To do broadcasting, you would need to manually specify the operation
-func Example_broadcasting1() {
+func ExampleBroadcastAdd() {
 	g := NewGraph()
 	a := NewVector(g, tensor.Float64, WithShape(2), WithName("a"), WithValue(tensor.New(tensor.WithBacking([]float64{100, 100}))))
 	b := NewMatrix(g, tensor.Float64, WithShape(2, 2), WithName("b"), WithValue(tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{1, 1, 2, 2}))))
@@ -59,7 +59,7 @@ func Example_broadcasting1() {
 
 }
 
-func Example_creatingTriangleMatrices() {
+func ExampleBroadcastGte_creatingTriangleMatrices() {
 	// Broadcasting is useful. We can create triangular dense matrices simply
 
 	g := NewGraph()

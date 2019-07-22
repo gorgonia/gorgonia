@@ -157,27 +157,52 @@ func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
 // SoftMax performs softmax on the input. Specifically this is used:
 //		e^(a[i]) / sum((e^(a[i])))
 // For a more numerically stable SoftMax, use StableSoftMax.
-func SoftMax(a *Node) (retVal *Node, err error) {
-	var exp, sum *Node
-	if exp, err = Exp(a); err == nil {
-		axis := 1 // default
-		if exp.IsColVec() || (exp.IsVector() && !exp.IsRowVec()) {
-			axis = 0
-		}
+// TODO: MULTI RANK SOFTMAX
+func SoftMax(a *Node, axes ...int) (retVal *Node, err error) {
+	aShape := a.Shape()
+	axis := aShape.Dims() - 1
+	if a.IsColVec() || (a.IsVector() && !a.IsRowVec()) {
+		axis = 0
+	}
 
-		if sum, err = Sum(exp, axis); err == nil {
-			if sum.IsScalar() {
-				return HadamardDiv(exp, sum)
-			}
-			a, b, err := Broadcast(exp, sum, NewBroadcastPattern(nil, []byte{1}))
-			if err != nil {
-				return nil, errors.Wrap(err, operationError)
-			}
-			return Div(a, b)
+	if len(axes) > 0 {
+		if axes[0] >= axis || axes[0] < 0 {
+			return nil, errors.Errorf("Cannot perform SoftMax on axis %d. Input has shape %v", axes[0], a.Shape())
 		}
+		axis = axes[0]
+	}
+
+	var exp, sum *Node
+	if exp, err = Exp(a); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
-	return nil, errors.Wrap(err, operationError)
+	if sum, err = Sum(exp, axis); err != nil {
+		return nil, errors.Wrap(err, operationError)
+	}
+
+	if sum.IsScalar() {
+		return HadamardDiv(exp, sum)
+	}
+
+	// reshape if necessary
+	ss := sum.Shape()
+	newShape := tensor.Shape(tensor.BorrowInts(ss.Dims() + 1)) // TODO: 1 should be len(axes)
+	copy(newShape, ss)
+
+	// TODO: this should range over axes
+	copy(newShape[axis+1:], newShape[axis:])
+	newShape[axis] = 1
+
+	if sum, err = Reshape(sum, newShape); err != nil {
+		return nil, errors.Wrap(err, "Failed to reshape")
+	}
+
+	// if axis == 0 && sum.IsVector() && !sum.IsRowVec() {
+	// 	if sum, err = Reshape(sum, tensor.Shape{1, sum.Shape()[0]}); err != nil {
+	// 		return nil, errors.Wrap(err, "Failed to reshape")
+	// 	}
+	// }
+	return BroadcastHadamardDiv(exp, sum, nil, []byte{byte(axis)})
 }
 
 // StableSoftMax performs a numerically stable softmax on the input. Specifically this is the formula used:

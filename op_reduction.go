@@ -179,7 +179,8 @@ func (op sumOp) Type() hm.Type {
 		return hm.NewFnType(t, a)
 	}
 
-	retType := makeTensorType(op.d-1, a)
+	newdim := op.d - 1
+	retType := makeTensorType(newdim, a)
 	return hm.NewFnType(t, retType)
 }
 
@@ -219,7 +220,13 @@ func (op sumOp) InferShape(inputs ...DimSizer) (shape tensor.Shape, err error) {
 			shape = shape[:1]
 		case shape.IsRowVec():
 			shape = shape[1:]
+		default:
+			for _, a := range op.along {
+				copy(shape[a:], shape[a+1:])
+				shape = shape[:len(shape)-1]
+			}
 		}
+		// log.Printf("INFER %v %v", shape, op.along)
 
 	}
 	return
@@ -249,6 +256,7 @@ func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 	symdiffLogf("repeat: %v", repeat.Type())
 	symdiffLogf("children %#Y", children)
 	symdiffLogf("children: %v", children)
+
 	if retVal[0], err = ApplyOp(repeat, children...); err != nil {
 		return nil, errors.Wrap(err, applyOpFail)
 	}
