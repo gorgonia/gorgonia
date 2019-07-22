@@ -74,9 +74,27 @@ func Mul(a, b *Node) (retVal *Node, err error) {
 	}
 }
 
-// BatchedMatMul returns a node representing the batched mat mul operation
-func BatchedMatMul(a, b *Node) (retVal *Node, err error) {
+// BatchedMatMul returns a node representing the batched mat mul operation.
+//
+// A list of transpose options are allowed. The
+func BatchedMatMul(a, b *Node, transes ...bool) (retVal *Node, err error) {
 	op := linAlgBinOp{āBinaryOperator: batchedMatMulOperator}
+	switch len(transes) {
+	case 0:
+		// noop
+	case 1:
+		// transA
+		op.transA = transes[0]
+	case 2:
+		// transA and transB
+		op.transA = transes[0]
+		op.transB = transes[1]
+	default:
+		// unsupported
+		op.transA = transes[0]
+		op.transB = transes[1]
+	}
+
 	return binOpNode(op, a, b)
 }
 
