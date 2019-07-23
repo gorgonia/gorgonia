@@ -566,6 +566,43 @@ func Concat(axis int, ns ...*Node) (retVal *Node, err error) {
 	return ApplyOp(op, ns...)
 }
 
+// Unconcat is the opposite of the built in concat function
+// TODO: port this back to Gorgonia and use Gorgonia's sli instead
+func Unconcat(a *Node, along int, n int) ([]*Node, error) {
+	aShape := a.Shape()
+	if along < 0 || along > aShape.Dims() {
+		return nil, errors.Errorf("Unable to Unconcat a of shape %v along axis %d", aShape, along)
+	}
+
+	if aShape[along]%n != 0 {
+		return nil, errors.Errorf("Axis %d of %v cannot be nicely split into %d parts", along, aShape, n)
+	}
+
+	newShapeAlong := aShape[along] / n
+	batches := aShape[along] / newShapeAlong
+
+	var start int
+	var retVal []*Node
+	for i := 0; i < batches; i++ {
+		ss := make([]tensor.Slice, len(aShape))
+		for i := range ss {
+			if i == along {
+				ss[i] = S(start, start+newShapeAlong)
+			} else {
+				ss[i] = S(0, aShape[i])
+			}
+		}
+
+		a2, err := Slice(a, ss...)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Unable to slice a of shape %v along %d on batch %d. Slices were: %v", aShape, along, i, ss)
+		}
+		retVal = append(retVal, a2)
+		start += newShapeAlong
+	}
+	return retVal, nil
+}
+
 // Reshape reshapes a node and returns a new node with the new shape
 func Reshape(n *Node, to tensor.Shape) (retVal *Node, err error) {
 	// check shape
