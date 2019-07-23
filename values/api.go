@@ -1,4 +1,4 @@
-package gorgonia
+package values
 
 import (
 	"fmt"
@@ -7,6 +7,107 @@ import (
 	"github.com/pkg/errors"
 	"gorgonia.org/tensor"
 )
+
+func AnyToScalar(any interface{}) (Scalar, tensor.Dtype) {
+	switch at := any.(type) {
+	case Scalar:
+		return at, at.Dtype()
+	case float64:
+		return NewF64(at), tensor.Float64
+	case float32:
+		return NewF32(at), tensor.Float32
+	case int:
+		return NewI(at), tensor.Int
+	case int32:
+		return NewI32(at), tensor.Int32
+	case int64:
+		return NewI64(at), tensor.Int64
+	case byte:
+		return NewU8(at), tensor.Byte
+	case bool:
+		return NewB(at), tensor.Bool
+	default:
+		panic(fmt.Sprintf("%v(%T) not scalar/not handled", any, any))
+	}
+}
+
+func AnyToValue(any interface{}) (val Value, t hm.Type, dt tensor.Dtype, err error) {
+	switch a := any.(type) {
+	case Value:
+		val = a
+		t = TypeOf(a)
+		dt = a.Dtype()
+		return
+	case float64, float32, int, int64, int32, byte, bool:
+		val, dt = AnyToScalar(any)
+		t = dt
+		return
+	case F64:
+		return NewF64(float64(a)), tensor.Float64, tensor.Float64, nil
+	case F32:
+		return NewF32(float32(a)), tensor.Float32, tensor.Float32, nil
+	case I:
+		return NewI(int(a)), tensor.Int, tensor.Int, nil
+	case I64:
+		return NewI64(int64(a)), tensor.Int64, tensor.Int64, nil
+	case I32:
+		return NewI32(int32(a)), tensor.Int32, tensor.Int32, nil
+	case U8:
+		return NewU8(byte(a)), tensor.Uint8, tensor.Uint8, nil
+	case B:
+		return NewB(bool(a)), tensor.Bool, tensor.Bool, nil
+	case tensor.Tensor:
+		val = a
+		t = TypeOf(a)
+		dt = a.Dtype()
+		return
+	default:
+		err = errors.Errorf("value %v of %T not yet handled", any, any)
+		return
+	}
+}
+
+func One(dt tensor.Dtype) Scalar {
+	switch dt {
+	case tensor.Float64:
+		return NewF64(float64(1))
+	case tensor.Float32:
+		return NewF32(float32(1))
+	case tensor.Int:
+		return NewI(1)
+	case tensor.Int32:
+		return NewI32(int32(1))
+	case tensor.Int64:
+		return NewI64(int64(1))
+	case tensor.Byte:
+		return NewU8(byte(1))
+	case tensor.Bool:
+		return NewB(true)
+	default:
+		panic("Unhandled dtype")
+	}
+}
+
+func Zero(dt tensor.Dtype) Scalar {
+	switch dt {
+	case tensor.Float64:
+		return NewF64(float64(0))
+	case tensor.Float32:
+		return NewF32(float32(0))
+	case tensor.Int:
+		return NewI(0)
+	case tensor.Int32:
+		return NewI32(int32(0))
+	case tensor.Int64:
+		return NewI64(int64(0))
+	case tensor.Byte:
+		return NewU8(byte(0))
+	case tensor.Bool:
+		return NewB(false)
+	default:
+		panic("Unhandled dtype")
+	}
+}
 
 // TypeOf returns the Type of the value
 func TypeOf(v Value) hm.Type {
@@ -221,11 +322,11 @@ func Copy(dest, src Value) (Value, error) {
 	}
 }
 
-func setEngine(v Value, e tensor.Engine) {
+func SetEngine(v Value, e tensor.Engine) {
 	switch vv := v.(type) {
 	case *dualValue:
-		setEngine(vv.Value, e)
-		setEngine(vv.d, e)
+		SetEngine(vv.Value, e)
+		SetEngine(vv.d, e)
 	case tensor.Tensor:
 		tensor.WithEngine(e)(vv)
 	}

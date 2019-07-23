@@ -86,11 +86,6 @@ type CopierFrom interface {
 	CopyFrom(src interface{}) error
 }
 
-// Setter is a any value that can Memset itself to the provided value
-// type Setter interface {
-// 	SetAll(interface{}) error
-// }
-
 // makeValue creates a value given a type and shape. The default value is the zero value of the type.
 func makeValue(t hm.Type, s tensor.Shape) (retVal Value, err error) {
 	var dt tensor.Dtype
