@@ -197,11 +197,6 @@ func SoftMax(a *Node, axes ...int) (retVal *Node, err error) {
 		return nil, errors.Wrap(err, "Failed to reshape")
 	}
 
-	// if axis == 0 && sum.IsVector() && !sum.IsRowVec() {
-	// 	if sum, err = Reshape(sum, tensor.Shape{1, sum.Shape()[0]}); err != nil {
-	// 		return nil, errors.Wrap(err, "Failed to reshape")
-	// 	}
-	// }
 	return BroadcastHadamardDiv(exp, sum, nil, []byte{byte(axis)})
 }
 

@@ -11,6 +11,13 @@ import (
 // Nodes is a slice of nodes, but it also acts as a set of nodes by implementing the Sort interface
 type Nodes []*Node
 
+// Node returns nil. Always. This is bound to cause a panic somewhere if an program is not using it correctly.
+// The reason for implementing this is so that it may fulfil common interfaces.
+func (ns Nodes) Node() *Node { return nil }
+
+// Nodes returns itself. This is useful for interfaces
+func (ns Nodes) Nodes() Nodes { return ns }
+
 // implement sort.Interface
 
 func (ns Nodes) Len() int { return len(ns) }

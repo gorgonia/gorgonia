@@ -5,7 +5,9 @@ import (
 	"gorgonia.org/tensor"
 )
 
-type SymbolicEngine struct{}
+type SymbolicEngine struct{
+	ExprGraph
+}
 
 // StandardEngine is the default CPU engine for gorgonia
 type StandardEngine struct {
