@@ -42,9 +42,3 @@ type hashWriter interface {
 type arityer interface {
 	Arity() int
 }
-
-// Result is a future Gorgonia thing
-type Result interface {
-	Tensor() Tensor
-	Err() error
-}

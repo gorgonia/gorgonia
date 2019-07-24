@@ -18,6 +18,9 @@ func (ns Nodes) Node() *Node { return nil }
 // Nodes returns itself. This is useful for interfaces
 func (ns Nodes) Nodes() Nodes { return ns }
 
+// Err returns nil always
+func (ns Nodes) Err() error { return nil }
+
 // implement sort.Interface
 
 func (ns Nodes) Len() int { return len(ns) }

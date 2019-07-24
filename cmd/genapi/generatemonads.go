@@ -150,7 +150,7 @@ func functionSignatures() {
 		}
 	}
 	f := func(a strRepr) bool {
-		want := []string{"*Node", "error"}
+		want := []string{"Nodes", "error"}
 		if len(a.retTypes) != len(want) {
 			return false
 		}
@@ -165,6 +165,7 @@ func functionSignatures() {
 	signatures := make(map[string]int)
 	interesting := filterSigs(allFns, f)
 	for _, v := range interesting {
+		v.printName = true
 		signatures[fmt.Sprintf("%v", v)]++
 	}
 
