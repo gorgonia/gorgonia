@@ -237,5 +237,7 @@ func generateInterfaces() {
 }
 
 func main() {
-	generateInterfaces()
+	// generateAPI()
+	// generateInterfaces()
+	functionSignatures()
 }
