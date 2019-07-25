@@ -27,7 +27,7 @@ type Errer interface {
 	Err() error
 }
 
-// Lift1  decorates a function with a prechecl and post function lifting
+// Lift1  decorates a function with a precheck and post function lifting
 func Lift1(fn func(a *Node) (*Node, error)) func(a Input) Result {
 	return func(a Input) Result {
 		if err := CheckOne(a); err != nil {
@@ -37,7 +37,7 @@ func Lift1(fn func(a *Node) (*Node, error)) func(a Input) Result {
 	}
 }
 
-// Lift1Axoa;  decorates a function with a prechecl and post function lifting
+// Lift1Axial;  decorates a function with a precheck and post function lifting
 func Lift1Axial(fn func(a *Node, axes ...int) (*Node, error)) func(a Input, axes ...int) Result {
 	return func(a Input, axes ...int) Result {
 		if err := CheckOne(a); err != nil {
@@ -71,44 +71,6 @@ func Lift2Broadcast(fn func(a, b *Node, pat1, pat2 []byte) (*Node, error)) func(
 		}
 		return LiftResult(fn(a.Node(), b.Node(), pat1, pat2))
 	}
-}
-
-// Do1 runs a precheck before performing a unary operation
-func Do1(fn func(a *Node) (*Node, error), a Input) Result {
-	if err := CheckOne(a); err != nil {
-		return Err{errors.WithStack(err)}
-	}
-	return LiftResult(fn(a.Node()))
-}
-
-// Do1Axial runs a precheck before performing a unary operation with an axial option
-func Do1Axial(fn func(a *Node, axes ...int) (*Node, error), a *Node, axes ...int) Result {
-	if err := CheckOne(a); err != nil {
-		return Err{errors.WithStack(err)}
-	}
-	return LiftResult(fn(a.Node(), axes...))
-}
-
-// Do2 runs a pre-check before performing a binary operation
-func Do2(fn func(a, b *Node) (*Node, error), a, b Input) Result {
-	if err := CheckOne(a); err != nil {
-		return Err{errors.WithStack(err)}
-	}
-	if err := CheckOne(b); err != nil {
-		return Err{errors.WithStack(err)}
-	}
-	return LiftResult(fn(a.Node(), b.Node()))
-}
-
-// Do2Broadcast runs a pre-check before performing a broadcast binop
-func Do2Broadcast(fn func(a, b *Node, pat1, pat2 []byte) (*Node, error), a, b Input, pat1, pat2 []byte) Result {
-	if err := CheckOne(a); err != nil {
-		return Err{errors.WithStack(err)}
-	}
-	if err := CheckOne(b); err != nil {
-		return Err{errors.WithStack(err)}
-	}
-	return LiftResult(fn(a.Node(), b.Node(), pat1, pat2))
 }
 
 // Err implements Result
