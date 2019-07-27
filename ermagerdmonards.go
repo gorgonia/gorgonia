@@ -80,11 +80,21 @@ func (err Err) Node() *Node  { return nil }
 func (err Err) Nodes() Nodes { return nil }
 func (err Err) Err() error   { return err.E }
 
-func LiftResult(a *Node, err error) Result {
+// resultM is a wrapper for Input to create a Result. This is the default Result if an unknown Input was passed in.
+type resultM struct{ Input }
+
+func (r resultM) Err() error { return nil }
+
+func LiftResult(a Input, err error) Result {
 	if err != nil {
 		return Err{err}
 	}
-	return a
+	switch at := a.(type) {
+	case Result:
+		return at
+	default:
+		return resultM{a}
+	}
 }
 
 // CheckOne checks whether an input is an error
