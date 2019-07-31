@@ -563,7 +563,7 @@ func Concat(axis int, ns ...*Node) (retVal *Node, err error) {
 
 // Unconcat is the opposite of the built in concat function
 // TODO: port this back to Gorgonia and use Gorgonia's sli instead
-func Unconcat(a *Node, along int, n int) ([]*Node, error) {
+func Unconcat(a *Node, along int, n int) (Nodes, error) {
 	aShape := a.Shape()
 	if along < 0 || along > aShape.Dims() {
 		return nil, errors.Errorf("Unable to Unconcat a of shape %v along axis %d", aShape, along)
@@ -577,7 +577,7 @@ func Unconcat(a *Node, along int, n int) ([]*Node, error) {
 	batches := aShape[along] / newShapeAlong
 
 	var start int
-	var retVal []*Node
+	var retVal Nodes
 	for i := 0; i < batches; i++ {
 		ss := make([]tensor.Slice, len(aShape))
 		for i := range ss {
