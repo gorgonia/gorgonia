@@ -29,8 +29,8 @@ func (n *node) Attributes() []encoding.Attribute {
 		`'`, "&#39;", // "&#39;" is shorter than "&apos;" and apos was not in HTML until HTML5.
 		`<`, "&lt;",
 		`>`, "&gt;",
-		`{`, "\\n",
-		`}`, "\\n",
+		`{`, "&#123;",
+		`}`, "&#125;",
 		`"`, "&#34;", // "&#34;" is shorter than "&quot;".
 		`const`, "const|", // "&#34;" is shorter than "&quot;".
 	)
@@ -44,8 +44,12 @@ func (n *node) Attributes() []encoding.Attribute {
 			Value: "Mrecord",
 		},
 		encoding.Attribute{
-			Key:   "label",
-			Value: fmt.Sprintf(`"{{%s|%#x}|{Op|%s}|{Shape|%v}}"`, n.n.Name(), n.ID(), htmlEscaper.Replace(fmt.Sprintf("%s", n.n.Op())), n.n.Shape()),
+			Key: "label",
+			Value: fmt.Sprintf(`"{{%s|%#x}|{Op|%s}|{Shape|%v}}"`,
+				htmlEscaper.Replace(n.n.Name()),
+				n.ID(),
+				htmlEscaper.Replace(fmt.Sprintf("%s", n.n.Op())),
+				n.n.Shape()),
 		},
 	}
 	return attrs
