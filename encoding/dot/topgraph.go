@@ -42,12 +42,13 @@ func generateDotGraph(g *gorgonia.ExprGraph) (graph.Graph, error) {
 	for nodes.Next() {
 		n := nodes.Node()
 		if _, ok := n.(gencoding.Grouper); ok {
-			group := n.(gencoding.Grouper).Group()
-			if subgrapher, ok := subGraphs[group]; ok {
-				n := &node{
-					n: n.(*gorgonia.Node),
+			for _, group := range n.(gencoding.Grouper).Group() {
+				if subgrapher, ok := subGraphs[group]; ok {
+					n := &node{
+						n: n.(*gorgonia.Node),
+					}
+					subgrapher.(graph.DirectedBuilder).AddNode(n)
 				}
-				subgrapher.(graph.DirectedBuilder).AddNode(n)
 			}
 		}
 	}
