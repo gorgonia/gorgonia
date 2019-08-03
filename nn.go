@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/encoding"
 	"gorgonia.org/tensor"
 )
 
@@ -228,6 +229,7 @@ func Im2Col(n *Node, kernel, pad, stride, dilation tensor.Shape) (retVal *Node, 
 // stride: len(stride) == 2
 // dilation: len(dilation) == 2
 func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []int) (retVal *Node, err error) {
+	group := encoding.NewGroup("Convolution")
 	// niceness for defaults
 	if pad == nil {
 		pad = []int{0, 0}
@@ -259,6 +261,7 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []
 	if colIm, err = Im2Col(im, kernelShape, pad, stride, dilation); err != nil {
 		return
 	}
+	colIm.groups.Upsert(group)
 
 	layer := filter.Shape()[0]
 	kernel := filter.Shape()[1]
@@ -269,6 +272,7 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []
 	if flattened, err = Reshape(filter, tensor.Shape{layer, kernel * row * col}); err != nil {
 		return
 	}
+	flattened.groups.Upsert(group)
 
 	// extract patch
 	batch := colIm.Shape()[0]
@@ -280,6 +284,7 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []
 	if patch, err = Reshape(colIm, tensor.Shape{batch * m * n, z}); err != nil {
 		return
 	}
+	patch.groups.Upsert(group)
 
 	op := linAlgBinOp{
 		āBinaryOperator: matMulOperator,
@@ -290,13 +295,17 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []
 	if colImLayer, err = ApplyOp(op, patch, flattened); err != nil {
 		return
 	}
+	colImLayer.groups.Upsert(group)
 
 	// now reshape and transpose the values back into the original order
 	var res *Node
 	if res, err = Reshape(colImLayer, tensor.Shape{batch, m, n, layer}); err != nil {
 		return
 	}
-	return Transpose(res, 0, 3, 1, 2)
+	res.groups.Upsert(group)
+	ret, err := Transpose(res, 0, 3, 1, 2)
+	ret.groups.Upsert(group)
+	return ret, err
 }
 
 // Conv1d is a 1D convlution. It relies on Conv2D
