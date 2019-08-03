@@ -249,6 +249,8 @@ func (n *Node) Groups() encoding.Groups {
 		n.groups.Upsert(encoding.ConstantCluster)
 	case isInput:
 		n.groups.Upsert(encoding.InputCluster)
+	default:
+		n.groups.Upsert(encoding.ExprGraphCluster)
 	}
 	return n.groups
 }
