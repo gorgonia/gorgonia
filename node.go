@@ -217,7 +217,7 @@ func WithShape(shp ...int) NodeConsOpt {
 }
 
 // WithGroupName is a node construction option to group a *Node within a particular group. This option is useful for debugging with graphs.
-// This function is deprecated and will proabably be remove in the next version, please use the WithGroup function.
+// This function is deprecated and will proabably be remove in the next version.
 func WithGroupName(name string) NodeConsOpt {
 	f := func(n *Node) {
 		if n.group == "" {
@@ -227,8 +227,8 @@ func WithGroupName(name string) NodeConsOpt {
 	return f
 }
 
-// WithGroup is a node construction option to group a *Node within a particular group. This option is useful for debugging with graphs.
-func WithGroup(group encoding.Group) NodeConsOpt {
+// withGroup is a node construction option to group a *Node within a particular group. This option is useful for debugging with graphs.
+func withGroup(group encoding.Group) NodeConsOpt {
 	f := func(n *Node) {
 		n.groups.Upsert(group)
 	}
