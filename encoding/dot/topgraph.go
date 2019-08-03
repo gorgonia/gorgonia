@@ -6,24 +6,24 @@ import (
 	gonumDot "gonum.org/v1/gonum/graph/encoding/dot"
 	"gonum.org/v1/gonum/graph/simple"
 	"gorgonia.org/gorgonia"
-	gencoding "gorgonia.org/gorgonia/internal/encoding"
+	internalEncoding "gorgonia.org/gorgonia/internal/encoding"
 )
 
 var (
-	subGraphs = map[gencoding.Group]subgrapher{
-		gencoding.ConstantCluster: constantSubGraph{
+	subGraphs = map[internalEncoding.Group]subgrapher{
+		internalEncoding.ConstantCluster: constantSubGraph{
 			DirectedBuilder: simple.NewDirectedGraph(),
 			name:            "Constants",
 		},
-		gencoding.InputCluster: inputSubGraph{
+		internalEncoding.InputCluster: inputSubGraph{
 			DirectedBuilder: simple.NewDirectedGraph(),
 			name:            "Inputs",
 		},
-		gencoding.ExprGraphCluster: exprSubGraph{
+		internalEncoding.ExprGraphCluster: exprSubGraph{
 			DirectedBuilder: simple.NewDirectedGraph(),
 			name:            "ExprGraph",
 		},
-		gencoding.UndefinedCluster: exprSubGraph{
+		internalEncoding.UndefinedCluster: exprSubGraph{
 			DirectedBuilder: simple.NewDirectedGraph(),
 			name:            "ExprGraph",
 		},
@@ -41,12 +41,9 @@ func generateDotGraph(g *gorgonia.ExprGraph) (graph.Graph, error) {
 
 	for nodes.Next() {
 		n := nodes.Node()
-		if _, ok := n.(gencoding.Grouper); ok {
-			for _, group := range n.(gencoding.Grouper).Groups() {
+		if _, ok := n.(internalEncoding.Grouper); ok {
+			for _, group := range n.(internalEncoding.Grouper).Groups() {
 				if subgrapher, ok := subGraphs[group]; ok {
-					n := &node{
-						n: n.(*gorgonia.Node),
-					}
 					subgrapher.(graph.DirectedBuilder).AddNode(n)
 				}
 			}

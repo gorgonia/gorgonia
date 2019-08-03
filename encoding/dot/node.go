@@ -6,6 +6,7 @@ import (
 
 	"gonum.org/v1/gonum/graph/encoding"
 	"gorgonia.org/gorgonia"
+	internalEncoding "gorgonia.org/gorgonia/internal/encoding"
 )
 
 type node struct {
@@ -48,4 +49,8 @@ func (n *node) Attributes() []encoding.Attribute {
 		},
 	}
 	return attrs
+}
+
+func (n *node) Groups() internalEncoding.Groups {
+	return n.n.Groups()
 }
