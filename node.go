@@ -12,6 +12,7 @@ import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
+	"gorgonia.org/gorgonia/encoding"
 	"gorgonia.org/tensor"
 )
 
@@ -27,8 +28,11 @@ type Node struct {
 
 	// For nicely grouping stuff in graphviz.
 	// TODO: Should this be in *Node?
-	name  string
+	name string
+	// DEPRECATED: the group attribute will be removed in the next version in favor of groups
 	group string
+	// the grouping notion is only useful for exporting to another format
+	groups encoding.Groups
 
 	g *ExprGraph // this node belongs in this graph
 
@@ -213,6 +217,7 @@ func WithShape(shp ...int) NodeConsOpt {
 }
 
 // WithGroupName is a node construction option to group a *Node within a particular group. This option is useful for debugging with graphs.
+// This function is deprecated and will proabably be remove in the next version, please use the WithGroup function.
 func WithGroupName(name string) NodeConsOpt {
 	f := func(n *Node) {
 		if n.group == "" {
@@ -220,6 +225,32 @@ func WithGroupName(name string) NodeConsOpt {
 		}
 	}
 	return f
+}
+
+// WithGroup is a node construction option to group a *Node within a particular group. This option is useful for debugging with graphs.
+func WithGroup(group encoding.Group) NodeConsOpt {
+	f := func(n *Node) {
+		n.groups.Upsert(group)
+	}
+	return f
+}
+
+// Groups to fulfil the encoding Grouper interface
+func (n *Node) Groups() encoding.Groups {
+	var isConst bool
+	var isInput = n.isInput()
+
+	if n.op != nil {
+		_, isConst = n.op.(constant)
+	}
+
+	switch {
+	case isConst:
+		n.groups.Upsert(encoding.ConstantCluster)
+	case isInput:
+		n.groups.Upsert(encoding.InputCluster)
+	}
+	return n.groups
 }
 
 func newNode(opts ...NodeConsOpt) *Node {
@@ -503,7 +534,8 @@ func (n *Node) Hashcode() uint32 {
 	return n.hash
 }
 
-// ToDot returns the graph as a graphviz compatible string
+// ToDot returns the graph as a graphviz compatible string.
+// DEPRECATED: This function will be removed in the next release, please use the encoding/dot package
 func (n *Node) ToDot() string {
 	graphName := exprgraphClust
 

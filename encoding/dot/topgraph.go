@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	subGraphs = map[gencoding.GroupID]subgrapher{
+	subGraphs = map[gencoding.Group]subgrapher{
 		gencoding.ConstantCluster: constantSubGraph{
 			DirectedBuilder: simple.NewDirectedGraph(),
 			name:            "Constants",
@@ -42,7 +42,7 @@ func generateDotGraph(g *gorgonia.ExprGraph) (graph.Graph, error) {
 	for nodes.Next() {
 		n := nodes.Node()
 		if _, ok := n.(gencoding.Grouper); ok {
-			for _, group := range n.(gencoding.Grouper).Group() {
+			for _, group := range n.(gencoding.Grouper).Groups() {
 				if subgrapher, ok := subGraphs[group]; ok {
 					n := &node{
 						n: n.(*gorgonia.Node),

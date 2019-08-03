@@ -3,17 +3,17 @@ package encoding
 // Cluster represent a group of nodes that are similars
 // It is used for the grapviz generation
 
-const (
+var (
 	// UndefinedCluster ...
-	UndefinedCluster GroupID = iota
+	UndefinedCluster = NewGroup("UndefinedCluster")
 	// ExprGraphCluster is the default cluster
-	ExprGraphCluster
+	ExprGraphCluster = NewGroup("ExprGraphCluster ")
 	// ConstantCluster is the group of nodes that represents constants
-	ConstantCluster
+	ConstantCluster = NewGroup("Constants ")
 	// InputCluster is the group of nodes that are expecting values
-	InputCluster
+	InputCluster = NewGroup("Inputs ")
 	// GradientCluster ...
-	GradientCluster
+	GradientCluster = NewGroup("Gradients ")
 	// StrayCluster ...
-	StrayCluster
+	StrayCluster = NewGroup("Undifferentiated nodes ")
 )
