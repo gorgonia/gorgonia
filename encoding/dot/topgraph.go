@@ -45,6 +45,13 @@ func generateDotGraph(g *gorgonia.ExprGraph) (graph.Graph, error) {
 			for _, group := range n.(internalEncoding.Grouper).Groups() {
 				if subgrapher, ok := subGraphs[group]; ok {
 					subgrapher.(graph.DirectedBuilder).AddNode(n)
+				} else {
+					subgraph := operatorSubGraph{
+						DirectedBuilder: simple.NewDirectedGraph(),
+						name:            group.Name,
+					}
+					subgraph.AddNode(n)
+					subGraphs[group] = subgraph
 				}
 			}
 		}
