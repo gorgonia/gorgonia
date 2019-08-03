@@ -6,7 +6,7 @@ import (
 	gonumDot "gonum.org/v1/gonum/graph/encoding/dot"
 	"gonum.org/v1/gonum/graph/simple"
 	"gorgonia.org/gorgonia"
-	gencoding "gorgonia.org/gorgonia/encoding"
+	gencoding "gorgonia.org/gorgonia/internal/encoding"
 )
 
 var (
