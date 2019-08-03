@@ -22,6 +22,7 @@ var (
 		internalEncoding.ExprGraphCluster: exprSubGraph{
 			DirectedBuilder: simple.NewDirectedGraph(),
 			name:            "ExprGraph",
+			subs:            make(map[internalEncoding.Group]operatorSubGraph),
 		},
 		internalEncoding.UndefinedCluster: exprSubGraph{
 			DirectedBuilder: simple.NewDirectedGraph(),
@@ -42,13 +43,27 @@ func generateDotGraph(g *gorgonia.ExprGraph) (graph.Graph, error) {
 	for nodes.Next() {
 		n := nodes.Node()
 		if _, ok := n.(internalEncoding.Grouper); ok {
-			for _, group := range n.(internalEncoding.Grouper).Groups() {
+			groups := n.(internalEncoding.Grouper).Groups()
+			for _, group := range groups {
 				if subgrapher, ok := subGraphs[group]; ok {
 					subgrapher.(graph.DirectedBuilder).AddNode(n)
 				} else {
-					subgraph := operatorSubGraph{
+					// check if we are in the ExprGraphCluster
+					var subgraph operatorSubGraph
+					subgraph = operatorSubGraph{
 						DirectedBuilder: simple.NewDirectedGraph(),
 						name:            group.Name,
+					}
+					if groups.Have(internalEncoding.ExprGraphCluster) {
+						exprSubg := subGraphs[internalEncoding.ExprGraphCluster].(exprSubGraph)
+						var ok bool
+						if _, ok = exprSubg.subs[group]; ok {
+							subgraph = exprSubg.subs[group]
+						} else {
+							exprSubg.subs[group] = subgraph
+						}
+						subgraph.AddNode(n)
+						continue
 					}
 					subgraph.AddNode(n)
 					subGraphs[group] = subgraph

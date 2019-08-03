@@ -23,7 +23,7 @@ func (g operatorSubGraph) DOTAttributers() (graph, node, edge encoding.Attribute
 		},
 		encoding.Attribute{
 			Key:   "color",
-			Value: "lightgray",
+			Value: "coral",
 		},
 		encoding.Attribute{
 			Key:   "style",

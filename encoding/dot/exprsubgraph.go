@@ -3,10 +3,13 @@ package dot
 import (
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/encoding"
+	gonumDot "gonum.org/v1/gonum/graph/encoding/dot"
+	internalEncoding "gorgonia.org/gorgonia/internal/encoding"
 )
 
 type exprSubGraph struct {
 	name string
+	subs map[internalEncoding.Group]operatorSubGraph
 	graph.DirectedBuilder
 }
 
@@ -53,4 +56,13 @@ func (g exprSubGraph) DOTAttributers() (graph, node, edge encoding.Attributer) {
 		},
 	}
 	return graphAttributes, nodeAttributes, attributer{}
+}
+
+// Structure fulfils the dot.Structurer interface.
+func (g exprSubGraph) Structure() []gonumDot.Graph {
+	output := make([]gonumDot.Graph, 0, len(g.subs))
+	for _, subg := range g.subs {
+		output = append(output, subg)
+	}
+	return output
 }
