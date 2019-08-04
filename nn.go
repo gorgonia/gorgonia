@@ -159,6 +159,7 @@ func LeakyRelu(x *Node, alpha float64) (*Node, error) {
 func Rectify(x *Node) (retVal *Node, err error) {
 	var zero *Node
 	var dt tensor.Dtype
+	group := encoding.NewGroup("Rectify")
 
 	// which zero to use?
 	if dt, err = dtypeOf(x.t); err != nil {
@@ -179,6 +180,7 @@ func Rectify(x *Node) (retVal *Node, err error) {
 	if retVal, err = ApplyOp(cmp, x, zero); err != nil {
 		return nil, errors.Wrap(err, applyOpFail)
 	}
+	retVal.groups.Upsert(group)
 
 	return HadamardProd(x, retVal)
 }
@@ -324,6 +326,7 @@ func Conv1d(in, filter *Node, kernel, pad, stride, dilation int) (*Node, error) 
 //   paddedOutputH = pad[0] + inputH + pad[1]
 //   paddedOutputW = pad[2] + inputW + pad[3]
 func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
+	group := encoding.NewGroup("Maxpool")
 	xShape := x.Shape()
 	h, w := xShape[2], xShape[3]
 	kh, kw := kernel[0], kernel[1]
@@ -348,7 +351,9 @@ func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 	}
 
 	op := newMaxPoolOp(xShape, kernel, pad, stride)
-	return ApplyOp(op, x)
+	retVal, err := ApplyOp(op, x)
+	retVal.groups.Upsert(group)
+	return retVal, err
 }
 
 func MaxPool1D(x *Node, kernel, pad, stride int) (*Node, error) {
