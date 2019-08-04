@@ -52,6 +52,7 @@ func generateDotGraph(g *gorgonia.ExprGraph) (graph.Graph, error) {
 					var subgraph operatorSubGraph
 					subgraph = operatorSubGraph{
 						DirectedBuilder: simple.NewDirectedGraph(),
+						id:              group.ID,
 						name:            group.Name,
 					}
 					if groups.Have(internalEncoding.ExprGraphCluster) {
