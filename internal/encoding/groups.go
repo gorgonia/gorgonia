@@ -14,8 +14,9 @@ func NewGroup(name string) Group {
 
 // Group represent a cluster of elements
 type Group struct {
-	ID   int
-	Name string
+	ID        int
+	IsPrimary bool
+	Name      string
 }
 
 // Grouper is any object that can claim itself as being part of a group
