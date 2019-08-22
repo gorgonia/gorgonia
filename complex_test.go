@@ -3,6 +3,7 @@ package gorgonia
 import "testing"
 
 func TestWeirdNetwork(t *testing.T) {
+	//	t.Skip()
 	const (
 		embeddingDims = 50
 		hiddenSize    = 200

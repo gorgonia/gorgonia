@@ -91,12 +91,16 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	var v Value
 	switch op := instr.op.(type) {
 	case CUDADoer:
-		prealloc := m.getValue(instr.writeTo)
-		if v, err = op.CUDADo(m, toDev, prealloc, inputs...); err != nil {
-			return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
-		}
-		e := &m.Engines()[int(toDev)]
-		setEngine(v, e)
+		// add the function in the queue to run it in the main thread
+		mainDo(func() {
+			prealloc := m.getValue(instr.writeTo)
+			if v, err = op.CUDADo(m, toDev, prealloc, inputs...); err != nil {
+				return
+				//return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
+			}
+			e := &m.Engines()[int(toDev)]
+			setEngine(v, e)
+		})
 	case CLDoer:
 	default:
 		switch {

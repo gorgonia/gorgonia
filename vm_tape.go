@@ -196,8 +196,13 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 }
 
 func (m *tapeMachine) RunAll() (err error) {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
+	done := make(chan bool, 1)
+	defer func() {
+		done <- true
+	}()
+	go func() {
+		initCuda(done)
+	}()
 	defer m.DoWork()
 
 	workAvailable := m.ExternMetadata.WorkAvailable()
