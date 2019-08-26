@@ -23,6 +23,7 @@ type Input interface {
 	Nodes() Nodes
 }
 
+// Errer is an interface that can return an error.
 type Errer interface {
 	Err() error
 }
@@ -103,4 +104,23 @@ func CheckOne(in Input) error {
 		return errer.Err()
 	}
 	return nil
+}
+
+// NodesFromInputs creates a Nodes from a list of Input.
+func NodesFromInputs(xs ...Input) (Nodes, error) {
+	for i := range xs {
+		if err:= CheckOne(xs[i]); err != nil{
+			return nil, errors.Wrapf(err, "NodesFromInputs %dth input",i)
+		}
+		// check if the Input is a *Node
+		if xs[i].Node() == nil {
+			return nil, errors.Errorf("Input %d is not a *Node", i)
+		}
+	}
+
+	retVal := make(Nodes, len(xs))
+	for i :=range xs {
+		retVal[i] = xs[i].Node()
+	}
+	return retVal, nil
 }
