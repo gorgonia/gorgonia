@@ -29,6 +29,7 @@ func returnNode(n *Node) {
 	n.children = nil
 	n.name = ""
 	n.group = ""
+	n.groups = nil
 	n.g = nil
 	n.boundTo = nil
 	n.derivOf = nil
