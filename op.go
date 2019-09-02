@@ -96,12 +96,6 @@ type BinaryOp interface {
 	IsBinary() bool
 }
 
-type BestDoer interface {
-	Op
-
-	BestDo(prealloc Value, vals ...Value) (Value, error)
-}
-
 // A NoRetOp is an Op that reads a value, but does not return any value. It's a representation of a not-pure function
 type NoRetOp interface {
 	Op
