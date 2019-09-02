@@ -38,6 +38,9 @@ func walkGraph(start *Node, ch chan *Node, walked NodeSet) {
 }
 
 // Sort topologically sorts a ExprGraph: root of graph will be first
+// nodes are sorted using gonum's SortStabilized function.
+//
+// see https://godoc.org/gonum.org/v1/gonum/graph/topo#SortStabilized for more info
 func Sort(g *ExprGraph) (sorted Nodes, err error) {
 	var sortedNodes []graph.Node
 	// if sortedNodes, err = topo.Sort(g); err != nil {
@@ -49,6 +52,11 @@ func Sort(g *ExprGraph) (sorted Nodes, err error) {
 	return
 }
 
+// UnstableSort performs a topological sort of the directed graph g returning the 'from' to 'to'
+// sort order. If a topological ordering is not possible, an Unorderable error is returned
+// listing cyclic components in g with each cyclic component's members sorted by ID. When
+// an Unorderable error is returned, each cyclic component's topological position within
+// the sorted nodes is marked with a nil graph.Node.
 func UnstableSort(g *ExprGraph) (sorted Nodes, err error) {
 	var sortedNodes []graph.Node
 	if sortedNodes, err = topo.Sort(g); err != nil {

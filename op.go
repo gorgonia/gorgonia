@@ -154,6 +154,7 @@ type CLDoer interface {
 	CLDo(inputs ...Value) (Value, error)
 }
 
+// A CUDAADOp operation have a specific method to run with CUDA
 type CUDAADOp interface {
 	ADOp
 	CUDADoDiff(extern External, dev Device, inputs Nodes, output *Node) error

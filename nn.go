@@ -356,10 +356,14 @@ func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 	return retVal, err
 }
 
+// MaxPool1D applies a maxpool on the node x.
 func MaxPool1D(x *Node, kernel, pad, stride int) (*Node, error) {
 	return MaxPool2D(x, tensor.Shape{1, kernel}, []int{0, pad}, []int{1, stride})
 }
 
+// BatchNorm applies a batchnormalization. This operator can be used in forward pass or for training.
+// In an evaluation only, the "op" output can be discared.
+// In training phase, γ, β can be discarded and the op should be used.
 func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β *Node, op *BatchNormOp, err error) {
 	dt, err := dtypeOf(x.Type())
 	if err != nil {

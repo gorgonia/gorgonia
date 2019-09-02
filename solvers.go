@@ -203,6 +203,7 @@ func WithRho(rho float64) SolverOpt {
 	return f
 }
 
+// WithMomentum sets the momentum of the solver. It is a no-op is the solver's type is not Momentum
 func WithMomentum(momentum float64) SolverOpt {
 	f := func(s Solver) {
 		switch st := s.(type) {
@@ -1350,7 +1351,7 @@ func (s *AdaGradSolver) Step(model []ValueGrad) (err error) {
 	return
 }
 
-// Barzilai-Borwein performs Gradient Descent in steepest descend direction
+// BarzilaiBorweinSolver / Barzilai-Borwein performs Gradient Descent in steepest descend direction
 // Solves 0 = F(x), by
 // x_{i+1} = x_i - eta * Grad(F)(x_i)
 // Where the learn rate eta is calculated by the Barzilai-Borwein method:
@@ -1365,6 +1366,8 @@ type BarzilaiBorweinSolver struct {
 	prevDV  []*dualValue // dual value for x_{i-1} step
 }
 
+// NewBarzilaiBorweinSolver creates a new Barzilai-Borwein solver withs some default values:
+// the learn rate is set to 0.001 and the solver does not use clipping.
 func NewBarzilaiBorweinSolver(opts ...SolverOpt) *BarzilaiBorweinSolver {
 	s := &BarzilaiBorweinSolver{
 		eta:     0.001,
