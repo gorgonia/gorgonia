@@ -51,6 +51,7 @@ func NewExternalOp(op Op, ctx ExecutionContext, prealloc Value) *ExternalOp {
 	return retVal
 }
 
+// DetermineDevice ...
 func (op *ExternalOp) DetermineDevice(inputs Nodes, output *Node) error {
 	dev := output.dataOn
 	var inDev Device = -2

@@ -72,6 +72,7 @@ func (m *ExternMetadata) Transfer(toDev, fromDev Device, v Value, synchronous bo
 	return v, nil
 }
 
+// Reset is a noop function for compatibility with the interface
 func (m *ExternMetadata) Reset() {}
 
 // Cleanup cleans up the ancillary allocations made during the calling of batched external device function.
