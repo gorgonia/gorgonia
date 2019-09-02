@@ -377,8 +377,8 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 	variance := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	ma := tensor.New(tensor.Of(dt), tensor.WithShape(1))
 
-	mean_ := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
-	variance_ := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	meanTmp := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	varianceTmp := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	tmp := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
 	xNorm := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
 	batchSumMultiplier := tensor.New(tensor.Of(dt), tensor.WithShape(batches))
@@ -408,9 +408,9 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 		variance: variance,
 		ma:       ma,
 
-		mean_:                mean_,
-		variance_:            variance_,
-		tmp_:                 tmp,
+		meanTmp:              meanTmp,
+		varianceTmp:          varianceTmp,
+		tmpSpace:             tmp,
 		xNorm:                xNorm,
 		batchSumMultiplier:   batchSumMultiplier,
 		numByChans:           numByChans,
