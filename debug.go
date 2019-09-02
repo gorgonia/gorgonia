@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 )
 
+// DEBUG is a global flag that activates various debugging functions
 const DEBUG = true
 
 func init() {
@@ -32,11 +33,8 @@ var (
 	allocatorDev      = false
 )
 
-var READMEMSTATS = true
-
+// TABCOUNT is a global flag used when debugging
 var TABCOUNT uint32
-
-var TRACK = false
 
 var _logger_ = log.New(os.Stderr, "", 0)
 var replacement = "\n"
