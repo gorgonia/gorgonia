@@ -5,6 +5,8 @@ go env
 go test -v -a -covermode=atomic -coverprofile=test.cover .
 go test -tags='avx' -a  .
 go test -tags='sse' -a  .
+go test -tags='noasm' -a .
+go test -tags='wasm' -a .
 
 # because coveralls only accepts one coverage file at one time... we combine them into one gigantic one
 covers=(./test.cover)
@@ -20,6 +22,6 @@ goveralls -coverprofile=./final.cover -service=travis-ci
 # commands are supposed to exit with non zero status, but then continue
 # executing.  set -x makes the travis log files extremely verbose and
 # difficult to understand.
-# 
+#
 # see travis-ci/travis-ci#5120
 set +ex
