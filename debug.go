@@ -36,7 +36,7 @@ var (
 // TABCOUNT is a global flag used when debugging
 var TABCOUNT uint32
 
-var _logger_ = log.New(os.Stderr, "", 0)
+var logger = log.New(os.Stderr, "", 0)
 var replacement = "\n"
 
 func tabcount() int {
@@ -46,7 +46,7 @@ func tabcount() int {
 func enterLogScope() {
 	atomic.AddUint32(&TABCOUNT, 1)
 	tabcount := tabcount()
-	_logger_.SetPrefix(strings.Repeat("\t", tabcount))
+	logger.SetPrefix(strings.Repeat("\t", tabcount))
 	replacement = "\n" + strings.Repeat("\t", tabcount)
 }
 
@@ -60,7 +60,7 @@ func leaveLogScope() {
 	} else {
 		atomic.StoreUint32(&TABCOUNT, uint32(tabcount))
 	}
-	_logger_.SetPrefix(strings.Repeat("\t", tabcount))
+	logger.SetPrefix(strings.Repeat("\t", tabcount))
 	replacement = "\n" + strings.Repeat("\t", tabcount)
 }
 
@@ -69,8 +69,8 @@ func logf(format string, others ...interface{}) {
 		// format = strings.Replace(format, "\n", replacement, -1)
 		s := fmt.Sprintf(format, others...)
 		s = strings.Replace(s, "\n", replacement, -1)
-		_logger_.Println(s)
-		// _logger_.Printf(format, others...)
+		logger.Println(s)
+		// logger.Printf(format, others...)
 	}
 }
 
@@ -136,7 +136,7 @@ func allocatorLogf(format string, attrs ...interface{}) {
 
 func recoverFrom(format string, attrs ...interface{}) {
 	if r := recover(); r != nil {
-		_logger_.Printf(format, attrs...)
+		logger.Printf(format, attrs...)
 		panic(r)
 	}
 }
@@ -156,6 +156,7 @@ func incrEC() {
 	atomic.AddInt64(&ec, 1)
 }
 
+// GraphCollisionStats ...
 func GraphCollisionStats() (int, int, int) {
 	return int(atomic.LoadInt64(&nnc)), int(atomic.LoadInt64(&cc)), int(atomic.LoadInt64(&ec))
 }
