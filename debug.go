@@ -156,6 +156,7 @@ func incrEC() {
 	atomic.AddInt64(&ec, 1)
 }
 
+// GraphCollisionStats ...
 func GraphCollisionStats() (int, int, int) {
 	return int(atomic.LoadInt64(&nnc)), int(atomic.LoadInt64(&cc)), int(atomic.LoadInt64(&ec))
 }
