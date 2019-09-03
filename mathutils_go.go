@@ -1,4 +1,4 @@
-// +build wasm
+// +build noasm wasm
 
 package gorgonia
 
