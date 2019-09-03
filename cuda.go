@@ -10,11 +10,12 @@ import (
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
-	"gorgonia.org/cu/dnn"
+	cudnn "gorgonia.org/cu/dnn"
 	"gorgonia.org/gorgonia/cuda"
 	"gorgonia.org/tensor"
 )
 
+// CUDA tells the package that CUDA is used
 const CUDA = true
 
 var (
@@ -63,17 +64,18 @@ type ExternMetadata struct {
 	initialized   bool
 }
 
-// elemGridSize calculates the gridsize for elementwise operations
-func (md *ExternMetadata) ElemGridSize(n, dev int) (gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ int) {
+// ElemGridSize calculates the gridsize for elementwise operations
+func (m *ExternMetadata) ElemGridSize(n, dev int) (gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ int) {
 	if dev >= len(md.engines) {
 		// error
 	}
-	return md.engines[dev].ElemGridSize(n)
+	return m.engines[dev].ElemGridSize(n)
 }
 
 // WorkAvailable returns a channel of empty struct, which is used to signal to the VM when there is work available. The VM will then call the DoWork method
 func (m *ExternMetadata) WorkAvailable() <-chan bool { return m.workAvailable }
 
+// Sync the channels
 func (m *ExternMetadata) Sync() chan struct{} { return m.syncChan }
 
 // DoWork flushes any batched cgo calls. In this build it flushes any batched CUDA calls and any batched CBLAS calls.
@@ -86,6 +88,7 @@ func (m *ExternMetadata) DoWork() error {
 	return nil
 }
 
+// Engines ...
 func (m *ExternMetadata) Engines() []cuda.Engine { return m.engines }
 
 // Contexts return a slice of contexts that is being used by this CUDAMachine
@@ -97,7 +100,7 @@ func (m *ExternMetadata) Contexts() []*cu.BatchedContext {
 	return retVal
 }
 
-// CUDNNContext returns the CUDNN context
+// CUDNNContexts returns the CUDNN context
 func (m *ExternMetadata) CUDNNContexts() []*cudnn.Context {
 	retVal := make([]*cudnn.Context, 0, len(m.engines))
 	for _, e := range m.engines {
