@@ -11,6 +11,7 @@ func (op linAlgBinOp) CallsExtern() bool {
 	return false
 }
 
+// NewAddOp creates a new *ExternalOp that wraps an add op
 func NewAddOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
 	add := newElemBinOp(addOpType, a, b)
 	op := NewExternalOp(add, ctx, nil)
@@ -26,6 +27,7 @@ func NewSubOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
 	return op
 }
 
+// NewHadamardProdOp creates a new *ExternalOp that wraps a mul op
 func NewHadamardProdOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
 	mul := newEBOByType(mulOpType, a.t, b.t)
 	op := NewExternalOp(mul, ctx, nil)

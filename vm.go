@@ -284,6 +284,7 @@ func WithManualGradient() VMOpt {
 	return f
 }
 
+// WithEngine sets the tensor engine for computation inside the VM.
 func WithEngine(e tensor.Engine) VMOpt {
 	f := func(m VM) {
 		switch v := m.(type) {

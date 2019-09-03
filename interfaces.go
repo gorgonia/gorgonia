@@ -10,6 +10,7 @@ import (
 	"gorgonia.org/tensor"
 )
 
+// Tensor is an interface that describes an ndarray
 type Tensor interface {
 	// info about the ndarrayN
 	Shape() tensor.Shape
