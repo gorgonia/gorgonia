@@ -24,6 +24,7 @@ The following contributors have contributed to the quality of the project
 * Andrew Murray | @radarhere
 * Ankit Raj | @aj0t
 * Bart Fokker | @barthr
+* bezineb5 | @bezineb5
 * Bradley J Kemp | @bradleyjkemp
 * David Soller | @3ygun
 * Davor Kapsa | @dvrkps
