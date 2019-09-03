@@ -36,8 +36,8 @@ var (
 	ten3F32 = &TensorType{Dims: 3, Of: tensor.Float32}
 
 	// removes the need for type checking
-	f64T hm.Type = tensor.Float64
-	f32T hm.Type = tensor.Float32
+	f64T = tensor.Float64 // hm.Type
+	f32T = tensor.Float32 // hm.Type
 )
 
 var acceptableDtypes = [...]tensor.Dtype{tensor.Float64, tensor.Float32, tensor.Int, tensor.Int64, tensor.Int32, tensor.Byte, tensor.Bool}
