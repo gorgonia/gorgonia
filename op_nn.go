@@ -320,8 +320,6 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 	chanStride := h * w
 	inRowStride := inputStrides[2]
 
-	var imEnd, colEnd int
-
 	switch input.Dtype() {
 	case tensor.Float64:
 		imData := input.Data().([]float64)
@@ -329,11 +327,13 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 		for i := 0; i < b; i++ {
 			imStart := i * batchStrideIm
 			colStart := i * batchStrideCol
+			imEnd := imStart + batchStrideIm
+			colEnd := colStart + batchStrideCol
 
-			if imEnd = imStart + batchStrideIm; imEnd >= len(imData) {
+			if imEnd >= len(imData) {
 				imEnd = len(imData)
 			}
-			if colEnd = colStart + batchStrideCol; colEnd >= len(colData) {
+			if colEnd >= len(colData) {
 				colEnd = len(colData)
 			}
 
@@ -345,11 +345,13 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 		for i := 0; i < b; i++ {
 			imStart := i * batchStrideIm
 			colStart := i * batchStrideCol
+			imEnd := imStart + batchStrideIm
+			colEnd := colStart + batchStrideCol
 
 			if imEnd >= len(imData) {
 				imEnd = len(imData)
 			}
-			if colEnd = colStart + batchStrideCol; colEnd >= len(colData) {
+			if colEnd >= len(colData) {
 				colEnd = len(colData)
 			}
 
