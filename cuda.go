@@ -66,7 +66,7 @@ type ExternMetadata struct {
 
 // ElemGridSize calculates the gridsize for elementwise operations
 func (m *ExternMetadata) ElemGridSize(n, dev int) (gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ int) {
-	if dev >= len(md.engines) {
+	if dev >= len(m.engines) {
 		// error
 	}
 	return m.engines[dev].ElemGridSize(n)
