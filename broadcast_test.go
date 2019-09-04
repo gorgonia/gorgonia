@@ -62,6 +62,9 @@ func TestBroadcast(t *testing.T) {
 		t.Fatal(err)
 	}
 	z, err = Add(a, b)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if a, b, err = Broadcast(x, y, NewBroadcastPattern(nil, []byte{1})); err != nil {
 		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
 		t.Fatal(err)

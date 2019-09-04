@@ -141,7 +141,7 @@ func (m *lispMachine) execDevTrans(op devTrans, n *Node, children Nodes) (err er
 		if mem, err = m.Get(op.to, calcMemSize(cv.Dtype(), child.shape)); err != nil {
 			return
 		}
-		if cd, err = makeValueFromMem(child.t, child.shape, mem); err != nil {
+		if _, err = makeValueFromMem(child.t, child.shape, mem); err != nil {
 			return
 		}
 	}
