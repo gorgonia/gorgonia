@@ -133,6 +133,9 @@ func main() {
 
 	cudamodules := path.Join(gorgoniaLoc, "cudamodules.go")
 	f, err := os.OpenFile(cudamodules, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer f.Close()
 
 	f.Write([]byte("// +build cuda\n\npackage gorgonia\n"))
