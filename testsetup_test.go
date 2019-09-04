@@ -178,7 +178,6 @@ func checkErr(t *testing.T, expected bool, err error, name string, id interface{
 	return false
 }
 
-
 func deepNodeEq(a, b *Node) bool {
 	if a == b {
 		return true

@@ -35,15 +35,15 @@ func (n *node) Attributes() []encoding.Attribute {
 		`const`, "const|", // "&#34;" is shorter than "&quot;".
 	)
 	attrs := []encoding.Attribute{
-		encoding.Attribute{
+		{
 			Key:   "id",
 			Value: fmt.Sprintf(`"%p"`, n.n),
 		},
-		encoding.Attribute{
+		{
 			Key:   "shape",
 			Value: "Mrecord",
 		},
-		encoding.Attribute{
+		{
 			Key: "label",
 			Value: fmt.Sprintf(`"{{%s|%#x}|{Op|%s}|{Shape|%v}}"`,
 				htmlEscaper.Replace(n.n.Name()),

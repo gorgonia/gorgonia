@@ -73,7 +73,7 @@ func Broadcast(a, b *Node, pattern BroadcastPattern) (*Node, *Node, error) {
 	if len(broadcastOn[0]) > 0 {
 		children := Nodes{x}
 		for _, a := range broadcastOn[0] {
-			if a >= yshape.Dims(){
+			if a >= yshape.Dims() {
 				return nil, nil, errors.Errorf("Attempting to broadcast a on axis %d of b. But b has shape %v", a, yshape)
 			}
 
@@ -92,7 +92,7 @@ func Broadcast(a, b *Node, pattern BroadcastPattern) (*Node, *Node, error) {
 	if len(broadcastOn[1]) > 0 {
 		children := Nodes{y}
 		for _, a := range broadcastOn[1] {
-			if a >= xshape.Dims(){
+			if a >= xshape.Dims() {
 				return nil, nil, errors.Errorf("Attempting to broadcast b on axis %d of a. But a has shape %v", a, xshape)
 			}
 
