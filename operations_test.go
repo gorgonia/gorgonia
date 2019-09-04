@@ -970,6 +970,6 @@ func TestReshapeRuntime(t *testing.T) {
 	}
 
 	if !x.Value().Shape().Eq(tensor.Shape{28, 28}) {
-		t.Errorf("A mutation of shape has occured!")
+		t.Errorf("A mutation of shape has occurred")
 	}
 }
