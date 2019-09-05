@@ -10,15 +10,23 @@ import (
 var (
 	// Represents the types that Nodes can take in Gorgonia
 
+	// Float64 ...
 	Float64 = tensor.Float64
+	// Float32 ...
 	Float32 = tensor.Float32
-	Int     = tensor.Int
-	Int64   = tensor.Int64
-	Int32   = tensor.Int32
-	Byte    = tensor.Uint8
-	Bool    = tensor.Bool
+	// Int ...
+	Int = tensor.Int
+	// Int64 ...
+	Int64 = tensor.Int64
+	// Int32 ...
+	Int32 = tensor.Int32
+	// Byte ...
+	Byte = tensor.Uint8
+	// Bool ...
+	Bool = tensor.Bool
 
-	Ptr = tensor.UnsafePointer // equivalent to interface{}. Ugh Ugh Ugh
+	// Ptr is equivalent to interface{}. Ugh Ugh Ugh
+	Ptr = tensor.UnsafePointer
 
 	vecF64  = &TensorType{Dims: 1, Of: tensor.Float64}
 	vecF32  = &TensorType{Dims: 1, Of: tensor.Float32}
@@ -28,8 +36,8 @@ var (
 	ten3F32 = &TensorType{Dims: 3, Of: tensor.Float32}
 
 	// removes the need for type checking
-	f64T hm.Type = tensor.Float64
-	f32T hm.Type = tensor.Float32
+	f64T = tensor.Float64 // hm.Type
+	f32T = tensor.Float32 // hm.Type
 )
 
 var acceptableDtypes = [...]tensor.Dtype{tensor.Float64, tensor.Float32, tensor.Int, tensor.Int64, tensor.Int32, tensor.Byte, tensor.Bool}

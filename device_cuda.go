@@ -35,6 +35,7 @@ func (d Device) Alloc(extern External, size int64) (tensor.Memory, error) {
 	return ctx.MemAlloc(size)
 }
 
+// Free the memory of the device
 func (d Device) Free(extern External, mem tensor.Memory, size int64) (err error) {
 	var devptr cu.DevicePtr
 	var ok bool

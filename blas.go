@@ -20,7 +20,7 @@ type BLAS interface {
 	// blas.Complex128
 }
 
-// only blastoise.Implementation() and cubone.Implementation() are batchedBLAS -
+// only blase.Implementation() and cubone.Implementation() are batchedBLAS -
 // they both batch cgo calls (and cubone batches cuda calls)
 type batchedBLAS interface {
 	WorkAvailable() <-chan struct{}
@@ -31,10 +31,10 @@ type batchedBLAS interface {
 
 // Use defines which BLAS implementation gorgonia should use.
 // The default is Gonum's Native. These are the other options:
-//		Use(blastoise.Implementation())
+//		Use(blase.Implementation())
 //		Use(cubone.Implementation())
 //		Use(cgo.Implementation)
-// Note the differences in the brackets. The blastoise and cubone ones are functions.
+// Note the differences in the brackets. The blase and cubone ones are functions.
 func Use(b BLAS) {
 	// close the blast door! close the blast door!
 	blasdoor.Lock()
