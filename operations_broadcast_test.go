@@ -126,7 +126,6 @@ func TestBroadcastAdd(t *testing.T) {
 	}
 }
 
-
 var broadcastMulTests = []broadcastOpTest{
 	{name: "vec-mat",
 		a:     tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{10, 20})),
