@@ -37,7 +37,7 @@ func (g *Groups) Upsert(grp Group) {
 	*g = append(*g, grp)
 }
 
-// Have retuns true if GroupID is in groups
+// Have returns true if GroupID is in groups
 func (g *Groups) Have(grp Group) bool {
 	for i := 0; i < len(*g); i++ {
 		if (*g)[i].ID == grp.ID {

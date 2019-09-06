@@ -159,4 +159,4 @@ func (ctx *context) DoWork() {
 func (ctx *context) WorkAvailable() <-chan struct{} { return ctx.workAvailable }
 
 // String implements runtime.Stringer and fmt.Stringer. It returns the name of the BLAS implementation.
-func (ctxt *context) String() string { return "Blase" }
+func (*context) String() string { return "Blase" }
