@@ -34,7 +34,7 @@ func cudaLogf(format string, attrs ...interface{})     {}
 func allocatorLogf(format string, attr ...interface{}) {}
 func recoverFrom(format string, attrs ...interface{})  {}
 
-/* Graph Collision related debugging code */
+// GraphCollisionStats returns the collisions in the graph only when built with the debug tag, otherwise it's a noop that returns 0
 func GraphCollisionStats() (int, int, int) { return 0, 0, 0 }
 
 func incrCC() {}

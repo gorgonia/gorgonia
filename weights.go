@@ -4,7 +4,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/leesper/go_rng"
+	rng "github.com/leesper/go_rng"
 	"github.com/pkg/errors"
 	"gorgonia.org/tensor"
 )
@@ -37,7 +37,8 @@ func Zeroes() InitWFn {
 	return f
 }
 
-// Ones creates an InitWFn that populates a Value with ones. Straight out of the tin!
+
+// Ones creates an InitWfn that populates a Value with ones. See Zeroes() for more explanation.
 func Ones() InitWFn {
 	return func(dt tensor.Dtype, s ...int) interface{} { return ones(dt, s...).Data() }
 }
@@ -51,6 +52,7 @@ func RangedFrom(start int) InitWFn {
 	return f
 }
 
+// ValuesOf creates an InitWrn that populates a value with val. This function will cause a panic if val's type is incompatible with the values type.
 func ValuesOf(val interface{}) InitWFn {
 	f := func(dt tensor.Dtype, s ...int) interface{} {
 		size := tensor.Shape(s).TotalSize()

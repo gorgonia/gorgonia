@@ -94,8 +94,16 @@ type SymDiffError struct {
 	err     error
 }
 
-func (err SymDiffError) Error() string          { return err.err.Error() }
-func (err SymDiffError) Nodes() Nodes           { return err.nodes }
-func (err SymDiffError) Node() *Node            { return err.single }
+func (err SymDiffError) Error() string { return err.err.Error() }
+
+// Nodes returns the nodes involved in the error
+func (err SymDiffError) Nodes() Nodes { return err.nodes }
+
+// Node returns a specific node involved in the error
+func (err SymDiffError) Node() *Node { return err.single }
+
+// Grads returns the grads involved in the error
 func (err SymDiffError) Grads() map[*Node]Nodes { return err.gradMap }
-func (err SymDiffError) Grad() *Node            { return err.grad }
+
+// Grad returns a specific grad involved in the error
+func (err SymDiffError) Grad() *Node { return err.grad }

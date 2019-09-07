@@ -7,6 +7,7 @@ import (
 	"unsafe"
 )
 
+// SetOptimizationLevel to i
 func SetOptimizationLevel(i int) { optimizationLevel = i }
 
 func castFU32(x float32) uint32 { return *(*uint32)(unsafe.Pointer(&x)) }

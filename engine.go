@@ -5,15 +5,18 @@ import (
 	"gorgonia.org/tensor"
 )
 
+
 type SymbolicEngine struct{
 	ExprGraph
 }
+
 
 // StandardEngine is the default CPU engine for gorgonia
 type StandardEngine struct {
 	tensor.StdEng
 }
 
+// Transpose tensor a according to expStrides
 func (e StandardEngine) Transpose(a tensor.Tensor, expStrides []int) error {
 	if !a.IsNativelyAccessible() {
 		return errors.Errorf("Cannot Transpose() on non-natively accessible tensor")

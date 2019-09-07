@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/encoding"
 	"gorgonia.org/tensor"
 )
 
@@ -158,6 +159,7 @@ func LeakyRelu(x *Node, alpha float64) (*Node, error) {
 func Rectify(x *Node) (retVal *Node, err error) {
 	var zero *Node
 	var dt tensor.Dtype
+	group := encoding.NewGroup("Rectify")
 
 	// which zero to use?
 	if dt, err = dtypeOf(x.t); err != nil {
@@ -178,6 +180,7 @@ func Rectify(x *Node) (retVal *Node, err error) {
 	if retVal, err = ApplyOp(cmp, x, zero); err != nil {
 		return nil, errors.Wrap(err, applyOpFail)
 	}
+	retVal.groups.Upsert(group)
 
 	return HadamardProd(x, retVal)
 }
@@ -228,6 +231,7 @@ func Im2Col(n *Node, kernel, pad, stride, dilation tensor.Shape) (retVal *Node, 
 // stride: len(stride) == 2
 // dilation: len(dilation) == 2
 func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []int) (retVal *Node, err error) {
+	group := encoding.NewGroup("Convolution")
 	// niceness for defaults
 	if pad == nil {
 		pad = []int{0, 0}
@@ -259,6 +263,7 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []
 	if colIm, err = Im2Col(im, kernelShape, pad, stride, dilation); err != nil {
 		return
 	}
+	colIm.groups.Upsert(group)
 
 	layer := filter.Shape()[0]
 	kernel := filter.Shape()[1]
@@ -269,6 +274,7 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []
 	if flattened, err = Reshape(filter, tensor.Shape{layer, kernel * row * col}); err != nil {
 		return
 	}
+	flattened.groups.Upsert(group)
 
 	// extract patch
 	batch := colIm.Shape()[0]
@@ -280,6 +286,7 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []
 	if patch, err = Reshape(colIm, tensor.Shape{batch * m * n, z}); err != nil {
 		return
 	}
+	patch.groups.Upsert(group)
 
 	op := linAlgBinOp{
 		āBinaryOperator: matMulOperator,
@@ -290,13 +297,17 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []
 	if colImLayer, err = ApplyOp(op, patch, flattened); err != nil {
 		return
 	}
+	colImLayer.groups.Upsert(group)
 
 	// now reshape and transpose the values back into the original order
 	var res *Node
 	if res, err = Reshape(colImLayer, tensor.Shape{batch, m, n, layer}); err != nil {
 		return
 	}
-	return Transpose(res, 0, 3, 1, 2)
+	res.groups.Upsert(group)
+	ret, err := Transpose(res, 0, 3, 1, 2)
+	ret.groups.Upsert(group)
+	return ret, err
 }
 
 // Conv1d is a 1D convlution. It relies on Conv2D
@@ -315,6 +326,7 @@ func Conv1d(in, filter *Node, kernel, pad, stride, dilation int) (*Node, error) 
 //   paddedOutputH = pad[0] + inputH + pad[1]
 //   paddedOutputW = pad[2] + inputW + pad[3]
 func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
+	group := encoding.NewGroup("Maxpool")
 	xShape := x.Shape()
 	h, w := xShape[2], xShape[3]
 	kh, kw := kernel[0], kernel[1]
@@ -339,13 +351,19 @@ func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 	}
 
 	op := newMaxPoolOp(xShape, kernel, pad, stride)
-	return ApplyOp(op, x)
+	retVal, err := ApplyOp(op, x)
+	retVal.groups.Upsert(group)
+	return retVal, err
 }
 
+// MaxPool1D applies a maxpool on the node x.
 func MaxPool1D(x *Node, kernel, pad, stride int) (*Node, error) {
 	return MaxPool2D(x, tensor.Shape{1, kernel}, []int{0, pad}, []int{1, stride})
 }
 
+// BatchNorm applies a batchnormalization. This operator can be used in forward pass or for training.
+// In an evaluation only, the "op" output can be discared.
+// In training phase, γ, β can be discarded and the op should be used.
 func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β *Node, op *BatchNormOp, err error) {
 	dt, err := dtypeOf(x.Type())
 	if err != nil {
@@ -359,8 +377,8 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 	variance := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	ma := tensor.New(tensor.Of(dt), tensor.WithShape(1))
 
-	mean_ := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
-	variance_ := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	meanTmp := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	varianceTmp := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	tmp := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
 	xNorm := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
 	batchSumMultiplier := tensor.New(tensor.Of(dt), tensor.WithShape(batches))
@@ -390,9 +408,9 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 		variance: variance,
 		ma:       ma,
 
-		mean_:                mean_,
-		variance_:            variance_,
-		tmp_:                 tmp,
+		meanTmp:              meanTmp,
+		varianceTmp:          varianceTmp,
+		tmpSpace:             tmp,
 		xNorm:                xNorm,
 		batchSumMultiplier:   batchSumMultiplier,
 		numByChans:           numByChans,

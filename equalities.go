@@ -98,7 +98,7 @@ func tensorClose(a, b tensor.Tensor) bool {
 		if len(aFs) != len(bFs) {
 			return false
 		}
-		aFs = aFs[:len(aFs)]
+		aFs = aFs[:]
 		bFs = bFs[:len(aFs)]
 		for i, v := range aFs {
 			if !dawson.CloseF64(v, bFs[i]) {
@@ -112,7 +112,7 @@ func tensorClose(a, b tensor.Tensor) bool {
 		if len(aFs) != len(bFs) {
 			return false
 		}
-		aFs = aFs[:len(aFs)]
+		aFs = aFs[:]
 		bFs = bFs[:len(aFs)]
 		for i, v := range aFs {
 			if !dawson.CloseF32(v, bFs[i]) {
