@@ -43,8 +43,11 @@ func logStabilization(a *Node) (retVal *Node, err error) {
 		if cnst, ok := input1.op.(constant); ok {
 			if constEq(cnst, onef32ConstOp) || constEq(cnst, onef64ConstOp) {
 				x = input0
+				break
 			}
 		}
+
+		return a, noStabilizationErr{}
 	case subOpType:
 		if cnst, ok := input0.op.(constant); !ok || (ok && !constEq(cnst, onef32ConstOp) && !constEq(cnst, onef64ConstOp)) {
 			return a, noStabilizationErr{}
