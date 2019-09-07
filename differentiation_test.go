@@ -107,11 +107,11 @@ func TestBackprop(t *testing.T) {
 	// extra was created in the Backprop process
 
 	extra := Must(Mul(res, onef64))
-	dzdx_expectedPath := Nodes{ret[0], w, extra, res, mul, x, w, grad}
-	dzdw_expectedPath := Nodes{ret[1], x, extra, res, mul, x, w, grad}
+	dzdxExpectedPath := Nodes{ret[0], w, extra, res, mul, x, w, grad}
+	dzdwExpectedPath := Nodes{ret[1], x, extra, res, mul, x, w, grad}
 
-	assert.True(dzdx_expectedPath.Equals(ret[0].seqWalk()))
-	assert.True(dzdw_expectedPath.Equals(ret[1].seqWalk()))
+	assert.True(dzdxExpectedPath.Equals(ret[0].seqWalk()))
+	assert.True(dzdwExpectedPath.Equals(ret[1].seqWalk()))
 
 	/*
 		ioutil.WriteFile("Test_Res.dot", []byte(res.ToDot()), 0644)

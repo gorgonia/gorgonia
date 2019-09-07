@@ -490,7 +490,7 @@ func inverseSqrtDiff(x, y *Node) (err error) {
 	}
 
 	sub := newElemBinOp(subOpType, x, y)
-	if d, err = sub.Do(xdv.d, d); err != nil {
+	if _, err = sub.Do(xdv.d, d); err != nil {
 		return errors.Wrapf(err, doFail, sub)
 	}
 	return nil
