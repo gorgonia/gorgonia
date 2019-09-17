@@ -25,16 +25,16 @@ func TestWeirdNetwork(t *testing.T) {
 	var p *Node
 	var q *Node
 
-	e_x := NewMatrix(g, Float64, WithShape(xs, embeddingDims), WithName("x embeddings"), WithInit(GlorotU(1)))
-	e_p := NewMatrix(g, Float64, WithShape(ps, embeddingDims), WithName("p embeddings"), WithInit(GlorotU(1)))
-	e_q := NewMatrix(g, Float64, WithShape(qs, embeddingDims), WithName("q embeddings"), WithInit(GlorotU(1)))
-	w0_x := NewMatrix(g, Float64, WithShape(hiddenSize, xFeats*embeddingDims), WithName("layer0 weights for x"), WithInit(GlorotU(1)))
-	w0_p := NewMatrix(g, Float64, WithShape(hiddenSize, pFeats*embeddingDims), WithName("layer0 weights for p"), WithInit(GlorotU(1)))
-	w0_q := NewMatrix(g, Float64, WithShape(hiddenSize, qFeats*embeddingDims), WithName("layer0 weights for q"), WithInit(GlorotU(1)))
+	eX := NewMatrix(g, Float64, WithShape(xs, embeddingDims), WithName("x embeddings"), WithInit(GlorotU(1)))
+	eP := NewMatrix(g, Float64, WithShape(ps, embeddingDims), WithName("p embeddings"), WithInit(GlorotU(1)))
+	eQ := NewMatrix(g, Float64, WithShape(qs, embeddingDims), WithName("q embeddings"), WithInit(GlorotU(1)))
+	w0X := NewMatrix(g, Float64, WithShape(hiddenSize, xFeats*embeddingDims), WithName("layer0 weights for x"), WithInit(GlorotU(1)))
+	w0P := NewMatrix(g, Float64, WithShape(hiddenSize, pFeats*embeddingDims), WithName("layer0 weights for p"), WithInit(GlorotU(1)))
+	w0Q := NewMatrix(g, Float64, WithShape(hiddenSize, qFeats*embeddingDims), WithName("layer0 weights for q"), WithInit(GlorotU(1)))
 	b := NewVector(g, Float64, WithShape(hiddenSize), WithName("bias"), WithInit(Zeroes()))
 	w1 := NewMatrix(g, Float64, WithShape(outSize, hiddenSize), WithName("layer 1"), WithInit(GlorotU(1)))
 
-	model := Nodes{e_x, e_p, e_q, w0_x, w0_p, w0_q, b, w1}
+	model := Nodes{eX, eP, eQ, w0X, w0P, w0Q, b, w1}
 
 	/* SET UP NEURAL NETWORK */
 
@@ -43,19 +43,19 @@ func TestWeirdNetwork(t *testing.T) {
 	slicesQ := make(Nodes, qFeats)
 
 	for i := 0; i < xFeats; i++ {
-		if slicesX[i], err = Slice(e_x, S(i)); err != nil {
+		if slicesX[i], err = Slice(eX, S(i)); err != nil {
 			t.Fatal(err)
 		}
 	}
 
 	for i := 0; i < pFeats; i++ {
-		if slicesP[i], err = Slice(e_p, S(i)); err != nil {
+		if slicesP[i], err = Slice(eP, S(i)); err != nil {
 			t.Fatal(err)
 		}
 	}
 
 	for i := 0; i < qFeats; i++ {
-		if slicesQ[i], err = Slice(e_q, S(i)); err != nil {
+		if slicesQ[i], err = Slice(eQ, S(i)); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -73,15 +73,15 @@ func TestWeirdNetwork(t *testing.T) {
 	}
 
 	var wx, wp, wq *Node
-	if wx, err = Mul(w0_x, x); err != nil {
+	if wx, err = Mul(w0X, x); err != nil {
 		t.Fatal(err)
 	}
 
-	if wp, err = Mul(w0_p, p); err != nil {
+	if wp, err = Mul(w0P, p); err != nil {
 		t.Fatal(err)
 	}
 
-	if wq, err = Mul(w0_q, q); err != nil {
+	if wq, err = Mul(w0Q, q); err != nil {
 		t.Fatal(err)
 	}
 

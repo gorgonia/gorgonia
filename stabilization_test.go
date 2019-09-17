@@ -51,6 +51,15 @@ func TestLogStabilization(t *testing.T) {
 	if lp.children[0] == x {
 		t.Error("Oops.")
 	}
+
+	// log(a+2)
+	// We expect to keep the same operation tree, without stabilization
+	p = Must(Add(x, twof64))
+	lp = Must(Log(p))
+	if lp.children[0] != p {
+		t.Error("Oops.")
+		ioutil.WriteFile("log(a+2).dot", []byte(lp.ToDot()), 0644)
+	}
 }
 
 func TestExpStabilization(t *testing.T) {

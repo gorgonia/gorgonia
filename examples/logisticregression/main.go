@@ -29,7 +29,7 @@ var wT tensor.Tensor
 var yT tensor.Tensor
 var xT tensor.Tensor
 
-// in this example, we will generate random float64 values
+// Float is an alias; in this example, we will generate random float64 values
 var Float = tensor.Float64
 
 // init generates random values for x, w, and y for demo purposes
@@ -217,12 +217,10 @@ func accuracy(target, predicted G.Value) float64 {
 	count := 0.0
 	targetArray := target.Data().([]float64)
 	predictedArray := predicted.Data().([]bool)
-	targetBool := false
 	for i := 0; i < target.Size(); i++ {
+		targetBool := false
 		if targetArray[i] == 1.0 {
 			targetBool = true
-		} else {
-			targetBool = false
 		}
 		if targetBool == predictedArray[i] {
 			count++

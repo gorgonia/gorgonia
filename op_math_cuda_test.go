@@ -53,7 +53,7 @@ func TestCUDABasicArithmetic(t *testing.T) {
 		runtime.GC()
 	}
 
-	// _logger_ = spare
+	// logger = spare
 }
 
 func testOneCUDABasicArithmetic(t *testing.T, bot binOpTest, i int) error {
