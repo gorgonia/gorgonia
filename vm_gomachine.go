@@ -99,6 +99,10 @@ func (g *GoMachine) RunAll() error {
 			// Node is an output
 			g.db.upsert(make(chan Value, 0), outputNode, currentNode.ID())
 		}
+	}
+	nodesIt.Reset()
+	for nodesIt.Next() {
+		currentNode := nodesIt.Node().(*Node)
 		// run all the nodes carrying an Op inside a go-routine
 		switch {
 		case currentNode.Op() != nil:
