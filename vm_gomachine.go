@@ -100,7 +100,8 @@ func (g *GoMachine) RunAll() error {
 			g.db.upsert(make(chan Value, 0), outputNode, currentNode.ID())
 		}
 		// run all the nodes carrying an Op inside a go-routine
-		if currentNode.Op() != nil {
+		switch {
+		case currentNode.Op() != nil:
 			go func(n *Node) {
 				inputC := g.db.getAllFromTail(currentNode.ID())
 				vals := make([]Value, len(inputC))
@@ -116,14 +117,15 @@ func (g *GoMachine) RunAll() error {
 					c <- output
 				}
 			}(currentNode)
-		}
-		// Send the input to the self nodes...
-		if currentNode.Value() != nil {
+			// Send the input to the self nodes...
+		case currentNode.Value() != nil:
 			go func(n *Node) {
 				for _, inputC := range g.db.getAllFromHead(currentNode.ID()) {
 					inputC <- currentNode.Value()
 				}
 			}(currentNode)
+		default:
+			log.Println("Yerk?")
 		}
 	}
 	// wait for all values to be computed
