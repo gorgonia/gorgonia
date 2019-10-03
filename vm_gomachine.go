@@ -80,27 +80,33 @@ func (c *chanDB) getChan(tail, head int64) (chan Value, bool) {
 	return v, ok
 }
 
+func (c *chanDB) len() int {
+	return len(c.dico)
+}
+
 func (g *GoMachine) RunAll() error {
-	edgesIt := getEdges(g.g)
-	for edgesIt.Next() {
-		currentEdge := edgesIt.Edge()
-		head := currentEdge.From().ID()
-		tail := currentEdge.To().ID()
-		g.db.upsert(make(chan Value, 0), tail, head)
-	}
 	nodesIt := g.g.Nodes()
-	for nodesIt.Next() {
-		currentNode := nodesIt.Node().(*Node)
-		if g.g.From(currentNode.ID()).Len() == 0 {
-			// Node is an input
-			g.db.upsert(make(chan Value, 0), currentNode.ID(), inputNode)
+	if g.db.len() == 0 {
+		edgesIt := getEdges(g.g)
+		for edgesIt.Next() {
+			currentEdge := edgesIt.Edge()
+			head := currentEdge.From().ID()
+			tail := currentEdge.To().ID()
+			g.db.upsert(make(chan Value, 0), tail, head)
 		}
-		if g.g.To(currentNode.ID()).Len() == 0 {
-			// Node is an output
-			g.db.upsert(make(chan Value, 0), outputNode, currentNode.ID())
+		for nodesIt.Next() {
+			currentNode := nodesIt.Node().(*Node)
+			if g.g.From(currentNode.ID()).Len() == 0 {
+				// Node is an input
+				g.db.upsert(make(chan Value, 0), currentNode.ID(), inputNode)
+			}
+			if g.g.To(currentNode.ID()).Len() == 0 {
+				// Node is an output
+				g.db.upsert(make(chan Value, 0), outputNode, currentNode.ID())
+			}
 		}
+		nodesIt.Reset()
 	}
-	nodesIt.Reset()
 	for nodesIt.Next() {
 		currentNode := nodesIt.Node().(*Node)
 		// run all the nodes carrying an Op inside a go-routine
@@ -117,29 +123,20 @@ func (g *GoMachine) RunAll() error {
 						log.Fatal("chan edge not found")
 					}
 				}
-				//inputC := g.db.getAllFromTail(currentNode.ID())
-				//vals := make([]Value, len(inputC))
 				for i := range inputC {
-					//fmt.Printf("[%v] %v ==> get value i=%v chan=%v\n", n.ID(), n.Op(), i, inputC[i])
 					vals[i] = <-inputC[i]
-					//fmt.Printf("[%v] %v ==> get value i=%v val.Shape()=%v chan=%v\n", n.ID(), n.Op(), i, vals[i].Shape(), inputC[i])
 				}
-				//fmt.Printf("[%v] %v ==> start\n", n.ID(), n.Op())
-				//fmt.Printf("[%v] %v ==> overwrites %v\n", n.ID(), n.Op(), n.Op().OverwritesInput())
-
 				output, err := n.Op().Do(vals...)
 				if err != nil {
 					log.Fatal(err)
 				}
-				//fmt.Printf("[%v] %v ==> stop\n", n.ID(), n.Op())
 				for _, c := range g.db.getAllFromHead(currentNode.ID()) {
 					n.boundTo = output
-					//fmt.Printf("[%v] %v ==> sending output value %v into chan %v\n", n.ID(), n.Op(), output.Shape(), c)
 					c <- output
 				}
 			}(currentNode)
 			// Send the input to the self nodes...
-		case currentNode.Value() != nil:
+		case currentNode.Op() == nil && currentNode.Value() != nil:
 			go func(n *Node) {
 				for _, inputC := range g.db.getAllFromHead(currentNode.ID()) {
 					inputC <- currentNode.Value()
