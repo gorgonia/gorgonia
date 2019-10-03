@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"fmt"
 	"testing"
 
 	"gorgonia.org/tensor"
@@ -105,16 +106,19 @@ func TestGoMachine_MaxPool2D(t *testing.T) {
 	for _, dt := range dts {
 		g := NewGraph()
 		x := NewTensor(g, dt, 4, WithShape(1, 2, 3, 4), WithInit(RangedFrom(0)))
-		y, err := MaxPool2D(x, tensor.Shape{2, 2}, []int{0, 0}, []int{1, 1})
+		_, err := MaxPool2D(x, tensor.Shape{2, 2}, []int{0, 0}, []int{1, 1})
 		if err != nil {
 			t.Fatal(err)
 		}
-		cost := Must(Sum(y))
-		_, err = Grad(cost, x)
-		if err != nil {
-			t.Fatal(err)
-		}
+		/*
+			cost := Must(Sum(y))
+				_, err = Grad(cost, x)
+				if err != nil {
+					t.Fatal(err)
+				}
+		*/
 
+		fmt.Println(g.ToDot())
 		m := NewGoMachine(g)
 		if err := m.RunAll(); err != nil {
 			t.Fatal(err)

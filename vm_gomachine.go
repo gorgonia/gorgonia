@@ -107,17 +107,34 @@ func (g *GoMachine) RunAll() error {
 		switch {
 		case currentNode.Op() != nil:
 			go func(n *Node) {
-				inputC := g.db.getAllFromTail(currentNode.ID())
-				vals := make([]Value, len(inputC))
-				for i := range inputC {
-					vals[i] = <-inputC[i]
+				children := currentNode.children
+				vals := make([]Value, len(children))
+				inputC := make([]chan Value, len(children))
+				for i, child := range children {
+					var ok bool
+					inputC[i], ok = g.db.getChan(currentNode.ID(), child.ID())
+					if !ok {
+						log.Fatal("chan edge not found")
+					}
 				}
+				//inputC := g.db.getAllFromTail(currentNode.ID())
+				//vals := make([]Value, len(inputC))
+				for i := range inputC {
+					//fmt.Printf("[%v] %v ==> get value i=%v chan=%v\n", n.ID(), n.Op(), i, inputC[i])
+					vals[i] = <-inputC[i]
+					//fmt.Printf("[%v] %v ==> get value i=%v val.Shape()=%v chan=%v\n", n.ID(), n.Op(), i, vals[i].Shape(), inputC[i])
+				}
+				//fmt.Printf("[%v] %v ==> start\n", n.ID(), n.Op())
+				//fmt.Printf("[%v] %v ==> overwrites %v\n", n.ID(), n.Op(), n.Op().OverwritesInput())
+
 				output, err := n.Op().Do(vals...)
 				if err != nil {
 					log.Fatal(err)
 				}
+				//fmt.Printf("[%v] %v ==> stop\n", n.ID(), n.Op())
 				for _, c := range g.db.getAllFromHead(currentNode.ID()) {
 					n.boundTo = output
+					//fmt.Printf("[%v] %v ==> sending output value %v into chan %v\n", n.ID(), n.Op(), output.Shape(), c)
 					c <- output
 				}
 			}(currentNode)
@@ -129,7 +146,7 @@ func (g *GoMachine) RunAll() error {
 				}
 			}(currentNode)
 		default:
-			log.Println("Yerk?")
+			log.Fatal("Yerk?")
 		}
 	}
 	// wait for all values to be computed
