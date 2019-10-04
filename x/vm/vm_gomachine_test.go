@@ -1,4 +1,4 @@
-package gorgonia
+package xvm
 
 import (
 	"testing"
