@@ -1,15 +1,15 @@
 package gorgonia
 
 import (
-	"fmt"
 	"testing"
 
+	"gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
 
 func TestChanDB(t *testing.T) {
 	db := newChanDB()
-	testChan := make(chan Value, 0)
+	testChan := make(chan gorgonia.Value, 0)
 	db.upsert(testChan, 0, 0)
 	_, ok := db.getChan(1, 1)
 	if ok == true {
@@ -24,27 +24,27 @@ func TestChanDB(t *testing.T) {
 	}
 }
 func TestNewGoMachine(t *testing.T) {
-	_ = NewGoMachine(NewGraph())
+	_ = NewGoMachine(gorgonia.NewGraph())
 }
 
 func TestGoMachine_RunAll(t *testing.T) {
 
-	g := NewGraph()
+	g := gorgonia.NewGraph()
 
-	var x, y, z *Node
+	var x, y, z *gorgonia.Node
 
 	// define the expression
-	x = NewScalar(g, Float64, WithName("x"))
-	y = NewScalar(g, Float64, WithName("y"))
-	z, _ = Add(x, y)
+	x = gorgonia.NewScalar(g, gorgonia.Float64, gorgonia.WithName("x"))
+	y = gorgonia.NewScalar(g, gorgonia.Float64, gorgonia.WithName("y"))
+	z, _ = gorgonia.Add(x, y)
 
 	// create a VM to run the program on
 	machine := NewGoMachine(g)
 	defer machine.Close()
 
 	// set initial values then run
-	Let(x, 2.0)
-	Let(y, 2.5)
+	gorgonia.Let(x, 2.0)
+	gorgonia.Let(y, 2.5)
 	if err := machine.RunAll(); err != nil {
 		t.Fatal(err)
 	}
@@ -58,23 +58,23 @@ func TestGoMachine_RunAll(t *testing.T) {
 }
 func TestGoMachine_RunAllComplex(t *testing.T) {
 
-	g := NewGraph()
+	g := gorgonia.NewGraph()
 
-	var x, y, z, zz *Node
+	var x, y, z, zz *gorgonia.Node
 
 	// define the expression
-	x = NewScalar(g, Float64, WithName("x"))
-	y = NewScalar(g, Float64, WithName("y"))
-	z, _ = Add(x, y)
-	zz, _ = Add(x, z)
+	x = gorgonia.NewScalar(g, gorgonia.Float64, gorgonia.WithName("x"))
+	y = gorgonia.NewScalar(g, gorgonia.Float64, gorgonia.WithName("y"))
+	z, _ = gorgonia.Add(x, y)
+	zz, _ = gorgonia.Add(x, z)
 
 	// create a VM to run the program on
 	machine := NewGoMachine(g)
 	defer machine.Close()
 
 	// set initial values then run
-	Let(x, 2.0)
-	Let(y, 2.5)
+	gorgonia.Let(x, 2.0)
+	gorgonia.Let(y, 2.5)
 	if err := machine.RunAll(); err != nil {
 		t.Fatal(err)
 	}
@@ -88,15 +88,15 @@ func TestGoMachine_RunAllComplex(t *testing.T) {
 }
 
 func TestGetEdges(t *testing.T) {
-	g := NewGraph()
+	g := gorgonia.NewGraph()
 
-	var x, y *Node
+	var x, y *gorgonia.Node
 
 	// define the expression
-	x = NewScalar(g, Float64, WithName("x"))
-	y = NewScalar(g, Float64, WithName("y"))
-	Add(x, y)
-	edgesIT := getEdges(g)
+	x = gorgonia.NewScalar(g, gorgonia.Float64, gorgonia.WithName("x"))
+	y = gorgonia.NewScalar(g, gorgonia.Float64, gorgonia.WithName("y"))
+	gorgonia.Add(x, y)
+	edgesIT := g.Edges()
 	if edgesIT.Len() != 2 {
 		t.Fail()
 	}
@@ -104,9 +104,9 @@ func TestGetEdges(t *testing.T) {
 func TestGoMachine_MaxPool2D(t *testing.T) {
 	dts := []tensor.Dtype{tensor.Float64, tensor.Float32}
 	for _, dt := range dts {
-		g := NewGraph()
-		x := NewTensor(g, dt, 4, WithShape(1, 2, 3, 4), WithInit(RangedFrom(0)))
-		_, err := MaxPool2D(x, tensor.Shape{2, 2}, []int{0, 0}, []int{1, 1})
+		g := gorgonia.NewGraph()
+		x := gorgonia.NewTensor(g, dt, 4, gorgonia.WithShape(1, 2, 3, 4), gorgonia.WithInit(gorgonia.RangedFrom(0)))
+		_, err := gorgonia.MaxPool2D(x, tensor.Shape{2, 2}, []int{0, 0}, []int{1, 1})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -118,7 +118,6 @@ func TestGoMachine_MaxPool2D(t *testing.T) {
 				}
 		*/
 
-		fmt.Println(g.ToDot())
 		m := NewGoMachine(g)
 		if err := m.RunAll(); err != nil {
 			t.Fatal(err)

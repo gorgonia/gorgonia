@@ -3,8 +3,7 @@ package gorgonia
 import (
 	"log"
 
-	"gonum.org/v1/gonum/graph"
-	"gonum.org/v1/gonum/graph/iterator"
+	"gorgonia.org/gorgonia"
 )
 
 const (
@@ -13,15 +12,15 @@ const (
 )
 
 type GoMachine struct {
-	g  *ExprGraph
+	g  *gorgonia.ExprGraph
 	db *chanDB
 }
 
 type chanDB struct {
 	// map[tail][head]
-	dico map[int64]map[int64]chan Value
+	dico map[int64]map[int64]chan gorgonia.Value
 	// map[head][tail]
-	reverseDico map[int64]map[int64]chan Value
+	reverseDico map[int64]map[int64]chan gorgonia.Value
 }
 
 func (c *chanDB) closeAll() {
@@ -33,12 +32,12 @@ func (c *chanDB) closeAll() {
 }
 
 // upsert the channel to the DB, if id already exists it is overwritten
-func (c *chanDB) upsert(channel chan Value, tail, head int64) {
+func (c *chanDB) upsert(channel chan gorgonia.Value, tail, head int64) {
 	if _, ok := c.dico[tail]; !ok {
-		c.dico[tail] = make(map[int64]chan Value, 0)
+		c.dico[tail] = make(map[int64]chan gorgonia.Value, 0)
 	}
 	if _, ok := c.reverseDico[head]; !ok {
-		c.reverseDico[head] = make(map[int64]chan Value, 0)
+		c.reverseDico[head] = make(map[int64]chan gorgonia.Value, 0)
 	}
 	c.dico[tail][head] = channel
 	c.reverseDico[head][tail] = channel
@@ -46,36 +45,36 @@ func (c *chanDB) upsert(channel chan Value, tail, head int64) {
 
 func newChanDB() *chanDB {
 	return &chanDB{
-		dico:        make(map[int64]map[int64]chan Value, 0),
-		reverseDico: make(map[int64]map[int64]chan Value, 0),
+		dico:        make(map[int64]map[int64]chan gorgonia.Value, 0),
+		reverseDico: make(map[int64]map[int64]chan gorgonia.Value, 0),
 	}
 }
 
-func (c *chanDB) getAllFromTail(tail int64) []chan Value {
+func (c *chanDB) getAllFromTail(tail int64) []chan gorgonia.Value {
 	edges, ok := c.dico[tail]
 	if !ok {
 		return nil
 	}
-	output := make([]chan Value, 0, len(edges))
+	output := make([]chan gorgonia.Value, 0, len(edges))
 	for _, edge := range edges {
 		output = append(output, edge)
 	}
 	return output
 }
 
-func (c *chanDB) getAllFromHead(head int64) []chan Value {
+func (c *chanDB) getAllFromHead(head int64) []chan gorgonia.Value {
 	edges, ok := c.reverseDico[head]
 	if !ok {
 		return nil
 	}
-	output := make([]chan Value, 0, len(edges))
+	output := make([]chan gorgonia.Value, 0, len(edges))
 	for _, edge := range edges {
 		output = append(output, edge)
 	}
 	return output
 }
 
-func (c *chanDB) getChan(tail, head int64) (chan Value, bool) {
+func (c *chanDB) getChan(tail, head int64) (chan gorgonia.Value, bool) {
 	v, ok := c.dico[tail][head]
 	return v, ok
 }
@@ -87,36 +86,38 @@ func (c *chanDB) len() int {
 func (g *GoMachine) RunAll() error {
 	nodesIt := g.g.Nodes()
 	if g.db.len() == 0 {
-		edgesIt := getEdges(g.g)
+		edgesIt := g.g.Edges()
 		for edgesIt.Next() {
 			currentEdge := edgesIt.Edge()
 			head := currentEdge.From().ID()
 			tail := currentEdge.To().ID()
-			g.db.upsert(make(chan Value, 0), tail, head)
+			g.db.upsert(make(chan gorgonia.Value, 0), tail, head)
 		}
 		for nodesIt.Next() {
-			currentNode := nodesIt.Node().(*Node)
+			currentNode := nodesIt.Node().(*gorgonia.Node)
 			if g.g.From(currentNode.ID()).Len() == 0 {
 				// Node is an input
-				g.db.upsert(make(chan Value, 0), currentNode.ID(), inputNode)
+				g.db.upsert(make(chan gorgonia.Value, 0), currentNode.ID(), inputNode)
 			}
 			if g.g.To(currentNode.ID()).Len() == 0 {
 				// Node is an output
-				g.db.upsert(make(chan Value, 0), outputNode, currentNode.ID())
+				g.db.upsert(make(chan gorgonia.Value, 0), outputNode, currentNode.ID())
 			}
 		}
 		nodesIt.Reset()
 	}
 	for nodesIt.Next() {
-		currentNode := nodesIt.Node().(*Node)
+		currentNode := nodesIt.Node().(*gorgonia.Node)
 		// run all the nodes carrying an Op inside a go-routine
 		switch {
 		case currentNode.Op() != nil:
-			go func(n *Node) {
-				children := currentNode.children
-				vals := make([]Value, len(children))
-				inputC := make([]chan Value, len(children))
-				for i, child := range children {
+			go func(n *gorgonia.Node) {
+				//children := currentNode.children
+				children := g.g.From(currentNode.ID())
+				vals := make([]gorgonia.Value, children.Len())
+				inputC := make([]chan gorgonia.Value, children.Len())
+				for i := 0; children.Next(); i++ {
+					child := children.Node()
 					var ok bool
 					inputC[i], ok = g.db.getChan(currentNode.ID(), child.ID())
 					if !ok {
@@ -131,13 +132,13 @@ func (g *GoMachine) RunAll() error {
 					log.Fatal(err)
 				}
 				for _, c := range g.db.getAllFromHead(currentNode.ID()) {
-					n.boundTo = output
+					gorgonia.UnsafeLet(n, output)
 					c <- output
 				}
 			}(currentNode)
 			// Send the input to the self nodes...
 		case currentNode.Op() == nil && currentNode.Value() != nil:
-			go func(n *Node) {
+			go func(n *gorgonia.Node) {
 				for _, inputC := range g.db.getAllFromHead(currentNode.ID()) {
 					inputC <- currentNode.Value()
 				}
@@ -165,25 +166,9 @@ func (g *GoMachine) Close() error {
 
 // NewGoMachine creates a new VM able to run a program in a concurrent way.
 // by now, only forward pass is supported
-func NewGoMachine(g *ExprGraph) *GoMachine {
+func NewGoMachine(g *gorgonia.ExprGraph) *GoMachine {
 	return &GoMachine{
 		g:  g,
 		db: newChanDB(),
 	}
-}
-
-func getEdges(g *ExprGraph) graph.Edges {
-	var edges []graph.Edge
-	for _, n := range g.all {
-		for _, toN := range g.to[n] {
-			edges = append(edges, edge{
-				from: n,
-				to:   toN,
-			})
-		}
-	}
-	if len(edges) == 0 {
-		return graph.Empty
-	}
-	return iterator.NewOrderedEdges(edges)
 }
