@@ -87,20 +87,6 @@ func TestGoMachine_RunAllComplex(t *testing.T) {
 	}
 }
 
-func TestGetEdges(t *testing.T) {
-	g := gorgonia.NewGraph()
-
-	var x, y *gorgonia.Node
-
-	// define the expression
-	x = gorgonia.NewScalar(g, gorgonia.Float64, gorgonia.WithName("x"))
-	y = gorgonia.NewScalar(g, gorgonia.Float64, gorgonia.WithName("y"))
-	gorgonia.Add(x, y)
-	edgesIT := g.Edges()
-	if edgesIT.Len() != 2 {
-		t.Fail()
-	}
-}
 func TestGoMachine_MaxPool2D(t *testing.T) {
 	dts := []tensor.Dtype{tensor.Float64, tensor.Float32}
 	for _, dt := range dts {
