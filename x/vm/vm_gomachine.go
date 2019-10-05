@@ -11,6 +11,17 @@ const (
 	outputNode int64 = -2
 )
 
+// GoMachine is a computation VM for Gorgonia.
+// Every edge of the graph is associated with a channel of Value.
+// The channels are identified by two IDs, tail and head, which are the IDs of the starting node and the ending node.
+//
+// Every node with a non-nil Op launches a goroutine.
+//
+// Each goroutine is expecting Values from all of its input channels (those with a tail matching the current node's ID).
+// Then it calls the Do method of the operator, sets the own node's Value (thanks to the `Let` function),
+// and sends the Value to the output channel (the channels with a head matching the current node'ID).
+//
+// Every input *Node, sends its Value to the channel with a tail matching its node ID and head matching a constant negative value.
 type GoMachine struct {
 	g  *gorgonia.ExprGraph
 	db *chanDB
@@ -83,6 +94,9 @@ func (c *chanDB) len() int {
 	return len(c.dico)
 }
 
+// RunAll triggers all the goroutines and wait for the all the output channel to be filled with a value.
+//
+// Caution: there is no safety mechanism, and this method would never return (deadlock) in some circumstances.
 func (g *GoMachine) RunAll() error {
 	nodesIt := g.g.Nodes()
 	if g.db.len() == 0 {
@@ -154,11 +168,13 @@ func (g *GoMachine) RunAll() error {
 	return nil
 }
 
+// Reset close all communication channels and created a new channel dictionnary
 func (g *GoMachine) Reset() {
 	g.db.closeAll()
 	g.db = newChanDB()
 }
 
+// Close all channels
 func (g *GoMachine) Close() error {
 	g.db.closeAll()
 	return nil
