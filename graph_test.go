@@ -387,3 +387,18 @@ func TestGraph_Clone(t *testing.T) {
 		}
 	}
 }
+
+func TestExprGraph_Edges(t *testing.T) {
+	g := NewGraph()
+
+	var x, y *Node
+
+	// define the expression
+	x = NewScalar(g, Float64, WithName("x"))
+	y = NewScalar(g, Float64, WithName("y"))
+	Add(x, y)
+	edgesIT := g.Edges()
+	if edgesIT.Len() != 2 {
+		t.Fail()
+	}
+}

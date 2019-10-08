@@ -25,23 +25,30 @@ const (
 // HasFunc returns true if the execution is external (cgo/cuda/openCL) AND the external device contains the function with the given name
 func (e *Engine) HasFunc(name string) bool { _, ok := e.f[name]; return ok }
 
+// Sync returns a channel of sync signals
 func (e *Engine) Sync() chan struct{} { return e.syncChan }
 
+// Signal signals the machine to do work
 func (e *Engine) Signal() {
 	e.workAvailable <- true
 }
 
+// Context returns the BatchedContext
 func (e *Engine) Context() *cu.BatchedContext { return &e.c }
 
+// CUDNNContext returns the cuDNN context
 func (e *Engine) CUDNNContext() *cudnn.Context { return &e.n }
 
+// BLASContext returns the cuBLAS context
 func (e *Engine) BLASContext() *cublas.Standard { return &e.b }
 
+// Modules returns the loaded modules indexed by name
 func (e *Engine) Modules() map[string]cu.Module { return e.m }
 
+// Functions returns the loaded functions indexed by name
 func (e *Engine) Functions() map[string]cu.Function { return e.f }
 
-// elemGridSize calculates the gridsize for elementwise operations. n is the number of elements
+// ElemGridSize calculates the gridsize for elementwise operations. n is the number of elements
 func (e *Engine) ElemGridSize(n int) (gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ int) {
 	maxThreads := e.mtpb
 	maxGridX := e.mgdx
@@ -162,6 +169,7 @@ func (e *Engine) doInit(size int64) (err error) {
 	return nil
 }
 
+// Close cleans up the machine, and closes all available resources
 func (e *Engine) Close() error {
 	e.Lock()
 	defer e.Unlock()
@@ -211,11 +219,13 @@ func (e *Engine) Close() error {
 	return nil
 }
 
+// DoWork sends a signal to the batched CUDA Context to actually do work
 func (e *Engine) DoWork() error {
 	e.c.DoWork()
 	return e.c.Errors()
 }
 
+// Run initialises and starts the engine
 func (e *Engine) Run() {
 	e.Lock()
 	if e.running {
