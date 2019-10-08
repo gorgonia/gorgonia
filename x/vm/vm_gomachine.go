@@ -168,7 +168,7 @@ func (g *GoMachine) RunAll() error {
 	return nil
 }
 
-// Reset close all communication channels and created a new channel dictionnary
+// Reset close all communication channels and created a new channel dictionary
 func (g *GoMachine) Reset() {
 	g.db.closeAll()
 	g.db = newChanDB()
