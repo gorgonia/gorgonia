@@ -25,16 +25,17 @@ func TestIssue182(t *testing.T) {
 	b := NewScalar(g, tensor.Float64)
 
 	xT := tensor.New(tensor.WithBacking([]float64{1, 1, 1}), tensor.WithShape(3))
-	y, err := Mul(x, a)
-	z, err := Mul(y, b)
-	dz, err := Grad(z, x)
+	// TODO: Check errors returned by Mul and Grad?
+	y, _ := Mul(x, a)
+	z, _ := Mul(y, b)
+	dz, _ := Grad(z, x)
 	machine := NewTapeMachine(g)
 	defer machine.Close()
 
 	machine.Let(x, xT)
 	machine.Let(b, -0.5)
 	for turns := 0; turns < 4; turns++ {
-		if err = machine.RunAll(); err != nil {
+		if err := machine.RunAll(); err != nil {
 			t.Fatalf("Machine failed to run at turn %v", turns)
 		}
 		machine.Reset()
@@ -106,10 +107,11 @@ func TestIssue268_im2col(t *testing.T) {
 		18, 21, 22, 23, 0, 0, 0, 41, 42, 43, 46, 47, 48, 0, 0, 0, 17, 18, 19, 22, 23, 24, 0, 0, 0, 42, 43, 44, 47, 48,
 		49, 0, 0, 0, 18, 19, 0, 23, 24, 0, 0, 0, 0, 43, 44, 0, 48, 49, 0, 0, 0, 0,
 	}))
-	y, err := Im2Col(x, []int{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1})
+	// TODO: Check the error returned by Im2Col?
+	y, _ := Im2Col(x, []int{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1})
 
 	machine := NewTapeMachine(g)
-	if err = machine.RunAll(); err != nil {
+	if err := machine.RunAll(); err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(t, yT.Shape(), y.Shape(), "Tensors should be the same")

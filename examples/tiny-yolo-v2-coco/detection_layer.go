@@ -57,7 +57,8 @@ func (tiny *TinyYOLOv2Net) ProcessOutput() (Detections, error) {
 
 	bb := make(Detections, 0)
 	outDense := outTensor.(*tensor.Dense)
-	err := outDense.Reshape((tiny.classesNum+5)*tiny.boxesPerCell, 13, 13)
+	// TODO: Check the error returned by Reshape?
+	_ = outDense.Reshape((tiny.classesNum+5)*tiny.boxesPerCell, 13, 13)
 	data, err := native.Tensor3F32(outDense)
 	if err != nil {
 		return nil, err

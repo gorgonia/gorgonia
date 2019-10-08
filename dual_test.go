@@ -40,7 +40,6 @@ func TestDVBindVar(t *testing.T) {
 	}
 	assert.Equal(t, 1.0, retVal.d.Data())
 
-	x = tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4}))
 	x = tensor.New(tensor.WithBacking([]float64{4, 3, 2, 1}))
 	op = newEBOByType(addOpType, TypeOf(x), TypeOf(y))
 	xdv = constantDV(x)
