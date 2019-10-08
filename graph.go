@@ -6,6 +6,7 @@ import (
 
 	"github.com/awalterschulze/gographviz"
 	"gonum.org/v1/gonum/graph"
+	"gonum.org/v1/gonum/graph/iterator"
 )
 
 // ExprGraph is a data structure for a directed acyclic graph (of expressions). This structure is the main entry point
@@ -487,8 +488,24 @@ func (g *ExprGraph) ToDot() string {
 	return gv.String()
 }
 
-// other private methods
+// Edges returns all the edges in the graph.
+func (g *ExprGraph) Edges() graph.Edges {
+	var edges []graph.Edge
+	for _, n := range g.all {
+		for _, toN := range g.to[n] {
+			edges = append(edges, edge{
+				from: n,
+				to:   toN,
+			})
+		}
+	}
+	if len(edges) == 0 {
+		return graph.Empty
+	}
+	return iterator.NewOrderedEdges(edges)
+}
 
+// other private methods
 func (g *ExprGraph) removeAllEdgesFrom(n *Node) {
 	for k, ns := range g.to {
 		g.to[k] = ns.remove(n)
