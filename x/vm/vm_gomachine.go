@@ -2,6 +2,7 @@ package xvm
 
 import (
 	"log"
+	"sync"
 
 	"gorgonia.org/gorgonia"
 )
@@ -82,23 +83,39 @@ func NewGoMachine(g *gorgonia.ExprGraph) *GoMachine {
 
 func opWorker(n *gorgonia.Node, inputC []<-chan gorgonia.Value, outputC []chan<- gorgonia.Value) {
 	vals := make([]gorgonia.Value, len(inputC))
+	var wg sync.WaitGroup
+	wg.Add(len(inputC))
 	for i := range inputC {
-		vals[i] = <-inputC[i]
+		go func(i int, vals []gorgonia.Value, inputC []<-chan gorgonia.Value) {
+			vals[i] = <-inputC[i]
+			wg.Done()
+		}(i, vals, inputC)
 	}
+	wg.Wait()
 	output, err := n.Op().Do(vals...)
 	if err != nil {
 		log.Fatal(err)
 	}
 	gorgonia.UnsafeLet(n, output)
+	wg.Add(len(outputC))
 	for i := range outputC {
-		outputC[i] <- output
+		go func(i int, outputC []chan<- gorgonia.Value) {
+			outputC[i] <- output
+			wg.Done()
+		}(i, outputC)
 	}
+	wg.Wait()
 }
 
 func valueFeeder(n *gorgonia.Node, feedC []chan<- gorgonia.Value) {
+	var wg sync.WaitGroup
+	wg.Add(len(feedC))
 	for i := range feedC {
-		feedC[i] <- n.Value()
+		go func(i int, feedC []chan<- gorgonia.Value) {
+			feedC[i] <- n.Value()
+		}(i, feedC)
 	}
+	wg.Wait()
 }
 
 func (g *GoMachine) populateChanDB() error {
