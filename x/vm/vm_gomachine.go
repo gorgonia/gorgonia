@@ -123,6 +123,7 @@ func (g *GoMachine) RunAll() error {
 	for nodesIt.Next() {
 		currentNode := nodesIt.Node().(*gorgonia.Node)
 		// run all the nodes carrying an Op inside a go-routine
+		outputC := g.db.getAllFromHead(currentNode.ID())
 		switch {
 		case currentNode.Op() != nil:
 			children := g.g.From(currentNode.ID())
@@ -135,10 +136,10 @@ func (g *GoMachine) RunAll() error {
 					log.Fatal("chan edge not found")
 				}
 			}
-			go g.opWorker(currentNode, inputC, g.db.getAllFromHead(currentNode.ID()))
+			go g.opWorker(currentNode, inputC, outputC)
 			// Send the input to the self nodes...
 		case currentNode.Op() == nil && currentNode.Value() != nil:
-			go g.valueFeeder(currentNode, g.db.getAllFromHead(currentNode.ID()))
+			go g.valueFeeder(currentNode, outputC)
 		default:
 			log.Fatal("Yerk?")
 		}
