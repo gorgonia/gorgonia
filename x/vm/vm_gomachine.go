@@ -44,10 +44,10 @@ func (g *GoMachine) RunAll() error {
 					log.Fatal("chan edge not found")
 				}
 			}
-			go g.opWorker(currentNode, inputC, outputC)
+			go opWorker(currentNode, inputC, outputC)
 			// Send the input to the self nodes...
 		case currentNode.Op() == nil && currentNode.Value() != nil:
-			go g.valueFeeder(currentNode, outputC)
+			go valueFeeder(currentNode, outputC)
 		default:
 			log.Fatal("Yerk?")
 		}
@@ -80,7 +80,7 @@ func NewGoMachine(g *gorgonia.ExprGraph) *GoMachine {
 	}
 }
 
-func (g *GoMachine) opWorker(n *gorgonia.Node, inputC []<-chan gorgonia.Value, outputC []chan<- gorgonia.Value) {
+func opWorker(n *gorgonia.Node, inputC []<-chan gorgonia.Value, outputC []chan<- gorgonia.Value) {
 	vals := make([]gorgonia.Value, len(inputC))
 	for i := range inputC {
 		vals[i] = <-inputC[i]
@@ -95,7 +95,7 @@ func (g *GoMachine) opWorker(n *gorgonia.Node, inputC []<-chan gorgonia.Value, o
 	}
 }
 
-func (g *GoMachine) valueFeeder(n *gorgonia.Node, feedC []chan<- gorgonia.Value) {
+func valueFeeder(n *gorgonia.Node, feedC []chan<- gorgonia.Value) {
 	for i := range feedC {
 		feedC[i] <- n.Value()
 	}
