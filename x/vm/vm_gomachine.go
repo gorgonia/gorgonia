@@ -73,12 +73,12 @@ func (c *chanDB) getAllFromTail(tail int64) []chan gorgonia.Value {
 	return output
 }
 
-func (c *chanDB) getAllFromHead(head int64) []chan gorgonia.Value {
+func (c *chanDB) getAllFromHead(head int64) []chan<- gorgonia.Value {
 	edges, ok := c.reverseDico[head]
 	if !ok {
 		return nil
 	}
-	output := make([]chan gorgonia.Value, 0, len(edges))
+	output := make([]chan<- gorgonia.Value, 0, len(edges))
 	for _, edge := range edges {
 		output = append(output, edge)
 	}
@@ -123,40 +123,23 @@ func (g *GoMachine) RunAll() error {
 	for nodesIt.Next() {
 		currentNode := nodesIt.Node().(*gorgonia.Node)
 		// run all the nodes carrying an Op inside a go-routine
+		outputC := g.db.getAllFromHead(currentNode.ID())
 		switch {
 		case currentNode.Op() != nil:
-			go func(n *gorgonia.Node) {
-				//children := currentNode.children
-				children := g.g.From(currentNode.ID())
-				vals := make([]gorgonia.Value, children.Len())
-				inputC := make([]chan gorgonia.Value, children.Len())
-				for i := 0; children.Next(); i++ {
-					child := children.Node()
-					var ok bool
-					inputC[i], ok = g.db.getChan(currentNode.ID(), child.ID())
-					if !ok {
-						log.Fatal("chan edge not found")
-					}
+			children := g.g.From(currentNode.ID())
+			inputC := make([]<-chan gorgonia.Value, children.Len())
+			for i := 0; children.Next(); i++ {
+				child := children.Node()
+				var ok bool
+				inputC[i], ok = g.db.getChan(currentNode.ID(), child.ID())
+				if !ok {
+					log.Fatal("chan edge not found")
 				}
-				for i := range inputC {
-					vals[i] = <-inputC[i]
-				}
-				output, err := n.Op().Do(vals...)
-				if err != nil {
-					log.Fatal(err)
-				}
-				for _, c := range g.db.getAllFromHead(currentNode.ID()) {
-					gorgonia.UnsafeLet(n, output)
-					c <- output
-				}
-			}(currentNode)
+			}
+			go g.opWorker(currentNode, inputC, outputC)
 			// Send the input to the self nodes...
 		case currentNode.Op() == nil && currentNode.Value() != nil:
-			go func(n *gorgonia.Node) {
-				for _, inputC := range g.db.getAllFromHead(currentNode.ID()) {
-					inputC <- currentNode.Value()
-				}
-			}(currentNode)
+			go g.valueFeeder(currentNode, outputC)
 		default:
 			log.Fatal("Yerk?")
 		}
@@ -186,5 +169,26 @@ func NewGoMachine(g *gorgonia.ExprGraph) *GoMachine {
 	return &GoMachine{
 		g:  g,
 		db: newChanDB(),
+	}
+}
+
+func (g *GoMachine) opWorker(n *gorgonia.Node, inputC []<-chan gorgonia.Value, outputC []chan<- gorgonia.Value) {
+	vals := make([]gorgonia.Value, len(inputC))
+	for i := range inputC {
+		vals[i] = <-inputC[i]
+	}
+	output, err := n.Op().Do(vals...)
+	if err != nil {
+		log.Fatal(err)
+	}
+	gorgonia.UnsafeLet(n, output)
+	for i := range outputC {
+		outputC[i] <- output
+	}
+}
+
+func (g *GoMachine) valueFeeder(n *gorgonia.Node, feedC []chan<- gorgonia.Value) {
+	for i := range feedC {
+		feedC[i] <- n.Value()
 	}
 }
