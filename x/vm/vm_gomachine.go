@@ -61,12 +61,12 @@ func newChanDB() *chanDB {
 	}
 }
 
-func (c *chanDB) getAllFromTail(tail int64) []chan gorgonia.Value {
+func (c *chanDB) getAllFromTail(tail int64) []<-chan gorgonia.Value {
 	edges, ok := c.dico[tail]
 	if !ok {
 		return nil
 	}
-	output := make([]chan gorgonia.Value, 0, len(edges))
+	output := make([]<-chan gorgonia.Value, 0, len(edges))
 	for _, edge := range edges {
 		output = append(output, edge)
 	}
