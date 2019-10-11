@@ -140,26 +140,3 @@ func (g *GoMachine) populateChanDB() error {
 	}
 	return nil
 }
-
-func (g *GoMachine) populateChanDB() error {
-	edgesIt := g.g.Edges()
-	for edgesIt.Next() {
-		currentEdge := edgesIt.Edge()
-		head := currentEdge.From().ID()
-		tail := currentEdge.To().ID()
-		g.db.upsert(make(chan gorgonia.Value, 0), tail, head)
-	}
-	nodesIt := g.g.Nodes()
-	for nodesIt.Next() {
-		currentNode := nodesIt.Node().(*gorgonia.Node)
-		if g.g.From(currentNode.ID()).Len() == 0 {
-			// Node is an input
-			g.db.upsert(make(chan gorgonia.Value, 0), currentNode.ID(), g.db.inputNodeID)
-		}
-		if g.g.To(currentNode.ID()).Len() == 0 {
-			// Node is an output
-			g.db.upsert(make(chan gorgonia.Value, 0), g.db.outputNodeID, currentNode.ID())
-		}
-	}
-	return nil
-}
