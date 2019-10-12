@@ -1,4 +1,4 @@
-// +build wasm, noasm
+// +build wasm noasm arm64
 
 package gorgonia
 
