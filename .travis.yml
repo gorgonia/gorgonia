@@ -5,9 +5,8 @@ branches:
   only:
     - master
 go:
-  - 1.10.x
-  - 1.11.x
   - 1.12.x
+  - 1.13.x
   - tip
 
 env:
@@ -31,7 +30,7 @@ go_import_path: gorgonia.org/gorgonia
 install:
 - travis_wait source ${TRAVIS_BUILD_DIR}/.travis/$TRAVIS_OS_NAME/install.sh
 
-script: 
+script:
 - source ${TRAVIS_BUILD_DIR}/.travis/$TRAVIS_OS_NAME/$BLAS_LIB/test.sh
 
 matrix:
