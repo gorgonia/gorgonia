@@ -19,13 +19,16 @@ func (c *chanDB) closeAll() {
 	}
 }
 
-// upsert the channel to the DB, if id already exists it is overwritten
+// upsert the channel to the DB, if a channel already exists it is not overwritten
 func (c *chanDB) upsert(channel chan gorgonia.Value, tail, head int64) {
 	if _, ok := c.dico[tail]; !ok {
 		c.dico[tail] = make(map[int64]chan gorgonia.Value, 0)
 	}
 	if _, ok := c.reverseDico[head]; !ok {
 		c.reverseDico[head] = make(map[int64]chan gorgonia.Value, 0)
+	}
+	if _, ok := c.dico[tail][head]; ok {
+		return
 	}
 	c.dico[tail][head] = channel
 	c.reverseDico[head][tail] = channel
