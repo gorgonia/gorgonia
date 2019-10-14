@@ -56,7 +56,7 @@ We use [semver 2.0.0](http://semver.org/) for our versioning. Before 1.0, Gorgon
 
 Gorgonia supports 2 versions below the Master branch of Go. This means Gorgonia will support the current released version of Go, and up to 4 previous versions - providing something doesn't break. Where possible a shim will be provided (for things like new `sort` APIs or `math/bits` which came out in Go 1.9).
 
-The current version of Go is 1.13.1. The earliest version Gorgonia supports is Go 1.11.x.
+The current version of Go is 1.13.1. The earliest version Gorgonia supports is Go 1.11.x but Gonum supports only 1.12+.
 
 ## Hardware and OS supported ##
 
