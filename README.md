@@ -506,7 +506,7 @@ A Significant Contributor is one who has shown *deep understanding* of how the l
 Significant Contributors list will be updated once a month (if anyone even uses Gorgonia that is).
 
 # How To Get Support #
-The best way of support right now is to open a ticket on Github.
+The best way of support right now is to open a [ticket on Github](https://github.com/gorgonia/gorgonia/issues/new).
 
 # Frequently Asked Questions #
 
