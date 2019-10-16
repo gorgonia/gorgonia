@@ -1,5 +1,9 @@
-// +build !noasm,!wasm,!arm64
+// +build !amd64
 
 package gorgonia
 
-func divmod(a, b int) (q, r int)
+func divmod(a, b int) (q, r int) {
+	q = a / b
+	r = a % b
+	return
+}
