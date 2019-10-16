@@ -262,7 +262,7 @@ func (r *charRNN) fwd(srcIndex int, prev *lstmOut) (retVal *lstmOut, err error) 
 		prevCells = prev.cells
 	}
 
-	inputVector := r.inputVector
+	var inputVector *Node
 	var hiddens, cells Nodes
 	for i, l := range r.ls {
 		if i == 0 {
