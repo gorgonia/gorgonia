@@ -19,7 +19,8 @@ func concat(xS, yS tensor.Shape) (Value, error) {
 		return nil, errors.Wrap(err, "Concat")
 	}
 
-	m := NewLispMachine(g, ExecuteFwdOnly())
+	//m := NewLispMachine(g, ExecuteFwdOnly())
+	m := NewTapeMachine(g)
 	if err = m.RunAll(); err != nil {
 		return nil, errors.Wrap(err, "run Concat")
 	}
@@ -63,7 +64,7 @@ func TestConcat_issue341(t *testing.T) {
 
 	//run Concat: RunAll: Failed to bindVar: Failed to carry op.Do(): Failed to perform Concat:
 	//Unable to assignArray in denseConcat: BroadcastStrides failed: Dimension mismatch. Expected 2, got 3
-	t.Run("2,2,2+ 2,2,2", func(t *testing.T) {
+	t.Run("2_2_2u2_1_2", func(t *testing.T) {
 		_, err := concat(tensor.Shape{2, 2, 2}, tensor.Shape{2, 1, 2})
 		if err != nil {
 			t.Fatal(err)
@@ -96,7 +97,7 @@ func TestMul_issue341(t *testing.T) {
 		if !ok {
 			t.Fail()
 		}
-		if v != float32(6) {
+		if v != float32(4) {
 			t.Fail()
 		}
 	})
@@ -111,7 +112,7 @@ func TestMul_issue341(t *testing.T) {
 		if !ok {
 			t.Fail()
 		}
-		if v != float32(6) {
+		if v != float32(5) {
 			t.Fail()
 		}
 	})
