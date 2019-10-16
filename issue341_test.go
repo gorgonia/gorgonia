@@ -57,7 +57,7 @@ func TestConcat_issue341(t *testing.T) {
 	t.Run("2,2,2+ 2,3,2", func(t *testing.T) {
 		_, err := concat(tensor.Shape{2, 2, 2}, tensor.Shape{2, 3, 2})
 		if err != nil {
-			t.Fail()
+			t.Fatal(err)
 		}
 	})
 
@@ -66,7 +66,7 @@ func TestConcat_issue341(t *testing.T) {
 	t.Run("2,2,2+ 2,2,2", func(t *testing.T) {
 		_, err := concat(tensor.Shape{2, 2, 2}, tensor.Shape{2, 1, 2})
 		if err != nil {
-			t.Fail()
+			t.Fatal(err)
 		}
 	})
 }
@@ -76,7 +76,7 @@ func TestMul_issue341(t *testing.T) {
 	t.Run("2,3x3,2", func(t *testing.T) {
 		z, err := runMul(tensor.Shape{2, 3}, tensor.Shape{3, 2})
 		if err != nil {
-			t.Fail()
+			t.Fatal(err)
 		}
 		v, ok := z.Data().(float32)
 		if !ok {
@@ -90,7 +90,7 @@ func TestMul_issue341(t *testing.T) {
 	t.Run("2,2x2,1", func(t *testing.T) {
 		z, err := runMul(tensor.Shape{2, 2}, tensor.Shape{2, 1})
 		if err != nil {
-			t.Fail()
+			t.Fatal(err)
 		}
 		v, ok := z.Data().(float32)
 		if !ok {
@@ -105,7 +105,7 @@ func TestMul_issue341(t *testing.T) {
 	t.Run("1,2x2,2", func(t *testing.T) {
 		z, err := runMul(tensor.Shape{1, 2}, tensor.Shape{2, 2})
 		if err != nil {
-			t.Fail()
+			t.Fatal(err)
 		}
 		v, ok := z.Data().(float32)
 		if !ok {
