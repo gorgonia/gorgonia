@@ -37,7 +37,6 @@ func Zeroes() InitWFn {
 	return f
 }
 
-
 // Ones creates an InitWfn that populates a Value with ones. See Zeroes() for more explanation.
 func Ones() InitWFn {
 	return func(dt tensor.Dtype, s ...int) interface{} { return ones(dt, s...).Data() }
@@ -164,17 +163,23 @@ func HeN(gain float64) InitWFn {
 			return HeEtAlN64(gain, s...)
 		default:
 			err := errors.Errorf(nyiTypeFail, "HeNormal", dt)
+			panic(err)
 		}
 	}
+	return f
 }
 
-func HeU(gain float64) IniWFn {
+func HeU(gain float64) InitWFn {
 	f := func(dt tensor.Dtype, s ...int) interface{} {
 		switch dt {
 		case tensor.Float64:
 			return HeEtAlU64(gain, s...)
+		default:
+			err := errors.Errorf(nyiTypeFail, "HeUniform", dt)
+			panic(err)
 		}
 	}
+	return f
 }
 
 // Gaussian64 returns a []float64 drawn from a gaussian distribution as defined by the mean and stdev
