@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-var _logger_ = log.New(os.Stderr, "", 0)
+var logger = log.New(os.Stderr, "", 0)
 var replacement = "\n"
 
 func tabcount() int { return 0 }

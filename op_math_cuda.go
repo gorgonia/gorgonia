@@ -122,17 +122,15 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	if fn := binOps[boType]; fn != nil {
 		if toReuse {
 			return (*fn)(a, b, tensor.WithReuse(pT))
-		} else {
-			return (*fn)(a, b, tensor.UseUnsafe())
 		}
+		return (*fn)(a, b, tensor.UseUnsafe())
 	}
 
 	if fn := cmpOps[boType]; fn != nil {
 		if toReuse {
 			return (*fn)(a, b, tensor.WithReuse(pT))
-		} else {
-			return (*fn)(a, b, tensor.UseUnsafe())
 		}
+		return (*fn)(a, b, tensor.UseUnsafe())
 	}
 
 	return nil, errors.Errorf("op %v cannot be done by CUDA", op)
@@ -286,6 +284,7 @@ func NewSubOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
 	return op
 }
 
+// NewHadamardProdOp creates a new *ExternalOp that wraps a mul op
 func NewHadamardProdOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
 	mul := newEBOByType(mulOpType, a.t, b.t)
 	op := NewExternalOp(mul, ctx, nil)

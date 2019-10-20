@@ -23,15 +23,26 @@ The main reason to use Gorgonia is developer comfort. If you're using a Go stack
 
 ML/AI at large is usually split into two stages: the experimental stage where one builds various models, test and retest; and the deployed state where a model after being tested and played with, is deployed. This necessitate different roles like data scientist and data engineer.
 
-Typically the two phases have different tools: Python/Lua (using [Theano](http://deeplearning.net/software/theano/), [Torch](http://torch.ch/), etc) is commonly used for the experimental stage, and then the model is rewritten in some more performant language like C++ (using [dlib](http://dlib.net/ml.html), [mlpack](http://mlpack.org) etc). Of course, nowadays the gap is closing and people frequently share the tools between them. Tensorflow is one such tool that bridges the gap.
+Typically the two phases have different tools: Python ([PyTorch](http://pytorch.org/), etc) is commonly used for the experimental stage, and then the model is rewritten in some more performant language like C++ (using [dlib](http://dlib.net/ml.html), [mlpack](http://mlpack.org) etc). Of course, nowadays the gap is closing and people frequently share the tools between them. Tensorflow is one such tool that bridges the gap.
 
-Gorgonia aims to do the same, but for the Go environment. Gorgonia is currently fairly performant - its speeds are comparable to Theano's and Tensorflow's  CPU implementations. GPU implementations are a bit finnicky to compare due to the heavy cgo tax, but rest assured that this is an area of active improvement.
+Gorgonia aims to do the same, but for the Go environment. Gorgonia is currently fairly performant - its speeds are comparable to PyTorch's and Tensorflow's  CPU implementations. GPU implementations are a bit finnicky to compare due to the heavy cgo tax, but rest assured that this is an area of active improvement.
 
 # Installation #
 
-The package is go-gettable: `go get -u gorgonia.org/gorgonia`. Additionally, Gorgonia uses [dep](https://github.com/golang/dep) as its vendoring tool.
+The package is go-gettable: `go get -u gorgonia.org/gorgonia`.
 
-The current version is 0.8.x
+Gorgonia is compatible with go modules :
+
+[embedmd]:# (go.mod)
+```go
+module example.com/gorgonia_test
+
+go 1.12
+
+require gorgonia.org/gorgonia v0.9.3
+```
+
+The current stable version is 0.9.3
 
 
 ## Versioning ## 
@@ -43,9 +54,26 @@ We use [semver 2.0.0](http://semver.org/) for our versioning. Before 1.0, Gorgon
 
 ## Go Version Support ##
 
-Gorgonia aims to support 5 versions below the Master branch of Go. This means Gorgonia will support the current released version of Go, and up to 4 previous versions - providing something doesn't break. Where possible a shim will be provided (for things like new `sort` APIs or `math/bits` which came out in Go 1.9).
+Gorgonia supports 2 versions below the Master branch of Go. This means Gorgonia will support the current released version of Go, and up to 4 previous versions - providing something doesn't break. Where possible a shim will be provided (for things like new `sort` APIs or `math/bits` which came out in Go 1.9).
 
-The current version of Go is 1.9.2. The earliest version Gorgonia supports is Go 1.6.x. 
+The current version of Go is 1.13.1. The earliest version Gorgonia supports is Go 1.11.x but Gonum supports only 1.12+. Therefore, the minimum Go version to run the master branch is Go > 1.12.
+
+## Hardware and OS supported ##
+
+Gorgonia runs on :
+- linux/AMD64
+- linux/ARM7
+- linux/ARM64
+- win32/AMD64
+- darwin/AMD64
+- freeBSD/AMD64
+
+If you have tested gorgonia on other platform, please update this list.
+
+## Hardware accelaration
+
+Gorgonia use some pure assembler instructions to accelerate somes mathematical operations. Unfortunately, only amd64 is supported.
+
 
 ## Dependencies ##
 
@@ -69,7 +97,7 @@ There are very few dependencies that Gorgonia uses - and they're all pretty stab
 
 # Keeping Updated #
 
-Gorgonia's project has a [mailing list](https://groups.google.com/forum/#!forum/gorgonia), as well as a [Twitter account](https://twitter.com/gorgoniaML). Official updates and announcements will be posted to those two sites.
+Gorgonia's project has a [Slack channel on gopher](https://gophers.slack.com/messages/gorgonia/), as well as a [Twitter account](https://twitter.com/gorgoniaML). Official updates and announcements will be posted to those two sites.
 
 # Usage #
 
@@ -438,8 +466,6 @@ BenchmarkOneMil-8       	      50	  33169036 ns/op
 # API Stability #
 Gorgonia's API is as of right now, not considered stable. It will be stable from version 1.0 forwards.
 
-As we move towards 1.0, the github repository will be moved to the [organization gorgonia](https://github.com/gorgonia/gorgonia/issues/98). See the issue for more updates.
-
 # Roadmap #
 
 Here are the goals for Gorgonia, sorted by importance 
@@ -468,7 +494,7 @@ The secondary goal for Gorgonia is to provide a platform for exploration for non
 
 Obviously since you are most probably reading this on Github, Github will form the major part of the workflow for contributing to this package.
 
-See also: CONTRIBUTING.md
+See also: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 
 ## Contributors and Significant Contributors ##
@@ -485,7 +511,7 @@ A Significant Contributor is one who has shown *deep understanding* of how the l
 Significant Contributors list will be updated once a month (if anyone even uses Gorgonia that is).
 
 # How To Get Support #
-The best way of support right now is to open a ticket on Github.
+The best way of support right now is to open a [ticket on Github](https://github.com/gorgonia/gorgonia/issues/new).
 
 # Frequently Asked Questions #
 

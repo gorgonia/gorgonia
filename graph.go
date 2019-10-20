@@ -6,6 +6,7 @@ import (
 
 	"github.com/awalterschulze/gographviz"
 	"gonum.org/v1/gonum/graph"
+	"gonum.org/v1/gonum/graph/iterator"
 )
 
 // ExprGraph is a data structure for a directed acyclic graph (of expressions). This structure is the main entry point
@@ -15,7 +16,7 @@ type ExprGraph struct {
 
 	all Nodes
 
-	byId   map[int64]int
+	byID   map[int64]int
 	byHash map[uint32]*Node
 	evac   map[uint32]Nodes
 	to     map[*Node]Nodes
@@ -40,7 +41,7 @@ func WithGraphName(name string) graphconopt {
 // NewGraph creates a new graph. Duh
 func NewGraph(opts ...graphconopt) *ExprGraph {
 	g := &ExprGraph{
-		byId:   make(map[int64]int),
+		byID:   make(map[int64]int),
 		byHash: make(map[uint32]*Node),
 		evac:   make(map[uint32]Nodes),
 		to:     make(map[*Node]Nodes),
@@ -90,7 +91,7 @@ func (g *ExprGraph) Clone() interface{} {
 		}
 	}
 
-	g2.byId = make(map[int64]int)
+	g2.byID = make(map[int64]int)
 	g2.byHash = make(map[uint32]*Node)
 	for k, v := range g.byHash {
 		g2.byHash[k] = mapping[v]
@@ -487,8 +488,24 @@ func (g *ExprGraph) ToDot() string {
 	return gv.String()
 }
 
-// other private methods
+// Edges returns all the edges in the graph.
+func (g *ExprGraph) Edges() graph.Edges {
+	var edges []graph.Edge
+	for _, n := range g.all {
+		for _, toN := range g.to[n] {
+			edges = append(edges, edge{
+				from: n,
+				to:   toN,
+			})
+		}
+	}
+	if len(edges) == 0 {
+		return graph.Empty
+	}
+	return iterator.NewOrderedEdges(edges)
+}
 
+// other private methods
 func (g *ExprGraph) removeAllEdgesFrom(n *Node) {
 	for k, ns := range g.to {
 		g.to[k] = ns.remove(n)
@@ -510,7 +527,7 @@ func (g *ExprGraph) Node(id int64) graph.Node {
 }
 
 func (g *ExprGraph) node(id int64) *Node {
-	if idx, ok := g.byId[id]; ok {
+	if idx, ok := g.byID[id]; ok {
 		if idx >= len(g.all) {
 			return nil
 		}
@@ -518,7 +535,7 @@ func (g *ExprGraph) node(id int64) *Node {
 	}
 	for i, n := range g.all {
 		if n.id == id {
-			g.byId[id] = i
+			g.byID[id] = i
 			return n
 		}
 	}
@@ -673,7 +690,7 @@ func (g *ExprGraph) subgraph(ns Nodes, findMissing bool, opts ...Nodes) *ExprGra
 
 	retVal := &ExprGraph{
 		all:    ns,
-		byId:   make(map[int64]int),
+		byID:   make(map[int64]int),
 		byHash: g.byHash,
 		evac:   g.evac,
 		to:     g.to,

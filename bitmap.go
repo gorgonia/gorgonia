@@ -58,7 +58,7 @@ func (bm *bitmap) Clear(i int) {
 
 // BlocksWithZero finds the first block with zeroes in the bit. atleast specifies how many consecutive zeroes need be found
 func (bm *bitmap) BlocksWithZero(atleast int) int {
-	var retVal int = -1
+	retVal := -1
 	for i, b := range bm.n {
 		if bits.OnesCount64(b) != bitmapBits {
 			// shortcut:
