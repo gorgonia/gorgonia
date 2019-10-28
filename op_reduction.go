@@ -11,11 +11,102 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash"
+	"strings"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"gorgonia.org/tensor"
 )
+
+func reductionType(d int, along []int) hm.Type {
+	a := hm.TypeVariable('a')
+	t := makeTensorType(d, a)
+
+	axes := make(map[int]bool)
+	for _, axis := range along {
+		if axis < d {
+			axes[axis] = true
+		}
+	}
+
+	if d == 1 || len(axes) == 0 || len(axes) == d {
+		// then it reduces down
+		return hm.NewFnType(t, a)
+	}
+
+	var retType hm.Type
+	if len(axes) == d-1 { // Only 1 non-reduced dim, so we can reduce to a vector as before.
+		retType = makeTensorType(1, a)
+	} else {
+		retType = t
+	}
+	return hm.NewFnType(t, retType)
+}
+
+func reductionInferShape(along []int, inputs ...DimSizer) (tensor.Shape, error) {
+	if len(inputs) != 1 {
+		return nil, fmt.Errorf("len(dimsizers)!=1")
+	}
+	if len(along) == 0 {
+		return tensor.ScalarShape(), nil
+	}
+	in := inputs[0].(tensor.Shape)
+	shape := make(tensor.Shape, len(in))
+	copy(shape, in)
+	for _, d := range along {
+		if d >= len(shape) {
+			return nil, fmt.Errorf("shape error, along %d is not a valid axis for shape %v", d, in)
+		}
+		shape[d] = 1
+	}
+	// special cases: if all dimensions are 1 -> ScalarShape, if exactly one dimension is != 1 -> vector
+	vecD := 0
+	numNot1 := 0
+	for _, d := range shape {
+		if d != 1 {
+			vecD = d
+			numNot1++
+			if numNot1 > 1 {
+				return shape, nil
+			}
+		}
+	}
+	if numNot1 == 0 {
+		return tensor.ScalarShape(), nil
+	}
+	return tensor.Shape{vecD}, nil
+}
+
+func reductionDo(op Op, s string, f func(*tensor.Dense, ...int) (*tensor.Dense, error), along []int, inputs ...Value) (retVal Value, err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+	at := inputs[0].(tensor.Tensor)
+	switch t := at.(type) {
+	case *tensor.Dense:
+		var ret *tensor.Dense
+		if ret, err = f(t, along...); err == nil {
+			if ret.IsScalar() {
+				retVal, _ = anyToScalar(ret.ScalarValue())
+			} else {
+				// the tensor reduction ops remove collapsed dimensions, but here we preserve them except in special cases.
+				// so we reshape the return to ensure the dimensions match.
+				var sh tensor.Shape
+				if sh, err = reductionInferShape(along, t.Shape()); err == nil {
+					if err = ret.Reshape(sh...); err == nil {
+						retVal = ret
+					}
+				}
+			}
+		} else {
+			return nil, errors.Wrap(err, fmt.Sprintf("failed to apply *tensor.Dense.%s()", strings.Title(s)))
+		}
+	default:
+		return nil, errors.Errorf(nyiFail, fmt.Sprintf("%sOp.Do()", s), at)
+	}
+	return
+
+}
 
 type maxOp struct {
 	along axes
@@ -32,43 +123,12 @@ func newMaxOp(along axes, dim int) *maxOp {
 func (op maxOp) Arity() int { return 1 }
 
 func (op maxOp) Type() hm.Type {
-	a := hm.TypeVariable('a')
-	t := makeTensorType(op.d, a)
-
-	var retType hm.Type
-	if op.d == 1 || len(op.along) == 0 || len(op.along) == op.d {
-		// then it reduces down
-		return hm.NewFnType(t, a)
-	}
-	retType = makeTensorType(op.d-1, a)
-	return hm.NewFnType(t, retType)
+	return reductionType(op.d, op.along)
 }
 
 //func (op maxOp) InferShape(...DimSizer) (tensor.Shape, error) { return scalarShape, nil } // TODO, THIS IS INCORRECT
 func (op maxOp) InferShape(dimsizers ...DimSizer) (tensor.Shape, error) {
-	if len(dimsizers) != 1 {
-		return nil, fmt.Errorf("len(dimsizers)!=1")
-	}
-	s := make(tensor.Shape, op.d)
-	ds := dimsizers[0]
-	for d := 0; d < op.d; d++ {
-		dInAlong := false
-		for _, dim := range op.along {
-			if d == dim {
-				dInAlong = true
-			}
-		}
-		if dInAlong {
-			s[d] = 1
-		} else {
-			size, err := ds.DimSize(d)
-			if err != nil {
-				return s, err
-			}
-			s[d] = size
-		}
-	}
-	return s, nil
+	return reductionInferShape(op.along, dimsizers...)
 }
 func (op maxOp) DiffWRT(i int) []bool { return []bool{true} }
 
@@ -102,6 +162,7 @@ func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 	if a2, b2, err = Broadcast(gradNode, eq, bcpat); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
+	retVal = make(Nodes, 1)
 	if retVal[0], err = Mul(a2, b2); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
@@ -109,14 +170,7 @@ func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 }
 
 func (op maxOp) Do(inputs ...Value) (retVal Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
-		return
-	}
-	if arg, ok := inputs[0].(*tensor.Dense); ok {
-		retVal, err = arg.Max(op.along...)
-		return
-	}
-	return nil, errors.Errorf("Max arg is not a tensor")
+	return reductionDo(op, "max", (*tensor.Dense).Max, op.along, inputs...)
 }
 
 func (op maxOp) ReturnsPtr() bool     { return true }
@@ -167,62 +221,11 @@ func (op sumOp) Arity() int { return 1 }
 // sumOp is a function with this type:
 //		sumOp :: (Summable a) ⇒ Tensor d a → Tensor d-1 a
 func (op sumOp) Type() hm.Type {
-	a := hm.TypeVariable('a')
-	t := makeTensorType(op.d, a)
-
-	if op.inputShape.IsVector() {
-		return hm.NewFnType(t, a)
-	}
-
-	// if it's a monotonic axes, it's basically summing everything.
-	if monotonic, incr1 := tensor.IsMonotonicInts(op.along); monotonic && incr1 && len(op.along) == len(op.inputShape) {
-		return hm.NewFnType(t, a)
-	}
-
-	retType := makeTensorType(op.d-1, a)
-	return hm.NewFnType(t, retType)
+	return reductionType(op.d, op.along)
 }
 
 func (op sumOp) InferShape(inputs ...DimSizer) (shape tensor.Shape, err error) {
-	in := inputs[0].(tensor.Shape)
-	shapeLogf("input shape: %v", in)
-	switch {
-	case in.IsScalar():
-		shape = scalarShape
-	case in.IsVector() && !in.IsRowVec() && !in.IsColVec():
-		if len(op.along) > 1 || (len(op.along) == 1 && op.along[0] != 0) {
-			return nil, errors.Errorf("Shape mismatch: along is %v. Shape is %v", op.along, in)
-		}
-		shape = scalarShape
-	default:
-		shape = in.Clone()
-		if len(op.along) > len(shape) {
-			return nil, errors.Errorf("Shape mismatch: %v and %v", shape, op.along)
-		}
-
-		// special case (sum all)
-		if monotonic, incr1 := tensor.IsMonotonicInts(op.along); monotonic && incr1 && len(op.along) == len(shape) && op.along[0] == 0 {
-			shape = scalarShape
-			return
-		}
-
-		for _, a := range op.along {
-			if a >= len(shape) {
-				return nil, errors.Errorf("Axis %d is greater or equal to the length of the shape %v", a, shape)
-			}
-			shape[a] = 1
-		}
-
-		switch {
-
-		case shape.IsColVec():
-			shape = shape[:1]
-		case shape.IsRowVec():
-			shape = shape[1:]
-		}
-
-	}
-	return
+	return reductionInferShape(op.along, inputs...)
 }
 
 func (op sumOp) DiffWRT(i int) []bool { return []bool{true} }
@@ -342,27 +345,7 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 }
 
 func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
-		return
-	}
-
-	at := inputs[0].(tensor.Tensor)
-	switch t := at.(type) {
-	case *tensor.Dense:
-		var ret *tensor.Dense
-		if ret, err = t.Sum(op.along...); err == nil {
-			if ret.IsScalar() {
-				retVal, _ = anyToScalar(ret.ScalarValue())
-			} else {
-				retVal = ret
-			}
-		} else {
-			return nil, errors.Wrap(err, "failed to apply *tensor.Dense.Sum()")
-		}
-	default:
-		return nil, errors.Errorf(nyiFail, "sumOp.Do()", at)
-	}
-	return
+	return reductionDo(op, "sum", (*tensor.Dense).Sum, op.along, inputs...)
 }
 
 func (op sumOp) ReturnsPtr() bool      { return true }

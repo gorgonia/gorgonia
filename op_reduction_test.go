@@ -9,7 +9,7 @@ import (
 	"gorgonia.org/tensor"
 )
 
-func TestSumOp(t *testing.T) {
+func TestSumOpGrad(t *testing.T) {
 	assert := assert.New(t)
 	// var g *ExprGraph
 	var z, sz *Node
@@ -199,39 +199,229 @@ func TestSumOpDiff(t *testing.T) {
 }
 
 func TestMaxOp(t *testing.T) {
-	subTests := []struct {
-		along    []int
-		expected interface{}
-	}{
-		{along: []int{0}, expected: []float32{5, 6}},
-		{along: []int{1}, expected: []float32{2, 4, 6}},
-		{along: []int{}, expected: float32(6)},
-		{along: []int{0, 1}, expected: float32(6)},
-		{along: []int{1, 0}, expected: float32(6)},
+	subTests := []reductionTest{
+		{dt: Float32, inShape: []int{3, 2}, inData: []float32{1, 2, 3, 4, 5, 6}, op: Max, along: []int{0}, wantShape: []int{2}, wantData: []float32{5, 6}},
+		{dt: Float32, inShape: []int{3, 2}, inData: []float32{1, 2, 3, 4, 5, 6}, op: Max, along: []int{1}, wantShape: []int{3}, wantData: []float32{2, 4, 6}},
+		{dt: Float32, inShape: []int{3, 2}, inData: []float32{1, 2, 3, 4, 5, 6}, op: Max, along: []int{}, wantShape: []int{}, wantData: float32(6)},
+		{dt: Float32, inShape: []int{3, 2}, inData: []float32{1, 2, 3, 4, 5, 6}, op: Max, along: []int{0, 1}, wantShape: []int{}, wantData: float32(6)},
+		{dt: Float32, inShape: []int{3, 2}, inData: []float32{1, 2, 3, 4, 5, 6}, op: Max, along: []int{1, 0}, wantShape: []int{}, wantData: float32(6)},
+		{
+			dt:        Float32,
+			inShape:   []int{2, 2, 2, 2},
+			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			op:        Max,
+			along:     []int{0, 1, 2, 3},
+			wantShape: []int{},
+			wantData:  float32(16),
+		},
+		{
+			dt:        Float32,
+			inShape:   []int{2, 2, 2, 2},
+			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			op:        Max,
+			along:     []int{},
+			wantShape: []int{},
+			wantData:  float32(16),
+		},
+		{
+			dt:        Float32,
+			inShape:   []int{2, 2, 2, 2},
+			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			op:        Max,
+			along:     []int{0},
+			wantShape: []int{1, 2, 2, 2},
+			wantData:  []float32{9, 10, 11, 12, 13, 14, 15, 16},
+		},
+		{
+			dt:        Float32,
+			inShape:   []int{2, 2, 2, 2},
+			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			op:        Max,
+			along:     []int{1},
+			wantShape: []int{2, 1, 2, 2},
+			wantData:  []float32{5, 6, 7, 8, 13, 14, 15, 16},
+		},
+		{
+			dt:        Float32,
+			inShape:   []int{2, 2, 2, 2},
+			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			op:        Max,
+			along:     []int{2},
+			wantShape: []int{2, 2, 1, 2},
+			wantData:  []float32{3, 4, 7, 8, 11, 12, 15, 16},
+		},
+		{
+			dt:        Float32,
+			inShape:   []int{2, 2, 2, 2},
+			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			op:        Max,
+			along:     []int{3},
+			wantShape: []int{2, 2, 2, 1},
+			wantData:  []float32{2, 4, 6, 8, 10, 12, 14, 16},
+		},
+		{
+			dt:        Float32,
+			inShape:   []int{2, 2, 2, 2},
+			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			op:        Max,
+			along:     []int{1, 3},
+			wantShape: []int{2, 1, 2, 1},
+			wantData:  []float32{6, 8, 14, 16},
+		},
+		{
+			dt:        Float32,
+			inShape:   []int{2, 2, 2, 2},
+			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			op:        Max,
+			along:     []int{0, 2, 3},
+			wantShape: []int{2},
+			wantData:  []float32{12, 16},
+		},
 	}
 
-	dt := Float32
 	for _, subTest := range subTests {
-		t.Run(fmt.Sprintf("along %d", subTest.along), func(t *testing.T) {
-			g := NewGraph()
-			Xn := NewTensor(g, dt, 2, WithShape(2, 2))
-			max := Must(Max(Xn, subTest.along...))
-			// resShape, errShape := max.op.(*maxOp).InferShape(Xn.Shape())
-			// fmt.Printf("along %d inferShape, %s", resShape, errShape)
-
-			xT := tensor.New(tensor.WithShape(3, 2), tensor.WithBacking([]float32{
-				1, 2,
-				3, 4,
-				5, 6}))
-			vm := NewTapeMachine(g)
-			defer vm.Close()
-			vm.Let(Xn, xT)
-			err := vm.RunAll()
-			if err != nil {
-				t.Error(err)
-			}
-			assert := assert.New(t)
-			assert.Equal(subTest.expected, max.Value().(*tensor.Dense).Data())
+		t.Run(fmt.Sprintf("along %v", subTest.along), func(t *testing.T) {
+			testReductionOp(t, subTest)
 		})
 	}
+}
+
+func TestSumOp(t *testing.T) {
+	subTests := []reductionTest{
+		{dt: Float32, inShape: []int{3, 2}, inData: []float32{1, 2, 3, 4, 5, 6}, op: Sum, along: []int{0}, wantShape: []int{2}, wantData: []float32{9, 12}},
+		{dt: Float32, inShape: []int{3, 2}, inData: []float32{1, 2, 3, 4, 5, 6}, op: Sum, along: []int{1}, wantShape: []int{3}, wantData: []float32{3, 7, 11}},
+		{dt: Float32, inShape: []int{3, 2}, inData: []float32{1, 2, 3, 4, 5, 6}, op: Sum, along: []int{}, wantShape: []int{}, wantData: float32(21)},
+		{dt: Float32, inShape: []int{3, 2}, inData: []float32{1, 2, 3, 4, 5, 6}, op: Sum, along: []int{0, 1}, wantShape: []int{}, wantData: float32(21)},
+		{dt: Float32, inShape: []int{3, 2}, inData: []float32{1, 2, 3, 4, 5, 6}, op: Sum, along: []int{1, 0}, wantShape: []int{}, wantData: float32(21)},
+		{
+			dt:        Float32,
+			inShape:   []int{2, 2, 2, 2},
+			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			op:        Sum,
+			along:     []int{0, 1, 2, 3},
+			wantShape: []int{},
+			wantData:  float32(136),
+		},
+		{
+			dt:        Float32,
+			inShape:   []int{2, 2, 2, 2},
+			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			op:        Sum,
+			along:     []int{},
+			wantShape: []int{},
+			wantData:  float32(136),
+		},
+		{
+			dt:        Float32,
+			inShape:   []int{2, 2, 2, 2},
+			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			op:        Sum,
+			along:     []int{0},
+			wantShape: []int{1, 2, 2, 2},
+			wantData:  []float32{10, 12, 14, 16, 18, 20, 22, 24},
+		},
+		{
+			dt:        Float32,
+			inShape:   []int{2, 2, 2, 2},
+			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			op:        Sum,
+			along:     []int{1},
+			wantShape: []int{2, 1, 2, 2},
+			wantData:  []float32{6, 8, 10, 12, 22, 24, 26, 28},
+		},
+		{
+			dt:        Float32,
+			inShape:   []int{2, 2, 2, 2},
+			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			op:        Sum,
+			along:     []int{2},
+			wantShape: []int{2, 2, 1, 2},
+			wantData:  []float32{4, 6, 12, 14, 20, 22, 28, 30},
+		},
+		{
+			dt:        Float32,
+			inShape:   []int{2, 2, 2, 2},
+			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			op:        Sum,
+			along:     []int{3},
+			wantShape: []int{2, 2, 2, 1},
+			wantData:  []float32{3, 7, 11, 15, 19, 23, 27, 31},
+		},
+		{
+			dt:        Float32,
+			inShape:   []int{2, 2, 2, 2},
+			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			op:        Sum,
+			along:     []int{1, 3},
+			wantShape: []int{2, 1, 2, 1},
+			wantData:  []float32{14, 22, 46, 54},
+		},
+		{
+			dt:        Float32,
+			inShape:   []int{2, 2, 2, 2},
+			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			op:        Sum,
+			along:     []int{0, 2, 3},
+			wantShape: []int{2},
+			wantData:  []float32{52, 84},
+		},
+	}
+
+	for _, subTest := range subTests {
+		t.Run(fmt.Sprintf("along %v", subTest.along), func(t *testing.T) {
+			testReductionOp(t, subTest)
+		})
+	}
+}
+
+type reductionTest struct {
+	dt        tensor.Dtype
+	inShape   tensor.Shape
+	inData    interface{}
+	op        func(*Node, ...int) (*Node, error)
+	along     []int
+	wantShape tensor.Shape
+	wantData  interface{}
+}
+
+func testReductionOp(t *testing.T, test reductionTest) {
+	g := NewGraph()
+	Xn := NewTensor(g, test.dt, len(test.inShape), WithShape(test.inShape...))
+	got := Must(test.op(Xn, test.along...))
+
+	xT := tensor.New(tensor.WithShape(test.inShape...), tensor.WithBacking(test.inData))
+	vm := NewTapeMachine(g)
+	defer vm.Close()
+	vm.Let(Xn, xT)
+	err := vm.RunAll()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert := assert.New(t)
+	assert.Equal(test.wantShape, got.Value().Shape(), "shape mismatch")
+	assert.Equal(test.wantData, got.Value().Data(), "data mismatch")
+}
+
+// TestFollowupOp confirms that an element-wise binary op will work as expected after a sum/max.
+// The underlying reduction on the tensor changes the number of dimensions, but the gorgonia node does not.
+// We therefore confirm that the resulting nodes actually work.
+func TestFollowupOp(t *testing.T) {
+	g := NewGraph()
+	Xn := NewTensor(g, tensor.Float64, 4, WithShape(2, 2, 2, 2), WithInit(RangedFrom(1)))
+	mx := Must(Max(Xn, 1, 2))
+	sx := Must(Sum(Xn, 1, 2))
+	y := NewTensor(g, tensor.Float64, 4, WithShape(2, 1, 1, 2), WithInit(RangedFrom(1)))
+
+	amx := Must(Add(mx, y))
+	asx := Must(Add(sx, y))
+	assert.Equal(t, amx.Shape(), tensor.Shape{2, 1, 1, 2})
+	assert.Equal(t, asx.Shape(), tensor.Shape{2, 1, 1, 2})
+	vm := NewTapeMachine(g)
+	defer vm.Close()
+	err := vm.RunAll()
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, []float64{8, 10, 18, 20}, amx.Value().Data(), "data mismatch")
+	assert.Equal(t, []float64{17, 22, 51, 56}, asx.Value().Data(), "data mismatch")
 }
