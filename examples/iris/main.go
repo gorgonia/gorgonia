@@ -17,10 +17,16 @@ import (
 // https://www.kaggle.com/amarpandey/implementing-linear-regression-on-iris-dataset/notebook
 //
 func main() {
-	xT, yT := getXY()
 	g := gorgonia.NewGraph()
-	x := gorgonia.NodeFromAny(g, xT, gorgonia.WithName("x"))
-	y := gorgonia.NodeFromAny(g, yT, gorgonia.WithName("y"))
+	x, y := getXYMat()
+	xT := tensor.FromMat64(mat.DenseCopyOf(x))
+	yT := tensor.FromMat64(mat.DenseCopyOf(y))
+
+	s := yT.Shape()
+	yT.Reshape(s[0])
+
+	X := gorgonia.NodeFromAny(g, xT, gorgonia.WithName("x"))
+	Y := gorgonia.NodeFromAny(g, yT, gorgonia.WithName("y"))
 	theta := gorgonia.NewVector(
 		g,
 		gorgonia.Float64,
@@ -28,14 +34,14 @@ func main() {
 		gorgonia.WithShape(xT.Shape()[1]),
 		gorgonia.WithInit(gorgonia.Gaussian(0, 1)))
 
-	pred := must(gorgonia.Mul(x, theta))
+	pred := must(gorgonia.Mul(X, theta))
 
 	// Gorgonia might delete values from nodes so we are going to save it
 	// and print it out later
 	var predicted gorgonia.Value
 	gorgonia.Read(pred, &predicted)
 
-	squaredError := must(gorgonia.Square(must(gorgonia.Sub(pred, y))))
+	squaredError := must(gorgonia.Square(must(gorgonia.Sub(pred, Y))))
 	cost := must(gorgonia.Mean(squaredError))
 
 	if _, err := gorgonia.Grad(cost, theta); err != nil {
@@ -48,7 +54,7 @@ func main() {
 	model := []gorgonia.ValueGrad{theta}
 	solver := gorgonia.NewVanillaSolver(gorgonia.WithLearnRate(0.001))
 
-	fa := mat.Formatted(getThetaNormal(), mat.Prefix("   "), mat.Squeeze())
+	fa := mat.Formatted(getThetaNormal(x, y), mat.Prefix("   "), mat.Squeeze())
 
 	fmt.Printf("ϴ: %v\n", fa)
 	iter := 10000
@@ -66,7 +72,7 @@ func main() {
 			theta.Value(),
 			i,
 			cost.Value(),
-			accuracy(predicted.Data().([]float64), y.Value().Data().([]float64)))
+			accuracy(predicted.Data().([]float64), Y.Value().Data().([]float64)))
 
 		machine.Reset() // Reset is necessary in a loop like this
 	}
@@ -88,55 +94,38 @@ func accuracy(prediction, y []float64) float64 {
 	return ok / float64(len(y))
 }
 
-func getXYMat() (*mat.Dense, *mat.Dense) {
+func getXYMat() (*matrix, *matrix) {
 	f, err := os.Open("iris.csv")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer f.Close()
 	df := dataframe.ReadCSV(f)
-	xDF := df.Drop("species")
 
 	toValue := func(s series.Series) series.Series {
 		records := s.Records()
 		floats := make([]float64, len(records))
+		m := map[string]int{}
 		for i, r := range records {
-			switch r {
-			case "setosa":
-				floats[i] = 1
-			case "virginica":
-				floats[i] = 2
-			case "versicolor":
-				floats[i] = 3
-			default:
-				log.Fatalf("unknown iris: %v\n", r)
+			if _, ok := m[r]; !ok {
+				m[r] = len(m) + 1
 			}
+			floats[i] = float64(m[r])
 		}
 		return series.Floats(floats)
 	}
 
+	xDF := df.Drop("species")
 	yDF := df.Select("species").Capply(toValue)
 	numRows, _ := xDF.Dims()
 	xDF = xDF.Mutate(series.New(one(numRows), series.Float, "bias"))
 	fmt.Println(xDF.Describe())
 	fmt.Println(yDF.Describe())
 
-	return mat.DenseCopyOf(&matrix{xDF}), mat.DenseCopyOf(&matrix{yDF})
+	return &matrix{xDF}, &matrix{yDF}
 }
 
-func getXY() (*tensor.Dense, *tensor.Dense) {
-	x, y := getXYMat()
-
-	xT := tensor.FromMat64(x)
-	yT := tensor.FromMat64(y)
-	// Get rid of the last dimension to create a vector
-	s := yT.Shape()
-	yT.Reshape(s[0])
-	return xT, yT
-}
-
-func getThetaNormal() *mat.Dense {
-	x, y := getXYMat()
+func getThetaNormal(x, y *matrix) *mat.Dense {
 	xt := mat.DenseCopyOf(x).T()
 	var xtx mat.Dense
 	xtx.Mul(xt, x)
