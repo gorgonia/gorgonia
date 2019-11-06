@@ -34,6 +34,7 @@ var (
 	_ tensor.ElEqer = &Engine{}
 )
 
+// Engine is a CUDA engine
 type Engine struct {
 	tensor.Engine
 	sync.Mutex
@@ -67,17 +68,21 @@ type Engine struct {
 	running       bool
 }
 
+// AllocAccessible returns true because the engine return Go-accessible memory pointers
 func (e *Engine) AllocAccessible() bool { return true }
 
+// Alloc allocates a chunk of certain size from engine memory
 func (e *Engine) Alloc(size int64) (tensor.Memory, error) {
 	// return e.c.MemAllocManaged(size, cu.AttachGlobal)
 	return e.Get(size)
 }
 
+// AllocFlags returns allocation flags
 func (e *Engine) AllocFlags() (tensor.MemoryFlag, tensor.DataOrder) {
 	return tensor.MakeMemoryFlag(tensor.ManuallyManaged), tensor.ColMajor
 }
 
+// Free rees memory
 func (e *Engine) Free(mem tensor.Memory, size int64) error {
 	// e.c.MemFree(mem.(cu.DevicePtr))
 	// return e.c.Error()
@@ -126,12 +131,16 @@ func (e *Engine) Accessible(mem tensor.Memory) (tensor.Memory, error) {
 	panic("not implemented")
 }
 
+// WorksWith returns true because the data order can be directly worked with
 func (e *Engine) WorksWith(order tensor.DataOrder) bool { return true }
 
+// NonStdAlloc nothing instead of running the default built in allocator
 func (e *Engine) NonStdAlloc() {}
 
+// Errors returns an error message
 func (e *Engine) Errors() error { return e.c.Errors() }
 
+// NaNChecker checks that the tensor contains a NaN
 func (e *Engine) HasNaN(a tensor.Tensor) (bool, error) {
 	dt := a.Dtype()
 	name := fmt.Sprintf("misc.hasNaN_f%v", int(dt.Size()*8))
@@ -156,6 +165,7 @@ func (e *Engine) HasNaN(a tensor.Tensor) (bool, error) {
 	return int(retVal) > 0, e.c.Error()
 }
 
+// InfChecker checks that the tensor contains a Inf
 func (e *Engine) HasInf(a tensor.Tensor) (bool, error) {
 	dt := a.Dtype()
 	name := fmt.Sprintf("misc.hasInf_f%v", int(dt.Size()*8))
