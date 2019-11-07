@@ -14,6 +14,7 @@ import (
 	"gorgonia.org/vecf64"
 )
 
+// Sanity checks
 var (
 	_ SDOp = im2colOp{}
 	_ Op   = col2imOp{}
@@ -21,6 +22,7 @@ var (
 	_ Op   = &maxPoolDiffOp{}
 	_ Op   = &BatchNormOp{}
 	_ Op   = &batchnormDiffOp{}
+	_ Op   = &globalAveragePoolOp{}
 )
 
 /*
@@ -1624,4 +1626,120 @@ func (op *batchnormDiffOp) f32s(input, inGrad, outGrad *tensor.Dense) (err error
 	vecf32.Div(ig, tmp)
 	return nil
 
+}
+
+type globalAveragePoolOp struct{}
+
+func (g *globalAveragePoolOp) Arity() int {
+	return 1
+}
+
+func (g *globalAveragePoolOp) Type() hm.Type {
+	a := hm.TypeVariable('a')
+	t := newTensorType(4, a)
+	return hm.NewFnType(t, t)
+}
+
+func (g *globalAveragePoolOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
+	b, err := inputs[0].DimSize(0)
+	if err != nil {
+		return nil, err
+	}
+	c, err := inputs[0].DimSize(1)
+	if err != nil {
+		return nil, err
+	}
+	// check if the shape is correct without doing type inference
+	if _, err := inputs[0].DimSize(2); err != nil {
+		return nil, err
+	}
+	if _, err := inputs[0].DimSize(3); err != nil {
+		return nil, err
+	}
+	return tensor.Shape{b, c, 1, 1}, nil
+}
+
+func (g *globalAveragePoolOp) Do(inputs ...Value) (Value, error) {
+	im := inputs[0]
+	switch im.(type) {
+	case tensor.Tensor:
+		v := im.(tensor.Tensor)
+		B, C, H, W := v.Shape()[0], v.Shape()[1], v.Shape()[2], v.Shape()[3]
+		s, err := g.InferShape(v.Shape())
+		if err != nil {
+			return nil, err
+		}
+		output := tensor.New(tensor.Of(v.Dtype()), tensor.WithShape(s...))
+		switch v.Dtype() {
+		case tensor.Float64:
+			for b := 0; b < B; b++ {
+				for c := 0; c < C; c++ {
+					var sum float64
+					for h := 0; h < H; h++ {
+						for w := 0; w < W; w++ {
+							val, err := v.At(b, c, h, w)
+							if err != nil {
+								return nil, err
+							}
+							sum += val.(float64)
+						}
+					}
+					err := output.SetAt(sum/float64(H*W), b, c, 0, 0)
+					if err != nil {
+						return nil, err
+					}
+				}
+			}
+		case tensor.Float32:
+			for b := 0; b < B; b++ {
+				for c := 0; c < C; c++ {
+					var sum float32
+					for h := 0; h < H; h++ {
+						for w := 0; w < W; w++ {
+							val, err := v.At(b, c, h, w)
+							if err != nil {
+								return nil, err
+							}
+							sum += val.(float32)
+						}
+					}
+					err := output.SetAt(sum/float32(H*W), b, c, 0, 0)
+					if err != nil {
+						return nil, err
+					}
+				}
+			}
+		default:
+			return nil, nyi("Global Average Pool", v.Dtype())
+		}
+
+		return output, nil
+
+	default:
+		return nil, nyi("globalAveragePoolOp", inputs)
+	}
+}
+
+func (g *globalAveragePoolOp) ReturnsPtr() bool {
+	return false
+}
+
+func (g *globalAveragePoolOp) CallsExtern() bool {
+	return false
+}
+
+func (g *globalAveragePoolOp) OverwritesInput() int {
+	return -1
+}
+
+func (g *globalAveragePoolOp) WriteHash(h hash.Hash) {
+	fmt.Fprintf(h, "GlobalAveragePool")
+}
+
+func (g *globalAveragePoolOp) Hashcode() uint32 {
+	return simpleHash(g)
+}
+
+func (g *globalAveragePoolOp) String() string {
+	return "GlobalAveragePool"
 }
