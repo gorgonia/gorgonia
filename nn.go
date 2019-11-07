@@ -438,3 +438,9 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 
 	return retVal, scale, bias, op, err
 }
+
+// GlobalAveragePool2D consumes an input tensor X and applies average pooling across the values in the same channel.
+// The expected input shape is BCHW where B is the batch size, C is the number of channels, and H and W are the height and the width of the data.
+func GlobalAveragePool2D(x *Node) (*Node, error) {
+	return ApplyOp(&globalAveragePoolOp{}, x)
+}
