@@ -6,6 +6,7 @@ require (
 	github.com/awalterschulze/gographviz v0.0.0-20190221210632-1e9ccb565bca
 	github.com/chewxy/hm v1.0.0
 	github.com/chewxy/math32 v1.0.4
+	github.com/go-gota/gota v0.10.1
 	github.com/gogo/protobuf v1.2.1 // indirect
 	github.com/golang/protobuf v1.3.0 // indirect
 	github.com/gonum/blas v0.0.0-20181208220705-f22b278b28ac // indirect
