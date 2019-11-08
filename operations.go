@@ -162,16 +162,27 @@ func SoftMax(a *Node) (retVal *Node, err error) {
 	return nil, errors.Wrap(err, operationError)
 }
 
-// StableSoftMax performs a numerically stable softmax on the input. Specifically this is the formula used:
+// StableSoftMax performs a numerically stable softmax on the input. Spe)cifically this is the formula used:
 //		e^(a - max(a)) / sum(e^(a - max(a)))
 func StableSoftMax(a *Node) (retVal *Node, err error) {
+
 	var max, exp, sum *Node
 	if max, err = Max(a); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
+	if max.Shape().IsScalar() {
+		a, max, err = Broadcast(a, max, NewBroadcastPattern(nil, []byte{0}))
+		if err != nil {
+			return nil, errors.Wrap(err, operationError)
+		}
+	}
 	if retVal, err = Sub(a, max); err == nil {
 		if exp, err = Exp(retVal); err == nil {
-			if sum, err = Sum(exp, 1); err == nil {
+			axis := 1 // default
+			if exp.IsColVec() || (exp.IsVector() && !exp.IsRowVec()) {
+				axis = 0
+			}
+			if sum, err = Sum(exp, axis); err == nil {
 				return HadamardDiv(exp, sum)
 			}
 			return nil, errors.Wrap(err, operationError)
