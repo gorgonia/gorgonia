@@ -349,6 +349,16 @@ func (op repeatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err
 					err = errors.Wrapf(err, doFail, sum)
 					return
 				}
+				// sum.Do leaves the dimension of size 1 behind, so reshape here.
+				t = d.(tensor.Tensor)
+				finalShape := newShape[:axis+1]
+				if axis+1 < newShape.Dims() {
+					finalShape = append(finalShape, newShape[axis+2:]...)
+				}
+				if err = t.Reshape(finalShape...); err != nil {
+					err = errors.Wrapf(err, reshapeFail, newShape, t.DataSize())
+					return
+				}
 			}
 		}
 	}
