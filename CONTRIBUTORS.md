@@ -17,7 +17,7 @@ The following contributors have contributed in ways that required knowing how Go
 * Geoff Sindel (@durp) - gomod
 * Ben Leitner (@bdleitner)
 * Nabil Servais (@blackrez)
-* @mattn
+* Yasuhiro Matsumoto (@mattn)
 
 
 # Contributors 2 #
