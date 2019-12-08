@@ -39,33 +39,7 @@ func Zeroes() InitWFn {
 
 // Ones creates an InitWfn that populates a Value with ones. See Zeroes() for more explanation.
 func Ones() InitWFn {
-	f := func(dt tensor.Dtype, s ...int) interface{} {
-		size := tensor.Shape(s).TotalSize()
-		switch dt {
-		case tensor.Float64:
-			retVal := make([]float64, size)
-			for i := range retVal {
-				retVal[i] = 1
-			}
-			return retVal
-		case tensor.Float32:
-			retVal := make([]float32, size)
-			for i := range retVal {
-				retVal[i] = 1
-			}
-			return retVal
-		case tensor.Int:
-			retVal := make([]int, size)
-			for i := range retVal {
-				retVal[i] = 1
-			}
-			return retVal
-		default:
-			err := errors.Errorf(nyiTypeFail, "Ones", dt)
-			panic(err)
-		}
-	}
-	return f
+	return func(dt tensor.Dtype, s ...int) interface{} { return ones(dt, s...).Data() }
 }
 
 // RangedFrom creates an InitWFn that populates a Value starting with the provided start, increamenting the number for each element in the value by 1
@@ -176,6 +150,32 @@ func GlorotU(gain float64) InitWFn {
 			return GlorotEtAlU32(gain, s...)
 		default:
 			err := errors.Errorf(nyiTypeFail, "GlorotU", dt)
+			panic(err)
+		}
+	}
+	return f
+}
+
+func HeN(gain float64) InitWFn {
+	f := func(dt tensor.Dtype, s ...int) interface{} {
+		switch dt {
+		case tensor.Float64:
+			return HeEtAlN64(gain, s...)
+		default:
+			err := errors.Errorf(nyiTypeFail, "HeNormal", dt)
+			panic(err)
+		}
+	}
+	return f
+}
+
+func HeU(gain float64) InitWFn {
+	f := func(dt tensor.Dtype, s ...int) interface{} {
+		switch dt {
+		case tensor.Float64:
+			return HeEtAlU64(gain, s...)
+		default:
+			err := errors.Errorf(nyiTypeFail, "HeUniform", dt)
 			panic(err)
 		}
 	}

@@ -1,14 +1,12 @@
 package gorgonia
 
 import (
-	"encoding/gob"
-	"fmt"
 	"hash"
-	"io"
 	"unsafe"
 
 	"gorgonia.org/tensor"
 )
+
 
 // Tensor is an interface that describes an ndarray
 type Tensor interface {
@@ -19,27 +17,6 @@ type Tensor interface {
 	Dims() int
 	Size() int
 	DataSize() int
-
-	// Data access related
-	RequiresIterator() bool
-	Iterator() tensor.Iterator
-
-	// ops
-	tensor.Slicer
-	At(...int) (interface{}, error)
-	SetAt(v interface{}, coord ...int) error
-	Reshape(...int) error
-	T(axes ...int) error
-	UT()
-	Transpose() error // Transpose actually moves the data
-	Apply(fn interface{}, opts ...tensor.FuncOpt) (tensor.Tensor, error)
-
-	// data related interface
-	tensor.Zeroer
-	tensor.MemSetter
-	tensor.Dataer
-	tensor.Eq
-	tensor.Cloner
 
 	// type overloading methods
 	IsScalar() bool
@@ -54,16 +31,6 @@ type Tensor interface {
 	Pointer() unsafe.Pointer    // the pointer to the first elemment as a unsafe.Ponter
 	IsNativelyAccessible() bool // Can Go access the memory
 	IsManuallyManaged() bool    // Must Go manage the memory
-
-	// formatters
-	fmt.Formatter
-	fmt.Stringer
-
-	// all Tensors are serializable to these formats
-	WriteNpy(io.Writer) error
-	ReadNpy(io.Reader) error
-	gob.GobEncoder
-	gob.GobDecoder
 }
 
 type hashWriter interface {

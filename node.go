@@ -288,6 +288,17 @@ func NewUniqueNode(opts ...NodeConsOpt) *Node {
 // ID returns the ID of the node. This satisfies the gonum/graph.Node interface
 func (n *Node) ID() int64 { return n.id }
 
+// Node returns itself. This sorts of monoidal patterns are useful for compositions via interfaces.
+func (n *Node) Node() *Node { return n }
+
+// Nodes returns n as a slice of *Node. Again, this is mostly useful for interfaces
+func (n *Node) Nodes() Nodes { return Nodes{n} }
+
+// Err always returns nil. However, this method is implemented to enable nicer composition of functions
+func (n *Node) Err() error { return nil }
+
+func (n *Node) DataSize() int { return n.Shape().TotalSize() }
+
 // helper functions to help compilation process
 func (n *Node) isArg() bool      { return n.op == nil }
 func (n *Node) isInput() bool    { return (n.isArg() || n.isRandom()) && !n.isStmt }

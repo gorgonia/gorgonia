@@ -74,9 +74,27 @@ func Mul(a, b *Node) (retVal *Node, err error) {
 	}
 }
 
-// BatchedMatMul returns a node representing the batched mat mul operation
-func BatchedMatMul(a, b *Node) (retVal *Node, err error) {
+// BatchedMatMul returns a node representing the batched mat mul operation.
+//
+// A list of transpose options are allowed. The
+func BatchedMatMul(a, b *Node, transes ...bool) (retVal *Node, err error) {
 	op := linAlgBinOp{āBinaryOperator: batchedMatMulOperator}
+	switch len(transes) {
+	case 0:
+		// noop
+	case 1:
+		// transA
+		op.transA = transes[0]
+	case 2:
+		// transA and transB
+		op.transA = transes[0]
+		op.transB = transes[1]
+	default:
+		// unsupported
+		op.transA = transes[0]
+		op.transB = transes[1]
+	}
+
 	return binOpNode(op, a, b)
 }
 
@@ -139,27 +157,51 @@ func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
 // SoftMax performs softmax on the input. Specifically this is used:
 //		e^(a[i]) / sum((e^(a[i])))
 // For a more numerically stable SoftMax, use StableSoftMax.
-func SoftMax(a *Node) (retVal *Node, err error) {
-	var exp, sum *Node
-	if exp, err = Exp(a); err == nil {
-		axis := 1 // default
-		if exp.IsColVec() || (exp.IsVector() && !exp.IsRowVec()) {
-			axis = 0
-		}
+// TODO: MULTI RANK SOFTMAX
+func SoftMax(a *Node, axes ...int) (retVal *Node, err error) {
+	aShape := a.Shape()
+	axis := aShape.Dims() - 1 // default: last dim
+	if a.IsColVec() || (a.IsVector() && !a.IsRowVec()) {
+		axis = 0
+	}
 
-		if sum, err = Sum(exp, axis); err == nil {
-			if sum.IsScalar() {
-				return HadamardDiv(exp, sum)
-			}
-			a, b, err := Broadcast(exp, sum, NewBroadcastPattern(nil, []byte{1}))
-			if err != nil {
-				return nil, errors.Wrap(err, operationError)
-			}
-			return Div(a, b)
+	if len(axes) > 0 {
+		if axes[0] >= axis || axes[0] < 0 {
+			return nil, errors.Errorf("Cannot perform SoftMax on axis %d. Input has shape %v", axes[0], a.Shape())
 		}
+		axis = axes[0]
+	}
+
+	var exp, sum *Node
+	if exp, err = Exp(a); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
-	return nil, errors.Wrap(err, operationError)
+	if sum, err = Sum(exp, axis); err != nil {
+		return nil, errors.Wrap(err, operationError)
+	}
+
+	if sum.IsScalar() {
+		return HadamardDiv(exp, sum)
+	}
+
+	// reshape if necessary
+	ss := sum.Shape()
+	diff := exp.Shape().Dims() - ss.Dims()
+
+	// TODO: multirank softmax
+	if diff > 0 {
+		newShape := tensor.Shape(tensor.BorrowInts(ss.Dims() + diff))
+		copy(newShape, ss)
+		copy(newShape[axis+1:], newShape[axis:])
+		newShape[axis] = 1
+
+		if sum, err = Reshape(sum, newShape); err != nil {
+			return nil, errors.Wrap(err, "Failed to reshape")
+		}
+	}
+
+	return BroadcastHadamardDiv(exp, sum, nil, []byte{byte(axis)})
+
 }
 
 // StableSoftMax performs a numerically stable softmax on the input. Specifically this is the formula used:
@@ -521,6 +563,43 @@ func Concat(axis int, ns ...*Node) (retVal *Node, err error) {
 
 	op := concatOp{axis: axis, d: d, children: len(ns)}
 	return ApplyOp(op, ns...)
+}
+
+// Unconcat is the opposite of the built in concat function
+// TODO: port this back to Gorgonia and use Gorgonia's sli instead
+func Unconcat(a *Node, along int, n int) (Nodes, error) {
+	aShape := a.Shape()
+	if along < 0 || along > aShape.Dims() {
+		return nil, errors.Errorf("Unable to Unconcat a of shape %v along axis %d", aShape, along)
+	}
+
+	if aShape[along]%n != 0 {
+		return nil, errors.Errorf("Axis %d of %v cannot be nicely split into %d parts", along, aShape, n)
+	}
+
+	newShapeAlong := aShape[along] / n
+	batches := aShape[along] / newShapeAlong
+
+	var start int
+	var retVal Nodes
+	for i := 0; i < batches; i++ {
+		ss := make([]tensor.Slice, len(aShape))
+		for i := range ss {
+			if i == along {
+				ss[i] = S(start, start+newShapeAlong)
+			} else {
+				ss[i] = S(0, aShape[i])
+			}
+		}
+
+		a2, err := Slice(a, ss...)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Unable to slice a of shape %v along %d on batch %d. Slices were: %v", aShape, along, i, ss)
+		}
+		retVal = append(retVal, a2)
+		start += newShapeAlong
+	}
+	return retVal, nil
 }
 
 // Reshape reshapes a node and returns a new node with the new shape

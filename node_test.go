@@ -109,6 +109,22 @@ func TestNodeBasics(t *testing.T) {
 	n = newNode(In(g), WithType(makeTensorType(1, Float64)), WithShape(2, 1))
 	returnNode(n)
 
+	// Returns itsef
+	n  = newNode(In(g), WithType(makeTensorType(2, Float32)), WithShape(2,3))
+	m := n.Node()
+	if n != m {
+		t.Error("Expected n.Node() to return itself, pointers and all")
+	}
+	ns := n.Nodes()
+	if len(ns) != 1 {
+		t.Errorf("Expected Nodes() to return a slice of length 1. Got %v", ns)
+	}
+	if ns[0]!= n {
+		t.Error("Expected first slice to be itself.")
+	}
+	m = nil
+	returnNode(n)
+
 	// bad stuff
 	var f func()
 

@@ -209,13 +209,13 @@ var broadcastMulTests = []broadcastOpTest{
 	},
 }
 
-func TestBroadcastMul(t *testing.T) {
+func TestBroadcastHadamardProd(t *testing.T) {
 	assert := assert.New(t)
 	for i, bat := range broadcastMulTests {
 		g := NewGraph()
 		a := NodeFromAny(g, bat.a, WithName("a"))
 		b := NodeFromAny(g, bat.b, WithName("b"))
-		c, err := BroadcastMul(a, b, bat.left, bat.right)
+		c, err := BroadcastHadamardProd(a, b, bat.left, bat.right)
 		if checkErr(t, bat.err, err, bat.name, i) {
 			continue
 		}

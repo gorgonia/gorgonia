@@ -575,26 +575,24 @@ func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err e
 		// outerprods only handles vec x vec for now
 		retVal = tensor.Shape{x.TotalSize(), y.TotalSize()}
 	case batchedMatMulOperator:
-		// check that x and y are 3
-		if x.Dims() != 3 {
-			return nil, errors.Errorf("BatchedMatMul only works with 3D tensors as x")
+		innerX := x[len(x)-2:]
+		outerX := x[:len(x)-2]
+		innerY := y[len(y)-2:]
+		outerY := y[:len(y)-2]
+		if !outerX.Eq(outerY) {
+			return nil, errors.Errorf("Expected outer dimensions of %v and %v to match. Got %v and %v", x, y, outerX, outerY)
 		}
-		if y.Dims() != 3 {
-			return nil, errors.Errorf("BatchedMatMul only works with 3D tensors as y")
-		}
-		if x[0] != y[0] {
-			return nil, errors.Errorf("BatchedMatMul has encountered a batch mismatch: %v %v", x, y)
-		}
-		batchSize := x[0]
+
+		// batchSize := outerX.TotalSize()
 		if op.transA {
-			x = transpose2D(x[1:])
-			defer tensor.ReturnInts(x)
+			innerX = transpose2D(innerX)
+			defer tensor.ReturnInts(innerX)
 		}
 		if op.transB {
-			y = transpose2D(y[1:])
-			defer tensor.ReturnInts(y)
+			innerY = transpose2D(innerY)
+			defer tensor.ReturnInts(innerY)
 		}
-		retVal = tensor.Shape{batchSize, x[0], y[1]}
+		retVal = append(outerX, innerX[0], innerY[1])
 	}
 	return
 }

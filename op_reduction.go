@@ -252,6 +252,7 @@ func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 	symdiffLogf("repeat: %v", repeat.Type())
 	symdiffLogf("children %#Y", children)
 	symdiffLogf("children: %v", children)
+
 	if retVal[0], err = ApplyOp(repeat, children...); err != nil {
 		return nil, errors.Wrap(err, applyOpFail)
 	}

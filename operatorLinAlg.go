@@ -421,25 +421,34 @@ func batchedMatMulDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node)
 }
 
 func batchedMatMul(a, b, c tensor.Tensor, transA, transB, incr bool) (retVal tensor.Tensor, err error) {
-	shapeA := a.Shape()
-	shapeB := b.Shape()
-
-	batchSize := shapeA[0]
+	shapeA := a.Shape().Clone()
+	shapeB := b.Shape().Clone()
+	outer := shapeA[:len(shapeA)-2]
+	innerA := shapeA[len(shapeA)-2:]
+	innerB := shapeB[len(shapeB)-2:]
 
 	if c == nil {
-		c = tensor.New(tensor.Of(a.Dtype()), tensor.WithShape(batchSize, shapeA[2], shapeB[1]), tensor.WithEngine(a.Engine()))
+		newShape := append(outer, innerA[0], innerB[1])
+		c = tensor.New(tensor.Of(a.Dtype()), tensor.WithShape(newShape...), tensor.WithEngine(a.Engine()))
+	}
+
+	slices := make([]sli, len(outer))
+	ss := make([]tensor.Slice, len(slices))
+	for i := range slices {
+		slices[i].end = slices[i].start + 1
+		ss[i] = &slices[i]
 	}
 
 	var as, bs, cs tensor.Tensor
-	for i := 0; i < batchSize; i++ {
-		if as, err = a.Slice(S(i)); err != nil {
-
+	for halt := false; !halt; halt = incrSlices(slices, outer) {
+		if as, err = a.Slice(ss...); err != nil {
+			return nil, errors.Wrapf(err, "Slicing %v from a failed", ss)
 		}
-		if bs, err = b.Slice(S(i)); err != nil {
-
+		if bs, err = b.Slice(ss...); err != nil {
+			return nil, errors.Wrapf(err, "Slicing %v from b failed", ss)
 		}
-		if cs, err = c.Slice(S(i)); err != nil {
-
+		if cs, err = c.Slice(ss...); err != nil {
+			return nil, errors.Wrapf(err, "Slicing %v from c failed", ss)
 		}
 
 		if transA {
@@ -457,9 +466,29 @@ func batchedMatMul(a, b, c tensor.Tensor, transA, transB, incr bool) (retVal ten
 		}
 
 		if _, err = tensor.MatMul(as, bs, fo); err != nil {
-
+			return nil, errors.Wrapf(err, "MatMul on batch %v failed.", ss)
 		}
+
 	}
 
 	return c, nil
+}
+
+// incrSlices increments the slices. If everything has matched then return true
+func incrSlices(a []sli, shp tensor.Shape) (halt bool) {
+	for i := len(a) - 1; i >= 0; i-- {
+		if shp[i]-a[i].start == 1 {
+			a[i].start = 0
+			a[i].end = 1
+			if i == 0 {
+				return true
+			}
+			continue
+		}
+
+		a[i].start++
+		a[i].end = a[i].start + 1
+		return false
+	}
+	return true
 }

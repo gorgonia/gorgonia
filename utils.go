@@ -58,10 +58,6 @@ func tensorInfo(t tensor.Tensor) (dt tensor.Dtype, dim int) {
 	return
 }
 
-func cloneNodes(node Nodes, replacements map[*Node]*Node) Nodes {
-	return nil
-}
-
 // valuesToInts will FORCIBLY cast floats to ints.
 func valuesToInts(values []Value) (retVal []int, err error) {
 	retVal = tensor.BorrowInts(len(values))

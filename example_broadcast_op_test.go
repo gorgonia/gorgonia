@@ -1,16 +1,16 @@
-package gorgonia_test
+package gorgonia
 
 import (
 	"fmt"
 	"log"
 
-	. "gorgonia.org/gorgonia"
+	// . "gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
 
 // By default, Gorgonia operations do not perform broadcasting.
 // To do broadcasting, you would need to manually specify the operation
-func Example_broadcasting1() {
+func ExampleBroadcastAdd() {
 	g := NewGraph()
 	a := NewVector(g, tensor.Float64, WithShape(2), WithName("a"), WithValue(tensor.New(tensor.WithBacking([]float64{100, 100}))))
 	b := NewMatrix(g, tensor.Float64, WithShape(2, 2), WithName("b"), WithValue(tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{1, 1, 2, 2}))))
@@ -56,5 +56,50 @@ func Example_broadcasting1() {
 	// b +⃗ a =
 	// ⎡101  101⎤
 	// ⎣102  102⎦
+
+}
+
+func ExampleBroadcastGte_creatingTriangleMatrices() {
+	// Broadcasting is useful. We can create triangular dense matrices simply
+
+	g := NewGraph()
+	a := NewMatrix(g, tensor.Float64, WithShape(3, 1), WithName("a"), WithInit(RangedFrom(0)))
+	b := NewMatrix(g, tensor.Float64, WithShape(1, 4), WithName("b"), WithInit(RangedFrom(0)))
+	tl, err := BroadcastGte(a, b, true, []byte{1}, []byte{0})
+	if err != nil {
+		log.Fatalf("uh oh. Something went wrong %v", err)
+	}
+
+	tu, err := BroadcastLt(a, b, true, []byte{1}, []byte{0})
+	if err != nil {
+		log.Fatalf("uh oh. Something went wrong %v", err)
+	}
+
+	m := NewTapeMachine(g)
+
+	// PEDAGOGICAL:
+	// Uncomment the following code if you want to see what happens behind the scenes
+	// m.Close()
+	// logger := log.New(os.Stderr, "",0)
+	// m = NewTapeMachine(g, WithLogger(logger), WithWatchlist())
+
+	defer m.Close()
+	if err = m.RunAll(); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("triangular, lower:\n%v\n", tl.Value())
+	fmt.Printf("triangular, upper:\n%v\n", tu.Value())
+
+	// Output:
+	// triangular, lower:
+	// ⎡1  0  0  0⎤
+	// ⎢1  1  0  0⎥
+	// ⎣1  1  1  0⎦
+	//
+	// triangular, upper:
+	// ⎡0  1  1  1⎤
+	// ⎢0  0  1  1⎥
+	// ⎣0  0  0  1⎦
 
 }
