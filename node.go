@@ -294,7 +294,11 @@ func (n *Node) Node() *Node { return n }
 // Nodes returns n as a slice of *Node. Again, this is mostly useful for interfaces
 func (n *Node) Nodes() Nodes { return Nodes{n} }
 
-func (n *Node) DataSize() int {return n.Shape().TotalSize()}
+// Err always returns nil. However, this method is implemented to enable nicer composition of functions
+func (n *Node) Err() error { return nil }
+
+func (n *Node) DataSize() int { return n.Shape().TotalSize() }
+
 
 // helper functions to help compilation process
 func (n *Node) isArg() bool      { return n.op == nil }

@@ -160,7 +160,7 @@ func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
 // TODO: MULTI RANK SOFTMAX
 func SoftMax(a *Node, axes ...int) (retVal *Node, err error) {
 	aShape := a.Shape()
-	axis := aShape.Dims() - 1
+	axis := aShape.Dims() - 1 // default: last dim
 	if a.IsColVec() || (a.IsVector() && !a.IsRowVec()) {
 		axis = 0
 	}
@@ -186,15 +186,18 @@ func SoftMax(a *Node, axes ...int) (retVal *Node, err error) {
 
 	// reshape if necessary
 	ss := sum.Shape()
-	newShape := tensor.Shape(tensor.BorrowInts(ss.Dims() + 1)) // TODO: 1 should be len(axes)
-	copy(newShape, ss)
 
-	// TODO: this should range over axes
-	copy(newShape[axis+1:], newShape[axis:])
-	newShape[axis] = 1
 
-	if sum, err = Reshape(sum, newShape); err != nil {
-		return nil, errors.Wrap(err, "Failed to reshape")
+	// TODO: multirank softmax
+	if diff > 0 {
+		newShape := tensor.Shape(tensor.BorrowInts(ss.Dims() + diff))
+		copy(newShape, ss)
+		copy(newShape[axis+1:], newShape[axis:])
+		newShape[axis] = 1
+
+		if sum, err = Reshape(sum, newShape); err != nil {
+			return nil, errors.Wrap(err, "Failed to reshape")
+		}
 	}
 
 	return BroadcastHadamardDiv(exp, sum, nil, []byte{byte(axis)})
@@ -563,7 +566,9 @@ func Concat(axis int, ns ...*Node) (retVal *Node, err error) {
 
 // Unconcat is the opposite of the built in concat function
 // TODO: port this back to Gorgonia and use Gorgonia's sli instead
-func Unconcat(a *Node, along int, n int) ([]*Node, error) {
+
+func Unconcat(a *Node, along int, n int) (Nodes, error) {
+
 	aShape := a.Shape()
 	if along < 0 || along > aShape.Dims() {
 		return nil, errors.Errorf("Unable to Unconcat a of shape %v along axis %d", aShape, along)
@@ -577,7 +582,8 @@ func Unconcat(a *Node, along int, n int) ([]*Node, error) {
 	batches := aShape[along] / newShapeAlong
 
 	var start int
-	var retVal []*Node
+	var retVal Nodes
+
 	for i := 0; i < batches; i++ {
 		ss := make([]tensor.Slice, len(aShape))
 		for i := range ss {

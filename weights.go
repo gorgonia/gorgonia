@@ -157,6 +157,32 @@ func GlorotU(gain float64) InitWFn {
 	return f
 }
 
+func HeN(gain float64) InitWFn {
+	f := func(dt tensor.Dtype, s ...int) interface{} {
+		switch dt {
+		case tensor.Float64:
+			return HeEtAlN64(gain, s...)
+		default:
+			err := errors.Errorf(nyiTypeFail, "HeNormal", dt)
+			panic(err)
+		}
+	}
+	return f
+}
+
+func HeU(gain float64) InitWFn {
+	f := func(dt tensor.Dtype, s ...int) interface{} {
+		switch dt {
+		case tensor.Float64:
+			return HeEtAlU64(gain, s...)
+		default:
+			err := errors.Errorf(nyiTypeFail, "HeUniform", dt)
+			panic(err)
+		}
+	}
+	return f
+}
+
 // Gaussian64 returns a []float64 drawn from a gaussian distribution as defined by the mean and stdev
 func Gaussian64(mean, stdev float64, s ...int) []float64 {
 	size := tensor.Shape(s).TotalSize()

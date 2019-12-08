@@ -26,15 +26,24 @@ func TestIssue182(t *testing.T) {
 
 	xT := tensor.New(tensor.WithBacking([]float64{1, 1, 1}), tensor.WithShape(3))
 	y, err := Mul(x, a)
+	if err != nil {
+		t.Fatal(err)
+	}
 	z, err := Mul(y, b)
+	if err != nil {
+		t.Fatal(err)
+	}
 	dz, err := Grad(z, x)
+	if err != nil {
+		t.Fatal(err)
+	}
 	machine := NewTapeMachine(g)
 	defer machine.Close()
 
 	machine.Let(x, xT)
 	machine.Let(b, -0.5)
 	for turns := 0; turns < 4; turns++ {
-		if err = machine.RunAll(); err != nil {
+		if err := machine.RunAll(); err != nil {
 			t.Fatalf("Machine failed to run at turn %v", turns)
 		}
 		machine.Reset()
@@ -107,6 +116,9 @@ func TestIssue268_im2col(t *testing.T) {
 		49, 0, 0, 0, 18, 19, 0, 23, 24, 0, 0, 0, 0, 43, 44, 0, 48, 49, 0, 0, 0, 0,
 	}))
 	y, err := Im2Col(x, []int{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	machine := NewTapeMachine(g)
 	if err = machine.RunAll(); err != nil {
