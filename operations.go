@@ -327,8 +327,10 @@ func Sum(a *Node, along ...int) (retVal *Node, err error) {
 		switch {
 		case a.IsRowVec():
 			along = []int{1}
+			dims = 1
 		case a.IsColVec(), a.IsVector():
 			along = []int{0}
+			dims = 1
 		default:
 			along = intRange(0, dims)
 		}
