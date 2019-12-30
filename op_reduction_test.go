@@ -29,7 +29,30 @@ func TestSumOpGrad(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(1, len(grads))
 	t.Logf("%v", grads[0])
+}
 
+func TestSumOpFakeVec(t *testing.T) {
+	g := NewGraph()
+
+	xv := tensor.New(tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2, 1))
+	yv := tensor.New(tensor.WithBacking([]float64{10, 20}), tensor.WithShape(1, 2))
+	x := NewMatrix(g, Float64, WithName("x"), WithShape(2, 1), WithValue(xv))
+	y := NewMatrix(g, Float64, WithName("y"), WithShape(1, 2), WithValue(yv))
+	sx, _ := Sum(x)
+	sy, _ := Sum(y)
+
+	assert.True(t, sx.Shape().Eq(tensor.ScalarShape()))
+	assert.True(t, sy.Shape().Eq(tensor.ScalarShape()))
+
+	sx2, _ := Sum(x, 1)
+	assert.True(t, sx2.Shape().Eq(tensor.Shape{2}))
+
+	vm := NewTapeMachine(g)
+	vm.RunAll()
+
+	assert.Equal(t, 3.0, sx.Value().Data(), "Expected sx to be 3.0")
+	assert.Equal(t, 30.0, sy.Value().Data(), "Expected sy to be 30.0")
+	assert.Equal(t, []float64{1, 2}, sx2.Value().Data(), "sx2 should be a flat array")
 }
 
 func TestSumOpDiff(t *testing.T) {

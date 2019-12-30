@@ -43,18 +43,13 @@ func reductionType(d int, along []int) hm.Type {
 	return hm.NewFnType(t, retType)
 }
 
-func reductionInferShape(along []int, inputs ...DimSizer) (tensor.Shape, error) {
-	if len(inputs) != 1 {
-		return nil, fmt.Errorf("len(dimsizers)!=1")
-	}
+func reductionInferShape(along []int, in tensor.Shape) (tensor.Shape, error) {
 	if len(along) == 0 {
 		return tensor.ScalarShape(), nil
 	}
-	in := inputs[0].(tensor.Shape)
-	shape := make(tensor.Shape, len(in))
-	copy(shape, in)
+	shape := in.Clone()
 	for _, d := range along {
-		if d >= len(shape) {
+		if d >= shape.Dims() {
 			return nil, fmt.Errorf("shape error, along %d is not a valid axis for shape %v", d, in)
 		}
 		shape[d] = 1
@@ -126,9 +121,11 @@ func (op maxOp) Type() hm.Type {
 	return reductionType(op.d, op.along)
 }
 
-//func (op maxOp) InferShape(...DimSizer) (tensor.Shape, error) { return scalarShape, nil } // TODO, THIS IS INCORRECT
 func (op maxOp) InferShape(dimsizers ...DimSizer) (tensor.Shape, error) {
-	return reductionInferShape(op.along, dimsizers...)
+	if len(dimsizers) != 1 {
+		return nil, errors.Errorf("maxOp only takes one input shape to infer ")
+	}
+	return reductionInferShape(op.along, dimsizers[0].(tensor.Shape))
 }
 func (op maxOp) DiffWRT(i int) []bool { return []bool{true} }
 
@@ -224,8 +221,9 @@ func (op sumOp) Type() hm.Type {
 	return reductionType(op.d, op.along)
 }
 
+// InferShape infers the shape of a sumOp. It's purpose is to fulfil the Op interface. Only one input is expected, and the type is expected to be a tensor.Shape
 func (op sumOp) InferShape(inputs ...DimSizer) (shape tensor.Shape, err error) {
-	return reductionInferShape(op.along, inputs...)
+	return reductionInferShape(op.along, inputs[0].(tensor.Shape))
 }
 
 func (op sumOp) DiffWRT(i int) []bool { return []bool{true} }
