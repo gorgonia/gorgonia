@@ -130,8 +130,12 @@ case2:
 	// To extract error, use CheckOne
 	fmt.Printf("error: %v\n", CheckOne(act2))
 
+	// If you extract the *Node from an error, you get nil
+	fmt.Printf("Node: %v\n", act2.Node())
+
 	// Output:
 	// Err while Add: Failed to infer shape. Op: + false: Shape mismatch: (32, 100) and (1, 10000)
 	// act2: Failed to infer shape. Op: + false: Shape mismatch: (32, 100) and (1, 10000)
 	// error: Failed to infer shape. Op: + false: Shape mismatch: (32, 100) and (1, 10000)
+	// Node: <nil>
 }
