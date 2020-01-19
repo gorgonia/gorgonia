@@ -235,5 +235,68 @@ func TestIssue233_F64(t *testing.T) {
 	}
 
 	assert.Equal(t, correct, y.Value().Data())
+}
+
+func TestIssue363(t *testing.T) {
+	g := NewGraph()
+
+	x := NewScalar(g, Float64, WithName("x"))
+	y := NewScalar(g, Float64, WithName("y"))
+
+	z, err := Add(x, y)
+
+	if err != nil {
+		t.Fatal("error adding:", err)
+	}
+
+	z, err = Neg(z) //last node is Neg operator. So gradients are zero
+
+	// z, err = gorgonia.Mul(gorgonia.NewConstant(-1.0), z) //This results in non zero gradients
+
+	if err != nil {
+		t.Fatal("error in Multiply with -1:", err)
+	}
+
+	Let(x, 2.5)
+	Let(y, 2.0)
+
+	m := NewLispMachine(g)
+
+	defer m.Close()
+
+	err = m.RunAll()
+
+	if err != nil {
+		t.Fatal("error in running the lisp machine:", err)
+	}
+
+	t.Log("value of z:", z.Value())
+
+	xgrad, err := x.Grad()
+
+	if err != nil {
+		t.Fatal("error in getting the xgrad:", err)
+	}
+
+	ygrad, err := y.Grad()
+
+	if err != nil {
+		t.Fatal("error in getting the ygrad:", err)
+	}
+
+	actualxgrad := xgrad.Data().(float64)
+
+	actualygrad := ygrad.Data().(float64)
+
+	if actualxgrad == 0.0 {
+		t.Log("xgrad=", actualxgrad, "ygrad=", actualygrad)
+		t.Fatal("zero xgrad")
+	}
+
+	if actualygrad == 0.0 {
+		t.Fatal("zero ygrad")
+	}
+
+	t.Log("xgrad=", actualxgrad, "ygrad=", actualygrad)
 
 }

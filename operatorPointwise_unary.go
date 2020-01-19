@@ -311,10 +311,21 @@ func negDiff(x, y *Node) (err error) {
 	xdv, ydv := getDV(x, y)
 
 	sub := newElemBinOp(subOpType, x, y)
-	_, err = sub.UnsafeDo(xdv.d, ydv.d)
+	var d Value
+	d, err = sub.UnsafeDo(xdv.d, ydv.d)
+
+	// first we check if what essentially is a noIncrError is called
 	if err = checkErrSetDeriv(err, xdv); err != nil {
 		return errors.Wrapf(err, autodiffFail, x)
 	}
+
+	// then we set derivs, if d is a scalar
+	if _, ok := xdv.Value.(Scalar); ok {
+		if err = xdv.SetDeriv(d); err != nil {
+			return errors.Wrapf(err, autodiffFail, x)
+		}
+	}
+
 	return
 }
 
