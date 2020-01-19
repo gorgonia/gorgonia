@@ -12,12 +12,11 @@ var (
 
 // Result is either a Node or Nodes or error. It's a poor man's sum types and it's not sealed for good reason
 type Result interface {
-	Node() *Node
-	Nodes() Nodes
-	Err() error
+	Input
+	Errer
 }
 
-// Input is either a Node or Nodes
+// Input is something that can produce both a *Node and Nodes. Returning nil is OK.
 type Input interface {
 	Node() *Node
 	Nodes() Nodes
@@ -28,27 +27,32 @@ type Errer interface {
 	Err() error
 }
 
+// Mker is an interface of any Input that can make a new version of itself
+type Mker interface {
+	Mk(...Input) Input
+}
+
 // Lift1  decorates a function with a precheck and post function lifting
 func Lift1(fn func(a *Node) (*Node, error)) func(a Input) Result {
 	return func(a Input) Result {
 		if err := CheckOne(a); err != nil {
 			return Err(errors.WithStack(err))
 		}
-		return LiftResult(fn(a.Node()))
+		return TransformResult(a)(fn(a.Node()))
 	}
 }
 
-// Lift1Axial;  decorates a function with a precheck and post function lifting
+// Lift1Axial  decorates a function with a precheck and post function lifting
 func Lift1Axial(fn func(a *Node, axes ...int) (*Node, error)) func(a Input, axes ...int) Result {
 	return func(a Input, axes ...int) Result {
 		if err := CheckOne(a); err != nil {
 			return Err(errors.WithStack(err))
 		}
-		return LiftResult(fn(a.Node(), axes...))
+		return TransformResult(a)(fn(a.Node(), axes...))
 	}
 }
 
-// Lift2  decorates a function with a prechecl and post function lifting
+// Lift2 decorates a function with a precheck and post function lifting
 func Lift2(fn func(a, b *Node) (*Node, error)) func(a, b Input) Result {
 	return func(a, b Input) Result {
 		if err := CheckOne(a); err != nil {
@@ -57,11 +61,11 @@ func Lift2(fn func(a, b *Node) (*Node, error)) func(a, b Input) Result {
 		if err := CheckOne(b); err != nil {
 			return Err(errors.WithStack(err))
 		}
-		return LiftResult(fn(a.Node(), b.Node()))
+		return TransformResult(a, b)(fn(a.Node(), b.Node()))
 	}
 }
 
-// Lift2Broadcast  decorates a function with a prechecl and post function lifting
+// Lift2Broadcast decorates a function with a precheck and post function lifting
 func Lift2Broadcast(fn func(a, b *Node, pat1, pat2 []byte) (*Node, error)) func(a, b Input, pat1, pat2 []byte) Result {
 	return func(a, b Input, pat1, pat2 []byte) Result {
 		if err := CheckOne(a); err != nil {
@@ -70,7 +74,7 @@ func Lift2Broadcast(fn func(a, b *Node, pat1, pat2 []byte) (*Node, error)) func(
 		if err := CheckOne(b); err != nil {
 			return Err(errors.WithStack(err))
 		}
-		return LiftResult(fn(a.Node(), b.Node(), pat1, pat2))
+		return TransformResult(a, b)(fn(a.Node(), b.Node(), pat1, pat2))
 	}
 }
 
@@ -105,6 +109,26 @@ func LiftResult(a Input, err error) Result {
 		return at
 	default:
 		return resultM{a}
+	}
+}
+
+// TransformResult is like LiftResult, but allows for custom data types that fulfil Mker
+func TransformResult(ins ...Input) func(a Input, err error) Result {
+	return func(a Input, err error) Result {
+		if err != nil {
+			return Err(err)
+		}
+		for _, in := range ins {
+			if mk, ok := in.(Mker); ok {
+				a = mk.Mk(a)
+			}
+		}
+		switch at := a.(type) {
+		case Result:
+			return at
+		default:
+			return resultM{a}
+		}
 	}
 }
 
