@@ -26,7 +26,7 @@ const (
 )
 
 var (
-	gopath, gorgonialoc string
+	gopath, gorgonialoc, golgiloc string
 )
 
 var funcmap = template.FuncMap{
@@ -34,9 +34,10 @@ var funcmap = template.FuncMap{
 }
 
 var (
-	unaryTemplate     *template.Template
-	binaryTemplate    *template.Template
-	broadcastTemplate *template.Template
+	unaryTemplate          *template.Template
+	binaryTemplate         *template.Template
+	broadcastTemplate      *template.Template
+	maybeBroadcastTemplate *template.Template
 )
 
 const unaryTemplateRaw = ` // {{.FnName}} performs a pointwise {{lower .FnName}}.
@@ -54,7 +55,7 @@ func {{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}) (*Node, error) {
 }
 `
 
-const broadcastTemplateRaw = `//{{.FnName}} performs a {{lower .FnName}}. The operation is precomposed with a broadcast such that the shapes matches before operations commence.
+const broadcastTemplateRaw = `// Broadcast{{.FnName}} performs a {{lower .FnName}}. The operation is precomposed with a broadcast such that the shapes matches before operations commence.
 func Broadcast{{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}, leftPattern, rightPattern []byte)(*Node, error) {
 	a2, b2, err := Broadcast(a, b, NewBroadcastPattern(leftPattern, rightPattern))
 	if err != nil {
@@ -63,6 +64,19 @@ func Broadcast{{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}, leftPat
 	return {{.FnName}}(a2, b2{{if .AsSame}}, retSame{{end}})
 }
 `
+
+// maybeBroadcast is the set of Broadcast functions in Golgi
+const maybeBroadcastTemplateRaw = `// Broadcast{{.FnName}} performs a {{lower .FnName}}. The operation is precomposed with a broadcast such that the shapes matches before operations commence.
+func Broadcast{{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}, leftPattern, rightPattern []byte)(*Node, error) {
+	if a.Shape().Eq(b.Shape()){
+		return return {{.FnName}}(a2, b2{{if .AsSame}}, retSame{{end}})
+	}
+	a2, b2, err := Broadcast(a, b, NewBroadcastPattern(leftPattern, rightPattern))
+	if err != nil {
+		return nil, err
+	}
+	return {{.FnName}}(a2, b2{{if .AsSame}}, retSame{{end}})
+}`
 
 func init() {
 	gopath = os.Getenv("GOPATH")
@@ -82,9 +96,11 @@ func init() {
 		}
 	}
 	gorgonialoc = path.Join(gopath, "src/gorgonia.org/gorgonia")
+	golgiloc = path.Join(gopath, "src/gorgonia.org/golgi")
 	unaryTemplate = template.Must(template.New("Unary").Funcs(funcmap).Parse(unaryTemplateRaw))
 	binaryTemplate = template.Must(template.New("Binary").Funcs(funcmap).Parse(binaryTemplateRaw))
 	broadcastTemplate = template.Must(template.New("Broadcast").Funcs(funcmap).Parse(broadcastTemplateRaw))
+	maybeBroadcastTemplate = template.Must(template.New("MaybeBroadcast").Funcs(funcmap).Parse(maybeBroadcastTemplateRaw))
 }
 
 func generateUnary(outFile io.Writer) {
@@ -141,7 +157,7 @@ func generateBinary(outFile io.Writer) {
 	}
 }
 
-func generateBroadcastBinOps(outFile io.Writer) {
+func generateBroadcastBinOps(tmpl, outFile io.Writer) {
 	// parse operator_binary_const.go
 	filename := path.Join(gorgonialoc, binaryOps)
 	fset := token.NewFileSet()
@@ -169,7 +185,7 @@ func generateBroadcastBinOps(outFile io.Writer) {
 		case "Lt", "Gt", "Lte", "Gte", "Eq", "Ne":
 			data.AsSame = true
 		}
-		broadcastTemplate.Execute(outFile, data)
+		tmpl.Execute(outFile, data)
 	}
 }
 
@@ -222,7 +238,7 @@ func generateAPI() {
 	fmt.Fprintf(outFile, "package gorgonia\n\n%v\n\n", genmsg)
 	generateUnary(outFile)
 	generateBinary(outFile)
-	generateBroadcastBinOps(outFile)
+	generateBroadcastBinOps(broadcastTemplate, outFile)
 }
 
 func generateInterfaces() {
@@ -236,8 +252,20 @@ func generateInterfaces() {
 	generateUnaryInterface(outFile)
 }
 
+func generateGolgiAPI() {
+	outFileName := path.Join(gorgonialoc, apigenOut)
+	outFile, err := os.OpenFile(outFileName, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer outFile.Close()
+	fmt.Fprintf(outFile, "package golgi\n\n%v\n\n", genmsg)
+	generateBroadcastBinOps(maybeBroadcastTemplate, outFile)
+}
+
 func main() {
 	// generateAPI()
 	// generateInterfaces()
-	functionSignatures()
+	// functionSignatures()
+	generateGolgiAPI()
 }
