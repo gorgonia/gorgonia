@@ -67,16 +67,17 @@ func Broadcast{{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}, leftPat
 
 // maybeBroadcast is the set of Broadcast functions in Golgi
 const maybeBroadcastTemplateRaw = `// Broadcast{{.FnName}} performs a {{lower .FnName}}. The operation is precomposed with a broadcast such that the shapes matches before operations commence.
-func Broadcast{{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}, leftPattern, rightPattern []byte)(*Node, error) {
+func Broadcast{{.FnName}}(a, b *G.Node{{if .AsSame}}, retSame bool{{end}}, leftPattern, rightPattern []byte)(*G.Node, error) {
 	if a.Shape().Eq(b.Shape()){
-		return return {{.FnName}}(a2, b2{{if .AsSame}}, retSame{{end}})
+		return G.{{.FnName}}(a, b{{if .AsSame}}, retSame{{end}})
 	}
-	a2, b2, err := Broadcast(a, b, NewBroadcastPattern(leftPattern, rightPattern))
+	a2, b2, err := G.Broadcast(a, b, G.NewBroadcastPattern(leftPattern, rightPattern))
 	if err != nil {
 		return nil, err
 	}
-	return {{.FnName}}(a2, b2{{if .AsSame}}, retSame{{end}})
-}`
+	return G.{{.FnName}}(a2, b2{{if .AsSame}}, retSame{{end}})
+}
+`
 
 func init() {
 	gopath = os.Getenv("GOPATH")
@@ -157,7 +158,7 @@ func generateBinary(outFile io.Writer) {
 	}
 }
 
-func generateBroadcastBinOps(tmpl, outFile io.Writer) {
+func generateBroadcastBinOps(tmpl *template.Template, outFile io.Writer) {
 	// parse operator_binary_const.go
 	filename := path.Join(gorgonialoc, binaryOps)
 	fset := token.NewFileSet()
@@ -253,7 +254,7 @@ func generateInterfaces() {
 }
 
 func generateGolgiAPI() {
-	outFileName := path.Join(gorgonialoc, apigenOut)
+	outFileName := path.Join(golgiloc, apigenOut)
 	outFile, err := os.OpenFile(outFileName, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
