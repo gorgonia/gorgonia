@@ -118,6 +118,14 @@ var broadcastAddTests = []broadcastOpTest{
 		ab:    tensor.New(tensor.WithShape(2, 2, 2), tensor.WithBacking([]float64{101, 102, 203, 204, 305, 306, 407, 408})),
 		err:   false,
 	},
+	{name: "vec-3tensor",
+		a:     tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{100, 200})),
+		b:     tensor.New(tensor.WithShape(2, 2, 2), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6, 7, 8})),
+		left:  []byte{1, 2},
+		right: nil,
+		ab:    tensor.New(tensor.WithShape(2, 2, 2), tensor.WithBacking([]float64{101, 202, 103, 204, 105, 206, 107, 208})),
+		err:   false,
+	},
 
 	// TODO (these would give coverage to all broadcast applications)
 	// 	vec-3tensor
