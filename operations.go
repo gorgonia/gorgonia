@@ -166,7 +166,7 @@ func SoftMax(a *Node, axes ...int) (retVal *Node, err error) {
 	}
 
 	if len(axes) > 0 {
-		if axes[0] >= axis || axes[0] < 0 {
+		if axes[0] >= axis+1 || axes[0] < 0 {
 			return nil, errors.Errorf("Cannot perform SoftMax on axis %d. Input has shape %v", axes[0], a.Shape())
 		}
 		axis = axes[0]
