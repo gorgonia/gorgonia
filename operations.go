@@ -694,6 +694,20 @@ func Tensordot(aAxes []int, bAxes []int, a, b *Node) (retVal *Node, err error) {
 	return ApplyOp(op, a, b)
 }
 
+// Mish is a novel activation function that is self regularizing.
+//
+// https://arxiv.org/abs/1908.08681
+func Mish(a *Node) (retVal *Node, err error) {
+	var sp, tsp *Node
+	if sp, err = Softplus(a); err != nil {
+		return nil, errors.Wrap(err, "Mish() - SoftPlus failed")
+	}
+	if tsp, err = Tanh(sp); err != nil {
+		return nil, errors.Wrap(err, "Mish() - Tanh failed")
+	}
+	return HadamardProd(a, tsp)
+}
+
 // Private functions
 
 func containsDuplicate(slice []int) bool {
