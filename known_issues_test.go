@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -299,4 +300,14 @@ func TestIssue363(t *testing.T) {
 
 	t.Log("xgrad=", actualxgrad, "ygrad=", actualygrad)
 
+}
+
+func TestIssue368(t *testing.T) {
+	g := NewGraph()
+	x := NewTensor(g, Float32, 2, WithShape(2, 5), WithInit(GlorotU(1.0)))
+	sm, err := SoftMax(x, 1)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_ = sm
 }
