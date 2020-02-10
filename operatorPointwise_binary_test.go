@@ -33,6 +33,7 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 	var g, g2 *ExprGraph
 	var x, y, z *Node
 	var a, b, c *Node
+	var i, j, k *Node
 	g = NewGraph()
 	x = NewScalar(g, dt, WithName("x"))
 	y = NewScalar(g, dt, WithName("y"))
@@ -44,6 +45,13 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 	a = NewScalar(g2, dt, WithName("a"))
 	b = NewScalar(g2, dt, WithName("b"))
 	if c, err = ApplyOp(binOp, a, b); err != nil {
+		return err
+	}
+
+	i = NewScalar(g, dt, WithName("i"))
+	j = NewScalar(g, dt, WithName("j"))
+	binOp.retSame = true
+	if k, err = ApplyOp(binOp, i, j); err != nil {
 		return err
 	}
 
@@ -64,6 +72,8 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 
 	Let(x, randX)
 	Let(y, randY)
+	Let(i, randX)
+	Let(j, randY)
 	if err = m1.RunAll(); err != nil {
 		return
 	}
@@ -93,6 +103,17 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 			return
 		}
 		if cG, err = c.Grad(); err != nil {
+			return
+		}
+
+		if _, err = i.Grad(); err != nil {
+			return
+		}
+
+		if _, err = j.Grad(); err != nil {
+			return
+		}
+		if _, err = k.Grad(); err != nil {
 			return
 		}
 
