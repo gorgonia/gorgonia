@@ -291,8 +291,9 @@ func Set(a, b *Node) (retVal *Node) {
 	return NewUniqueNode(WithOp(op), WithChildren(Nodes{a, b}), WithName(name), In(a.g))
 }
 
-// Read is one of those special snowflake tumblrina *Nodes. It allows for extraction of the value of the *Node at runtime
-// into a Value. Note that a *Value (a pointer to a Value) is passed into this function, not a Value.
+// Read allows for extraction of the value of the *Node at runtime into a Value.
+// To achieve this, a pointer to a Value (*Value) is passed into this function, not a Value.
+// The 'into' value remains nil until the execution of the graph (via a call to the Run() methods of the VM)
 func Read(n *Node, into *Value) (retVal *Node) {
 	op := readOp{into}
 	name := fmt.Sprintf("read %v into %v", n, into)
