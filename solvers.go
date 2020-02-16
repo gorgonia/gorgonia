@@ -1358,6 +1358,7 @@ func (s *AdaGradSolver) Step(model []ValueGrad) (err error) {
 //  eta(xᵢ) = <(xᵢ - xᵢ₋₁), (Grad(F)(xᵢ) - Grad(F)(xᵢ₋₁))> /
 //                  ∥(Grad(F)(xᵢ) - Grad(F)(xᵢ₋₁))∥²
 // The input learn rate is used for the first iteration.
+//
 // TODO: Check out stochastic implementations, e.g. "Barzilai-Borwein Step Size for Stochastic Gradient Descent" https://arxiv.org/abs/1605.04131
 type BarzilaiBorweinSolver struct {
 	eta     float64 // initial learn rate
