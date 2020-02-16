@@ -269,7 +269,7 @@ func (s *RMSPropSolver) Step(model []ValueGrad) (err error) {
 		}
 
 		cv := cached.Value
-		// cw = cw*decay + (1-decay) * grad^2
+		// cw = cw*decay + (1-decay) * grad²
 		switch cw := cv.(type) {
 		case *tensor.Dense:
 			var gt, gt2, w, regularized tensor.Tensor
@@ -545,7 +545,7 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 			// prep done. Now let's apply the formula:
 			// the formula is
 			//		(β_1 * m_t-1) + (1 - β_1)g_t ..................	1
-			//		(β_2 * v_t-1) + (1 - β_2)*(g_t)^2 .............	2
+			//		(β_2 * v_t-1) + (1 - β_2)*(g_t)² .............	2
 
 			// equation(1)
 			t1 := g.Clone().(*tensor.Dense)
@@ -1353,17 +1353,18 @@ func (s *AdaGradSolver) Step(model []ValueGrad) (err error) {
 
 // BarzilaiBorweinSolver / Barzilai-Borwein performs Gradient Descent in steepest descend direction
 // Solves 0 = F(x), by
-// x_{i+1} = x_i - eta * Grad(F)(x_i)
+//  xᵢ₊₁ = xᵢ - eta * Grad(F)(xᵢ)
 // Where the learn rate eta is calculated by the Barzilai-Borwein method:
-// eta(x_i) = <(x_i - x_{i-1}), (Grad(F)(x_i) - Grad(F)(x_{i-1}))> /
-//                            ||(Grad(F)(x_i) - Grad(F)(x_{i-1}))||^2
+//  eta(xᵢ) = <(xᵢ - xᵢ₋₁), (Grad(F)(xᵢ) - Grad(F)(xᵢ₋₁))> /
+//                  ∥(Grad(F)(xᵢ) - Grad(F)(xᵢ₋₁))∥²
 // The input learn rate is used for the first iteration.
+//
 // TODO: Check out stochastic implementations, e.g. "Barzilai-Borwein Step Size for Stochastic Gradient Descent" https://arxiv.org/abs/1605.04131
 type BarzilaiBorweinSolver struct {
 	eta     float64 // initial learn rate
 	clip    float64 // clip value
 	useClip bool
-	prevDV  []*dualValue // dual value for x_{i-1} step
+	prevDV  []*dualValue // dual value for xᵢ₋₁ step
 }
 
 // NewBarzilaiBorweinSolver creates a new Barzilai-Borwein solver withs some default values:
@@ -1431,7 +1432,7 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 					return errors.Wrap(err, subFail)
 				}
 
-				// <(x_i - x_{i-1}), (Grad(F)(x_i) - Grad(F)(x_{i-1}))>
+				// <(xᵢ - xᵢ₋₁), (Grad(F)(xᵢ) - Grad(F)(xᵢ₋₁))>
 
 				// Scalar Product == Total tensor contraction
 				dims := valueDiff.Dims()
@@ -1448,7 +1449,7 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 
 				nominator += valGradDiffscalarProd.Data().(float64)
 
-				// ||(Grad(F)(x_i) - Grad(F)(x_{i-1}))||^2
+				// ∥(Grad(F)(xᵢ) - Grad(F)(xᵢ₋₁))∥²
 				gradDiffscalarProd, err := tensor.Contract(gradDiff, gradDiff, contractionAxes, contractionAxes)
 				if err != nil {
 					return errors.New("operationError, Contracting value / gradient difference")

@@ -44,8 +44,8 @@ const unaryTemplateRaw = ` // {{.FnName}} performs a pointwise {{lower .FnName}}
 func {{.FnName}}(a *Node) (*Node, error) { return unaryOpNode(newElemUnaryOp({{.OpType}}, a), a) }
 `
 
-const binaryTemplateRaw = `// {{.FnName}} perfors a pointwise {{lower .FnName}} operation.
-{{if .AsSame -}}//	retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
+const binaryTemplateRaw = `// {{.FnName}} performs a pointwise {{lower .FnName}} operation.
+{{if .AsSame -}}// retSame indicates if the data type of the return value should be the same as the input data type. It defaults to Bool otherwise.
 {{end -}}
 func {{.FnName}}(a, b *Node{{if .AsSame}}, retSame bool{{end}}) (*Node, error) { {{if not .AsSame -}}return binOpNode(newElemBinOp({{.OpType}}, a, b), a, b) {{else -}}
 	op := newElemBinOp({{.OpType}}, a, b)
