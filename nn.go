@@ -101,7 +101,7 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 
 // LeakyRelu returns a node whose underlying value is:
 //   f(x) = alpha * x if x < 0
-//   f(x) = x for x >= 0
+//   f(x) = x for x ⩾ 0
 // applied elementwise.
 func LeakyRelu(x *Node, alpha float64) (*Node, error) {
 	var zero *Node
@@ -154,7 +154,7 @@ func LeakyRelu(x *Node, alpha float64) (*Node, error) {
 }
 
 // Rectify is a convenience function for creating rectified linear units activation functions.
-// This function uses >=, which is the canonical version. If you want to use >, you can create
+// This function uses ⩾, which is the canonical version. If you want to use >, you can create
 // your own by just following this.
 func Rectify(x *Node) (retVal *Node, err error) {
 	var zero *Node

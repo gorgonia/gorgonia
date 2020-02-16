@@ -33,7 +33,7 @@ func forwardDiffAnalysis(outputs, sortedNodes Nodes) (retVal NodeSet, err error)
 
 	symdiffLogf("Diff Set: %d", diffSet)
 	symdiffLogf("%d", sortedNodes)
-	// for i := len(sortedNodes) - 1; i >= 0; i-- {
+	// for i := len(sortedNodes) - 1; i ⩾ 0; i-- {
 	// 	n := sortedNodes[i]
 	for _, n := range sortedNodes {
 		if diffSet.Contains(n) && !n.isInput() {

@@ -392,8 +392,8 @@ func TestBarzilaiBorweinSolver(t *testing.T) {
 // which is used as a performance test problem for optimization algorithms.
 // https://en.wikipedia.org/wiki/Rosenbrock_function
 //
-// f(x,y) = (a-x)^2 + b(y-x^2)^2
-// It has a global minimum at (x, y) = (a, a^2), where f(x,y) = 0.
+// f(x,y) = (a-x)² + b(y-x²)²
+// It has a global minimum at (x, y) = (a, a²), where f(x,y) = 0.
 // Usually a = 1, b = 100, then the minimum is at x = y = 1
 // TODO: There is also an n-dimensional version...see wiki
 func model2dRosenbrock(a, b, xInit, yInit float64) (z, cost *Node, machine *tapeMachine, err error) {

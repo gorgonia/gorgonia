@@ -595,7 +595,7 @@ func (cg *codegenerator) gen() (*program, map[*Node]register) {
 	enterLogScope()
 	defer leaveLogScope()
 	for i, node := range cg.sorted {
-		// for i := len(cg.sorted) - 1; i >= 0; i-- {
+		// for i := len(cg.sorted) - 1; i ⩾ 0; i-- {
 		// node := cg.sorted[i]
 		replacement := cg.df.replacements[node]
 		compileLogf("Working on %x. Replacement: %x", node.ID(), replacement.ID())

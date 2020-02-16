@@ -844,7 +844,7 @@ func hadamardDivDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 		xdv.SetDeriv(ver.Value()) // ignore errors on purpose
 	}
 
-	//dzdy = -x/y^2
+	//dzdy = -x/y²
 	// TODO: investigate if this can be done (if no other node uses z):
 	//		unsafe do : neg zdv.d
 	// 		unsafe do : mul zdv.d, zdv.Value

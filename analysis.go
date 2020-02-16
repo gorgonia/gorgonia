@@ -197,15 +197,15 @@ func (df *dataflow) insertDeviceInstr(sorted Nodes) Nodes {
 	Consider a CFG that looks like this:
 
                            BLOCK 1           BLOCK 3
-                           +-------+        +-------+
-                     +---->| x = 1 +------->| y = 3 +----------------+
-        BLOCK 0      |     +-------+        | use x |                v  BLOCK 4
-       +-------+     |                      +-------+              +-------------+
-       |       |+----+                                             | x = ϕ(1, 2) |
-       +-------+     |     BLOCK 2                                 +-------------+
-                     |     +-------+                                 ^
-                     +---->| x = 2 +---------------------------------+
-                           +-------+
+                           ±-----∓        ±-----∓
+                     ±-→| x = 1 ±----→| y = 3 ±--------------∓
+        BLOCK 0      |     ±-----∓        | use x |                v  BLOCK 4
+       ±-----∓     |                      ±-----∓              ±-----------∓
+       |       |±--∓                                             | x = ϕ(1, 2) |
+       ±-----∓     |     BLOCK 2                                 ±-----------∓
+                     |     ±-----∓                                 ^
+                     ±-→| x = 2 ±-------------------------------∓
+                           ±-----∓
 
 	`x = 1` needs to be live in BLOCK 1, BLOCK 3 and BLOCK 4
 	`x = 2` needs to be live in BLOCK 2 and BLOCK 4.
