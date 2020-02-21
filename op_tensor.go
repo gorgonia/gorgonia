@@ -489,7 +489,7 @@ func (op repeatOp) WriteHash(h hash.Hash) {
 
 func (op repeatOp) Hashcode() uint32 { return simpleHash(op) }
 
-// sliceOp represents a slicing operation. If end <= start, it means ":"
+// sliceOp represents a slicing operation. If end ⩽ start, it means ":"
 type sliceOp struct {
 	tensor.Slice
 
