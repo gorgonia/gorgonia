@@ -12,7 +12,7 @@ import (
 )
 
 func TestDevCUDA(t *testing.T) {
-	// t.SkipNow()
+	 t.SkipNow()
 
 	g := NewGraph()
 	x := NewMatrix(g, Float64, WithShape(1024, 100), WithName("x"), WithInit(ValuesOf(2.0)))
@@ -44,6 +44,7 @@ func TestDevCUDA(t *testing.T) {
 	}
 
 	t.Logf("x: \n%v", x.Value())
+
 	t.Logf("y: \n%v", y.Value())
 	t.Logf("xpy \n%v", xpyV)
 	t.Logf("xmy \n%v", xmyV)
@@ -56,6 +57,11 @@ func TestDevCUDA(t *testing.T) {
 	}
 
 }
+//(add-to-list 'tramp-remote-process-environment "GO111MODULES=off")
+//(add-to-list 'tramp-remote-process-environment "GOPATH=/home/ubuntu/src/gows")
+//(add-to-list 'tramp-remote-path "/home/ubuntu/src/gows/bin")
+//(setq tramp-remote-process-environment '("GOPATH=/home/ubuntu/src/gows"  "GO111MODULE=off" "ENV=''" "TMOUT=0" "LC_CTYPE=''" "CDPATH=" "HISTORY=" "MAIL=" "MAILCHECK=" "MAILPATH=" "PAGER=cat" "autocorrect=" "correct="))
+
 
 func TestExternMetadata_Transfer(t *testing.T) {
 	m := new(ExternMetadata)
