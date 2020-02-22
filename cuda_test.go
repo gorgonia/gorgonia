@@ -57,11 +57,6 @@ func TestDevCUDA(t *testing.T) {
 	}
 
 }
-//(add-to-list 'tramp-remote-process-environment "GO111MODULES=off")
-//(add-to-list 'tramp-remote-process-environment "GOPATH=/home/ubuntu/src/gows")
-//(add-to-list 'tramp-remote-path "/home/ubuntu/src/gows/bin")
-//(setq tramp-remote-process-environment '("GOPATH=/home/ubuntu/src/gows"  "GO111MODULE=off" "ENV=''" "TMOUT=0" "LC_CTYPE=''" "CDPATH=" "HISTORY=" "MAIL=" "MAILCHECK=" "MAILPATH=" "PAGER=cat" "autocorrect=" "correct="))
-
 
 func TestExternMetadata_Transfer(t *testing.T) {
 	m := new(ExternMetadata)
