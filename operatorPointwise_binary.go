@@ -119,9 +119,9 @@ func (o scalarBinOp) Do(same bool, vals ...Value) (retVal Value, err error) {
 
 		if same && !o.isArith() {
 			if *(r.(*B)) {
-				r = F32(1)
+				r = newF32(1)
 			} else {
-				r = F32(0)
+				r = newF32(0)
 			}
 		}
 
@@ -156,9 +156,9 @@ func (o scalarBinOp) Do(same bool, vals ...Value) (retVal Value, err error) {
 
 		if same && !o.isArith() {
 			if *(r.(*B)) {
-				r = I(1)
+				r = newI(1)
 			} else {
-				r = I(0)
+				r = newI(0)
 			}
 		}
 	case *I32:
@@ -192,9 +192,9 @@ func (o scalarBinOp) Do(same bool, vals ...Value) (retVal Value, err error) {
 
 		if same && !o.isArith() {
 			if *(r.(*B)) {
-				r = I32(1)
+				r = newI32(1)
 			} else {
-				r = I32(0)
+				r = newI32(0)
 			}
 		}
 	case *I64:
@@ -228,9 +228,9 @@ func (o scalarBinOp) Do(same bool, vals ...Value) (retVal Value, err error) {
 
 		if same && !o.isArith() {
 			if *(r.(*B)) {
-				r = I64(1)
+				r = newI64(1)
 			} else {
-				r = I64(0)
+				r = newI64(0)
 			}
 		}
 	case *U8:
@@ -264,9 +264,9 @@ func (o scalarBinOp) Do(same bool, vals ...Value) (retVal Value, err error) {
 
 		if same && !o.isArith() {
 			if *(r.(*B)) {
-				r = U8(1)
+				r = newU8(1)
 			} else {
-				r = U8(0)
+				r = newU8(0)
 			}
 		}
 	case *B:
@@ -844,7 +844,7 @@ func hadamardDivDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 		xdv.SetDeriv(ver.Value()) // ignore errors on purpose
 	}
 
-	//dzdy = -x/y^2
+	//dzdy = -x/y²
 	// TODO: investigate if this can be done (if no other node uses z):
 	//		unsafe do : neg zdv.d
 	// 		unsafe do : mul zdv.d, zdv.Value

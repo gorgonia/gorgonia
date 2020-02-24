@@ -7,7 +7,7 @@ import (
 	"gorgonia.org/tensor"
 )
 
-func Example_KeepDims() {
+func Example_keepDims() {
 	g := NewGraph()
 	a := NodeFromAny(g, tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6})))
 	m1, _ := Mean(a, 1)

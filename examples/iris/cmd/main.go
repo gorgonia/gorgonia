@@ -61,7 +61,7 @@ func getInput(s string) float64 {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Printf("%v: ", s)
 	text, _ := reader.ReadString('\n')
-	text = strings.Replace(text, "\n", "", -1)
+	text = strings.TrimSpace(text)
 
 	input, err := strconv.ParseFloat(text, 64)
 	if err != nil {

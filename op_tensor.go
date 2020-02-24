@@ -489,7 +489,7 @@ func (op repeatOp) WriteHash(h hash.Hash) {
 
 func (op repeatOp) Hashcode() uint32 { return simpleHash(op) }
 
-// sliceOp represents a slicing operation. If end <= start, it means ":"
+// sliceOp represents a slicing operation. If end ⩽ start, it means ":"
 type sliceOp struct {
 	tensor.Slice
 
@@ -857,6 +857,7 @@ func (op sliceIncrOp) Hashcode() uint32 { return simpleHash(op) }
 func (op sliceIncrOp) String() string {
 	var buf bytes.Buffer
 	buf.WriteString("T[")
+
 	for i := 0; i < op.along; i++ {
 		buf.WriteString(":, ")
 	}
@@ -1155,7 +1156,11 @@ func (op reshapeOp) Do(vals ...Value) (Value, error) {
 	switch vals[0].(type) {
 	case tensor.Tensor:
 		if v, ok := vals[0].(*tensor.Dense); ok {
-			val = v.ShallowClone()
+			if v.IsView() {
+				val = v.Materialize()
+			} else {
+				val = v.ShallowClone()
+			}
 		} else {
 			if val, err = CloneValue(vals[0]); err != nil {
 				return nil, errors.Wrapf(err, cloneFail, vals[0])
@@ -1164,6 +1169,7 @@ func (op reshapeOp) Do(vals ...Value) (Value, error) {
 		if !val.Shape().Eq(op.from) {
 			return nil, errors.Errorf("Shape mismatch. Input shape is %v. Expected %v", val.Shape(), op.from)
 		}
+
 		if err := val.(tensor.Tensor).Reshape(op.to...); err != nil {
 			return nil, err
 		}
