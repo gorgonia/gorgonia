@@ -35,8 +35,8 @@ func transposeBatch2D(shape tensor.Shape) tensor.Shape {
 
 // KeepDims is a function that ensures that input and output dimensions are the same though the shape may change.
 //
-// The expandLeft flag in the function indicates if any shape expansion should be done leftwards or rightwards. 
-// For example, if fn() returns a tensor with a shape (3) and the desired dimension is 2, 
+// The expandLeft flag in the function indicates if any shape expansion should be done leftwards or rightwards.
+// For example, if fn() returns a tensor with a shape (3) and the desired dimension is 2,
 // then if `expandLeft` is true the result will be `(1, 3)`. Otherwise the result will be `(3, 1)`.
 //
 // At the moment, results that turn into scalars cannot have their dimensions kept - the semantics isn't well established yet and is a work in progress.

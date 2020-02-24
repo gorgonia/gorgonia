@@ -1305,12 +1305,12 @@ func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
 	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, -1, nbc, 1, ssm, spatialDim, 1, outputF64s, spatialDim)
 
 	if op.training {
-		// compute variance using var(X) = E(X-EX)^2)
+		// compute variance using var(X) = E(X-EX)²)
 		copy(tmp, outputF64s)
 		vecf64.Mul(tmp, tmp) // (X-EX) ^ 2
 
 		whichblas.Dgemv(blas.NoTrans, nc, spatialDim, 1.0/(float64(n*spatialDim)), tmp, spatialDim, ssm, 1, 0, nbc, 1)
-		whichblas.Dgemv(blas.Trans, n, channels, 1.0, nbc, channels, bsm, 1, 0, varianceTmp, 1) // E((X_EX)^2)
+		whichblas.Dgemv(blas.Trans, n, channels, 1.0, nbc, channels, bsm, 1, 0, varianceTmp, 1) // E((X_EX)²)
 
 		// compute and save moving average
 		op.ma.Float64s()[0] *= momentum
@@ -1386,12 +1386,12 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, -1, nbc, 1, ssm, spatialDim, 1, outputF32s, spatialDim)
 
 	if op.training {
-		// compute variance using var(X) = E(X-EX)^2)
+		// compute variance using var(X) = E(X-EX)²)
 		copy(tmp, outputF32s)
 		vecf32.Mul(tmp, tmp) // (X-EX) ^ 2
 
 		whichblas.Sgemv(blas.NoTrans, nc, spatialDim, 1.0/(float32(n*spatialDim)), tmp, spatialDim, ssm, 1, 0, nbc, 1)
-		whichblas.Sgemv(blas.Trans, n, channels, 1.0, nbc, channels, bsm, 1, 0, varianceTmp, 1) // E((X_EX)^2)
+		whichblas.Sgemv(blas.Trans, n, channels, 1.0, nbc, channels, bsm, 1, 0, varianceTmp, 1) // E((X_EX)²)
 
 		// compute and save moving average
 		op.ma.Float32s()[0] *= momentum
@@ -1517,16 +1517,16 @@ func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) (err error
 	// if Y = (X-mean(X))/(sqrt(var(X)+eps)), then
 	//
 	// dE(Y)/dX =
-	//   (dE/dY - mean(dE/dY) - mean(dE/dY \cdot Y) \cdot Y)
+	//   (dE/dY - mean(dE/dY) - mean(dE/dY ⋅ Y) ⋅ Y)
 	//     ./ sqrt(var(X) + eps)
 	//
-	// where \cdot and ./ are hadamard product and elementwise division,
+	// where ⋅ and ./ are hadamard product and elementwise division,
 	// respectively, dE/dY is the top diff, and mean/var/sum are all computed
 	// along all dimensions except the channels dimension.  In the above
 	// equation, the operations allow for expansion (i.e. broadcast) along all
 	// dimensions except the channels dimension where required.
 
-	// sum(dE/dY \cdot Y)
+	// sum(dE/dY ⋅ Y)
 	copy(ig, out)
 	vecf64.Mul(ig, og)
 	whichblas.Dgemv(blas.NoTrans, nc, spatialDim, 1, ig, spatialDim, ssm, 1, 0, nbc, 1)
@@ -1536,19 +1536,19 @@ func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) (err error
 	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, meanTmp, channels, 0, nbc, channels)
 	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, 1, nbc, 1, ssm, spatialDim, 0, ig, spatialDim)
 
-	// sum(dE/dY \cdot Y) \cdot Y
+	// sum(dE/dY ⋅ Y) ⋅ Y
 	vecf64.Mul(ig, out)
 
-	// sum(dE/dY)-sum(dE/dY \cdot Y) \cdot Y
+	// sum(dE/dY)-sum(dE/dY ⋅ Y) ⋅ Y
 	whichblas.Dgemv(blas.NoTrans, nc, spatialDim, 1, og, spatialDim, ssm, 1, 0, nbc, 1)
 	whichblas.Dgemv(blas.Trans, n, channels, 1, nbc, channels, bsm, 1, 0, meanTmp, 1)
 
 	// reshape (broadcast) the above to make
-	// sum(dE/dY)-sum(dE/dY \cdot Y) \cdot Y
+	// sum(dE/dY)-sum(dE/dY ⋅ Y) ⋅ Y
 	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, meanTmp, channels, 0, nbc, channels)
 	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, 1, nbc, 1, ssm, spatialDim, 1, ig, spatialDim)
 
-	// dE/dY - mean(dE/dY)-mean(dE/dY \cdot Y) \cdot Y
+	// dE/dY - mean(dE/dY)-mean(dE/dY ⋅ Y) ⋅ Y
 	beta := (-1.0 / float64(nc))
 	vecf64.Scale(ig, beta)
 	vecf64.Add(ig, og)
@@ -1585,16 +1585,16 @@ func (op *batchnormDiffOp) f32s(input, inGrad, outGrad *tensor.Dense) (err error
 	// if Y = (X-mean(X))/(sqrt(var(X)+eps)), then
 	//
 	// dE(Y)/dX =
-	//   (dE/dY - mean(dE/dY) - mean(dE/dY \cdot Y) \cdot Y)
+	//   (dE/dY - mean(dE/dY) - mean(dE/dY ⋅ Y) ⋅ Y)
 	//     ./ sqrt(var(X) + eps)
 	//
-	// where \cdot and ./ are hadamard product and elementwise division,
+	// where ⋅ and ./ are hadamard product and elementwise division,
 	// respectively, dE/dY is the top diff, and mean/var/sum are all computed
 	// along all dimensions except the channels dimension.  In the above
 	// equation, the operations allow for expansion (i.e. broadcast) along all
 	// dimensions except the channels dimension where required.
 
-	// sum(dE/dY \cdot Y)
+	// sum(dE/dY ⋅ Y)
 	copy(ig, out)
 	vecf32.Mul(ig, og)
 	whichblas.Sgemv(blas.NoTrans, nc, spatialDim, 1, ig, spatialDim, ssm, 1, 0, nbc, 1)
@@ -1604,19 +1604,19 @@ func (op *batchnormDiffOp) f32s(input, inGrad, outGrad *tensor.Dense) (err error
 	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, meanTmp, channels, 0, nbc, channels)
 	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, 1, nbc, 1, ssm, spatialDim, 0, ig, spatialDim)
 
-	// sum(dE/dY \cdot Y) \cdot Y
+	// sum(dE/dY ⋅ Y) ⋅ Y
 	vecf32.Mul(ig, out)
 
-	// sum(dE/dY)-sum(dE/dY \cdot Y) \cdot Y
+	// sum(dE/dY)-sum(dE/dY ⋅ Y) ⋅ Y
 	whichblas.Sgemv(blas.NoTrans, nc, spatialDim, 1, og, spatialDim, ssm, 1, 0, nbc, 1)
 	whichblas.Sgemv(blas.Trans, n, channels, 1, nbc, channels, bsm, 1, 0, meanTmp, 1)
 
 	// reshape (broadcast) the above to make
-	// sum(dE/dY)-sum(dE/dY \cdot Y) \cdot Y
+	// sum(dE/dY)-sum(dE/dY ⋅ Y) ⋅ Y
 	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, meanTmp, channels, 0, nbc, channels)
 	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, 1, nbc, 1, ssm, spatialDim, 1, ig, spatialDim)
 
-	// dE/dY - mean(dE/dY)-mean(dE/dY \cdot Y) \cdot Y
+	// dE/dY - mean(dE/dY)-mean(dE/dY ⋅ Y) ⋅ Y
 	beta := (-1.0 / float32(n*spatialDim))
 	vecf32.Scale(ig, beta)
 	vecf32.Add(ig, og)
