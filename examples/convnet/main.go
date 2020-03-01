@@ -215,9 +215,9 @@ func main() {
 	if err = m.fwd(x); err != nil {
 		log.Fatalf("%+v", err)
 	}
-	losses := gorgonia.Must(gorgonia.HadamardProd(m.out, y))
-	cost := gorgonia.Must(gorgonia.Mean(losses))
-	cost = gorgonia.Must(gorgonia.Neg(cost))
+	losses := gorgonia.Must(gorgonia.Log(gorgonia.Must(gorgonia.HadamardProd(m.out, y))))
+	cost := gorgonia.Must(gorgonia.Neg(cost))
+	cost = gorgonia.Must(gorgonia.Mean(losses))
 
 	// we wanna track costs
 	var costVal gorgonia.Value
