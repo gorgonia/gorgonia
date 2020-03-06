@@ -6,12 +6,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Err struct {
-	error
-}
-func (err Err) Err() error {return err}
-func (err Err) Tensor() Tensor {return nil}
-
 // NoOpError is an error returned when an operation does nothing.
 type NoOpError interface {
 	NoOp() bool

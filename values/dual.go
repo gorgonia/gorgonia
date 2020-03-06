@@ -1,5 +1,13 @@
 package values
 
+import (
+	"fmt"
+
+	"github.com/chewxy/hm"
+	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/tensor"
+)
+
 type Dual struct {
 	Value
 	d Value
