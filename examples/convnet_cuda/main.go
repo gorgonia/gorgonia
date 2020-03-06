@@ -221,9 +221,10 @@ func main() {
 	if err = m.fwd(x); err != nil {
 		log.Fatalf("%+v", err)
 	}
-	losses := gorgonia.Must(gorgonia.HadamardProd(m.out, y))
-	cost := gorgonia.Must(gorgonia.Mean(losses))
-	cost = gorgonia.Must(gorgonia.Neg(cost))
+	log.Printf("m.out.Shape %v, y.Shape %v", m.out.Shape(), y.Shape())
+	losses := gorgonia.Must(gorgonia.Log(gorgonia.Must(gorgonia.HadamardProd(m.out, y))))
+	cost := gorgonia.Must(gorgonia.Neg(losses))
+	cost = gorgonia.Must(gorgonia.Mean(cost))
 
 	// we wanna track costs
 	var costVal, lossesVal gorgonia.Value
@@ -245,7 +246,7 @@ func main() {
 
 	// vm := gorgonia.NewTapeMachine(g, gorgonia.WithPrecompiled(prog, locMap), gorgonia.BindDualValues(m.learnables()...))
 	vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...))
-	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)))
+	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)), gorgonia.WithLearnRate(0.05))
 	defer vm.Close()
 
 	// pprof
@@ -308,7 +309,8 @@ func main() {
 			bar.Increment()
 			if xxx < 5 {
 				log.Printf("Cost %v", costVal)
-				log.Printf("Losses\n%v", lossesVal)
+				log.Printf("Y\n%#1.3f", y.Value())
+				log.Printf("Losses\n%#1.3f", lossesVal)
 				xxx++
 			}
 			avgcost += costVal.Data().(float64)
