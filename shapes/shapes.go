@@ -26,6 +26,14 @@ type BinOp struct {
 	Op OpType
 }
 
+func (op BinOp) TotalSize() int {
+	switch op.OpType {
+	case Add, Sub:
+	case Mul, Div:
+
+	}
+}
+
 type UnaryOp struct {
 	Op OpType
 	A  Expr
@@ -34,11 +42,19 @@ type UnaryOp struct {
 type OpType byte
 
 const (
+	// Unary
 	Const OpType = iota
 	Index
 
+	// Binary
 	Add
 	Sub
 	Mul
 	Div
 )
+
+// (a, b) -> (b, a)
+
+// (a, b) -> (a + b)
+
+// (a, b) -> (a * b, 1)

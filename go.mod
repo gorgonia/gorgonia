@@ -3,6 +3,7 @@ module gorgonia.org/gorgonia
 go 1.12
 
 require (
+	github.com/ajstarks/svgo v0.0.0-20200204031535-0cbcf57ea1d8 // indirect
 	github.com/awalterschulze/gographviz v0.0.0-20190221210632-1e9ccb565bca
 	github.com/chewxy/hm v1.0.0
 	github.com/chewxy/math32 v1.0.4
@@ -22,4 +23,5 @@ require (
 	gorgonia.org/tensor v0.9.2
 	gorgonia.org/vecf32 v0.9.0
 	gorgonia.org/vecf64 v0.9.0
+	honnef.co/go/tools v0.0.1-2020.1.3 // indirect
 )

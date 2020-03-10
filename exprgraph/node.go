@@ -1,8 +1,6 @@
 package exprgraph
 
-import (
-	"github.com/chewxy/hm"
-)
+import "gorgonia.org/tensor"
 
 // flag is a flag to identify what kind of node it is
 // The default flag is:
@@ -65,20 +63,18 @@ func (f flag) isValid() bool {
 	}
 }
 
-// NodeID represents a node's ID. It also implements gonum.org/v1/gonum/graph.Node
 type NodeID int64
 
 func (n NodeID) ID() int64 { return int64(n) }
 
-// Node is a payload
+// Node implements tensor.Tensor
 type Node struct {
+	tensor.Tensor
 	NodeID
-	t       hm.Type
-	op      Op        //TODO
-	boundTo dualValue //TODO
-	dataOn  device    //TODO
-	flag    flag
+	name string
 }
+
+// Node implements gonum's graph.Node
 
 // Node implements gorgonia.Result
 
@@ -106,6 +102,8 @@ type node struct {
 	Node
 	children []*node
 }
+
+/* TODO */
 
 type dualValue interface {
 	Value() interface{} //tmp
