@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"fmt"
 	"io/ioutil"
 	"runtime"
 	"testing"
@@ -9,6 +10,43 @@ import (
 	"gorgonia.org/dawson"
 	"gorgonia.org/tensor"
 )
+
+func TestDropout(t *testing.T) {
+	var tests = []struct {
+		dt       tensor.Dtype
+		prob     float64
+		rand     interface{}
+		expected interface{}
+	}{
+		{Float64, 0.0, []float64{0.0, 0.2, 0.5, 0.8, 1.0}, []float64{1.0, 1.0, 1.0, 1.0, 1.0}},
+		{Float64, 0.2, []float64{0.0, 0.2, 0.5, 0.8, 1.0}, []float64{0.0, 0.0, 5.0, 5.0, 5.0}},
+		{Float64, 0.5, []float64{0.0, 0.2, 0.5, 0.8, 1.0}, []float64{0.0, 0.0, 0.0, 2.0, 2.0}},
+		{Float64, 1.0, []float64{0.0, 0.2, 0.5, 0.8, 1.0}, []float64{0.0, 0.0, 0.0, 0.0, 0.0}},
+		{Float32, 0.2, []float32{0.0, 0.2, 0.5, 0.8, 1.0}, []float32{0.0, 0.0, 5.0, 5.0, 5.0}},
+		{Float32, 0.5, []float32{0.0, 0.2, 0.5, 0.8, 1.0}, []float32{0.0, 0.0, 0.0, 2.0, 2.0}},
+	}
+
+	for _, tt := range tests {
+		name := fmt.Sprintf("%v-%.1f", tt.dt, tt.prob)
+		t.Run(name, func(t *testing.T) {
+			randFn := func(g *ExprGraph, dt tensor.Dtype, low, high float64, shape ...int) *Node {
+				return NewVector(g, dt, WithShape(shape...), WithInit(func(dt tensor.Dtype, s ...int) interface{} {
+					return tt.rand
+				}))
+			}
+			g := NewGraph()
+			x := NewVector(g, tt.dt, WithShape(5), WithName("x"), WithInit(Ones()))
+			do := Must(dropout(x, tt.prob, randFn))
+
+			m := NewTapeMachine(g, BindDualValues())
+			defer m.Close()
+			defer runtime.GC()
+
+			assert.NoError(t, m.RunAll())
+			assert.Equal(t, tt.expected, do.Value().Data())
+		})
+	}
+}
 
 func dropoutTest(t *testing.T, dt tensor.Dtype) error {
 	g := NewGraph()
@@ -44,7 +82,7 @@ func dropoutTest(t *testing.T, dt tensor.Dtype) error {
 	return nil
 }
 
-func TestDropout(t *testing.T) {
+func TestDropout_integration(t *testing.T) {
 	// t.Skip()
 
 	if err := dropoutTest(t, Float64); err != nil {

@@ -63,6 +63,12 @@ func BinaryXent(output, target *Node) (retVal *Node, err error) {
 // It uses randomly zeroes out a *Tensor with a probability drawn from
 // a uniform distribution
 func Dropout(x *Node, prob float64) (retVal *Node, err error) {
+	return dropout(x, prob, UniformRandomNode)
+}
+
+type dropoutRandFn func(g *ExprGraph, dt tensor.Dtype, low, high float64, shape ...int) *Node
+
+func dropout(x *Node, prob float64, randFn dropoutRandFn) (retVal *Node, err error) {
 	if prob == 0.0 {
 		return x, nil
 	}
@@ -72,22 +78,19 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 		return nil, errors.Wrap(err, dtypeOfFail)
 	}
 
-	var opp, pr Value // opp = 1 per p
+	var pr Value
 	switch dt {
 	case Float64:
-		opp, _ = anyToScalar(1.0 / prob)
 		pr, _ = anyToScalar(prob)
 	case Float32:
-		opp, _ = anyToScalar(float32(1.0 / prob))
 		pr, _ = anyToScalar(float32(prob))
 	default:
 		return nil, errors.Errorf(nyiTypeFail, "Dropout()", dt)
 	}
 
 	p := NewConstant(pr)
-	c := NewConstant(opp)
 
-	m := UniformRandomNode(x.g, dt, 0, 1, x.shape...)
+	m := randFn(x.g, dt, 0, 1, x.shape...)
 	if retVal, err = Gt(m, p, true); err != nil {
 		return nil, errors.Wrap(err, "Greater Than failed")
 	}
@@ -96,7 +99,7 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 		return nil, errors.Wrap(err, mulFail)
 	}
 
-	return HadamardDiv(retVal, c)
+	return HadamardDiv(retVal, p)
 }
 
 // LeakyRelu returns a node whose underlying value is:
