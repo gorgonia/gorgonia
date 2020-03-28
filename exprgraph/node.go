@@ -74,8 +74,6 @@ type Node struct {
 	name string
 }
 
-// Node implements gonum's graph.Node
-
 // Node implements gorgonia.Result
 
 func (n Node) Node() Node   { return n }
@@ -101,6 +99,9 @@ type gn struct {
 type node struct {
 	Node
 	children []*node
+	flag
+	device
+	Op
 }
 
 /* TODO */
@@ -112,4 +113,4 @@ type dualValue interface {
 
 type Op interface{}
 
-type device int
+type device int16 // only reason why it's int16 is so that we fill up the struct
