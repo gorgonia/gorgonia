@@ -8,25 +8,35 @@ import (
 
 func TestNodeBasics(t *testing.T) {
 	var n *Node
+	var err error
 	var c0, c1 *Node
 	g := NewGraph()
 
 	// withGraph
-	n = newNode(In(g))
+	n, err = newNode(In(g))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if n.g == nil {
 		t.Error("Expected *Node to be constructed with a graph")
 	}
 	returnNode(n)
 
 	// withType
-	n = newNode(In(g), WithType(Float64))
+	n, err = newNode(In(g), WithType(Float64))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !n.t.Eq(Float64) {
 		t.Error("Expected *Node to be constructed with Float64")
 	}
 	returnNode(n)
 
 	// withOp
-	n = newNode(In(g), WithOp(newEBOByType(addOpType, Float64, Float64)))
+	n, err = newNode(In(g), WithOp(newEBOByType(addOpType, Float64, Float64)))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if op, ok := n.op.(elemBinOp); ok {
 		if op.binOpType() != addOpType {
 			t.Error("expected addOpType")
@@ -37,7 +47,10 @@ func TestNodeBasics(t *testing.T) {
 	returnNode(n)
 
 	// withOp - statement op
-	n = newNode(In(g), WithOp(letOp{}))
+	n, err = newNode(In(g), WithOp(letOp{}))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if _, ok := n.op.(letOp); ok {
 		if !n.isStmt {
 			t.Errorf("Expected *Node.isStmt to be true when a statement op is passed in")
@@ -48,16 +61,19 @@ func TestNodeBasics(t *testing.T) {
 	returnNode(n)
 
 	// WithName
-	n = newNode(In(g), WithName("n"))
+	n, err = newNode(In(g), WithName("n"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if n.name != "n" {
 		t.Error("Expected *Node to be constructed with a name \"n\"")
 	}
 	returnNode(n)
 
 	// withChildren
-	c0 = newNode(In(g), WithName("C0"))
-	c1 = newNode(In(g), WithName("C1"))
-	n = newNode(In(g), WithChildren(Nodes{c0, c1}))
+	c0, _ = newNode(In(g), WithName("C0"))
+	c1, _ = newNode(In(g), WithName("C1"))
+	n, _ = newNode(In(g), WithChildren(Nodes{c0, c1}))
 	if len(n.children) == 2 {
 		if !n.children.Contains(c0) || !n.children.Contains(c1) {
 			t.Error("Expected *Node to contain those two children")
@@ -75,21 +91,30 @@ func TestNodeBasics(t *testing.T) {
 
 	// withChildren but they're constants
 	c0 = NewConstant(3.14)
-	n = newNode(In(g), WithChildren(Nodes{c0}))
+	n, err = newNode(In(g), WithChildren(Nodes{c0}))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(n.children) != 1 {
 		t.Error("Expected *Node to have 1 child")
 	}
 	returnNode(n)
 	returnNode(c0)
 
-	n = newNode(In(g), WithValue(F64(3.14)), WithGrad(F64(1)))
+	n, err = newNode(In(g), WithValue(F64(3.14)), WithGrad(F64(1)))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if _, ok := n.boundTo.(*dualValue); !ok {
 		t.Error("Expected a dual Value")
 	}
 	returnNode(n)
 
 	// WithValue but no type
-	n = newNode(In(g), WithValue(F64(3.14)))
+	n, err = newNode(In(g), WithValue(F64(3.14)))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !n.t.Eq(Float64) {
 		t.Error("Expected a *Node to be constructed WithValue to get its type from the value if none exists")
 	}
@@ -99,18 +124,27 @@ func TestNodeBasics(t *testing.T) {
 	returnNode(n)
 
 	// WithValue but with existing type that is the same
-	n = newNode(In(g), WithType(Float64), WithValue(F64(3.14)))
+	n, err = newNode(In(g), WithType(Float64), WithValue(F64(3.14)))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !ValueEq(n.boundTo, newF64(3.14)) {
 		t.Error("Expected *Node to be bound to the correct value. Something has gone really wrong here")
 	}
 	returnNode(n)
 
 	// This is acceptable and should not panic
-	n = newNode(In(g), WithType(makeTensorType(1, Float64)), WithShape(2, 1))
+	n, err = newNode(In(g), WithType(makeTensorType(1, Float64)), WithShape(2, 1))
+	if err != nil {
+		t.Fatal(err)
+	}
 	returnNode(n)
 
 	// Returns itsef
-	n = newNode(In(g), WithType(makeTensorType(2, Float32)), WithShape(2, 3))
+	n, err = newNode(In(g), WithType(makeTensorType(2, Float32)), WithShape(2, 3))
+	if err != nil {
+		t.Fatal(err)
+	}
 	m := n.Node()
 	if n != m {
 		t.Error("Expected n.Node() to return itself, pointers and all")
@@ -126,37 +160,34 @@ func TestNodeBasics(t *testing.T) {
 	returnNode(n)
 
 	// bad stuff
-	var f func()
 
 	// no graph
-	f = func() {
-		n = newNode(WithType(Float64))
+	n, err = newNode(WithType(Float64))
+	if err == nil {
+		t.Fail()
 	}
-	assert.Panics(t, f)
-
-	// conflicting types, types were set first
-	f = func() {
-		n = newNode(In(g), WithType(Float32), WithValue(F64(1)))
+	n, err = newNode(In(g), WithType(Float32), WithValue(F64(1)))
+	if err == nil {
+		t.Fail()
 	}
-	assert.Panics(t, f)
 
 	// type mismatch - values were set first
-	f = func() {
-		n = newNode(In(g), WithValue(F64(1)), WithType(Float32))
+	n, err = newNode(In(g), WithValue(F64(1)), WithType(Float32))
+	if err == nil {
+		t.Fail()
 	}
-	assert.Panics(t, f)
 
 	// shape type mismatch
-	f = func() {
-		n = newNode(In(g), WithType(makeTensorType(1, Float64)), WithShape(2, 2))
+	n, err = newNode(In(g), WithType(makeTensorType(1, Float64)), WithShape(2, 2))
+	if err == nil {
+		t.Fail()
 	}
-	assert.Panics(t, f)
 
 	// bad grads
-	f = func() {
-		n = newNode(WithGrad(F64(3.14)))
+	n, err = newNode(WithGrad(F64(3.14)))
+	if err == nil {
+		t.Fail()
 	}
-	assert.Panics(t, f)
 }
 
 func TestNewUniqueNodes(t *testing.T) {
@@ -166,7 +197,11 @@ func TestNewUniqueNodes(t *testing.T) {
 
 	// withChildren but they're constants
 	c0 = NewConstant(3.14)
-	c1 = newNode(In(g), WithValue(5.0))
+	var err error
+	c1, err = newNode(In(g), WithValue(5.0))
+	if err != nil {
+		t.Fatal(err)
+	}
 	n = NewUniqueNode(In(g), WithChildren(Nodes{c0, c1}))
 	if n.children[0].g == nil {
 		t.Error("Expected a cloned constant child to have graph g")
@@ -183,4 +218,14 @@ func TestCloneTo(t *testing.T) {
 	n.CloneTo(g2)
 
 	assert.True(t, nodeEq(g2.AllNodes()[0], n))
+}
+
+func TestWithShape(t *testing.T) {
+	/*
+		vecShapeFunc := WithShape([]int{2})
+		colVecShapeFunc := WithShape([]int{2, 1})
+		rowVecShapeFunc := WithShape([]int{1, 2})
+		matrixShapeFunc := WithShape([]int{2, 2})
+		singleMatrixShapeFunc := WithShape([]int{1, 1})
+	*/
 }

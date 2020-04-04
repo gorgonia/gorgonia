@@ -12,6 +12,12 @@ import (
 func TestInferNodeType(t *testing.T) {
 	assert := assert.New(t)
 	g := NewGraph()
+	mustNode := func(n *Node, err error) *Node {
+		if err != nil {
+			t.Fatal(err)
+		}
+		return n
+	}
 	var inferNodeTests = []struct {
 		name     string
 		op       Op
@@ -21,20 +27,24 @@ func TestInferNodeType(t *testing.T) {
 		err     bool
 	}{
 		// simple case Float+Float
-		{"+(1, 2)",
+		{
+			"+(1, 2)",
 			newEBOByType(addOpType, Float64, Float64),
 			Nodes{
-				newNode(In(g), WithType(Float64), WithName("a")),
-				newNode(In(g), WithType(Float64), WithName("b"))},
+				mustNode(newNode(In(g), WithType(Float64), WithName("a"))),
+				mustNode(newNode(In(g), WithType(Float64), WithName("b"))),
+			},
 			Float64,
 			false},
 
 		// complicated case: will error out due to mis match
-		{"+(1, 2)",
+		{
+			"+(1, 2)",
 			newEBOByType(addOpType, Float64, Float32),
 			Nodes{
-				newNode(In(g), WithType(Float64), WithName("a")),
-				newNode(In(g), WithType(Float32), WithName("b"))},
+				mustNode(newNode(In(g), WithType(Float64), WithName("a"))),
+				mustNode(newNode(In(g), WithType(Float32), WithName("b"))),
+			},
 			Float64,
 			true},
 	}
@@ -62,19 +72,60 @@ var inferTypeTests = []struct {
 	correct hm.Type
 	err     bool
 }{
-	{newEBOByType(addOpType, Float64, Float64), hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a')), false},
-	{float32(0), Float32, false},
-	{float64(0), Float64, false},
-	{0, Int, false},
-	{int64(0), Int64, false},
-	{int32(0), Int32, false},
-	{true, Bool, false},
-	{newNode(In(NewGraph()), WithType(Float64), WithOp(newEBOByType(addOpType, Float64, Float64))), Float64, false},
+	{
+		newEBOByType(addOpType, Float64, Float64),
+		hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a')),
+		false,
+	},
+	{
+		float32(0),
+		Float32,
+		false,
+	},
+	{
+		float64(0),
+		Float64,
+		false,
+	},
+	{
+		0,
+		Int,
+		false,
+	},
+	{
+		int64(0),
+		Int64,
+		false,
+	},
+	{
+		int32(0),
+		Int32,
+		false,
+	},
+	{
+		true,
+		Bool,
+		false,
+	},
+	{
+		func(n *Node, err error) *Node {
+			return n
+		}(newNode(In(NewGraph()), WithType(Float64), WithOp(newEBOByType(addOpType, Float64, Float64)))),
+		Float64,
+		false,
+	},
 
 	{[]int{0}, nil, true},
 }
 
 func TestInferType(t *testing.T) {
+	mustNode := func(n *Node, err error) *Node {
+		if err != nil {
+			t.Fatal(err)
+		}
+		return n
+	}
+
 	for i, itts := range inferTypeTests {
 		t0, err := inferType(itts.expr)
 		switch {
@@ -92,7 +143,18 @@ func TestInferType(t *testing.T) {
 
 	// way out there stuff
 	g := NewGraph()
-	n := newNode(In(g), WithOp(newEBOByType(addOpType, Float64, Float64)), WithChildren(Nodes{newNode(In(g), WithName("a"), WithType(Float64)), newNode(In(g), WithName("b"), WithType(Float64))}))
+	n, err := newNode(
+		In(g),
+		WithOp(newEBOByType(addOpType, Float64, Float64)),
+		WithChildren(
+			Nodes{
+				mustNode(newNode(In(g), WithName("a"), WithType(Float64))),
+				mustNode(newNode(In(g), WithName("b"), WithType(Float64))),
+			},
+		))
+	if err != nil {
+		t.Fatal(err)
+	}
 	t0, err := inferType(n)
 	if err != nil {
 		t.Errorf("Special Case #1: %v", err)

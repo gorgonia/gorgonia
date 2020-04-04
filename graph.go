@@ -175,7 +175,11 @@ func (g *ExprGraph) AddNode(n *Node) (retVal *Node) {
 	}
 
 	if n.isConstant() {
-		n = n.clone()
+		var err error
+		n, err = n.clone()
+		if err != nil {
+			panic(err)
+		}
 		g.constants = g.constants.Add(n)
 		n.g = g
 	}

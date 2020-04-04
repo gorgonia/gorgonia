@@ -117,7 +117,11 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 	returnNode(dummy)
 
 	consOpts = append(consOpts, WithName(name))
-	return newNode(consOpts...)
+	n, err := newNode(consOpts...)
+	if err != nil {
+		panic(err)
+	}
+	return n
 }
 
 // UniformRandomNode creates an input node that has a random op so everytime the node is passed, random values will be plucked from

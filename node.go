@@ -57,18 +57,19 @@ type Node struct {
 }
 
 // NodeConsOpt is a function that provides construction options for any Node.
-type NodeConsOpt func(*Node)
+type NodeConsOpt func(*Node) error
 
 // WithType is a node construction option to set a node to the specified type.
 // Types in *Node are immutable once set. If the type has already been specified in the node,
 // a check will be made to see if the both types are the same. If it isn't, it will panic.
 func WithType(t hm.Type) NodeConsOpt {
-	f := func(n *Node) {
+	f := func(n *Node) error {
 		if n.t == nil {
 			n.t = t
 		} else if !n.t.Eq(t) {
-			panic(fmt.Sprintf("Node's type is %v. Asking to construct a Node with %v", n.t, t))
+			return fmt.Errorf("Node's type is %v. Asking to construct a Node with %v", n.t, t)
 		}
+		return nil
 	}
 	return f
 }
@@ -76,8 +77,9 @@ func WithType(t hm.Type) NodeConsOpt {
 // WithChildren sets the children of a node to the specified chidren.
 // This construction option does NOT check if existing children exists, and will overwrite the existing children.
 func WithChildren(children Nodes) NodeConsOpt {
-	f := func(n *Node) {
+	f := func(n *Node) error {
 		n.children = children
+		return nil
 	}
 	return f
 }
@@ -88,17 +90,18 @@ func WithChildren(children Nodes) NodeConsOpt {
 // do note that comparison of Ops is done using the `Hashcode()` method of Ops, and hash collisions MAY occur -
 // If both ops are different, this function will panic.
 func WithOp(op Op) NodeConsOpt {
-	f := func(n *Node) {
+	f := func(n *Node) error {
 		if n.op != nil {
 			if op.Hashcode() != n.op.Hashcode() {
-				panic(fmt.Sprintf("Node Ops are immutable. Cannot set op %v", op))
+				return fmt.Errorf("Node Ops are immutable. Cannot set op %v", op)
 			}
-			return
+			return nil
 		}
 		n.op = op
 		if _, ok := op.(stmtOp); ok {
 			n.isStmt = true
 		}
+		return nil
 	}
 	return f
 }
@@ -107,21 +110,23 @@ func WithOp(op Op) NodeConsOpt {
 // A `*Node`'s graph is immutable. If the graph has already been set, a check will be made that the specifiec *Graph
 // and the *Graph set in *Node are the same. If they are not, the function will panic/
 func In(g *ExprGraph) NodeConsOpt {
-	f := func(n *Node) {
+	f := func(n *Node) error {
 		if n.g != nil {
 			if g != n.g {
-				panic(fmt.Sprintf("Node Graphs are immutable. Cannot set g %v", g))
+				return fmt.Errorf("Node Graphs are immutable. Cannot set g %v", g)
 			}
 		}
 		n.g = g
+		return nil
 	}
 	return f
 }
 
 // WithName is a node construction option that gives the *Node the provided name. This is especially useful in debugging graphs.
 func WithName(name string) NodeConsOpt {
-	f := func(n *Node) {
+	f := func(n *Node) error {
 		n.name = name
+		return nil
 	}
 	return f
 }
@@ -135,17 +140,18 @@ func WithValue(any interface{}) NodeConsOpt {
 		panic(err)
 	}
 
-	f := func(n *Node) {
+	f := func(n *Node) error {
 		if n.t == nil {
 			n.t = t
 		} else if !n.t.Eq(t) {
-			panic(fmt.Sprintf("TypeError: Want %v, Got %v instead (%T %T)", n.t, t, n.t, t)) // yes this is a runtime error
+			return fmt.Errorf("TypeError: Want %v, Got %v instead (%T %T)", n.t, t, n.t, t)
 		}
 
 		n.bind(v)
 		if n.shape == nil {
 			n.shape = v.Shape()
 		}
+		return nil
 	}
 	return f
 }
@@ -158,36 +164,37 @@ func WithGrad(any interface{}) NodeConsOpt {
 	if err != nil {
 		panic(err)
 	}
-	f := func(n *Node) {
+	f := func(n *Node) error {
 		if n.boundTo == nil {
-			panic("No value already bound to node")
+			return fmt.Errorf("No value already bound to node")
 		}
 		if !TypeOf(n.boundTo).Eq(t) {
-			panic("Different types ")
+			return fmt.Errorf("Different types ")
 		}
 
 		if dv, ok := n.boundTo.(*dualValue); !ok {
 			if err := n.bind(&dualValue{Value: n.boundTo, d: v}); err != nil {
-				panic(err)
+				return err
 			}
 		} else {
 			dv.d = v
 		}
+		return nil
 	}
 	return f
 }
 
 // WithInit is a node construction option to initialize a *Node with the InitWFn provided.
 func WithInit(fn InitWFn) NodeConsOpt {
-	f := func(n *Node) {
+	f := func(n *Node) error {
 		dt, err := dtypeOf(n.t)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		var v Value
 		v = tensor.New(tensor.WithShape(n.shape...), tensor.WithBacking(fn(dt, n.shape...)))
-		WithValue(v)(n)
+		return WithValue(v)(n)
 	}
 	return f
 }
@@ -197,21 +204,19 @@ func WithInit(fn InitWFn) NodeConsOpt {
 func WithShape(shp ...int) NodeConsOpt {
 	s := tensor.Shape(tensor.BorrowInts(len(shp)))
 	copy(s, shp)
-	f := func(n *Node) {
+	f := func(n *Node) error {
 		nd := n.Dims()
-		// if nd == 1 && s.IsVector() {
-		// 	goto safe
-		// }
 		isVec := s.IsColVec() || s.IsRowVec()
 		acceptVec := (isVec && (nd == 1))
 		sameDims := nd == s.Dims()
 		acceptScalar := nd == 0 && scalarEquiv(s)
 
 		if !acceptVec && !sameDims && !acceptScalar {
-			panic(fmt.Sprintf("Node %v, has %d dimensions(Shape: %v). Input shape is %v, which has %d dimensions", n, n.Dims(), n.shape, s, s.Dims()))
+			return fmt.Errorf("Node %v, has %d dimensions(Shape: %v). Input shape is %v, which has %d dimensions", n, n.Dims(), n.shape, s, s.Dims())
 		}
 		// safe:
 		n.shape = s
+		return nil
 	}
 	return f
 }
@@ -219,20 +224,20 @@ func WithShape(shp ...int) NodeConsOpt {
 // WithGroupName is a node construction option to group a *Node within a particular group. This option is useful for debugging with graphs.
 // This function is deprecated and will proabably be remove in the next version.
 func WithGroupName(name string) NodeConsOpt {
-	f := func(n *Node) {
+	return func(n *Node) error {
 		if n.group == "" {
 			n.group = name
 		}
+		return nil
 	}
-	return f
 }
 
 // withGroup is a node construction option to group a *Node within a particular group. This option is useful for debugging with graphs.
 func withGroup(group encoding.Group) NodeConsOpt {
-	f := func(n *Node) {
+	return func(n *Node) error {
 		n.groups.Upsert(group)
+		return nil
 	}
-	return f
 }
 
 // Groups to fulfil the encoding Grouper interface
@@ -255,23 +260,32 @@ func (n *Node) Groups() encoding.Groups {
 	return n.groups
 }
 
-func newNode(opts ...NodeConsOpt) *Node {
+func newNode(opts ...NodeConsOpt) (*Node, error) {
 	n := borrowNode()
 	n.dataOn = CPU
 	n.id = -1
 
 	for _, opt := range opts {
-		opt(n)
+		err := opt(n)
+		if err != nil {
+			return nil, err
+		}
 	}
-	n.fix()
+	err := n.fix()
+	if err != nil {
+		return nil, err
+	}
 
 	incrNN()
-	return n
+	return n, nil
 }
 
 // NewUniqueNode creates a new unique node in a graph. If no graph was specified in the construction options then it will just return a graphless node.
 func NewUniqueNode(opts ...NodeConsOpt) *Node {
-	n := newNode(opts...)
+	n, err := newNode(opts...)
+	if err != nil {
+		panic(err)
+	}
 	if n.g == nil {
 		return n
 	}
@@ -297,6 +311,7 @@ func (n *Node) Nodes() Nodes { return Nodes{n} }
 // Err always returns nil. However, this method is implemented to enable nicer composition of functions
 func (n *Node) Err() error { return nil }
 
+// DataSize returns the total number of elements of the underlying array
 func (n *Node) DataSize() int { return n.Shape().TotalSize() }
 
 // helper functions to help compilation process
@@ -382,7 +397,10 @@ func (n *Node) CloneTo(g *ExprGraph) *Node {
 //		- there is no ID
 // 		- the children are not cloned
 func (n *Node) Clone() (retVal interface{}) {
-	n2 := newNode(In(n.g), WithOp(n.op), WithName(n.name), WithType(n.t))
+	n2, err := newNode(In(n.g), WithOp(n.op), WithName(n.name), WithType(n.t))
+	if err != nil {
+		panic(err)
+	}
 	if n.shape != nil {
 		n2.shape = n.shape.Clone()
 		n2.inferredShape = n.inferredShape
@@ -763,18 +781,19 @@ func (n *Node) dot(g *gographviz.Escape, graphName string, seen map[*Node]string
 	return id
 }
 
-func (n *Node) fix() {
+func (n *Node) fix() error {
 	if n.IsScalar() {
 		n.shape = scalarShape
 	}
 
 	if n.isConstant() {
-		return
+		return nil
 	}
 
 	if n.g == nil {
-		panic(fmt.Sprintf("no graph supplied %v", n))
+		return fmt.Errorf("no graph supplied %v", n)
 	}
+	return nil
 }
 
 func (n *Node) fixChildren() {
@@ -814,20 +833,26 @@ func (n *Node) setGroup(grp string) {
 	n.group = grp
 }
 
-func (n *Node) clone(opts ...NodeConsOpt) *Node {
+func (n *Node) clone(opts ...NodeConsOpt) (*Node, error) {
 	if n.isInput() {
-		return n
+		return n, nil
 	}
 
-	nn := newNode(WithChildren(n.children),
+	nn, err := newNode(WithChildren(n.children),
 		WithType(n.t),
 		WithOp(n.op),
 		WithName(n.name),
 		In(n.g),
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, opt := range opts {
-		opt(nn)
+		err := opt(nn)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// if the shape is already known...
@@ -836,7 +861,7 @@ func (n *Node) clone(opts ...NodeConsOpt) *Node {
 		nn.inferredShape = n.inferredShape
 	}
 
-	return nn
+	return nn, nil
 }
 
 func (n *Node) diffWRT() []bool {
