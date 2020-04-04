@@ -165,36 +165,30 @@ func (op sizeOp) DimSize(d int) (int, error) {
 }
 
 type repeatOp struct {
-	along axes
-
+	along      int
 	inputShape tensor.Shape
-	d          int
-
-	arg0Dim  int
-	children int
 }
 
-func newRepeatOp(along axes, children Nodes) *repeatOp {
-	retVal := &repeatOp{
-		along:    along,
-		children: len(children),
-		arg0Dim:  children[0].Dims(),
+func newRepeatOp(along int, a *Node) *repeatOp {
+	return &repeatOp{
+		along:      along,
+		inputShape: a.Shape().Clone(),
+	}
+}
+
+func repeatedApply(along []int, children Nodes) (retVal *Node, err error) {
+	if len(children) != len(along)+1 {
+		return nil, errors.Errorf("Expected %v children. Got %v instead (hint: along axes and number of children must match)", len(along)+1, len(children))
 	}
 
-	ds := children.dimSizers()
-	if s, err := retVal.InferShape(ds...); err == nil {
-		retVal.inputShape = s
-		if s.IsColVec() {
-			retVal.d = 1
-		} else {
-			retVal.d = s.Dims()
+	retVal = children[0]
+	for i := range along {
+		op := newRepeatOp(along[i], retVal)
+		if retVal, err = ApplyOp(op, retVal, children[i+1]); err != nil {
+			return nil, err
 		}
-	} else {
-		panic(err)
 	}
-	returnDimSizers(ds)
-
-	return retVal
+	return
 }
 
 func (op repeatOp) Arity() int { return -1 }
@@ -208,66 +202,42 @@ func (op repeatOp) Arity() int { return -1 }
 // for a trivial language, so I'll just hardcode this in
 func (op repeatOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
+	var arg0Dim int
+	d := op.inputShape.Dims()
+	if d == 0 {
+		arg0Dim = 1
+		d = 1
+	} else {
+		arg0Dim = op.inputShape[0]
+	}
+
 	var i0t hm.Type
 	var rt hm.Type
 
-	if op.arg0Dim == 0 {
+	if arg0Dim == 0 {
 		i0t = a
 	} else {
-		i0t = makeTensorType(op.arg0Dim, a)
+		i0t = makeTensorType(arg0Dim, a)
 	}
+	i0t = makeTensorType(d, a)
+	rt = makeTensorType(d, a)
+	//rt = i0t
 
-	// if we know the result already, then we know the return type as well
-	if op.d == 0 && op.inputShape != nil {
-		rt = a
-	} else {
-		rt = makeTensorType(op.d, a)
-	}
-
-	var ft hm.Types
-	ft = append(ft, i0t)
-
-	for i := 1; i < op.children; i++ {
-		ft = append(ft, a)
-	}
-	ft = append(ft, rt)
-	return hm.NewFnType(ft...)
+	return hm.NewFnType(i0t, a, rt)
 }
 
 func (op repeatOp) ReturnsPtr() bool     { return true }
-func (op repeatOp) OverwritesInput() int { return -1 }
+func (op repeatOp) OverwritesInput() int { return 0 }
 func (op repeatOp) CallsExtern() bool    { return false }
 
 func (op repeatOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
-	input := inputs[0].(tensor.Shape)
-	repeats := inputs[1:]
-
-	knownRepeats := make([]int, len(repeats))
-	for i, rep := range repeats {
-		if r, ok := rep.(sizeOp); ok {
-			knownRepeats[i] = r.val
-		}
+	retVal = inputs[0].(tensor.Shape).Clone()
+	x, err := inputs[1].DimSize(op.along)
+	if err != nil {
+		return nil, err
 	}
+	retVal[op.along] = x
 
-	if monotonic, incr := tensor.IsMonotonicInts(op.along); monotonic && incr && input.IsScalar() {
-		if input.IsScalar() {
-			retVal = tensor.Shape(tensor.BorrowInts(len(knownRepeats)))
-			copy(retVal, knownRepeats)
-			return
-		}
-	} else {
-		retVal = input
-	}
-
-	for i, axis := range op.along {
-		rep := knownRepeats[i]
-		if rep == 1 || rep == 0 { // 0 means unknown
-			continue
-		}
-		if retVal, _, _, err = retVal.Repeat(axis, rep); err != nil {
-			return
-		}
-	}
 	return
 }
 
@@ -280,7 +250,7 @@ func (op repeatOp) DiffWRT(i int) []bool {
 
 func (op repeatOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
 	var n *Node
-	if n, err = Sum(gradNode, op.along...); err == nil {
+	if n, err = Sum(gradNode, op.along); err == nil {
 		n.setGroup(gradClust)
 	}
 	retVal = make(Nodes, len(inputs))
@@ -289,90 +259,93 @@ func (op repeatOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, 
 }
 
 func (op repeatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
-		return
-	}
-	xdv, ydv := getDV(inputs[0], output)
-
-	var reps []int
-	var repeats []Value
-	for _, r := range inputs[1:] {
-		repeats = append(repeats, r.Value())
-	}
-
-	if reps, err = valuesToInts(repeats); err != nil {
-		return
-	}
-
-	xshape := xdv.Shape()
-	var d Value
-	d = ydv.d
-
-	// we make it a colVec
-	if xshape.IsVector() && !xshape.IsColVec() && !xshape.IsRowVec() {
-		xshape = tensor.Shape{xshape[0], 1}
-	}
-
-	if xshape.IsScalar() {
-		sum := newSumOp(op.along, output.shape, output.Dims())
-		if d, err = sum.Do(d); err != nil {
-			err = errors.Wrapf(err, doFail, sum)
+	return errors.New("NYI")
+	/*
+		if err = checkArity(op, len(inputs)); err != nil {
 			return
 		}
-	} else {
-		for _, axis := range op.along {
-			if xshape[axis] == 1 {
-				sum := newSumOp(op.along, output.shape, output.Dims())
-				if d, err = sum.Do(d); err != nil {
-					err = errors.Wrapf(err, doFail, sum)
-					return
-				}
-			} else {
-				newShape := xshape.Clone()
-				newShape = newShape[0 : axis+1]
-				newShape = append(newShape, reps...)
-				if axis+1 < xshape.Dims() {
-					newShape = append(newShape, xshape[axis+1:]...)
-				}
+		xdv, ydv := getDV(inputs[0], output)
 
-				along := []int{axis + 1}
+		var reps []int
+		var repeats []Value
+		for _, r := range inputs[1:] {
+			repeats = append(repeats, r.Value())
+		}
 
-				// a scalar can never get to this path
-				t := d.(tensor.Tensor)
-				if err = t.Reshape(newShape...); err != nil {
-					err = errors.Wrapf(err, reshapeFail, newShape, t.DataSize())
-					return
-				}
+		if reps, err = valuesToInts(repeats); err != nil {
+			return
+		}
 
-				sum := newSumOp(along, newShape, len(newShape))
-				if d, err = sum.Do(d); err != nil {
-					err = errors.Wrapf(err, doFail, sum)
-					return
-				}
-				// sum.Do leaves the dimension of size 1 behind, so reshape here.
-				t = d.(tensor.Tensor)
-				finalShape := newShape[:axis+1]
-				if axis+1 < newShape.Dims() {
-					finalShape = append(finalShape, newShape[axis+2:]...)
-				}
-				if err = t.Reshape(finalShape...); err != nil {
-					err = errors.Wrapf(err, reshapeFail, newShape, t.DataSize())
-					return
+		xshape := xdv.Shape()
+		var d Value
+		d = ydv.d
+
+		// we make it a colVec
+		if xshape.IsVector() && !xshape.IsColVec() && !xshape.IsRowVec() {
+			xshape = tensor.Shape{xshape[0], 1}
+		}
+
+		if xshape.IsScalar() {
+			sum := newSumOp(op.along, output.shape, output.Dims())
+			if d, err = sum.Do(d); err != nil {
+				err = errors.Wrapf(err, doFail, sum)
+				return
+			}
+		} else {
+			for _, axis := range op.along {
+				if xshape[axis] == 1 {
+					sum := newSumOp(op.along, output.shape, output.Dims())
+					if d, err = sum.Do(d); err != nil {
+						err = errors.Wrapf(err, doFail, sum)
+						return
+					}
+				} else {
+					newShape := xshape.Clone()
+					newShape = newShape[0 : axis+1]
+					newShape = append(newShape, reps...)
+					if axis+1 < xshape.Dims() {
+						newShape = append(newShape, xshape[axis+1:]...)
+					}
+
+					along := []int{axis + 1}
+
+					// a scalar can never get to this path
+					t := d.(tensor.Tensor)
+					if err = t.Reshape(newShape...); err != nil {
+						err = errors.Wrapf(err, reshapeFail, newShape, t.DataSize())
+						return
+					}
+
+					sum := newSumOp(along, newShape, len(newShape))
+					if d, err = sum.Do(d); err != nil {
+						err = errors.Wrapf(err, doFail, sum)
+						return
+					}
+					// sum.Do leaves the dimension of size 1 behind, so reshape here.
+					t = d.(tensor.Tensor)
+					finalShape := newShape[:axis+1]
+					if axis+1 < newShape.Dims() {
+						finalShape = append(finalShape, newShape[axis+2:]...)
+					}
+					if err = t.Reshape(finalShape...); err != nil {
+						err = errors.Wrapf(err, reshapeFail, newShape, t.DataSize())
+						return
+					}
 				}
 			}
 		}
-	}
 
-	add := newEBOByType(addOpType, TypeOf(xdv.d), TypeOf(d))
-	if d, err = add.UnsafeDo(xdv.d, d); err != nil {
+		add := newEBOByType(addOpType, TypeOf(xdv.d), TypeOf(d))
+		if d, err = add.UnsafeDo(xdv.d, d); err != nil {
+			return
+		}
+
+		if !add.ReturnsPtr() || inputs[0].IsScalar() {
+			err = xdv.SetDeriv(d)
+		}
+
 		return
-	}
-
-	if !add.ReturnsPtr() || inputs[0].IsScalar() {
-		err = xdv.SetDeriv(d)
-	}
-
-	return
+	*/
 }
 
 func (op repeatOp) String() string { return fmt.Sprintf("Repeat%v", op.along) }
@@ -383,68 +356,32 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
+	/*
+		// process inputs[1:]
+		var reps []int
+		repeats := inputs[1:]
+		if len(repeats) != len(op.along) {
+			err = errors.Errorf("Repeat Mismatch. Expected %d inputs. Got %d inputs instead", len(op.along), len(repeats))
+			return
+		}
 
-	// process inputs[1:]
-	var reps []int
-	repeats := inputs[1:]
-	if len(repeats) != len(op.along) {
-		err = errors.Errorf("Repeat Mismatch. Expected %d inputs. Got %d inputs instead", len(op.along), len(repeats))
-		return
-	}
+		if reps, err = valuesToInts(repeats); err != nil {
+			err = errors.Wrap(err, "Values To Ints failed in repeatOp.Do")
+			return
+		}
 
-	if reps, err = valuesToInts(repeats); err != nil {
-		err = errors.Wrap(err, "Values To Ints failed in repeatOp.Do")
-		return
-	}
-
-	monotonic, incr := tensor.IsMonotonicInts(op.along)
+		monotonic, incr := tensor.IsMonotonicInts(op.along)
+	*/
+	var rep int
+	rep, err = valueToInt(inputs[1])
 
 	// process inputs[0]
 	var t tensor.Tensor
 	switch iv := inputs[0].(type) {
-	case *F64:
-		s := iv.any()
-		if monotonic && incr {
-			ret := tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(reps...))
-			ret.Memset(s)
-			retVal = ret
-			return
-		}
-		t = tensor.New(tensor.FromScalar(s))
-	case *F32:
-		s := iv.any()
-		if monotonic && incr {
-			ret := tensor.New(tensor.Of(tensor.Float32), tensor.WithShape(reps...))
-			ret.Memset(s)
-			retVal = ret
-			return
-		}
-		t = tensor.New(tensor.FromScalar(s))
-	case *I:
-		s := iv.any()
-		if monotonic && incr {
-			ret := tensor.New(tensor.Of(tensor.Int), tensor.WithShape(reps...))
-			ret.Memset(s)
-			retVal = ret
-			return
-		}
-		t = tensor.New(tensor.FromScalar(s))
-	case *B:
-		s := iv.any()
-		if monotonic && incr {
-			ret := tensor.New(tensor.Of(tensor.Bool), tensor.WithShape(reps...))
-			ret.Memset(s)
-			retVal = ret
-			return
-		}
+	case Scalar:
+		s := iv.Data()
 		t = tensor.New(tensor.FromScalar(s))
 
-	// case I32:
-	// 	s := int32(iv)
-	// case I64:
-	// 	s := int64(iv)
-	// case U8:
-	// 	s := byte(iv)
 	case tensor.Tensor:
 		t = iv
 	default:
@@ -453,34 +390,22 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 	}
 
 	// actually do repeat
-
-	for i, axis := range op.along {
-		rep := reps[i]
-		if rep == 1 {
-			// then no need to waste CPU
-			continue
-		}
-		if t, err = tensor.Repeat(t, axis, rep); err != nil {
-			err = errors.Wrapf(err, repFail, axis, rep)
-			return
-		}
+	if rep == 1 {
+		goto fin
 	}
+	if t, err = tensor.Repeat(t, op.along, rep); err != nil {
+		err = errors.Wrapf(err, repFail, op.along, rep)
+		return
+	}
+fin:
 	retVal = t
 	return
 }
 
 func (op repeatOp) WriteHash(h hash.Hash) {
-	h.Write([]byte("repeat"))
-	if err := binary.Write(h, binary.LittleEndian, byte(op.d)); err != nil {
-		panic(err)
-	}
-
-	fmt.Fprintf(h, "%v", op.along)
-	if err := binary.Write(h, binary.LittleEndian, byte(op.children)); err != nil {
-		panic(err)
-	}
-
-	if op.arg0Dim == 0 {
+	fmt.Fprintf(h, "repeat %v %v", op.along, op.inputShape)
+	arg0Dim := op.inputShape[0]
+	if arg0Dim == 0 {
 		h.Write([]byte{1})
 	} else {
 		h.Write([]byte{0})
@@ -1138,9 +1063,18 @@ func (op reshapeOp) Arity() int { return 1 }
 func (op reshapeOp) Type() hm.Type {
 	if op.from.Dims() != op.to.Dims() {
 		fr := op.from.Dims()
-		frT := newTensorType(fr, hm.TypeVariable('a'))
+		var frT hm.Type
+		frT = newTensorType(fr, hm.TypeVariable('a'))
+		if fr == 0 {
+			frT = hm.TypeVariable('a')
+		}
+
 		to := op.to.Dims()
-		toT := newTensorType(to, hm.TypeVariable('a'))
+		var toT hm.Type
+		toT = newTensorType(to, hm.TypeVariable('a'))
+		if to == 0 {
+			toT = hm.TypeVariable('a')
+		}
 		return hm.NewFnType(frT, toT)
 	}
 	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'))
@@ -1174,9 +1108,14 @@ func (op reshapeOp) Do(vals ...Value) (Value, error) {
 			return nil, err
 		}
 		return val, nil
-
+	case Scalar:
+		v0 := ScalarAsTensor(vals[0], op.to.Dims(), nil)
+		if err := v0.(tensor.Tensor).Reshape(op.to...); err != nil {
+			return nil, err
+		}
+		return v0, nil
 	default:
-		return nil, errors.Errorf(nyiTypeFail, "reshape.Do", "Non tensor")
+		return nil, errors.Errorf(nyiTypeFail, "reshape.Do", vals[0])
 	}
 }
 

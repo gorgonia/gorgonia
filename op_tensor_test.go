@@ -11,7 +11,7 @@ import (
 var repeatOpTests = []struct {
 	name string
 	rep  int
-	axes []int
+	axes int
 	val  Value
 
 	correct       Value
@@ -19,63 +19,63 @@ var repeatOpTests = []struct {
 	err           bool
 }{
 	{
-		"repeat matrix on axis 0", 2, []int{0},
+		"repeat matrix on axis 0", 2, 0,
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4}), tensor.WithShape(2, 2)),
 		tensor.New(tensor.WithBacking([]float64{1, 2, 1, 2, 3, 4, 3, 4}), tensor.WithShape(4, 2)),
 		tensor.Shape{4, 2}, false,
 	},
 
 	{
-		"repeat matrix on axis 1", 2, []int{1},
+		"repeat matrix on axis 1", 2, 1,
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4}), tensor.WithShape(2, 2)),
 		tensor.New(tensor.WithBacking([]float64{1, 1, 2, 2, 3, 3, 4, 4}), tensor.WithShape(2, 4)),
 		tensor.Shape{2, 4}, false,
 	},
 
 	{
-		"repeat col vec on axis 0", 2, []int{0},
+		"repeat col vec on axis 0", 2, 0,
 		tensor.New(tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2, 1)),
 		tensor.New(tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(4, 1)),
 		tensor.Shape{4, 1}, false,
 	},
 
 	{
-		"repeat col vec on axis 1", 2, []int{1},
+		"repeat col vec on axis 1", 2, 1,
 		tensor.New(tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2, 1)),
 		tensor.New(tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(2, 2)),
 		tensor.Shape{2, 2}, false,
 	},
 
 	{
-		"repeat row vec on axis 0", 2, []int{0},
+		"repeat row vec on axis 0", 2, 0,
 		tensor.New(tensor.WithBacking([]float64{1, 2}), tensor.WithShape(1, 2)),
 		tensor.New(tensor.WithBacking([]float64{1, 2, 1, 2}), tensor.WithShape(2, 2)),
 		tensor.Shape{2, 2}, false,
 	},
 
 	{
-		"repeat row vec on axis 1", 2, []int{1},
+		"repeat row vec on axis 1", 2, 1,
 		tensor.New(tensor.WithBacking([]float64{1, 2}), tensor.WithShape(1, 2)),
 		tensor.New(tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(1, 4)),
 		tensor.Shape{1, 4}, false,
 	},
 
 	{
-		"repeat vector on axis 0", 2, []int{0},
+		"repeat vector on axis 0", 2, 0,
 		tensor.New(tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2)),
 		tensor.New(tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(4)),
 		tensor.Shape{4}, false,
 	},
 
 	{
-		"repeat vector on axis 1", 2, []int{1},
+		"repeat vector on axis 1", 2, 1,
 		tensor.New(tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2)),
 		tensor.New(tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(2, 2)),
 		tensor.Shape{2, 2}, false,
 	},
 
 	{
-		"repeat scalar", 2, []int{0},
+		"repeat scalar", 2, 0,
 		newF64(3.14), tensor.New(tensor.WithBacking([]float64{3.14, 3.14}), tensor.WithShape(2)),
 		tensor.Shape{2}, false,
 	},
@@ -91,10 +91,9 @@ func TestRepeatOp(t *testing.T) {
 		var repeat *repeatOp
 
 		rep := newI(rots.rep)
-		repN := NodeFromAny(g, rep)
 		n := NodeFromAny(g, rots.val)
 
-		repeat = newRepeatOp(rots.axes, Nodes{n, repN})
+		repeat = newRepeatOp(rots.axes, n)
 
 		res, err = repeat.Do(rots.val, rep)
 		switch {
@@ -149,7 +148,7 @@ func repeatOpDiff(repeatOn int, shape tensor.Shape, xV, yV interface{}) (g *Expr
 	}
 
 	repN := NewScalar(g, Float64, WithValue(2.0))
-	repeat := newRepeatOp([]int{repeatOn}, Nodes{x, repN})
+	repeat := newRepeatOp(repeatOn, x)
 	if y, err = ApplyOp(repeat, x, repN); err != nil {
 		return
 	}

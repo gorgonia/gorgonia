@@ -1,6 +1,9 @@
 package gorgonia
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
+)
 
 const (
 	bcAllowableAxes = 4
@@ -65,45 +68,61 @@ func Broadcast(a, b *Node, pattern BroadcastPattern) (*Node, *Node, error) {
 	broadcastOn := pattern.on()
 
 	var err error
+	var newShape tensor.Shape
 	x := a
 	y := b
 	xshape := x.Shape()
 	yshape := y.Shape()
 
 	if len(broadcastOn[0]) > 0 {
-		children := Nodes{x}
+
 		for _, a := range broadcastOn[0] {
 			if a >= yshape.Dims() {
 				return nil, nil, errors.Errorf("Attempting to broadcast a on axis %d of b. But b has shape %v", a, yshape)
 			}
-
+		}
+		if newShape, err = calcBroadcastShape(x, yshape.Dims(), broadcastOn[0]); err != nil {
+			return nil, nil, errors.Wrapf(err, "Unable to calculate the broadcasted shape. X: %v. Along %v", x.Shape(), broadcastOn[0])
+		}
+		if x, err = Reshape(x, newShape); err != nil {
+			return nil, nil, errors.Wrapf(err, "Cannot reshape x to %v for broadcasting", newShape)
+		}
+		children := Nodes{x}
+		for _, a := range broadcastOn[0] {
 			var size *Node
 			if size, err = SizeOf(a, y); err != nil {
 				return nil, nil, errors.Wrap(err, operationError)
 			}
 			children = append(children, size)
 		}
-		rep := newRepeatOp(broadcastOn[0], children)
-		if x, err = ApplyOp(rep, children...); err != nil {
+		if x, err = repeatedApply(broadcastOn[0], children); err != nil {
 			return nil, nil, errors.Wrap(err, operationError)
 		}
 	}
 
 	if len(broadcastOn[1]) > 0 {
-		children := Nodes{y}
 		for _, a := range broadcastOn[1] {
 			if a >= xshape.Dims() {
 				return nil, nil, errors.Errorf("Attempting to broadcast b on axis %d of a. But a has shape %v", a, xshape)
 			}
+		}
 
+		if newShape, err = calcBroadcastShape(y, xshape.Dims(), broadcastOn[1]); err != nil {
+			return nil, nil, errors.Wrapf(err, "Unable to calculate the broadcasted shape. Y: %v, Along %v", y.Shape(), broadcastOn[1])
+		}
+		if y, err = Reshape(y, newShape); err != nil {
+			return nil, nil, errors.Wrapf(err, "Cannot reshape y to %v for broadcast", newShape)
+		}
+		children := Nodes{y}
+		for _, a := range broadcastOn[1] {
 			var size *Node
 			if size, err = SizeOf(a, x); err != nil {
 				return nil, nil, errors.Wrap(err, operationError)
 			}
 			children = append(children, size)
 		}
-		rep := newRepeatOp(broadcastOn[1], children)
-		if y, err = ApplyOp(rep, children...); err != nil {
+
+		if y, err = repeatedApply(broadcastOn[1], children); err != nil {
 			return nil, nil, errors.Wrap(err, operationError)
 		}
 	}

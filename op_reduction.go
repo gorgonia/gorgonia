@@ -233,8 +233,18 @@ func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 		return
 	}
 
+	newShape, err := calcBroadcastShape(gradNode, op.d, op.along)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Unable to calculate broadcasted shape. grad has %v, along %v", gradNode.Shape(), op.along)
+	}
+
+	if gradNode, err = Reshape(gradNode, newShape); err != nil {
+		return nil, errors.Wrapf(err, "Unable to reshape grad node to %v", newShape)
+	}
+
 	children := make(Nodes, len(op.along)+1)
 	children[0] = gradNode
+
 	for i, a := range op.along {
 		var n *Node
 		if n, err = SizeOf(a, inputs[0]); err != nil {
@@ -245,13 +255,7 @@ func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 	}
 
 	retVal = make(Nodes, 1)
-	repeat := newRepeatOp(op.along, children)
-
-	symdiffLogf("repeat: %v", repeat.Type())
-	symdiffLogf("children %#Y", children)
-	symdiffLogf("children: %v", children)
-
-	if retVal[0], err = ApplyOp(repeat, children...); err != nil {
+	if retVal[0], err = repeatedApply(op.along, children); err != nil {
 		return nil, errors.Wrap(err, applyOpFail)
 	}
 	retVal[0].setGroup(gradClust)

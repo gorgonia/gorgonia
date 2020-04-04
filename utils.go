@@ -58,6 +58,27 @@ func tensorInfo(t tensor.Tensor) (dt tensor.Dtype, dim int) {
 	return
 }
 
+func valueToInt(v Value) (int, error) {
+	var intV int
+	switch sv := v.(type) {
+	case *F64:
+		intV = int(float64(*sv))
+	case *F32:
+		intV = int(float32(*sv))
+	case *I:
+		intV = int(*sv)
+	case *I32:
+		intV = int(int32(*sv))
+	case *I64:
+		intV = int(int64(*sv))
+	case *U8:
+		intV = int(byte(*sv))
+	default:
+		return -1, errors.Errorf("Expected values to be all Scalar Value. Got %v of %T instead", v, v)
+	}
+	return intV, nil
+}
+
 // valuesToInts will FORCIBLY cast floats to ints.
 func valuesToInts(values []Value) (retVal []int, err error) {
 	retVal = tensor.BorrowInts(len(values))
