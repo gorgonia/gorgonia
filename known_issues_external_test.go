@@ -1,8 +1,9 @@
 package gorgonia_test
 
 import (
-	"gorgonia.org/gorgonia"
 	"testing"
+
+	"gorgonia.org/gorgonia"
 )
 
 func TestMean_issue375(t *testing.T) {
