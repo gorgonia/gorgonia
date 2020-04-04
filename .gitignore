@@ -25,3 +25,5 @@ _testmain.go
 
 # vendor
 /vendor
+err.dot
+foo.dot
