@@ -233,11 +233,7 @@ func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 		return
 	}
 
-	newShape, err := calcBroadcastShape(gradNode, op.d, op.along)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Unable to calculate broadcasted shape. grad has %v, along %v", gradNode.Shape(), op.along)
-	}
-
+	newShape := calcBroadcastShape(gradNode, op.d, op.along)
 	if gradNode, err = Reshape(gradNode, newShape); err != nil {
 		return nil, errors.Wrapf(err, "Unable to reshape grad node to %v", newShape)
 	}

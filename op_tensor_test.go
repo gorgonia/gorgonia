@@ -85,6 +85,9 @@ func TestRepeatOp(t *testing.T) {
 	// assert := assert.New(t)
 
 	for _, rots := range repeatOpTests {
+		// if rots.name != "repeat matrix on axis 1" {
+		// 	continue
+		// }
 		g := NewGraph()
 		var res Value
 		var err error
@@ -113,7 +116,7 @@ func TestRepeatOp(t *testing.T) {
 
 	infershape:
 		var s tensor.Shape
-		size := sizeOp{val: rots.rep}
+		size := sizeOp{axis: rots.axes, val: rots.rep}
 		s, err = repeat.InferShape(rots.val.Shape(), size)
 		switch {
 		case rots.err:
@@ -122,7 +125,7 @@ func TestRepeatOp(t *testing.T) {
 			}
 			continue
 		case !rots.err && err != nil:
-			t.Errorf("%+v", err)
+			t.Errorf("Test %q %+v", rots.name, err)
 			continue
 		}
 

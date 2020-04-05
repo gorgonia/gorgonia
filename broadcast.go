@@ -81,9 +81,7 @@ func Broadcast(a, b *Node, pattern BroadcastPattern) (*Node, *Node, error) {
 				return nil, nil, errors.Errorf("Attempting to broadcast a on axis %d of b. But b has shape %v", a, yshape)
 			}
 		}
-		if newShape, err = calcBroadcastShape(x, yshape.Dims(), broadcastOn[0]); err != nil {
-			return nil, nil, errors.Wrapf(err, "Unable to calculate the broadcasted shape. X: %v. Along %v", x.Shape(), broadcastOn[0])
-		}
+		newShape = calcBroadcastShape(x, yshape.Dims(), broadcastOn[0])
 		if x, err = Reshape(x, newShape); err != nil {
 			return nil, nil, errors.Wrapf(err, "Cannot reshape x to %v for broadcasting", newShape)
 		}
@@ -107,9 +105,8 @@ func Broadcast(a, b *Node, pattern BroadcastPattern) (*Node, *Node, error) {
 			}
 		}
 
-		if newShape, err = calcBroadcastShape(y, xshape.Dims(), broadcastOn[1]); err != nil {
-			return nil, nil, errors.Wrapf(err, "Unable to calculate the broadcasted shape. Y: %v, Along %v", y.Shape(), broadcastOn[1])
-		}
+		newShape = calcBroadcastShape(y, xshape.Dims(), broadcastOn[1])
+
 		if y, err = Reshape(y, newShape); err != nil {
 			return nil, nil, errors.Wrapf(err, "Cannot reshape y to %v for broadcast", newShape)
 		}

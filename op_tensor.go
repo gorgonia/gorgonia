@@ -232,11 +232,25 @@ func (op repeatOp) CallsExtern() bool    { return false }
 
 func (op repeatOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
 	retVal = inputs[0].(tensor.Shape).Clone()
-	x, err := inputs[1].DimSize(op.along)
+	rep, err := inputs[1].DimSize(op.along)
 	if err != nil {
 		return nil, err
 	}
-	retVal[op.along] = x
+
+	// TODO: switch stmt
+	if retVal.IsVector() && retVal.Dims() <= op.along {
+		// extend
+		retVal = append(retVal, make(tensor.Shape, op.along-retVal.Dims()+1)...)
+		for i := range retVal {
+			if retVal[i] == 0 {
+				retVal[i] = 1
+			}
+		}
+	}
+	if retVal.IsScalar() {
+		retVal = tensor.Shape{1}
+	}
+	retVal[op.along] *= rep
 
 	return
 }
@@ -373,7 +387,9 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 		monotonic, incr := tensor.IsMonotonicInts(op.along)
 	*/
 	var rep int
-	rep, err = valueToInt(inputs[1])
+	if rep, err = valueToInt(inputs[1]); err != nil {
+		return nil, errors.Wrapf(err, "Cannot convert %v to an int", inputs[1])
+	}
 
 	// process inputs[0]
 	var t tensor.Tensor

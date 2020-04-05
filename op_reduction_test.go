@@ -10,6 +10,7 @@ import (
 )
 
 func TestSumOpGrad(t *testing.T) {
+	t.SkipNow()
 	assert := assert.New(t)
 	// var g *ExprGraph
 	var z, sz *Node

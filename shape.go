@@ -34,8 +34,8 @@ func transposeBatch2D(shape tensor.Shape) tensor.Shape {
 }
 
 // calcBroadcastShape calculates the new shape of a given Node and broadcast axes.
-// Note that `a` will be the *Noe reshaped to the newShape.
-func calcBroadcastShape(a *Node, expectedDims int, broadcastAlong []int) (newShape tensor.Shape, err error) {
+// Note that `a` will be the *Node reshaped to the newShape.
+func calcBroadcastShape(a *Node, expectedDims int, broadcastAlong []int) (newShape tensor.Shape) {
 	shp := a.Shape()
 	if shp.Dims() == expectedDims {
 		newShape = shp.Clone()
@@ -52,13 +52,6 @@ func calcBroadcastShape(a *Node, expectedDims int, broadcastAlong []int) (newSha
 			newShape[i] = 1
 		}
 	case shp.Dims() == expectedDims:
-		for _, ax := range broadcastAlong {
-			if newShape[ax] != 1 {
-				// error?
-				err = errors.New("XXX")
-				return
-			}
-		}
 	default:
 		for _, s := range a.Shape() {
 			// search for first non 0
