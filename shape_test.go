@@ -14,10 +14,7 @@ func Example_keepDims() {
 	m2, _ := KeepDims(a, false, func(a *Node) (*Node, error) { return Mean(a, 1) })
 	m3, _ := Mean(a, 0)
 	m4, _ := KeepDims(a, true, func(a *Node) (*Node, error) { return Mean(a, 0) })
-	_, err := KeepDims(a, true, func(a *Node) (*Node, error) { return Mean(a) })
-	if err == nil {
-		panic("expected an error: you can't keep dims on a scalar result")
-	}
+	m5, _ := KeepDims(a, true, func(a *Node) (*Node, error) { return Mean(a) })
 	vm := NewTapeMachine(g)
 	if err := vm.RunAll(); err != nil {
 		panic(err)
@@ -28,6 +25,7 @@ func Example_keepDims() {
 	fmt.Printf("m2 (shape: %v):\n%v\n", m2.Value().Shape(), m2.Value())
 	fmt.Printf("m3 (shape: %v):\n%v\n", m3.Value().Shape(), m3.Value())
 	fmt.Printf("m4 (shape: %v):\n%v\n", m4.Value().Shape(), m4.Value())
+	fmt.Printf("m5 (shape: %v):\n%v\n", m5.Value().Shape(), m5.Value())
 
 	// Output:
 	// a:
@@ -42,5 +40,7 @@ func Example_keepDims() {
 	// [2.5  3.5  4.5]
 	// m4 (shape: (1, 3)):
 	// R[2.5  3.5  4.5]
+	// m5 (shape: (1, 1)):
+	// ⎡3.5⎤
 
 }
