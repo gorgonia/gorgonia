@@ -218,8 +218,8 @@ func (op repeatOp) Type() hm.Type {
 }
 
 func (op repeatOp) ReturnsPtr() bool     { return true }
-func (op repeatOp) OverwritesInput() int { return -1 }
-func (op repeatOp) CallsExtern() bool    { return false }
+func (op repeatOp) OverwritesInput() int { return 0 }
+func (op repeatOp) CallsExtern() bool    { return true } // set to true because we want to force the VM to use PreallocDo
 
 func (op repeatOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
 	retVal = inputs[0].(tensor.Shape).Clone()
@@ -371,8 +371,12 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 	case Scalar:
 		s := iv.Data()
 		t = tensor.New(tensor.FromScalar(s))
-
 	case tensor.Tensor:
+		if iv.Shape().IsScalarEquiv() {
+			t = iv.Clone().(tensor.Tensor)
+			retVal = t
+			return
+		}
 		t = iv
 	default:
 		err = errors.Errorf(nyiTypeFail, "repeatOp.Do()", inputs[0])
@@ -427,8 +431,37 @@ func (op repeatOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value,
 	switch iv := inputs[0].(type) {
 	case Scalar:
 		s := iv.Data()
+		pt.Memset(s)
+		retVal = pt
+		return
 		t = tensor.New(tensor.FromScalar(s))
 	case tensor.Tensor:
+		if iv.Shape().IsScalarEquiv() {
+			data := iv.Data()
+			switch dt := data.(type) {
+			case float64:
+				ptd := pt.Data().([]float64)
+				for i := range ptd {
+					ptd[i] = dt
+				}
+			case float32:
+				ptd := pt.Data().([]float32)
+				for i := range ptd {
+					ptd[i] = dt
+				}
+			case []float64:
+				ptd := pt.Data().([]float64)
+				for i := range ptd {
+					ptd[i] = dt[0]
+				}
+			case []float32:
+				ptd := pt.Data().([]float32)
+				for i := range ptd {
+					ptd[i] = dt[0]
+				}
+			}
+			return pt, nil
+		}
 		t = iv
 	default:
 		err = errors.Errorf(nyiTypeFail, "repeatOp.Do()", inputs[0])
@@ -1145,7 +1178,7 @@ func (op reshapeOp) Do(vals ...Value) (Value, error) {
 
 func (op reshapeOp) ReturnsPtr() bool     { return true }
 func (op reshapeOp) CallsExtern() bool    { return false }
-func (op reshapeOp) OverwritesInput() int { return -1 }
+func (op reshapeOp) OverwritesInput() int { return 0 }
 func (op reshapeOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("reshapeOp"))
 	fmt.Fprintf(h, "from: %v, dims: %v", op.from, op.to)
@@ -1154,6 +1187,29 @@ func (op reshapeOp) WriteHash(h hash.Hash) {
 func (op reshapeOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op reshapeOp) String() string { return fmt.Sprintf("Reshape%v", op.to) }
+
+func (op reshapeOp) UnsafeDo(vals ...Value) (Value, error) {
+	if err := checkArity(op, len(vals)); err != nil {
+		return nil, err
+	}
+	var val Value
+	var err error
+	switch vals[0].(type) {
+	case tensor.Tensor:
+		val = vals[0]
+		err = val.(tensor.Tensor).Reshape(op.to...)
+
+		return val, err
+	case Scalar:
+		v0 := ScalarAsTensor(vals[0], op.to.Dims(), nil)
+		if err := v0.(tensor.Tensor).Reshape(op.to...); err != nil {
+			return nil, err
+		}
+		return v0, nil
+	default:
+		return nil, errors.Errorf(nyiTypeFail, "reshape.Do", vals[0])
+	}
+}
 
 func (op reshapeOp) CUDADo(extern External, dev Device, prealloc Value, vals ...Value) (retVal Value, err error) {
 	if err := checkArity(op, len(vals)); err != nil {
