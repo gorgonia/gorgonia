@@ -191,7 +191,7 @@ func repeatedApply(along []int, children Nodes) (retVal *Node, err error) {
 	return
 }
 
-func (op repeatOp) Arity() int { return -1 }
+func (op repeatOp) Arity() int { return 2 }
 
 // repeat is defined as one of the following:
 //		repeat :: Tensor-n a → a → Tensor-n a
@@ -218,7 +218,7 @@ func (op repeatOp) Type() hm.Type {
 }
 
 func (op repeatOp) ReturnsPtr() bool     { return true }
-func (op repeatOp) OverwritesInput() int { return 0 }
+func (op repeatOp) OverwritesInput() int { return -1 }
 func (op repeatOp) CallsExtern() bool    { return false }
 
 func (op repeatOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
@@ -359,22 +359,7 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
-	/*
-		// process inputs[1:]
-		var reps []int
-		repeats := inputs[1:]
-		if len(repeats) != len(op.along) {
-			err = errors.Errorf("Repeat Mismatch. Expected %d inputs. Got %d inputs instead", len(op.along), len(repeats))
-			return
-		}
 
-		if reps, err = valuesToInts(repeats); err != nil {
-			err = errors.Wrap(err, "Values To Ints failed in repeatOp.Do")
-			return
-		}
-
-		monotonic, incr := tensor.IsMonotonicInts(op.along)
-	*/
 	var rep int
 	if rep, err = valueToInt(inputs[1]); err != nil {
 		return nil, errors.Wrapf(err, "Cannot convert %v to an int", inputs[1])
@@ -421,6 +406,37 @@ func (op repeatOp) WriteHash(h hash.Hash) {
 }
 
 func (op repeatOp) Hashcode() uint32 { return simpleHash(op) }
+
+func (op repeatOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
+	pt, ok := prealloc.(tensor.Tensor)
+	if !ok {
+		return nil, errors.Errorf("Expected Tensor as a preallocated value. Got %v of %T instead", prealloc, prealloc)
+	}
+
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+
+	var rep int
+	if rep, err = valueToInt(inputs[1]); err != nil {
+		return nil, errors.Wrapf(err, "Cannot convert %v to an int", inputs[1])
+	}
+
+	// process inputs[0]
+	var t tensor.Tensor
+	switch iv := inputs[0].(type) {
+	case Scalar:
+		s := iv.Data()
+		t = tensor.New(tensor.FromScalar(s))
+	case tensor.Tensor:
+		t = iv
+	default:
+		err = errors.Errorf(nyiTypeFail, "repeatOp.Do()", inputs[0])
+		return
+	}
+
+	return tensor.RepeatReuse(t, pt, op.along, rep)
+}
 
 // sliceOp represents a slicing operation. If end ⩽ start, it means ":"
 type sliceOp struct {
