@@ -193,35 +193,26 @@ func repeatedApply(along []int, children Nodes) (retVal *Node, err error) {
 
 func (op repeatOp) Arity() int { return -1 }
 
-// repeat is an overload of three functions:
-//		repeat :: a → a → a → Tensor a
-// 		repeat :: Tensor a → a → a → Tensor a
-//		repeat :: a → 1 → 1 → a
-//
-// The last of which is a special case of the first. But I didn't want to create a dependent-type system
-// for a trivial language, so I'll just hardcode this in
+// repeat is defined as one of the following:
+//		repeat :: Tensor-n a → a → Tensor-n a
+//		repeat :: a → Vector a
+// The end result must have the same dimensions as the input
 func (op repeatOp) Type() hm.Type {
+
 	a := hm.TypeVariable('a')
-	var arg0Dim int
+
 	d := op.inputShape.Dims()
-	if d == 0 {
-		arg0Dim = 1
-		d = 1
-	} else {
-		arg0Dim = op.inputShape[0]
-	}
 
 	var i0t hm.Type
 	var rt hm.Type
 
-	if arg0Dim == 0 {
+	if d == 0 {
 		i0t = a
+		rt = makeTensorType(d+1, a)
 	} else {
-		i0t = makeTensorType(arg0Dim, a)
+		i0t = makeTensorType(d, a)
+		rt = makeTensorType(d, a)
 	}
-	i0t = makeTensorType(d, a)
-	rt = makeTensorType(d, a)
-	//rt = i0t
 
 	return hm.NewFnType(i0t, a, rt)
 }
@@ -273,93 +264,91 @@ func (op repeatOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, 
 }
 
 func (op repeatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
-	return errors.New("NYI")
-	/*
-		if err = checkArity(op, len(inputs)); err != nil {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+	xdv, ydv := getDV(inputs[0], output)
+
+	var reps []int
+	var repeats []Value
+	for _, r := range inputs[1:] {
+		repeats = append(repeats, r.Value())
+	}
+
+	if reps, err = valuesToInts(repeats); err != nil {
+		return
+	}
+
+	xshape := xdv.Shape()
+	var d Value
+	d = ydv.d
+
+	// we make it a colVec
+	if xshape.IsVector() && !xshape.IsColVec() && !xshape.IsRowVec() {
+		xshape = tensor.Shape{xshape[0], 1}
+	}
+
+	if xshape.IsScalar() {
+		sum := newSumOp([]int{op.along}, output.shape, output.Dims())
+		if d, err = sum.Do(d); err != nil {
+			err = errors.Wrapf(err, doFail, sum)
 			return
 		}
-		xdv, ydv := getDV(inputs[0], output)
-
-		var reps []int
-		var repeats []Value
-		for _, r := range inputs[1:] {
-			repeats = append(repeats, r.Value())
-		}
-
-		if reps, err = valuesToInts(repeats); err != nil {
-			return
-		}
-
-		xshape := xdv.Shape()
-		var d Value
-		d = ydv.d
-
-		// we make it a colVec
-		if xshape.IsVector() && !xshape.IsColVec() && !xshape.IsRowVec() {
-			xshape = tensor.Shape{xshape[0], 1}
-		}
-
-		if xshape.IsScalar() {
-			sum := newSumOp(op.along, output.shape, output.Dims())
+	} else {
+		axis := op.along
+		if xshape[axis] == 1 {
+			sum := newSumOp([]int{op.along}, output.shape, output.Dims())
 			if d, err = sum.Do(d); err != nil {
 				err = errors.Wrapf(err, doFail, sum)
 				return
 			}
 		} else {
-			for _, axis := range op.along {
-				if xshape[axis] == 1 {
-					sum := newSumOp(op.along, output.shape, output.Dims())
-					if d, err = sum.Do(d); err != nil {
-						err = errors.Wrapf(err, doFail, sum)
-						return
-					}
-				} else {
-					newShape := xshape.Clone()
-					newShape = newShape[0 : axis+1]
-					newShape = append(newShape, reps...)
-					if axis+1 < xshape.Dims() {
-						newShape = append(newShape, xshape[axis+1:]...)
-					}
+			newShape := xshape.Clone()
+			newShape = newShape[0 : axis+1]
+			newShape = append(newShape, reps...)
+			if axis+1 < xshape.Dims() {
+				newShape = append(newShape, xshape[axis+1:]...)
+			}
 
-					along := []int{axis + 1}
+			along := []int{axis + 1}
 
-					// a scalar can never get to this path
-					t := d.(tensor.Tensor)
-					if err = t.Reshape(newShape...); err != nil {
-						err = errors.Wrapf(err, reshapeFail, newShape, t.DataSize())
-						return
-					}
+			// a scalar can never get to this path
+			t := d.(tensor.Tensor)
+			if err = t.Reshape(newShape...); err != nil {
+				err = errors.Wrapf(err, reshapeFail, newShape, t.DataSize())
+				return
+			}
 
-					sum := newSumOp(along, newShape, len(newShape))
-					if d, err = sum.Do(d); err != nil {
-						err = errors.Wrapf(err, doFail, sum)
-						return
-					}
-					// sum.Do leaves the dimension of size 1 behind, so reshape here.
-					t = d.(tensor.Tensor)
-					finalShape := newShape[:axis+1]
-					if axis+1 < newShape.Dims() {
-						finalShape = append(finalShape, newShape[axis+2:]...)
-					}
-					if err = t.Reshape(finalShape...); err != nil {
-						err = errors.Wrapf(err, reshapeFail, newShape, t.DataSize())
-						return
-					}
-				}
+			sum := newSumOp(along, newShape, len(newShape))
+			if d, err = sum.Do(d); err != nil {
+				err = errors.Wrapf(err, doFail, sum)
+				return
+			}
+			// sum.Do leaves the dimension of size 1 behind, so reshape here.
+			t = d.(tensor.Tensor)
+			finalShape := newShape[:axis+1]
+			if axis+1 < newShape.Dims() {
+				finalShape = append(finalShape, newShape[axis+2:]...)
+			}
+			if err = t.Reshape(finalShape...); err != nil {
+				err = errors.Wrapf(err, reshapeFail, newShape, t.DataSize())
+				return
 			}
 		}
 
-		add := newEBOByType(addOpType, TypeOf(xdv.d), TypeOf(d))
-		if d, err = add.UnsafeDo(xdv.d, d); err != nil {
-			return
-		}
+	}
 
-		if !add.ReturnsPtr() || inputs[0].IsScalar() {
-			err = xdv.SetDeriv(d)
-		}
-
+	add := newEBOByType(addOpType, TypeOf(xdv.d), TypeOf(d))
+	if d, err = add.UnsafeDo(xdv.d, d); err != nil {
 		return
-	*/
+	}
+
+	if !add.ReturnsPtr() || inputs[0].IsScalar() {
+		err = xdv.SetDeriv(d)
+	}
+
+	return
+
 }
 
 func (op repeatOp) String() string { return fmt.Sprintf("Repeat%v", op.along) }
@@ -420,7 +409,10 @@ fin:
 
 func (op repeatOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "repeat %v %v", op.along, op.inputShape)
-	arg0Dim := op.inputShape[0]
+	var arg0Dim int
+	if !op.inputShape.Eq(tensor.ScalarShape()) {
+		arg0Dim = op.inputShape[0]
+	}
 	if arg0Dim == 0 {
 		h.Write([]byte{1})
 	} else {
