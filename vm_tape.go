@@ -508,10 +508,16 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 		return errors.Wrapf(err, dtypeExtractionFail, instr.t)
 	}
 
+	reg := m.getValue(instr.writeTo)
+	if reg != nil && reg.Dtype() == dt && reg.Shape().Eq(instr.s) {
+		return nil
+	}
+
 	dev := instr.writeTo.device
 	var v Value
 	switch dev {
 	case CPU:
+
 		v, err = makeValue(instr.t, instr.s)
 
 	default:
@@ -686,6 +692,12 @@ func (instr *readInstr) exec(m *tapeMachine) (err error) {
 	v := m.getValue(instr.readFrom)
 	if v == nil {
 		return nyi("value of nil", "readInstr.exec")
+	}
+
+	if *instr.into != nil {
+		dest := *instr.into
+		_, err = Copy(dest, v)
+		return err
 	}
 
 	v2, err := CloneValue(v)
