@@ -17,6 +17,7 @@ import (
 )
 
 var debug = flag.Bool("debug", false, "compile with debug mode (-linelinfo is added to nvcc call)")
+var sameModule = flag.Bool("same-module", false, "generate a cudamodules.go file which can be placed in the gorgonia dir instead of the application main dir")
 
 var funcNameRegex = regexp.MustCompile("// .globl	(.+?)\r?\n")
 
@@ -170,21 +171,25 @@ func main() {
 // +build cuda
 
 package %v
-
-import "gorgonia.org/gorgonia"
 `, packageName)
 	buf.WriteString(header)
+	if ! *sameModule {
+		buf.WriteString("import \"gorgonia.org/gorgonia\"\n")
+	}
 
 	buf.WriteString("func init() {\n")
 	for name := range m {
-		buf.WriteString(fmt.Sprintf("gorgonia.AddToStdLib(%q, %sPTX, []string{\"%s\"})\n", name, name, strings.Join(funcs[name], "\", \"")))
+		if ! *sameModule {
+			buf.WriteString("gorgonia.")
+		}
+		buf.WriteString(fmt.Sprintf("AddToStdLib(%q, %sPTX, []string{\"%s\"})\n", name, name, strings.Join(funcs[name], "\", \"")))
 	}
 	buf.WriteString("}\n")
 
 	for name, data := range m {
 		buf.WriteString(fmt.Sprintf("const %vPTX = `", name))
 		buf.Write(data)
-		buf.WriteString( "`\n")
+		buf.WriteString("`\n")
 	}
 
 	f, err := os.OpenFile(cudamodules, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
