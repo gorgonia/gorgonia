@@ -33,7 +33,7 @@ const (
 	scalarAlign = 8
 )
 
-//go:generate cudagen
+//go:generate cudagen -same-module
 
 var cudaStdLib []cudaLib
 
