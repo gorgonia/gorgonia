@@ -164,19 +164,12 @@ func (m *lispMachine) loadStdLib() {
 		return
 	}
 
-	for name, data := range cudaStdLib {
-		funcs, ok := cudaStdFuncs[name]
-		if !ok {
-			cudaLogf("No funcs for module %q", name)
-			// panic("WTF")
-			continue
-		}
+	for _, lib := range cudaStdLib {
 		for i := range m.engines {
 			e := &m.engines[i]
-			if err := e.LoadCUDAFunc(name, data, funcs); err != nil {
+			if err := e.LoadCUDAFunc(lib.name, lib.data, lib.funcs); err != nil {
 				panic(err)
 			}
-
 		}
 	}
 }

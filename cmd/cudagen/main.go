@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"gorgonia.org/cu"
 )
@@ -25,51 +26,82 @@ func stripExt(fullpath string) string {
 	return filename[:len(filename)-len(ext)]
 }
 
-func compileCUDA(src, targetLoc string, maj, min int) {
-	name := stripExt(src)
+func compileCUDA(src string, maj, min int) ([]byte, error) {
+	target, err := ioutil.TempFile("", stripExt(src)+"_*.ptx")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temporary file for compilation output")
+	}
+	defer target.Close()
+
+	output := fmt.Sprintf("-o=%v", target.Name())
 	arch := fmt.Sprintf("-arch=compute_%d%d", maj, min)
-	output := fmt.Sprintf("-o=%v", path.Join(targetLoc, name+".ptx"))
-
-	if _, err := os.Stat(targetLoc); os.IsNotExist(err) {
-		if err := os.Mkdir(targetLoc, 0777); err != nil {
-			log.Fatalf("FAILED TO CREATE TARGET DIR %q. Unable to proceed with nvcc compilation. Error was %v", targetLoc, err)
-		}
-	}
-
-	var stderr bytes.Buffer
-
-	var slow *exec.Cmd
+	var cmd *exec.Cmd
 	if *debug {
-		slow = exec.Command("nvcc", output, arch, "-lineinfo", "-ptx", "-Xptxas", "--allow-expensive-optimizations", "-fmad=false", "-ftz=false", "-prec-div=true", "-prec-sqrt=true", src)
+		cmd = exec.Command("nvcc", output, arch, "-lineinfo", "-ptx", "-Xptxas", "--allow-expensive-optimizations", "-fmad=false", "-ftz=false", "-prec-div=true", "-prec-sqrt=true", src)
 	} else {
-		slow = exec.Command("nvcc", output, arch, "-ptx", "-Xptxas", "--allow-expensive-optimizations", "-fmad=false", "-ftz=false", "-prec-div=true", "-prec-sqrt=true", src)
+		cmd = exec.Command("nvcc", output, arch, "-ptx", "-Xptxas", "--allow-expensive-optimizations", "-fmad=false", "-ftz=false", "-prec-div=true", "-prec-sqrt=true", src)
+	}
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil || stderr.Len() != 0 {
+		return nil, fmt.Errorf("failed to compile with nvcc. Error: %v. nvcc error: %v", err, stderr.String())
 	}
 
-	slow.Stderr = &stderr
-	if err := slow.Run(); err != nil || stderr.Len() != 0 {
-		log.Fatalf("Failed to compile with nvcc. Error: %v. nvcc error: %v", err, stderr.String())
+	out, err := ioutil.ReadAll(target)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read compilation output file. Error: %v", err)
 	}
+	if err := os.Remove(target.Name()); err != nil {
+		log.Printf("could not remove temporary file %v", target.Name())
+	}
+	return out, nil
+}
 
-	// fast := exec.Command("nvcc", output, arch, "-ptx", "-Xptxas", "-allow-expensive-optimizations", "-fmad=false", "-use_fast_math", src)
-	// if err := fast.Run(); err != nil {
-	// 	log.Fatal(err)
-	// }
+func packageLoc(name string) (string, error) {
+	cmd := exec.Command("go", "list", "-f", "{{.Dir}}", "-find", name)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil || stderr.Len() != 0 {
+		return "", fmt.Errorf("failed to locate %v. Error: %v. go list error: %v", name, err, stderr.String())
+	}
+	return strings.TrimSpace(stdout.String()), nil
+}
+
+func packageInWorkingDir() (string, error) {
+	cmd := exec.Command("go", "list", "-f", "{{.Name}}")
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil || stderr.Len() != 0 {
+		return "", fmt.Errorf("failed to get name of package in working directory. Error: %v. go list error: %v", err, stderr.String())
+	}
+	return strings.TrimSpace(stdout.String()), nil
+}
+
+func gofmt(path string) error {
+	cmd := exec.Command("gofmt", "-w", path)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("go imports failed with %v for %q. Error: %v", err, path, stderr.String())
+	}
+	return nil
 }
 
 func main() {
 	flag.Parse()
+
 	var devices int
 	var err error
-
 	if devices, err = cu.NumDevices(); err != nil {
 		log.Fatalf("error while finding number of devices: %+v", err)
 	}
-
 	if devices == 0 {
 		log.Fatal("No CUDA-capable devices found")
 	}
 
-	// get the lowest possible compute capability
+	// Get the lowest possible compute capability
 	major := int(^uint(0) >> 1)
 	minor := int(^uint(0) >> 1)
 	for d := 0; d < devices; d++ {
@@ -93,81 +125,80 @@ func main() {
 		}
 	}
 
-	gopath := os.Getenv("GOPATH")
-	if gopath == "" {
-		gopath = path.Join(os.Getenv("HOME"), "go")
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
 	}
-	gorgoniaLoc := path.Join(gopath, "src/gorgonia.org/gorgonia")
-	cuLoc := path.Join(gorgoniaLoc, "cuda modules/src")
-	ptxLoc := path.Join(gorgoniaLoc, "cuda modules/target")
-
-	ptxname := "%v.ptx"
-
-	matches, err := filepath.Glob(fmt.Sprintf("%v/*.cu", cuLoc))
+	cudamodules := path.Join(cwd, "cudamodules.go")
+	packageName, err := packageInWorkingDir()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, match := range matches {
-		compileCUDA(match, ptxLoc, major, minor)
+	gorgoniaLoc, err := packageLoc("gorgonia.org/gorgonia")
+	if err != nil {
+		log.Fatal(err)
+	}
+	cuLoc := path.Join(gorgoniaLoc, "cuda modules", "src", "*.cu")
+
+	matches, err := filepath.Glob(cuLoc)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	m := make(map[string][]byte)
+	funcs := make(map[string][]string)
 	for _, match := range matches {
 		name := stripExt(match)
-		ptxfile := path.Join(ptxLoc, fmt.Sprintf(ptxname, name))
-		data, _ := ioutil.ReadFile(ptxfile)
+		data, err := compileCUDA(match, major, minor)
+		if err != nil {
+			log.Fatal(err)
+		}
 		m[name] = data
-	}
 
-	funcNames := make(map[string][]string)
-	for mod, data := range m {
-		// regex
+		// Regex
 		var fns []string
-		matches := funcNameRegex.FindAllSubmatch([]byte(data), -1)
+		matches := funcNameRegex.FindAllSubmatch(data, -1)
 		for _, bs := range matches {
 			fns = append(fns, string(bs[1]))
 		}
-		funcNames[mod] = fns
+		funcs[name] = fns
 	}
 
-	cudamodules := path.Join(gorgoniaLoc, "cudamodules.go")
+	var buf bytes.Buffer
+	header := fmt.Sprintf(`// Code generated by Gorgonia cudagen. DO NOT EDIT.
+// +build cuda
+
+package %v
+
+import "gorgonia.org/gorgonia"
+`, packageName)
+	buf.WriteString(header)
+
+	buf.WriteString("func init() {\n")
+	for name := range m {
+		buf.WriteString(fmt.Sprintf("gorgonia.AddToStdLib(%q, %sPTX, []string{\"%s\"})\n", name, name, strings.Join(funcs[name], "\", \"")))
+	}
+	buf.WriteString("}\n")
+
+	for name, data := range m {
+		buf.WriteString(fmt.Sprintf("const %vPTX = `", name))
+		buf.Write(data)
+		buf.WriteString( "`\n")
+	}
+
 	f, err := os.OpenFile(cudamodules, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer f.Close()
-
-	f.Write([]byte("// +build cuda\n\npackage gorgonia\n"))
-	for name, data := range m {
-		fmt.Fprintf(f, "const %vPTX = `", name)
-		f.Write(data)
-		fmt.Fprintf(f, "`\n")
+	if _, err = buf.WriteTo(f); err != nil {
+		log.Fatalf("unable to write output to %v", cudamodules)
 	}
 
-	initFn := []byte(`func init() {
-		cudaStdLib = map[string]string {
-	`)
-	f.Write(initFn)
-	for name := range m {
-		fmt.Fprintf(f, "\"%v\": %vPTX,\n", name, name)
+	if err = gofmt(cudamodules); err != nil {
+		log.Fatal(err)
 	}
-	f.Write([]byte("}\n\t"))
 
-	f.Write([]byte("cudaStdFuncs = map[string][]string{\n"))
-	for name, fns := range funcNames {
-		fmt.Fprintf(f, "\"%v\": {", name)
-		for _, fnName := range fns {
-			fmt.Fprintf(f, "\"%v\", ", fnName)
-		}
-		fmt.Fprintf(f, "},\n")
-	}
-	f.Write([]byte("}"))
-
-	f.Write([]byte("}\n"))
-
-	cmd := exec.Command("gofmt", "-w", gorgoniaLoc+"/cudamodules.go")
-	if err = cmd.Run(); err != nil {
-		log.Fatalf("Go imports failed with %v for %q", err, gorgoniaLoc+"/cudamodules.go")
-	}
+	fmt.Printf("Created %v\n", cudamodules)
 }
