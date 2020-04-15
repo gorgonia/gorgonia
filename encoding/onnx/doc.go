@@ -1,2 +1,4 @@
-// Package gorgonnx creates a temporary graph that is compatible with backend.ComputationBackend.
+// Package gorgonnx is a transition package that allows importing an onnx definition and to create a graph structure.
+//
+// This package is experimental.
 package gorgonnx

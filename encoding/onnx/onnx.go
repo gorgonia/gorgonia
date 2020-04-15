@@ -5,6 +5,7 @@ import (
 	"gorgonia.org/gorgonia"
 )
 
+// UnmarshalONNX creates an ExprGraph from a model serialized in ONNX format
 func UnmarshalONNX(b []byte) (*gorgonia.ExprGraph, error) {
 	backend := newGraph()
 	model := onnx.NewModel(backend)
