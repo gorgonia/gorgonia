@@ -92,7 +92,7 @@ func (*dummyOp) String() string {
 func TestPopulateExprgraph_simple(t *testing.T) {
 	register("dummy", newDummyOp)
 	tensorType := gorgonia.TensorType{Dims: 1, Of: hm.TypeVariable('a')}
-	g := NewGraph()
+	g := newGraph()
 	g.exprgraph = gorgonia.NewGraph()
 	// create a simple graph:
 	// output -> dummyOp1
@@ -190,7 +190,7 @@ func TestPopulateExprgraph_complex(t *testing.T) {
 
 	tensorType := gorgonia.TensorType{Dims: 1, Of: hm.TypeVariable('a')}
 	//return hm.NewFnType(t, t)
-	g := NewGraph()
+	g := newGraph()
 	g.exprgraph = gorgonia.NewGraph()
 	// create a simple graph:
 	// output -> dummyOp1
