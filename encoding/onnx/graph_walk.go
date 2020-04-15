@@ -10,7 +10,7 @@ import (
 )
 
 // populateExprgraph by walking through the graph
-func (g *Graph) populateExprgraph() error {
+func (g *graph) populateExprgraph() error {
 	// Walk the graph
 	itN := g.Nodes()
 	nodes := make([]*Node, 0, itN.Len())
@@ -54,7 +54,7 @@ func (g *Graph) populateExprgraph() error {
 }
 
 // applyOperation creates a new node on the exprgraph
-func (g *Graph) applyOperation(n *Node) error {
+func (g *graph) applyOperation(n *Node) error {
 	// Is this node already in the ExprGraph?
 	if n.gorgoniaNode != nil {
 		return fmt.Errorf("unsupported case: node is already in the exprgraph")

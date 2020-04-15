@@ -6,8 +6,8 @@ import (
 	"gorgonia.org/tensor"
 )
 
-// Node is compatible with graph.Node and onnx.DataCarrier
-type Node struct {
+// node is compatible with graph.Node and onnx.DataCarrier
+type node struct {
 	id        int64
 	t         tensor.Tensor
 	operation *onnx.Operation
@@ -17,12 +17,12 @@ type Node struct {
 }
 
 // ID to fulfill the graph.Node interface
-func (n *Node) ID() int64 {
+func (n *node) ID() int64 {
 	return n.id
 }
 
 // SetTensor assign the tensor N to the underlying node
-func (n *Node) SetTensor(t tensor.Tensor) error {
+func (n *node) SetTensor(t tensor.Tensor) error {
 	n.t = t
 	if n.gorgoniaNode != nil {
 		err := gorgonia.Let(n.gorgoniaNode, t)
@@ -34,6 +34,6 @@ func (n *Node) SetTensor(t tensor.Tensor) error {
 }
 
 // GetTensor value from the node
-func (n *Node) GetTensor() tensor.Tensor {
+func (n *node) GetTensor() tensor.Tensor {
 	return n.t
 }
