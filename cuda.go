@@ -33,10 +33,15 @@ const (
 	scalarAlign = 8
 )
 
-var cudaStdLib map[string]string
-var cudaStdFuncs map[string][]string
+//go:generate cudagen -same-module
 
-//go:generate cudagen
+var cudaStdLib []cudaLib
+
+type cudaLib struct {
+	name  string
+	data  string
+	funcs []string
+}
 
 // CUDAMachine is a representation of CUDA capable VMs.
 type CUDAMachine interface {
@@ -293,8 +298,12 @@ func (m *ExternMetadata) setEngine(e tensor.Engine) {}
 
 // AddToStdLib allows for custom ops to be included into the "stdlib" of CUDA functions, so that when the VMs are created, they're loaded automatically
 // without having to specify extra loading.
-func AddToStdLib(name, data string) {
-	cudaStdLib[name] = data
+func AddToStdLib(name, data string, funcs []string) {
+	cudaStdLib = append(cudaStdLib, cudaLib{
+		name:  name,
+		data:  data,
+		funcs: funcs,
+	})
 }
 
 func init() {
