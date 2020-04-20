@@ -130,6 +130,7 @@ func main() {
 
 	vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...))
 	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)))
+	defer vm.Close()
 
 	if err = vm.RunAll(); err != nil {
 		log.Fatalf("Failed %v", err)
