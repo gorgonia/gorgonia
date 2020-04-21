@@ -152,7 +152,7 @@ func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 	if a, b, err = Broadcast(output, t, bcpat); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
-	if eq, err = Eq(a, b, false); err != nil {
+	if eq, err = Eq(a, b, true); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
 
@@ -160,7 +160,7 @@ func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 		return nil, errors.Wrap(err, operationError)
 	}
 	retVal = make(Nodes, 1)
-	if retVal[0], err = Mul(a2, b2); err != nil {
+	if retVal[0], err = HadamardProd(a2, b2); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
 	return
