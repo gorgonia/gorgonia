@@ -33,6 +33,7 @@ func main() {
 	x := gorgonia.NodeFromAny(g, xT, gorgonia.WithName("x"))
 	y, err := gorgonia.Mul(x, theta)
 	machine := gorgonia.NewTapeMachine(g)
+	defer machine.Close()
 	values[4] = 1.0
 	for {
 		values[0] = getInput("sepal length")
