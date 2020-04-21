@@ -12,7 +12,7 @@ import (
 )
 
 func TestDevCUDA(t *testing.T) {
-	 t.SkipNow()
+	t.SkipNow()
 
 	g := NewGraph()
 	x := NewMatrix(g, Float64, WithShape(1024, 100), WithName("x"), WithInit(ValuesOf(2.0)))
@@ -55,7 +55,6 @@ func TestDevCUDA(t *testing.T) {
 	if assertGraphEngine(t, g, stdengType); t.Failed() {
 		t.FailNow()
 	}
-
 }
 
 func TestExternMetadata_Transfer(t *testing.T) {
