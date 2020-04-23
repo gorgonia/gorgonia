@@ -62,16 +62,17 @@ func BinaryXent(output, target *Node) (retVal *Node, err error) {
 // Dropout is a convenience function to implement dropout.
 // It uses randomly zeroes out a *Tensor with a probability drawn from
 // a uniform distribution
-func Dropout(x *Node, prob float64) (retVal *Node, err error) {
-	return dropout(x, prob, UniformRandomNode)
+func Dropout(x *Node, dropProb float64) (retVal *Node, err error) {
+	return dropout(x, dropProb, UniformRandomNode)
 }
 
 type dropoutRandFn func(g *ExprGraph, dt tensor.Dtype, low, high float64, shape ...int) *Node
 
-func dropout(x *Node, prob float64, randFn dropoutRandFn) (retVal *Node, err error) {
-	if prob == 0.0 {
+func dropout(x *Node, dropProb float64, randFn dropoutRandFn) (retVal *Node, err error) {
+	if dropProb == 0.0 {
 		return x, nil
 	}
+	keepProb := 1.0 - dropProb
 
 	var dt tensor.Dtype
 	if dt, err = dtypeOf(x.t); err != nil {
@@ -81,9 +82,9 @@ func dropout(x *Node, prob float64, randFn dropoutRandFn) (retVal *Node, err err
 	var pr Value
 	switch dt {
 	case Float64:
-		pr, _ = anyToScalar(prob)
+		pr, _ = anyToScalar(keepProb)
 	case Float32:
-		pr, _ = anyToScalar(float32(prob))
+		pr, _ = anyToScalar(float32(keepProb))
 	default:
 		return nil, errors.Errorf(nyiTypeFail, "Dropout()", dt)
 	}
@@ -91,7 +92,7 @@ func dropout(x *Node, prob float64, randFn dropoutRandFn) (retVal *Node, err err
 	p := NewConstant(pr)
 
 	m := randFn(x.g, dt, 0, 1, x.shape...)
-	if retVal, err = Gt(m, p, true); err != nil {
+	if retVal, err = Lt(m, p, true); err != nil {
 		return nil, errors.Wrap(err, "Greater Than failed")
 	}
 
