@@ -110,6 +110,7 @@ func (sda *StackedDA) Pretrain(x tensor.Tensor, epoch int) (err error) {
 
 		var m VM
 		m = NewTapeMachine(sda.g, WithPrecompiled(prog, locMap))
+		defer m.Close()
 		machines = append(machines, m)
 	}
 

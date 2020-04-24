@@ -23,5 +23,7 @@ _testmain.go
 *.test
 *.prof
 
+cudamodules.go
+
 # vendor
 /vendor

@@ -36,6 +36,7 @@ func main() {
 	}
 
 	tm := G.NewTapeMachine(g)
+	defer tm.Close()
 	st := time.Now()
 	if err := tm.RunAll(); err != nil {
 		log.Fatalf("%+v", err)
