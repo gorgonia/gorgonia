@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"hash"
 	"hash/fnv"
-	"log"
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/chewxy/hm"
@@ -391,7 +390,6 @@ func (n *Node) Clone() (retVal interface{}) {
 	if n.boundTo != nil {
 		var err error
 		if n2.boundTo, err = CloneValue(n.boundTo); err != nil {
-			log.Printf("Unable to clone %v\n%T\n%v", n, n.boundTo, n.boundTo)
 			panic(err)
 		}
 	}
@@ -475,7 +473,7 @@ func (n *Node) Strides() []int {
 		case tensor.Tensor:
 			return v.Strides()
 		default:
-			log.Printf("Unhandled type for Strides(): %T. Using fallback method and assuming dense tensor types", n.boundTo)
+			panic(fmt.Sprintf("Unhandled type for Strides(): %T. Using fallback method and assuming dense tensor types", n.boundTo))
 		}
 	}
 	return n.shape.CalcStrides()
@@ -631,9 +629,6 @@ func (n *Node) String() string {
 
 // TODO: check type, check shape, check if needsGrad -> promote to dualValue
 func (n *Node) bind(v Value) error {
-	// pc, _, _, _ := runtime.Caller(1)
-	// log.Printf("binding to %p. Called by %v", n, runtime.FuncForPC(pc).Name())
-
 	if n.boundTo == nil {
 		n.boundTo = v
 		return nil
@@ -651,7 +646,6 @@ func (n *Node) bind(v Value) error {
 			}
 			// n.boundTo = vdv
 			// return nil
-			log.Printf("n %p", n)
 			panic("Undefined behaviour") // no seriously there literally is no defined behaviour of what should the right thing be. I'll come back to this TODO.
 		}
 		dv.Value = v

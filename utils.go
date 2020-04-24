@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"fmt"
 	"hash/fnv"
-	"log"
 	"math"
 
 	"github.com/chewxy/math32"
@@ -204,7 +203,6 @@ func hasNaN(v Value, dev Device) bool {
 			ok, _ := e.HasNaN(vt) // BUG: errors not checked
 			return ok
 		}
-		log.Printf("Value's engine %T", vt.Engine())
 
 		dt := vt.Dtype()
 		if dt != tensor.Float64 && dt != tensor.Float32 {
