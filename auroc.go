@@ -230,6 +230,10 @@ func (p VposSlice) String() (r string) {
 // margin = 0.2 and power = 3; but
 // these should be optimized in an outer loop.
 //
+// Yan: "In general, we can choose a value between 0.1
+// and 0.7 for margin. Also, we have found that power = 2 or 3
+// achieves similar, and generally the best results."
+//
 // INVAR: power > 1.0
 // INVAR: 0 < margin <= 1
 // These invariants should be checked by the caller for speed and
