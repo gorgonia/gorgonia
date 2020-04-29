@@ -14,7 +14,7 @@ type TargetRange struct {
 	Thresh float64
 
 	// should we compute the U_R objective function, a differentiable
-	// approximation to the Area under ROC?
+	// approximation to the Area under ROC, but designed to be minimized.
 	//
 	// Not implemented: actual optimization by using the derivative
 	// of the objective with respect to inputs X. Hence think of
@@ -24,8 +24,8 @@ type TargetRange struct {
 	//
 	ComputeObjective bool
 	// If ComputeObjective is true, then Margin and Power must be set.
-	Margin float64 // Margin must be > 0, and Margin must <= 1.
-	Power  float64 // Power must be > 1.
+	Margin float64 // Margin must be > 0, and Margin must <= 1.  Starting guess might be 0.2
+	Power  float64 // Power must be > 1. Starting guess might be 3.0
 }
 
 // AUCroc is returned by AreaUnderROC() call.
@@ -230,12 +230,17 @@ func (p VposSlice) String() (r string) {
 // margin = 0.2 and power = 3; but
 // these should be optimized in an outer loop.
 //
+// INVAR: power > 1.0
+// INVAR: 0 < margin <= 1
+// These invariants should be checked by the caller for speed and
+// to allow potential inlning. They are not checked within R1().
+//
 func R1(pred1, pred0, power, margin float64) float64 {
 	diff := pred1 - pred0
 	if diff >= margin {
 		return 0
 	}
-	tmp := -(diff - margin)
+	tmp := margin - diff // notice it will always be positive since diff < margin now.
 	switch power {
 	case 2.0:
 		return tmp * tmp
