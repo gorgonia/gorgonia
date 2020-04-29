@@ -222,8 +222,7 @@ func (p VposSlice) String() (r string) {
 // The two meta-parameters for the optimization are margin and power:
 // a) 0 < margin <= 1 improves generalization; and
 // b) power > 1 controls how strongly the margin minus the difference
-// between pred1 and pred0 is amplified (we want it to be large, but
-// perhaps not overly influenced by outliers);
+// between pred1 and pred0 is amplified;
 // the margin-difference is raised to power before
 // being returned.
 //
