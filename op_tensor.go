@@ -598,7 +598,7 @@ func (op *sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 		if v.IsScalar() {
 			retVal, _ = anyToScalar(v.ScalarValue())
 		} else {
-			retVal = v
+			retVal = v.(tensor.View).Materialize()
 		}
 	case Scalar:
 		return nil, errors.New("Cannot slice a scalar value")

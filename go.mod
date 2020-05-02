@@ -5,7 +5,7 @@ go 1.12
 require (
 	github.com/awalterschulze/gographviz v0.0.0-20190221210632-1e9ccb565bca
 	github.com/chewxy/hm v1.0.0
-	github.com/chewxy/math32 v1.0.4
+	github.com/chewxy/math32 v1.0.5
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/go-gota/gota v0.10.1
 	github.com/leesper/go_rng v0.0.0-20171009123644-5344a9259b21

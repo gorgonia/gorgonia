@@ -282,7 +282,6 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 			}
 		}
 	}
-
 	doneChan <- struct{}{}
 }
 

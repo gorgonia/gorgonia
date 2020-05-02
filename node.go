@@ -298,6 +298,10 @@ func (n *Node) Err() error { return nil }
 
 func (n *Node) DataSize() int { return n.Shape().TotalSize() }
 
+func (n *Node) DerivOf() Nodes { return n.derivOf }
+
+func (n *Node) Deriv() *Node { return n.deriv }
+
 // helper functions to help compilation process
 func (n *Node) isArg() bool      { return n.op == nil }
 func (n *Node) isInput() bool    { return (n.isArg() || n.isRandom()) && !n.isStmt }

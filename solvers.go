@@ -29,15 +29,15 @@ func newCachedDV(n ValueGrad, weights, grad Value, zero bool) (cached *dualValue
 	cached = new(dualValue)
 	if cached.Value, err = CloneValue(weights); err != nil {
 		if nm, ok := n.(Namer); ok {
-			return nil, errors.Errorf("Failed to clone weights of %v", nm.Name())
+			return nil, errors.Wrapf(err, "Failed to clone weights of %v", nm.Name())
 		}
-		return nil, errors.New("Failed to clone weights")
+		return nil, errors.Wrap(err, "Failed to clone weights")
 	}
 	if cached.d, err = CloneValue(grad); err != nil {
 		if nm, ok := n.(Namer); ok {
-			return nil, errors.Errorf("Failed to clone grad of %v", nm.Name())
+			return nil, errors.Wrapf(err, "Failed to clone grad of %v", nm.Name())
 		}
-		return nil, errors.New("Failed to clone grad")
+		return nil, errors.Wrap(err, "Failed to clone grad")
 	}
 	if zero {
 		cached.Value = ZeroValue(cached.Value)
