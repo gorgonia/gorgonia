@@ -39,7 +39,6 @@ func binOpNode(op BinaryOp, a, b *Node) (retVal *Node, err error) {
 		leaveLogScope()
 	}
 	stabLogf("No bin op stabilization")
-
 	return ApplyOp(op, a, b)
 }
 

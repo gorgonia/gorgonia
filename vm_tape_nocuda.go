@@ -32,6 +32,13 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	}
 	m.leaveLogScope()
 
+	// check if the destination has already been allocated
+	var usePrealloc bool
+	dest := instr.writeTo.id
+	if m.cpumem[dest] != nil {
+		usePrealloc = true
+	}
+
 	// Execute
 	var v Value
 	switch {
@@ -43,6 +50,19 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 			}
 		} else {
 			// TODO: maybe warn?
+			if v, err = instr.op.Do(inputs...); err != nil {
+				return errors.Wrap(err, opDoFail)
+			}
+		}
+	case usePrealloc:
+		if pd, ok := instr.op.(UsePreallocDoer); ok {
+			p := m.cpumem[instr.writeTo.id]
+			if v, err = pd.UsePreallocDo(p, inputs...); err != nil {
+				if v, err = instr.op.Do(inputs...); err != nil {
+					return errors.Wrap(err, opDoFail)
+				}
+			}
+		} else {
 			if v, err = instr.op.Do(inputs...); err != nil {
 				return errors.Wrap(err, opDoFail)
 			}
@@ -72,7 +92,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 
 	// Write
 	setEngine(v, m.Engine)
-	dest := instr.writeTo.id
+
 	m.cpumem[dest] = v
 	node := m.p.g.Node(instr.id).(*Node)
 

@@ -132,7 +132,7 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 	return diffSet, nil
 }
 
-// Backpropagate backpropagates errors by performing revers-emode symbolic differentiation, starting from the outputs, and working its way towads the inputs.
+// Backpropagate backpropagates errors by performing reverse-mode symbolic differentiation, starting from the outputs, and working its way towads the inputs.
 //
 // This is the rough algorithm:
 //		1. Filter out nodes that are unreachable
@@ -192,14 +192,14 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 	wrtSet := wrt.mapSet()
 	badWRTs := wrtSet.Difference(affectsOutput)
 	if len(badWRTs) > 0 {
-		return nil, SymDiffError{nodes: badWRTs.ToSlice(), err: errors.New("Non Differentiable WRTs")}
+		return nil, SymDiffError{nodes: badWRTs.ToSlice(), err: errors.Errorf("Non Differentiable WRTs: %v", badWRTs)}
 	}
 
 	outputSet := outputs.mapSet()
 	badOutputs := outputSet.Difference(affectedByOutput)
 	if len(badOutputs) > 0 {
 		symdiffLogf("badOutputs: %#v", badOutputs)
-		return nil, SymDiffError{nodes: badOutputs.ToSlice(), err: errors.New("Non-Differentable Outputs")}
+		return nil, SymDiffError{nodes: badOutputs.ToSlice(), err: errors.Errorf("Non-Differentable Outputs: %v", badOutputs)}
 	}
 
 	// map a node to a list of gradient terms
