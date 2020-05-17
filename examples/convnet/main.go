@@ -223,9 +223,9 @@ func main() {
 	var costVal gorgonia.Value
 	gorgonia.Read(cost, &costVal)
 
-	// if _, err = gorgonia.Grad(cost, m.learnables()...); err != nil {
-	// 	log.Fatal(err)
-	// }
+	if _, err = gorgonia.Grad(cost, m.learnables()...); err != nil {
+		log.Fatal(err)
+	}
 
 	// debug
 	// ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
@@ -234,7 +234,7 @@ func main() {
 	// vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...), gorgonia.WithLogger(logger), gorgonia.WithWatchlist())
 
 	prog, locMap, _ := gorgonia.Compile(g)
-	log.Printf("%v", prog)
+	//log.Printf("%v", prog)
 
 	vm := gorgonia.NewTapeMachine(g, gorgonia.WithPrecompiled(prog, locMap), gorgonia.BindDualValues(m.learnables()...))
 	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)))
@@ -289,9 +289,11 @@ func main() {
 			gorgonia.Let(x, xVal)
 			gorgonia.Let(y, yVal)
 			if err = vm.RunAll(); err != nil {
-				log.Fatalf("Failed at epoch  %d: %v", i, err)
+				log.Fatalf("Failed at epoch  %d, batch %d. Error: %v", i, b, err)
 			}
-			solver.Step(gorgonia.NodesToValueGrads(m.learnables()))
+			if err = solver.Step(gorgonia.NodesToValueGrads(m.learnables())); err != nil {
+				log.Fatalf("Failed to update nodes with gradients at epoch %d, batch %d. Error %v", i, b, err)
+			}
 			vm.Reset()
 			bar.Increment()
 		}
