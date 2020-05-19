@@ -33,6 +33,40 @@ func transposeBatch2D(shape tensor.Shape) tensor.Shape {
 	return retVal
 }
 
+// calcBroadcastShape calculates the new shape of a given Node and broadcast axes.
+// Note that `a` will be the *Node reshaped to the newShape.
+func calcBroadcastShape(a *Node, expectedDims int, broadcastAlong []int) (newShape tensor.Shape) {
+	shp := a.Shape()
+	if shp.Dims() == expectedDims {
+		newShape = shp.Clone()
+	} else {
+		newShape = make(tensor.Shape, expectedDims)
+		for _, i := range broadcastAlong {
+			newShape[i] = 1
+		}
+	}
+
+	switch {
+	case a.Shape().Eq(tensor.ScalarShape()):
+		for i := range newShape {
+			newShape[i] = 1
+		}
+	case shp.Dims() == expectedDims:
+	default:
+		for _, s := range a.Shape() {
+			// search for first non 0
+			for j := range newShape {
+				if newShape[j] == 0 {
+					newShape[j] = s
+					break
+				}
+			}
+		}
+	}
+
+	return
+}
+
 // KeepDims is a function that ensures that input and output dimensions are the same though the shape may change.
 //
 // The expandLeft flag in the function indicates if any shape expansion should be done leftwards or rightwards.

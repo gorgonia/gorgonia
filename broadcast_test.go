@@ -63,7 +63,7 @@ func TestBroadcast(t *testing.T) {
 	}
 	z, err = Add(a, b)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Error: %v. a %v + b %v", err, a.Shape(), b.Shape())
 	}
 	if _, _, err = Broadcast(x, y, NewBroadcastPattern(nil, []byte{1})); err != nil {
 		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)

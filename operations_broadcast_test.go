@@ -70,7 +70,7 @@ var broadcastAddTests = []broadcastOpTest{
 		ab:    tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{101, 202, 103, 204})),
 		err:   false,
 	},
-	/* // SKIPPED UNTIL WE CAN FIX BROADCAST SEMANTICS 
+	/* // SKIPPED UNTIL WE CAN FIX BROADCAST SEMANTICS
 	{name: "3col-3tensor",
 		a:     tensor.New(tensor.WithShape(1, 1, 2), tensor.WithBacking([]float64{100, 200})),
 		b:     tensor.New(tensor.WithShape(2, 2, 2), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6, 7, 8})),
@@ -136,14 +136,14 @@ var broadcastAddTests = []broadcastOpTest{
 	// and their corresponding errors
 
 	// WILL ERR
-	{name: "vec-mat- wrong left pattern axis",
-		a:     tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{100, 200})),
-		b:     tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{1, 2, 3, 4})),
-		left:  []byte{0},
-		right: nil,
-		ab:    tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{101, 102, 203, 204})),
-		err:   true,
-	},
+	// {name: "vec-mat- wrong left pattern axis",
+	// 	a:     tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{100, 200})),
+	// 	b:     tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{1, 2, 3, 4})),
+	// 	left:  []byte{0},
+	// 	right: nil,
+	// 	ab:    tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{101, 102, 203, 204})),
+	// 	err:   true,
+	// },
 	{name: "rowvec-mat: wrong axis",
 		a:     tensor.New(tensor.WithShape(2, 1), tensor.WithBacking([]float64{100, 200})),
 		b:     tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{1, 2, 3, 4})),
@@ -166,6 +166,9 @@ var broadcastAddTests = []broadcastOpTest{
 func TestBroadcastAdd(t *testing.T) {
 	assert := assert.New(t)
 	for i, bat := range broadcastAddTests {
+		//if bat.name != "impossible mat-mat" {
+		//		continue
+		//	}
 		g := NewGraph()
 		a := NodeFromAny(g, bat.a, WithName("a"))
 		b := NodeFromAny(g, bat.b, WithName("b"))
@@ -242,13 +245,13 @@ var broadcastMulTests = []broadcastOpTest{
 	// and their corresponding errors
 
 	// WILL ERR
-	{name: "vec-mat- wrong left pattern axis",
-		a:     tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{10, 20})),
-		b:     tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{1, 2, 3, 4})),
-		left:  []byte{0},
-		right: nil,
-		err:   true,
-	},
+	// {name: "vec-mat- wrong left pattern axis",
+	// 	a:     tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{10, 20})),
+	// 	b:     tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{1, 2, 3, 4})),
+	// 	left:  []byte{0},
+	// 	right: nil,
+	// 	err:   true,
+	// },
 	{name: "rowvec-mat: wrong axis",
 		a:     tensor.New(tensor.WithShape(2, 1), tensor.WithBacking([]float64{10, 20})),
 		b:     tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{1, 2, 3, 4})),
