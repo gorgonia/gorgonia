@@ -3,10 +3,11 @@ package op
 import (
 	"fmt"
 	"hash"
+	"runtime/trace"
 
 	"github.com/chewxy/hm"
-	"gorgonia.org/tensor"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/tensor"
 )
 
 // An Op is a symbolic representation of an operation
@@ -14,13 +15,15 @@ import (
 //
 // All Ops have type signatures that look like this:
 //		OpName :: (Floats a) ⇒ Tensor a → Tensor a → Tensor a
+//
+// All Ops need to know somethings about themselves - there is no support for generic Ops.
 type Op interface {
 	/* Graph Building Related Methods */
 
-	// Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime
+	// Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime.
 	Arity() int
 
-	// Informs the type of the Op (not the node). This will be used by the type system to infer the final type of the node
+	// Type informs the type of the Op (not the node). This will be used by the type system to infer the final type of the node.
 	Type() hm.Type
 
 	// returns the output shape as a function of the inputs
@@ -28,16 +31,27 @@ type Op interface {
 
 	/* Machine related */
 
-	// executes the op
+	// Do executes the op.
 	Do(...values.Value) (values.Value, error)
+
+	/* Operational stuff */
+
+	// Task generates a trace.Task for the Op. The Op is responsible for naming the task.
+	//
+	// In general it is best to just name it in the most general way possible.
+	//
+	// e.g. if a op is a reshape operation, then the standard implementation would have the
+	// target shape as part of the name (e.g. "reshape(2,3)"). In this case it's best to just
+	// call the task name "reshape", instead of "reshape(2,3)"
+	Task() *trace.Task
 
 	/* Analysis Related Methods */
 
-	// indicates if the Op will return a pointer (allowing possible inplace edits) or by value
-	// if it's false, the return value of the Op will be a copy of its input
+	// ReturnsPtr indicates if the Op will return a pointer (allowing possible inplace edits) or by value.
+	// If it's false, the return value of the Op will be a copy of its input.
 	ReturnsPtr() bool
 
-	// Does this op potentially call external (cgo or cuda) functions (thereby requiring extra overhead for Go's trampolining thing)
+	// CallsExtern informs if an op potentially call external (cgo or cuda) functions (thereby requiring extra overhead for Go's trampolining thing)
 	CallsExtern() bool
 
 	// overwriteInput() is a method which states which input the output will be overwriting.

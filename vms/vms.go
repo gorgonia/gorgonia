@@ -2,6 +2,7 @@ package vms
 
 import (
 	"bytes"
+	"context"
 	"log"
 	"os"
 
@@ -20,7 +21,10 @@ import (
 // The *lispMachine allows for graphs to be dynamically built and executed upon. The tradeoff is that executing a graph on *lispMachine
 // is generally slower than on *tapeMachine, given the same static "image" of a graph.
 type VM interface {
-	RunAll() error
+	// Run runs the VM with the given context.
+	Run(ctx context.Context) error
+
+	// Reset resets the state of the machine.
 	Reset()
 
 	// Close closes all the machine resources (CUDA, if any, loggers if any)

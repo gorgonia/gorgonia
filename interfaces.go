@@ -7,6 +7,10 @@ import (
 	"gorgonia.org/tensor"
 )
 
+var (
+	_ Tensor = tensor.New()
+)
+
 // Tensor is an interface that describes an ndarray
 type Tensor interface {
 	// info about the ndarrayN
@@ -38,10 +42,4 @@ type hashWriter interface {
 
 type arityer interface {
 	Arity() int
-}
-
-// Result is a future Gorgonia thing
-type Result interface {
-	Tensor() Tensor
-	Err() error
 }

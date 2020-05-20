@@ -186,7 +186,7 @@ func SoftMax(a *Node, axes ...int) (retVal *Node, err error) {
 
 	// reshape if necessary
 	ss := sum.Shape()
-
+	diff := exp.Shape().Dims() - ss.Dims()
 
 	// TODO: multirank softmax
 	if diff > 0 {
