@@ -1,0 +1,294 @@
+package gorgonia // import "gorgonia.org/gorgonia"
+
+Package gorgonia is a library that helps facilitate machine learning in Go.
+Write and evaluate mathematical equations involving multidimensional arrays
+easily. Do differentiation with them just as easily.
+
+const CUDA = false
+const DEBUG = false
+var Float64 = tensor.Float64 ...
+func Abs(a *Node) (*Node, error)
+func Add(a, b *Node) (*Node, error)
+func ApplyOp(op Op, children ...*Node) (retVal *Node, err error)
+func ApplyOpWithName(op Op, name string, children ...*Node) (retVal *Node, err error)
+func At(a *Node, coords ...int) (retVal *Node, err error)
+func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error)
+func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β *Node, op *BatchNormOp, err error)
+func BatchedMatMul(a, b *Node, transes ...bool) (retVal *Node, err error)
+func BinaryXent(output, target *Node) (retVal *Node, err error)
+func Binomial32(trials, prob float64, s ...int) []float32
+func Binomial64(trials, prob float64, s ...int) []float64
+func Broadcast(a, b *Node, pattern BroadcastPattern) (*Node, *Node, error)
+func BroadcastAdd(a, b *Node, leftPattern, rightPattern []byte) (*Node, error)
+func BroadcastEq(a, b *Node, retSame bool, leftPattern, rightPattern []byte) (*Node, error)
+func BroadcastGt(a, b *Node, retSame bool, leftPattern, rightPattern []byte) (*Node, error)
+func BroadcastGte(a, b *Node, retSame bool, leftPattern, rightPattern []byte) (*Node, error)
+func BroadcastHadamardDiv(a, b *Node, leftPattern, rightPattern []byte) (*Node, error)
+func BroadcastHadamardProd(a, b *Node, leftPattern, rightPattern []byte) (*Node, error)
+func BroadcastLt(a, b *Node, retSame bool, leftPattern, rightPattern []byte) (*Node, error)
+func BroadcastLte(a, b *Node, retSame bool, leftPattern, rightPattern []byte) (*Node, error)
+func BroadcastNe(a, b *Node, retSame bool, leftPattern, rightPattern []byte) (*Node, error)
+func BroadcastPow(a, b *Node, leftPattern, rightPattern []byte) (*Node, error)
+func BroadcastSub(a, b *Node, leftPattern, rightPattern []byte) (*Node, error)
+func Ceil(a *Node) (*Node, error)
+func CheckOne(in Input) error
+func CloneValue(v Value) (Value, error)
+func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
+func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap map[*Node]register, err error)
+func Concat(axis int, ns ...*Node) (retVal *Node, err error)
+func Conv1d(in, filter *Node, kernel, pad, stride, dilation int) (*Node, error)
+func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []int) (retVal *Node, err error)
+func Copy(dest, src Value) (Value, error)
+func Cos(a *Node) (*Node, error)
+func Cube(a *Node) (*Node, error)
+func DebugDerives()
+func DimSizersToShapes(ds []DimSizer) ([]tensor.Shape, error)
+func Div(a, b *Node) (retVal *Node, err error)
+func DontDebugDerives()
+func Dropout(x *Node, dropProb float64) (retVal *Node, err error)
+func Eq(a, b *Node, retSame bool) (*Node, error)
+func Exp(a *Node) (*Node, error)
+func Expm1(a *Node) (*Node, error)
+func Floor(a *Node) (*Node, error)
+func Gaussian32(mean, stdev float64, s ...int) []float32
+func Gaussian64(mean, stdev float64, s ...int) []float64
+func GlobalAveragePool2D(x *Node) (*Node, error)
+func GlorotEtAlN32(gain float64, s ...int) []float32
+func GlorotEtAlN64(gain float64, s ...int) []float64
+func GlorotEtAlU32(gain float64, s ...int) []float32
+func GlorotEtAlU64(gain float64, s ...int) []float64
+func Grad(cost *Node, WRTs ...*Node) (retVal Nodes, err error)
+func GraphCollisionStats() (int, int, int)
+func Gt(a, b *Node, retSame bool) (*Node, error)
+func Gte(a, b *Node, retSame bool) (*Node, error)
+func HadamardDiv(a, b *Node) (*Node, error)
+func HadamardProd(a, b *Node) (*Node, error)
+func HeEtAlN64(gain float64, s ...int) []float64
+func HeEtAlU64(gain float64, s ...int) []float64
+func Im2Col(n *Node, kernel, pad, stride, dilation tensor.Shape) (retVal *Node, err error)
+func Inverse(a *Node) (*Node, error)
+func InverseSqrt(a *Node) (*Node, error)
+func KeepDims(a *Node, expandLeft bool, fn func(a *Node) (*Node, error)) (*Node, error)
+func LeakyRelu(x *Node, alpha float64) (*Node, error)
+func Let(n *Node, be interface{}) error
+func Lift1(fn func(a *Node) (*Node, error)) func(a Input) Result
+func Lift1Axial(fn func(a *Node, axes ...int) (*Node, error)) func(a Input, axes ...int) Result
+func Lift2(fn func(a, b *Node) (*Node, error)) func(a, b Input) Result
+func Lift2Broadcast(fn func(a, b *Node, pat1, pat2 []byte) (*Node, error)) func(a, b Input, pat1, pat2 []byte) Result
+func Log(a *Node) (*Node, error)
+func Log1p(a *Node) (*Node, error)
+func Log2(a *Node) (*Node, error)
+func LogSumExp(a *Node, axis int) (retVal *Node, err error)
+func Lt(a, b *Node, retSame bool) (*Node, error)
+func Lte(a, b *Node, retSame bool) (*Node, error)
+func Max(a *Node, along ...int) (retVal *Node, err error)
+func MaxPool1D(x *Node, kernel, pad, stride int) (*Node, error)
+func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error)
+func Mean(a *Node, along ...int) (retVal *Node, err error)
+func Mish(a *Node) (retVal *Node, err error)
+func Mul(a, b *Node) (retVal *Node, err error)
+func Ne(a, b *Node, retSame bool) (*Node, error)
+func Neg(a *Node) (*Node, error)
+func NegNegOptimization(a *Node) (retVal *Node, err error)
+func NodesFromInputs(xs ...Input) (Nodes, error)
+func Norm(a *Node, axis, p int) (retVal *Node, err error)
+func OuterProd(a, b *Node) (retVal *Node, err error)
+func Pow(a, b *Node) (*Node, error)
+func Rectify(x *Node) (retVal *Node, err error)
+func ReduceAdd(nodes Nodes, opts ...NodeConsOpt) (retVal *Node, err error)
+func ReduceMul(nodes Nodes, opts ...NodeConsOpt) (retVal *Node, err error)
+func Reshape(n *Node, to tensor.Shape) (retVal *Node, err error)
+func ReturnNode(n *Node)
+func ReturnType(t hm.Type)
+func S(start int, opt ...int) tensor.Slice
+func SetDerivOf(deriv, of *Node)
+func SetOptimizationLevel(i int)
+func Sigmoid(a *Node) (*Node, error)
+func Sign(a *Node) (*Node, error)
+func Sin(a *Node) (*Node, error)
+func SizeOf(axis int, x *Node) (retVal *Node, err error)
+func Slice(n *Node, slices ...tensor.Slice) (retVal *Node, err error)
+func SoftMax(a *Node, axes ...int) (retVal *Node, err error)
+func Softplus(a *Node) (*Node, error)
+func Sort(g *ExprGraph) (sorted Nodes, err error)
+func Sqrt(a *Node) (*Node, error)
+func Square(a *Node) (*Node, error)
+func StableSoftMax(a *Node) (retVal *Node, err error)
+func Sub(a, b *Node) (*Node, error)
+func Sum(a *Node, along ...int) (retVal *Node, err error)
+func Tanh(a *Node) (*Node, error)
+func Tensordot(aAxes []int, bAxes []int, a, b *Node) (retVal *Node, err error)
+func TransformResult(ins ...Input) func(a Input, err error) Result
+func Transpose(n *Node, axes ...int) (retVal *Node, err error)
+func TypeOf(v Value) hm.Type
+func Unconcat(a *Node, along int, n int) (Nodes, error)
+func Uniform32(low, high float64, s ...int) []float32
+func Uniform64(low, high float64, s ...int) []float64
+func UnsafeLet(n *Node, be interface{}) error
+func UnstableSort(g *ExprGraph) (sorted Nodes, err error)
+func Use(b BLAS)
+func UseNonStable()
+func UseStabilization()
+func ValueClose(a, b Value) bool
+func ValueEq(a, b Value) bool
+func WalkGraph(start *Node) <-chan *Node
+func Err(e error) gErr
+func WithGraphName(name string) graphconopt
+func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine
+func FmtNodeMap(m interface{}) mapFmt
+func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine
+type ADOp interface{ ... }
+type AdaGradSolver struct{ ... }
+    func NewAdaGradSolver(opts ...SolverOpt) *AdaGradSolver
+type AdamSolver struct{ ... }
+    func NewAdamSolver(opts ...SolverOpt) *AdamSolver
+type Arena interface{ ... }
+type AutoDiffError struct{}
+type B bool
+type BLAS interface{ ... }
+    func WhichBLAS() BLAS
+type BarzilaiBorweinSolver struct{ ... }
+    func NewBarzilaiBorweinSolver(opts ...SolverOpt) *BarzilaiBorweinSolver
+type BatchNormOp struct{ ... }
+type Batched interface{ ... }
+type BatchedBLAS interface{ ... }
+type BatchedDevice interface{ ... }
+type BinaryOp interface{ ... }
+type BroadcastPattern byte
+    func NewBroadcastPattern(leftAxes, rightAxes []byte) BroadcastPattern
+type CLDoer interface{ ... }
+type CUDAADOp interface{ ... }
+type CUDADoer interface{ ... }
+type CloneErrorer interface{ ... }
+type Cloner interface{ ... }
+type CopierFrom interface{ ... }
+type CopierTo interface{ ... }
+type Device int
+    const CPU Device = 0
+type DimSizer interface{ ... }
+    func ShapesToDimSizers(shapes []tensor.Shape) []DimSizer
+type Dtyper interface{ ... }
+type Errer interface{ ... }
+type ExecutionContext struct{ ... }
+type ExprGraph struct{ ... }
+    func NewGraph(opts ...graphconopt) *ExprGraph
+type ExternMetadata struct{ ... }
+type External interface{ ... }
+type ExternalOp struct{ ... }
+    func NewAddOp(a, b *Node, ctx ExecutionContext) *ExternalOp
+    func NewExternalOp(op Op, ctx ExecutionContext, prealloc Value) *ExternalOp
+    func NewHadamardProdOp(a, b *Node, ctx ExecutionContext) *ExternalOp
+    func NewSubOp(a, b *Node, ctx ExecutionContext) *ExternalOp
+type F32 float32
+type F64 float64
+type I int
+type I32 int32
+type I64 int64
+type IncrDoer interface{ ... }
+type InitWFn func(dt tensor.Dtype, s ...int) interface{}
+    func Gaussian(mean, stdev float64) InitWFn
+    func GlorotN(gain float64) InitWFn
+    func GlorotU(gain float64) InitWFn
+    func HeN(gain float64) InitWFn
+    func HeU(gain float64) InitWFn
+    func Ones() InitWFn
+    func RangedFrom(start int) InitWFn
+    func Uniform(low, high float64) InitWFn
+    func ValuesOf(val interface{}) InitWFn
+    func Zeroes() InitWFn
+type Input interface{ ... }
+type Mker interface{ ... }
+type Momentum struct{ ... }
+    func NewMomentum(opts ...SolverOpt) *Momentum
+type Namer interface{ ... }
+type NoOpError interface{ ... }
+type NoRetOp interface{ ... }
+type Node struct{ ... }
+    func BinomialRandomNode(g *ExprGraph, dt tensor.Dtype, trials, prob float64, shape ...int) *Node
+    func GaussianRandomNode(g *ExprGraph, dt tensor.Dtype, mean, stdev float64, shape ...int) *Node
+    func Must(n *Node, err error, opts ...NodeConsOpt) *Node
+    func NewConstant(v interface{}, opts ...NodeConsOpt) *Node
+    func NewMatrix(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node
+    func NewScalar(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node
+    func NewTensor(g *ExprGraph, t tensor.Dtype, dims int, opts ...NodeConsOpt) *Node
+    func NewUniqueNode(opts ...NodeConsOpt) *Node
+    func NewVector(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node
+    func NodeFromAny(g *ExprGraph, any interface{}, opts ...NodeConsOpt) *Node
+    func OneHotVector(id, classes int, t tensor.Dtype, opts ...NodeConsOpt) *Node
+    func Read(n *Node, into *Value) (retVal *Node)
+    func Set(a, b *Node) (retVal *Node)
+    func UniformRandomNode(g *ExprGraph, dt tensor.Dtype, low, high float64, shape ...int) *Node
+type NodeConsOpt func(*Node)
+    func In(g *ExprGraph) NodeConsOpt
+    func WithChildren(children Nodes) NodeConsOpt
+    func WithGrad(any interface{}) NodeConsOpt
+    func WithGroupName(name string) NodeConsOpt
+    func WithInit(fn InitWFn) NodeConsOpt
+    func WithName(name string) NodeConsOpt
+    func WithOp(op Op) NodeConsOpt
+    func WithShape(shp ...int) NodeConsOpt
+    func WithType(t hm.Type) NodeConsOpt
+    func WithValue(any interface{}) NodeConsOpt
+type NodeSet map[*Node]struct{}
+    func NewNodeSet(a ...*Node) NodeSet
+type Nodes []*Node
+type Op interface{ ... }
+type RMSPropSolver struct{ ... }
+    func NewRMSPropSolver(opts ...SolverOpt) *RMSPropSolver
+type ReductionOp interface{ ... }
+type Result interface{ ... }
+    func LiftResult(a Input, err error) Result
+type SDOp interface{ ... }
+type Scalar interface{ ... }
+type Solver interface{ ... }
+type SolverOpt func(s Solver)
+    func WithBatchSize(batch float64) SolverOpt
+    func WithBeta1(beta1 float64) SolverOpt
+    func WithBeta2(beta2 float64) SolverOpt
+    func WithClip(clip float64) SolverOpt
+    func WithEps(eps float64) SolverOpt
+    func WithL1Reg(l1reg float64) SolverOpt
+    func WithL2Reg(l2reg float64) SolverOpt
+    func WithLearnRate(eta float64) SolverOpt
+    func WithMomentum(momentum float64) SolverOpt
+    func WithRho(rho float64) SolverOpt
+type StandardEngine struct{ ... }
+type SymDiffError struct{ ... }
+type SymbolicEngine struct{ ... }
+type Tensor interface{ ... }
+type TensorType struct{ ... }
+type Typer interface{ ... }
+type U8 byte
+type UnaryOp interface{ ... }
+type UnsafeDoer interface{ ... }
+type UsePreallocDoer interface{ ... }
+type VM interface{ ... }
+type VMOpt func(m VM)
+    func BindDualValues(nodes ...*Node) VMOpt
+    func ExecuteBwdOnly() VMOpt
+    func ExecuteFwdOnly() VMOpt
+    func LogBothDir() VMOpt
+    func LogBwd() VMOpt
+    func LogFwd() VMOpt
+    func TraceExec() VMOpt
+    func UseCudaFor(ops ...string) VMOpt
+    func WithEngine(e tensor.Engine) VMOpt
+    func WithInfWatch() VMOpt
+    func WithLogger(logger *log.Logger) VMOpt
+    func WithManualGradient() VMOpt
+    func WithNaNWatch() VMOpt
+    func WithPrecompiled(prog *program, locMap map[*Node]register) VMOpt
+    func WithValueFmt(format string) VMOpt
+    func WithWatchlist(list ...interface{}) VMOpt
+type Value interface{ ... }
+    func ScalarAsTensor(v Value, dims int, e tensor.Engine) Value
+    func ZeroValue(v Value) Value
+type ValueCloser interface{ ... }
+type ValueEqualer interface{ ... }
+type ValueGrad interface{ ... }
+    func NodesToValueGrads(in Nodes) (out []ValueGrad)
+type Valuer interface{ ... }
+type VanillaSolver struct{ ... }
+    func NewVanillaSolver(opts ...SolverOpt) *VanillaSolver
+type ZeroValuer interface{ ... }
+type Zeroer interface{ ... }
