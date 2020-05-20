@@ -5,28 +5,43 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
-	"gorgonia.org/gorgonia/tensor"
+	"gorgonia.org/gorgonia/execution"
+	"gorgonia.org/tensor"
 )
 
+type Op interface {
+	Do(...Value) (Value, error)
+}
+
+type ExternalOp interface {
+	Op
+	Get() (tensor.Memory, error)
+	Device() execution.Device
+}
+
+// Dual represents a dual value. In this instance, a dual value usually holds the value and a gradient value.
 type Dual struct {
 	Value
 	d Value
 }
 
+// SetDeriv sets the derivative value
 func (dv *Dual) SetDeriv(d Value) error {
 	if t, ok := d.(tensor.Tensor); ok && t.IsScalar() {
-		d, _ = anyToScalar(t.ScalarValue())
+		d, _ = AnyToScalar(t.ScalarValue())
 	}
 	dv.d = d
 
 	return dv.sanity()
 }
 
+// SetValue sets the value.
 func (dv *Dual) SetValue(v Value) error {
 	dv.Value = v
 	return dv.sanity()
 }
 
+// Clone clones a Dual
 func (dv *Dual) Clone() (retVal interface{}, err error) {
 	var v, d Value
 	if v, err = CloneValue(dv.Value); err != nil {
@@ -180,8 +195,8 @@ func dvUnit0(v Value) *Dual {
 }
 
 // dvUnitManaged does dvUnit for values whose memories are manually managed
-func dvUnitManaged(v Value, op *ExternalOp) (*Dual, error) {
-	if op.Device == CPU {
+func dvUnitManaged(v Value, op ExternalOp) (*Dual, error) {
+	if op.Device() == execution.CPU {
 		return dvUnit(v), nil
 	}
 
@@ -196,7 +211,7 @@ func dvUnitManaged(v Value, op *ExternalOp) (*Dual, error) {
 	dt := v.Dtype()
 	memsize := calcMemSize(dt, s)
 	// allocate on device
-	mem, err := op.Get(op.Device, memsize)
+	mem, err := op.Get(op.Device(), memsize)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +225,7 @@ func dvUnitManaged(v Value, op *ExternalOp) (*Dual, error) {
 	return retVal, nil
 }
 
-func dvUnitVarManaged(v Value, op *ExternalOp) (*Dual, error) {
+func dvUnitVarManaged(v Value, op ExternalOp) (*Dual, error) {
 	dv, err := dvUnitManaged(v, op)
 	if err != nil {
 		return dv, err
@@ -269,7 +284,7 @@ func dvBind(op Op, inputs []*Dual) (retVal *Dual, err error) {
 	if ret, err = op.Do(vals...); err != nil {
 		return nil, errors.Wrap(err, opDoFail)
 	}
-	if o, ok := op.(*ExternalOp); ok {
+	if o, ok := op.(ExternalOp); ok {
 		return dvUnitManaged(ret, o)
 	}
 	return dvUnit(ret), nil
@@ -284,7 +299,7 @@ func dvBindVar(op Op, inputs []*Dual) (retVal *Dual, err error) {
 	if ret, err = op.Do(vals...); err != nil {
 		return nil, errors.Wrap(err, opDoFail)
 	}
-	if o, ok := op.(*ExternalOp); ok {
+	if o, ok := op.(ExternalOp); ok {
 		return dvUnitVarManaged(ret, o)
 	}
 	return dvUnitVar(ret), nil

@@ -32,7 +32,6 @@ var (
 	f32T hm.Type = tensor.Float32
 )
 
-
 /*Tensor Type*/
 
 // TensorType is a type constructor for tensors.
@@ -48,11 +47,13 @@ type TensorType struct {
 	Of hm.Type
 }
 
-func makeFromTensorType(t TensorType, tv hm.TypeVariable) TensorType {
-	return makeTensorType(t.Dims, tv)
+// MakeTensorTypeLike creates a new TensorType like  the provided TensorType
+func MakeTensorTypeLike(t TensorType, tv hm.TypeVariable) TensorType {
+	return MakeTensorType(t.Dims, tv)
 }
 
-func makeTensorType(dims int, typ hm.Type) TensorType {
+// MakeTensorType makes a TensorType
+func MakeTensorType(dims int, typ hm.Type) TensorType {
 	return TensorType{
 		Dims: dims,
 		Of:   typ,

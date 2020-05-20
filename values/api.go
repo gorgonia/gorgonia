@@ -5,6 +5,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/tensor"
 )
 
@@ -114,7 +115,7 @@ func TypeOf(v Value) hm.Type {
 	switch t := v.(type) {
 	case tensor.Tensor:
 		dt, dim := tensorInfo(t)
-		return makeTensorType(dim, dt)
+		return types.MakeTensorType(dim, dt)
 	case Scalar:
 		return t.Dtype()
 	case Typer:
@@ -322,9 +323,10 @@ func Copy(dest, src Value) (Value, error) {
 	}
 }
 
+// SetEngine sets the engine of the given value.
 func SetEngine(v Value, e tensor.Engine) {
 	switch vv := v.(type) {
-	case *dualValue:
+	case *Dual:
 		SetEngine(vv.Value, e)
 		SetEngine(vv.d, e)
 	case tensor.Tensor:
