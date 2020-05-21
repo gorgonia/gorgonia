@@ -54,7 +54,7 @@ type Op interface {
 	// CallsExtern informs if an op potentially call external (cgo or cuda) functions (thereby requiring extra overhead for Go's trampolining thing)
 	CallsExtern() bool
 
-	// overwriteInput() is a method which states which input the output will be overwriting.
+	// OverwritesInput() is a method which states which input the output will be overwriting.
 	// This allows for some efficiency gains as the underlying arrays wouldn't have to be re-allocated.
 	// The method returns an int instead of a bool because potentially different operations may be allowed
 	// to overwrite certain inputs. For example, consider an operation to increment a value:
@@ -64,6 +64,7 @@ type Op interface {
 	OverwritesInput() int
 
 	/* Other methods */
+
 	WriteHash(h hash.Hash)
 	Hashcode() uint32
 	fmt.Stringer

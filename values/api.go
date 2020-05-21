@@ -5,6 +5,8 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	gerrors "gorgonia.org/gorgonia/internal/errors"
+	"gorgonia.org/gorgonia/internal/memutils"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/tensor"
 )
@@ -107,6 +109,61 @@ func Zero(dt tensor.Dtype) Scalar {
 		return NewB(false)
 	default:
 		panic("Unhandled dtype")
+	}
+}
+
+func MakeFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal Value, err error) {
+	var dt tensor.Dtype
+	if dt, err = types.DtypeOf(t); err != nil {
+		return
+	}
+	if s.IsScalar() {
+		return makeScalarFromMem(dt, mem)
+	}
+
+	switch tt := t.(type) {
+	case types.TensorType:
+		memsize := memutils.MemSize(dt, s)
+		return tensor.New(tensor.Of(dt), tensor.WithShape(s...), tensor.FromMemory(mem.Uintptr(), uintptr(memsize))), nil
+	case tensor.Dtype:
+		return makeScalarFromMem(tt, mem)
+	default:
+		err = errors.Errorf(gerrors.NYITypeFail, "MakeValue", tt)
+		return
+	}
+}
+
+func Make(t hm.Type, s tensor.Shape) (retVal Value, err error) {
+	var dt tensor.Dtype
+	if dt, err = types.DtypeOf(t); err != nil {
+		return
+	}
+
+	if s.IsScalar() {
+		switch dt {
+		case tensor.Float64:
+			return NewF64(0), nil
+		case tensor.Float32:
+			return NewF32(0), nil
+		case tensor.Int:
+			return NewI(0), nil
+		case tensor.Int64:
+			return NewI64(0), nil
+		case tensor.Int32:
+			return NewI32(0), nil
+		case tensor.Byte:
+			return NewU8(0), nil
+		case tensor.Bool:
+			return NewB(false), nil
+		}
+	}
+
+	switch tt := t.(type) {
+	case types.TensorType:
+		return tensor.New(tensor.Of(dt), tensor.WithShape(s...)), nil
+	default:
+		err = errors.Errorf(gerrors.NYITypeFail, "MakeValue", tt)
+		return
 	}
 }
 
@@ -326,10 +383,13 @@ func Copy(dest, src Value) (Value, error) {
 // SetEngine sets the engine of the given value.
 func SetEngine(v Value, e tensor.Engine) {
 	switch vv := v.(type) {
-	case *Dual:
-		SetEngine(vv.Value, e)
-		SetEngine(vv.d, e)
 	case tensor.Tensor:
 		tensor.WithEngine(e)(vv)
+	case engineSetter:
+		vv.SetEngine(e)
 	}
+}
+
+type engineSetter interface {
+	SetEngine(e tensor.Engine)
 }

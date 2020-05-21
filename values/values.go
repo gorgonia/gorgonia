@@ -32,16 +32,28 @@ type Typer interface {
 	Type() hm.Type
 }
 
-// Zeroer is a Value that can zero itself
+// Zeroer is a Value that can zero itself (here zero is used as a verb).
 type Zeroer interface {
 	Value
 	Zero()
 }
 
-// ZeroValuer is a a Value that can provide the zero-value of its type
+// ZeroValuer is a a Value that can provide the zero-value of its type.
 type ZeroValuer interface {
 	Value
 	ZeroValue() Value
+}
+
+// Oner is a Value that can set itself to 1.
+type Oner interface {
+	Value
+	One()
+}
+
+// OneValuer is a value that can provide the one-value of its type.
+type OneValuer interface {
+	Value
+	OneValue() Value
 }
 
 // ValueEqualer represents any type that can perform a equal value check

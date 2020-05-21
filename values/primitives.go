@@ -247,6 +247,26 @@ func (v *U8) Pointer() unsafe.Pointer { return unsafe.Pointer(v) }
 // Pointer returns the pointer as an unsafe.Pointer. Satisfies the tensor.Memory interface
 func (v *B) Pointer() unsafe.Pointer { return unsafe.Pointer(v) }
 
+/* Oner */
+
+func (v *F64) One() { *v = 1 }
+func (v *F32) One() { *v = 1 }
+func (v *I) One()   { *v = 1 }
+func (v *I64) One() { *v = 1 }
+func (v *I32) One() { *v = 1 }
+func (v *U8) One()  { *v = 1 }
+func (v *B) One()   { *v = true }
+
+/* OneValuer */
+
+func (v *F64) OneValue() Value { return NewF64(1) }
+func (v *F32) OneValue() Value { return NewF32(1) }
+func (v *I) OneValue() Value   { return NewI(1) }
+func (v *I64) OneValue() Value { return NewI64(1) }
+func (v *I32) OneValue() Value { return NewI32(1) }
+func (v *U8) OneValue() Value  { return NewU8(1) }
+func (v *B) OneValue() Value   { return NewB(true) }
+
 func formatScalar(v Scalar, s fmt.State, c rune) {
 	var buf bytes.Buffer
 	var ok bool

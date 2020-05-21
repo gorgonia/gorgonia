@@ -1,8 +1,9 @@
-package values
+package dual
 
 import (
 	"sync"
 
+	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 )
 
@@ -20,7 +21,7 @@ func returnDV(dv *Dual) {
 	dvpool.Put(dv)
 }
 
-func returnValue(v Value) {
+func returnValue(v values.Value) {
 	if t, ok := v.(tensor.Tensor); ok {
 		tensor.ReturnTensor(t)
 	}

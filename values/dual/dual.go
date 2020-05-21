@@ -1,4 +1,4 @@
-package values
+package dual
 
 import (
 	"fmt"
@@ -6,29 +6,36 @@ import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/execution"
+	gerrors "gorgonia.org/gorgonia/internal/errors"
+	"gorgonia.org/gorgonia/internal/memutils"
+	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 )
 
 type Op interface {
-	Do(...Value) (Value, error)
+	Do(...values.Value) (values.Value, error)
 }
 
 type ExternalOp interface {
 	Op
-	Get() (tensor.Memory, error)
+	Get(device execution.Device, size int64) (tensor.Memory, error)
 	Device() execution.Device
+}
+
+type UsePreallocDoer interface {
+	UsePreallocDo(prealloc values.Value, inputs ...values.Value) (values.Value, error)
 }
 
 // Dual represents a dual value. In this instance, a dual value usually holds the value and a gradient value.
 type Dual struct {
-	Value
-	d Value
+	values.Value
+	d values.Value
 }
 
 // SetDeriv sets the derivative value
-func (dv *Dual) SetDeriv(d Value) error {
+func (dv *Dual) SetDeriv(d values.Value) error {
 	if t, ok := d.(tensor.Tensor); ok && t.IsScalar() {
-		d, _ = AnyToScalar(t.ScalarValue())
+		d, _ = values.AnyToScalar(t.ScalarValue())
 	}
 	dv.d = d
 
@@ -36,21 +43,26 @@ func (dv *Dual) SetDeriv(d Value) error {
 }
 
 // SetValue sets the value.
-func (dv *Dual) SetValue(v Value) error {
+func (dv *Dual) SetValue(v values.Value) error {
 	dv.Value = v
 	return dv.sanity()
 }
 
+func (dv *Dual) SetEngine(e tensor.Engine) {
+	values.SetEngine(dv.Value, e)
+	values.SetEngine(dv.d, e)
+}
+
 // Clone clones a Dual
 func (dv *Dual) Clone() (retVal interface{}, err error) {
-	var v, d Value
-	if v, err = CloneValue(dv.Value); err != nil {
-		return nil, errors.Wrap(err, cloneFail)
+	var v, d values.Value
+	if v, err = values.CloneValue(dv.Value); err != nil {
+		return nil, errors.Wrap(err, gerrors.CloneFail)
 	}
 
 	if dv.d != nil {
-		if d, err = CloneValue(dv.d); err != nil {
-			return nil, errors.Wrap(err, cloneFail)
+		if d, err = values.CloneValue(dv.d); err != nil {
+			return nil, errors.Wrap(err, gerrors.CloneFail)
 		}
 	}
 
@@ -61,17 +73,17 @@ func (dv *Dual) Clone() (retVal interface{}, err error) {
 	return
 }
 
-func (dv *Dual) Type() hm.Type       { return TypeOf(dv.Value) }
+func (dv *Dual) Type() hm.Type       { return values.TypeOf(dv.Value) }
 func (dv *Dual) Dtype() tensor.Dtype { return dv.Value.Dtype() }
 
-func (dv *Dual) ValueEq(a Value) bool {
+func (dv *Dual) ValueEq(a values.Value) bool {
 	switch at := a.(type) {
 	case *Dual:
 		if at == dv {
 			return true
 		}
-		veq := ValueEq(at.Value, dv.Value)
-		deq := ValueEq(at.d, dv.d)
+		veq := values.ValueEq(at.Value, dv.Value)
+		deq := values.ValueEq(at.d, dv.d)
 		return veq && deq
 	// case Value:
 	// 	return ValueEq(at, dv.Value)
@@ -102,17 +114,17 @@ func (dv *Dual) sanity() error {
 
 // clones the dualValue and zeroes out the ndarrays
 func (dv *Dual) clone0() (retVal *Dual, err error) {
-	var v, d Value
-	if v, err = CloneValue(dv.Value); err != nil {
-		return nil, errors.Wrap(err, cloneFail)
+	var v, d values.Value
+	if v, err = values.CloneValue(dv.Value); err != nil {
+		return nil, errors.Wrap(err, gerrors.CloneFail)
 	}
 
-	if d, err = CloneValue(dv.d); err != nil {
-		return nil, errors.Wrap(err, cloneFail)
+	if d, err = values.CloneValue(dv.d); err != nil {
+		return nil, errors.Wrap(err, gerrors.CloneFail)
 	}
 
-	v = ZeroValue(v)
-	d = ZeroValue(d)
+	v = values.ZeroValue(v)
+	d = values.ZeroValue(d)
 
 	dv2 := borrowDV()
 	dv2.Value = v
@@ -126,7 +138,7 @@ func (dv *Dual) clone0() (retVal *Dual, err error) {
 // The original implementation was to have a constantDualValue type. This would lead to waaay less allocations of matrices
 // but as it turns out, as I waws working, the constants turn out to be not so constant afterall.
 // Is this a problem with the graph that leads to derivation of constant values? I don't quite know. TO CHECK
-func constantDV(val Value) *Dual {
+func constantDV(val values.Value) *Dual {
 	enterLogScope()
 	defer leaveLogScope()
 
@@ -135,23 +147,23 @@ func constantDV(val Value) *Dual {
 	retVal.Value = val
 
 	var err error
-	if retVal.d, err = CloneValue(val); err != nil {
+	if retVal.d, err = values.CloneValue(val); err != nil {
 		panic(err)
 	}
 
-	retVal.d = ZeroValue(retVal.d)
+	retVal.d = values.ZeroValue(retVal.d)
 	return retVal
 }
 
 // the derivative of x is 1.
-func variableDV(val Value) *Dual {
+func variableDV(val values.Value) *Dual {
 	// retVal := &dualValue{Value: val}
 	retVal := borrowDV()
 	retVal.Value = val
 
 	switch v := val.(type) {
-	case Scalar:
-		retVal.d = one(v.Dtype())
+	case values.Scalar:
+		retVal.d = values.One(v.Dtype())
 	case tensor.Tensor:
 		shp := v.Shape()
 		dt := v.Dtype()
@@ -165,7 +177,7 @@ func variableDV(val Value) *Dual {
 
 // monadic unit() function. This unit() function will allocate a Value for dv.d
 // this is useful for forward mode autodiff
-func dvUnit(v Value) *Dual {
+func dvUnit(v values.Value) *Dual {
 	enterLogScope()
 	defer leaveLogScope()
 
@@ -175,7 +187,7 @@ func dvUnit(v Value) *Dual {
 	return constantDV(v)
 }
 
-func dvUnitVar(v Value) *Dual {
+func dvUnitVar(v values.Value) *Dual {
 	if dv, ok := v.(*Dual); ok {
 		return dv
 	}
@@ -183,7 +195,7 @@ func dvUnitVar(v Value) *Dual {
 }
 
 // no alloc is done. It'll just return a *Dual with nil as the dv.d
-func dvUnit0(v Value) *Dual {
+func dvUnit0(v values.Value) *Dual {
 	if dv, ok := v.(*Dual); ok {
 		return dv
 	}
@@ -195,7 +207,7 @@ func dvUnit0(v Value) *Dual {
 }
 
 // dvUnitManaged does dvUnit for values whose memories are manually managed
-func dvUnitManaged(v Value, op ExternalOp) (*Dual, error) {
+func dvUnitManaged(v values.Value, op ExternalOp) (*Dual, error) {
 	if op.Device() == execution.CPU {
 		return dvUnit(v), nil
 	}
@@ -209,14 +221,14 @@ func dvUnitManaged(v Value, op ExternalOp) (*Dual, error) {
 
 	s := v.Shape()
 	dt := v.Dtype()
-	memsize := calcMemSize(dt, s)
+	memsize := memutils.MemSize(dt, s)
 	// allocate on device
 	mem, err := op.Get(op.Device(), memsize)
 	if err != nil {
 		return nil, err
 	}
 
-	d, err := makeValueFromMem(TypeOf(v), s, mem)
+	d, err := values.MakeFromMem(values.TypeOf(v), s, mem)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +237,7 @@ func dvUnitManaged(v Value, op ExternalOp) (*Dual, error) {
 	return retVal, nil
 }
 
-func dvUnitVarManaged(v Value, op ExternalOp) (*Dual, error) {
+func dvUnitVarManaged(v values.Value, op ExternalOp) (*Dual, error) {
 	dv, err := dvUnitManaged(v, op)
 	if err != nil {
 		return dv, err
@@ -244,20 +256,16 @@ func dvUnitVarManaged(v Value, op ExternalOp) (*Dual, error) {
 		default:
 			return dv, errors.Errorf("Unhandled dtype: %v", dt)
 		}
-	case *F64:
-		*d = F64(1)
-	case *F32:
-		*d = F32(1)
-	case *I:
-		*d = I(1)
-	case *I64:
-		*d = I64(1)
-	case *I32:
-		*d = I32(1)
-	case *U8:
-		*d = U8(1)
-	case *B:
-		*d = B(true)
+	case values.Oner:
+		// important: we need to put this case before the OneValuer case.
+		//
+		// this is especially important when we use GPU, as all we get are borrowed references (to use Rust's terms)
+		// So we can only mutate the pointers, and not create new Values, which OneValuer does.
+		//
+		// So if a type implements Oner and OneValuer, Oner should have precedence.
+		d.One()
+	case values.OneValuer:
+		dv.d = d.OneValue()
 	default:
 		return dv, errors.Errorf("Unhandeled type: %T", d)
 	}
@@ -265,8 +273,8 @@ func dvUnitVarManaged(v Value, op ExternalOp) (*Dual, error) {
 }
 
 // helper to unpack from []*Dual
-func idValue(inputs []*Dual) (retVals []Value) {
-	retVals = make([]Value, len(inputs))
+func idValue(inputs []*Dual) (retVals []values.Value) {
+	retVals = make([]values.Value, len(inputs))
 	for i, input := range inputs {
 		retVals[i] = input.Value
 	}
@@ -280,9 +288,9 @@ func dvBind(op Op, inputs []*Dual) (retVal *Dual, err error) {
 
 	vals := idValue(inputs)
 
-	var ret Value
+	var ret values.Value
 	if ret, err = op.Do(vals...); err != nil {
-		return nil, errors.Wrap(err, opDoFail)
+		return nil, errors.Wrap(err, gerrors.OpDoFail)
 	}
 	if o, ok := op.(ExternalOp); ok {
 		return dvUnitManaged(ret, o)
@@ -295,9 +303,9 @@ func dvBind(op Op, inputs []*Dual) (retVal *Dual, err error) {
 func dvBindVar(op Op, inputs []*Dual) (retVal *Dual, err error) {
 	vals := idValue(inputs)
 
-	var ret Value
+	var ret values.Value
 	if ret, err = op.Do(vals...); err != nil {
-		return nil, errors.Wrap(err, opDoFail)
+		return nil, errors.Wrap(err, gerrors.OpDoFail)
 	}
 	if o, ok := op.(ExternalOp); ok {
 		return dvUnitVarManaged(ret, o)
@@ -312,14 +320,14 @@ func dvBind0(op Op, retVal *Dual, inputs []*Dual) (err error) {
 	prealloc := retVal.Value
 	vals := idValue(inputs)
 
-	var ret Value
+	var ret values.Value
 	if pd, ok := op.(UsePreallocDoer); ok {
 		if ret, err = pd.UsePreallocDo(prealloc, vals...); err == nil {
 			goto next
 		}
 	}
 	if ret, err = op.Do(vals...); err != nil {
-		return errors.Wrap(err, opDoFail)
+		return errors.Wrap(err, gerrors.OpDoFail)
 	}
 
 next:
@@ -331,7 +339,7 @@ next:
 		return
 	}
 
-	retVal.SetDeriv(ZeroValue(retVal.d))
+	retVal.SetDeriv(values.ZeroValue(retVal.d))
 	return
 }
 
@@ -340,17 +348,17 @@ func dvBindVar0(op Op, retVal *Dual, inputs []*Dual) (err error) {
 
 	vals := idValue(inputs)
 
-	var ret Value
+	var ret values.Value
 	if pd, ok := op.(UsePreallocDoer); ok {
 		ret, err = pd.UsePreallocDo(prealloc, vals...)
 	} else {
 		if ret, err = op.Do(vals...); err != nil {
-			return errors.Wrap(err, opDoFail)
+			return errors.Wrap(err, gerrors.OpDoFail)
 		}
 	}
 
 	if err != nil {
-		return errors.Wrapf(err, opDoFail)
+		return errors.Wrapf(err, gerrors.OpDoFail)
 	}
 
 	if err = retVal.SetValue(ret); err != nil {
@@ -358,8 +366,8 @@ func dvBindVar0(op Op, retVal *Dual, inputs []*Dual) (err error) {
 	}
 
 	switch v := retVal.d.(type) {
-	case Scalar:
-		retVal.d = one(v.Dtype())
+	case values.Scalar:
+		retVal.d = values.One(v.Dtype())
 	case tensor.Tensor:
 		switch v.Dtype() {
 		case tensor.Float64:
@@ -369,7 +377,7 @@ func dvBindVar0(op Op, retVal *Dual, inputs []*Dual) (err error) {
 		}
 		retVal.d = v
 	default:
-		err = errors.Errorf(nyiTypeFail, "dvBindVar0", retVal.d)
+		err = errors.Errorf(gerrors.NYITypeFail, "dvBindVar0", retVal.d)
 	}
 	return
 }
