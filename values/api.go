@@ -230,8 +230,8 @@ func ValueClose(a, b Value) bool {
 	}
 }
 
-// CloneValue clones a value. For scalars, since Go copies scalars, it returns itself
-func CloneValue(v Value) (Value, error) {
+// Clone clones a value. For scalars, since Go copies scalars, it returns itself
+func Clone(v Value) (Value, error) {
 	switch vt := v.(type) {
 	case *F64:
 		retVal := *vt
