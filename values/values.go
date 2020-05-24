@@ -32,6 +32,11 @@ type Typer interface {
 	Type() hm.Type
 }
 
+// // Valuer is any type that can return a Value.
+type Valuer interface {
+	Value() Value
+}
+
 // Zeroer is a Value that can zero itself (here zero is used as a verb).
 type Zeroer interface {
 	Value

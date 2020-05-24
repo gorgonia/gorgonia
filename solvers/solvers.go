@@ -5,7 +5,9 @@ import (
 
 	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
+	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
 )
 
@@ -15,9 +17,9 @@ type Solver interface {
 	Step([]ValueGrad) error
 }
 
-// ValueGrad is any type that has a value and a grad. This is used for Solvers
+// values.ValueGrad is any type that has a value and a grad. This is used for Solvers
 type ValueGrad interface {
-	Valuer
+	values.Valuer
 	Grad() (values.Value, error)
 }
 
@@ -26,28 +28,30 @@ type Namer interface {
 	Name() string
 }
 
-func newCachedDV(n ValueGrad, weights, grad values.Value, zero bool) (cached *dualValue, err error) {
-	cached = new(dualValue)
-	if cached.Value, err = CloneValue(weights); err != nil {
+func newCachedDV(n ValueGrad, weights, grad values.Value, zero bool) (cached *dual.Dual, err error) {
+	cached = new(dual.Dual)
+	if cached.Value, err = values.Clone(weights); err != nil {
 		if nm, ok := n.(Namer); ok {
 			return nil, errors.Errorf("Failed to clone weights of %v", nm.Name())
 		}
 		return nil, errors.New("Failed to clone weights")
 	}
-	if cached.d, err = CloneValue(grad); err != nil {
+	var cloned values.Value
+	if cloned, err = values.Clone(grad); err != nil {
 		if nm, ok := n.(Namer); ok {
 			return nil, errors.Errorf("Failed to clone grad of %v", nm.Name())
 		}
 		return nil, errors.New("Failed to clone grad")
 	}
+	cached.SetDeriv(cloned)
 	if zero {
-		cached.Value = ZeroValue(cached.Value)
-		cached.d = ZeroValue(cached.d)
+		cached.Value = values.ZeroValue(cached.Value)
+		cached.SetDeriv(values.ZeroValue(cached.Deriv()))
 	}
 	return
 }
 
-func extractWeightGrad(n ValueGrad) (weights, grad Value, err error) {
+func extractWeightGrad(n ValueGrad) (weights, grad values.Value, err error) {
 	weights = n.Value()
 	if grad, err = n.Grad(); err != nil {
 		if nm, ok := n.(Namer); ok {
@@ -86,7 +90,7 @@ func NewVanillaSolver(opts ...SolverOpt) *VanillaSolver {
 // This function will error out if the nodes do not have an associated Grad value.
 func (s *VanillaSolver) Step(model []ValueGrad) (err error) {
 	for _, n := range model {
-		var weights, grad Value
+		var weights, grad values.Value
 		if weights, grad, err = extractWeightGrad(n); err != nil {
 			return err
 		}
@@ -120,31 +124,31 @@ func (s *VanillaSolver) Step(model []ValueGrad) (err error) {
 				}
 
 				if l1regs, err = tensor.Mul(l1reg, l1regs, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
+					return errors.Wrap(err, pointwiseMulFail)
 				}
 
 				if _, err = tensor.Add(g, l1regs, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, addFail)
 				}
 
-				defer returnTensor(l1regs)
+				defer tensor.ReturnTensor(l1regs)
 			}
 
 			if s.useL2Reg {
 				if l2regs, err = tensor.Mul(l2reg, w); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
+					return errors.Wrap(err, pointwiseMulFail)
 				}
 
 				if _, err = tensor.Add(g, l2regs, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, addFail)
 				}
 
-				defer returnTensor(l2regs)
+				defer tensor.ReturnTensor(l2regs)
 			}
 
 			if s.batch > 1 {
 				if _, err = tensor.Mul(onePerBatch, g, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
+					return errors.Wrap(err, pointwiseMulFail)
 				}
 			}
 
@@ -155,7 +159,7 @@ func (s *VanillaSolver) Step(model []ValueGrad) (err error) {
 			}
 
 			if _, err = tensor.Mul(eta, g, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
+				return errors.Wrap(err, pointwiseMulFail)
 			}
 
 			if _, err = tensor.Add(w, g, tensor.UseUnsafe()); err != nil {
@@ -164,9 +168,9 @@ func (s *VanillaSolver) Step(model []ValueGrad) (err error) {
 
 			g.Zero()
 
-		case *F32:
-			g := grad.(*F32).any()
-			wv := w.any()
+		case *values.F32:
+			g := grad.(*values.F32).Any()
+			wv := w.Any()
 
 			l1reg := float32(s.l1reg)
 			l2reg := float32(s.l2reg)
@@ -201,11 +205,11 @@ func (s *VanillaSolver) Step(model []ValueGrad) (err error) {
 			upd := -eta * g
 			wv += upd
 
-			*(weights.(*F32)) = F32(wv)
-			*(grad.(*F32)) = F32(0.0)
-		case *F64:
-			g := grad.(*F64).any()
-			wv := w.any()
+			*(weights.(*values.F32)) = values.F32(wv)
+			*(grad.(*values.F32)) = values.F32(0.0)
+		case *values.F64:
+			g := grad.(*values.F64).Any()
+			wv := w.Any()
 
 			l1reg := s.l1reg
 			l2reg := s.l2reg
@@ -240,10 +244,10 @@ func (s *VanillaSolver) Step(model []ValueGrad) (err error) {
 			upd := -eta * g
 			wv += upd
 
-			*(weights.(*F64)) = F64(wv)
-			*(grad.(*F64)) = F64(0.0)
+			*(weights.(*values.F64)) = values.F64(wv)
+			*(grad.(*values.F64)) = values.F64(0.0)
 		default:
-			return errors.Errorf(nyiFail, "VanillaSolver.step", w)
+			return errors.Errorf(gerrors.NYIFail, "VanillaSolver.step", w)
 		}
 	}
 	return
@@ -260,7 +264,7 @@ type Momentum struct {
 
 	useClip, useL1Reg, useL2Reg bool
 
-	cache []*values.Dual
+	cache []*dual.Dual
 }
 
 // NewMomentum creates a new Momentum with sane-ish default values
@@ -281,16 +285,16 @@ func NewMomentum(opts ...SolverOpt) *Momentum {
 // This function will error out if the nodes do not have an associated Grad value.
 func (s *Momentum) Step(model []ValueGrad) (err error) {
 	if s.cache == nil {
-		s.cache = make([]*values.Dual, len(model))
+		s.cache = make([]*dual.Dual, len(model))
 	}
 
 	for i, n := range model {
-		var weights, grad Value
+		var weights, grad values.Value
 		if weights, grad, err = extractWeightGrad(n); err != nil {
 			return err
 		}
 
-		var cached *values.Dual
+		var cached *dual.Dual
 		if cached = s.cache[i]; cached == nil {
 			if cached, err = newCachedDV(n, weights, grad, true); err != nil {
 				return err
@@ -334,31 +338,31 @@ func (s *Momentum) Step(model []ValueGrad) (err error) {
 				}
 
 				if l1regs, err = tensor.Mul(l1reg, l1regs, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
+					return errors.Wrap(err, pointwiseMulFail)
 				}
 
 				if _, err = tensor.Add(g, l1regs, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, addFail)
 				}
 
-				defer returnTensor(l1regs)
+				defer tensor.ReturnTensor(l1regs)
 			}
 
 			if s.useL2Reg {
 				if l2regs, err = tensor.Mul(l2reg, cw); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
+					return errors.Wrap(err, pointwiseMulFail)
 				}
 
 				if _, err = tensor.Add(g, l2regs, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, addFail)
 				}
 
-				defer returnTensor(l2regs)
+				defer tensor.ReturnTensor(l2regs)
 			}
 
 			if s.batch > 1 {
 				if _, err = tensor.Mul(onePerBatch, g, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
+					return errors.Wrap(err, pointwiseMulFail)
 				}
 			}
 
@@ -370,17 +374,17 @@ func (s *Momentum) Step(model []ValueGrad) (err error) {
 
 			// momentum
 			if _, err = tensor.Mul(g, eta, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
+				return errors.Wrap(err, pointwiseMulFail)
 			}
 
 			// cw * momentum
 			if _, err = tensor.Mul(cw, momentum, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
+				return errors.Wrap(err, pointwiseMulFail)
 			}
 
 			//  cw * momentum - eta * grad
 			if _, err = tensor.Add(cw, g, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
+				return errors.Wrap(err, pointwiseMulFail)
 			}
 
 			if _, err = tensor.Add(w, cw, tensor.UseUnsafe()); err != nil {
@@ -389,7 +393,7 @@ func (s *Momentum) Step(model []ValueGrad) (err error) {
 
 			g.Zero()
 
-		case *F32:
+		case *values.F32:
 			l1reg := float32(s.l1reg)
 			l2reg := float32(s.l2reg)
 			batch := float32(s.batch)
@@ -397,9 +401,9 @@ func (s *Momentum) Step(model []ValueGrad) (err error) {
 			eta := float32(s.eta)
 			momentum := float32(s.momentum)
 
-			g := grad.(*F32).any()
-			w := weights.(*F32).any()
-			c := cw.any()
+			g := grad.(*values.F32).Any()
+			w := weights.(*values.F32).Any()
+			c := cw.Any()
 
 			if s.useL1Reg {
 				if w < 0 {
@@ -428,9 +432,9 @@ func (s *Momentum) Step(model []ValueGrad) (err error) {
 			c = c*momentum - eta*g
 			w += c
 
-			*(weights.(*F32)) = F32(w)
-			*(grad.(*F32)) = F32(0.0)
-		case *F64:
+			*(weights.(*values.F32)) = values.F32(w)
+			*(grad.(*values.F32)) = values.F32(0.0)
+		case *values.F64:
 			l1reg := s.l1reg
 			l2reg := s.l2reg
 			batch := s.batch
@@ -438,9 +442,9 @@ func (s *Momentum) Step(model []ValueGrad) (err error) {
 			eta := s.eta
 			momentum := s.momentum
 
-			g := grad.(*F64).any()
-			w := weights.(*F64).any()
-			c := cw.any()
+			g := grad.(*values.F64).Any()
+			w := weights.(*values.F64).Any()
+			c := cw.Any()
 
 			if s.useL1Reg {
 				if w < 0 {
@@ -469,10 +473,10 @@ func (s *Momentum) Step(model []ValueGrad) (err error) {
 			c = c*momentum - eta*g
 			w += c
 
-			*(weights.(*F64)) = F64(w)
-			*(grad.(*F64)) = F64(0.0)
+			*(weights.(*values.F64)) = values.F64(w)
+			*(grad.(*values.F64)) = values.F64(0.0)
 		default:
-			return errors.Errorf(nyiFail, "Momentum.step", cv)
+			return errors.Errorf(gerrors.NYIFail, "Momentum.step", cv)
 		}
 	}
 	return
@@ -488,7 +492,7 @@ type AdaGradSolver struct {
 
 	useL2Reg, useClip bool
 
-	cache []*values.Dual
+	cache []*dual.Dual
 }
 
 // NewAdaGradSolver creates a new AdaGradSolver with sane-ish default values
@@ -509,16 +513,16 @@ func NewAdaGradSolver(opts ...SolverOpt) *AdaGradSolver {
 // This function will error out if the nodes do not have an associated Grad value.
 func (s *AdaGradSolver) Step(model []ValueGrad) (err error) {
 	if s.cache == nil {
-		s.cache = make([]*values.Dual, len(model))
+		s.cache = make([]*dual.Dual, len(model))
 	}
 
 	for i, n := range model {
-		var weights, grad Value
+		var weights, grad values.Value
 		if weights, grad, err = extractWeightGrad(n); err != nil {
 			return err
 		}
 
-		var cached *values.Dual
+		var cached *dual.Dual
 		if cached = s.cache[i]; cached == nil {
 			if cached, err = newCachedDV(n, weights, grad, true); err != nil {
 				return err
@@ -550,12 +554,12 @@ func (s *AdaGradSolver) Step(model []ValueGrad) (err error) {
 
 			g = grad.(*tensor.Dense)
 			if g2, err = tensor.Square(g); err != nil {
-				return errors.Wrap(err, pointWiseSquareFail)
+				return errors.Wrap(err, pointwiseSquareFail)
 			}
 
 			c = cw
 			tensor.Add(c, g2, tensor.UseUnsafe())
-			defer returnTensor(g2)
+			defer tensor.ReturnTensor(g2)
 
 			if s.useClip {
 				if _, err = tensor.Clamp(g, negClip, clip, tensor.UseUnsafe()); err != nil {
@@ -573,11 +577,11 @@ func (s *AdaGradSolver) Step(model []ValueGrad) (err error) {
 				return errors.Wrap(err, invSqrtFail)
 			}
 			if _, err = tensor.Mul(g, eta, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
+				return errors.Wrap(err, pointwiseMulFail)
 			}
 
 			if _, err = tensor.Mul(upd, g, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
+				return errors.Wrap(err, pointwiseMulFail)
 			}
 
 			// regularize
@@ -585,25 +589,25 @@ func (s *AdaGradSolver) Step(model []ValueGrad) (err error) {
 
 			if s.useL2Reg {
 				if regularized, err = tensor.Mul(w, l2reg); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
+					return errors.Wrap(err, pointwiseMulFail)
 				}
 
 				if _, err = tensor.Sub(upd, regularized, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, subFail)
 				}
 
-				defer returnTensor(regularized)
+				defer tensor.ReturnTensor(regularized)
 			}
 
 			if _, err = tensor.Add(w, upd, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, addFail)
 			}
-			defer returnTensor(upd)
+			defer tensor.ReturnTensor(upd)
 
 			// zero all
 			g.Zero()
 
-		case *F32:
+		case *values.F32:
 			var w, g, c float32
 
 			l2reg := float32(s.l2reg)
@@ -611,8 +615,8 @@ func (s *AdaGradSolver) Step(model []ValueGrad) (err error) {
 			eps := float32(s.eps)
 			eta := float32(s.eta)
 
-			c = cw.any()
-			g = grad.(*F32).any()
+			c = cw.Any()
+			g = grad.(*values.F32).Any()
 
 			c += g * g
 
@@ -624,7 +628,7 @@ func (s *AdaGradSolver) Step(model []ValueGrad) (err error) {
 				}
 			}
 
-			w = weights.(*F32).any()
+			w = weights.(*values.F32).Any()
 
 			upd := -eta * g / math32.Sqrt(c+eps)
 
@@ -635,9 +639,9 @@ func (s *AdaGradSolver) Step(model []ValueGrad) (err error) {
 			w += upd
 
 			// because scalar values are copies, and not pointers, we have to actually re-update the dualValu in model[i]
-			*(weights.(*F32)) = F32(w)
-			*(grad.(*F32)) = F32(0.0)
-		case *F64:
+			*(weights.(*values.F32)) = values.F32(w)
+			*(grad.(*values.F32)) = values.F32(0.0)
+		case *values.F64:
 			var w, g, c float64
 
 			l2reg := s.l2reg
@@ -645,8 +649,8 @@ func (s *AdaGradSolver) Step(model []ValueGrad) (err error) {
 			eps := s.eps
 			eta := s.eta
 
-			c = cw.any()
-			g = grad.(*F64).any()
+			c = cw.Any()
+			g = grad.(*values.F64).Any()
 
 			c += g * g
 
@@ -658,7 +662,7 @@ func (s *AdaGradSolver) Step(model []ValueGrad) (err error) {
 				}
 			}
 
-			w = weights.(*F64).any()
+			w = weights.(*values.F64).Any()
 			upd := -eta * g / math.Sqrt(c+eps)
 			if s.useL2Reg {
 				upd -= w * l2reg
@@ -667,11 +671,11 @@ func (s *AdaGradSolver) Step(model []ValueGrad) (err error) {
 			w += upd
 
 			// because scalar values are copies, and not pointers, we have to actually re-update the dualValu in model[i]
-			*(weights.(*F64)) = F64(w)
-			*(grad.(*F64)) = F64(0.0)
+			*(weights.(*values.F64)) = values.F64(w)
+			*(grad.(*values.F64)) = values.F64(0.0)
 
 		default:
-			return errors.Errorf(nyiFail, "Adagrad step", cv)
+			return errors.Errorf(gerrors.NYIFail, "Adagrad step", cv)
 		}
 
 	}
@@ -692,7 +696,7 @@ type BarzilaiBorweinSolver struct {
 	eta     float64 // initial learn rate
 	clip    float64 // clip value
 	useClip bool
-	prevDV  []*values.Dual // dual value for xᵢ₋₁ step
+	prevDV  []*dual.Dual // dual value for xᵢ₋₁ step
 }
 
 // NewBarzilaiBorweinSolver creates a new Barzilai-Borwein solver withs some default values:
@@ -717,7 +721,7 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 	firstRun := false
 	if s.prevDV == nil {
 		firstRun = true
-		s.prevDV = make([]*values.Dual, len(model))
+		s.prevDV = make([]*dual.Dual, len(model))
 	}
 
 	// Update the learning rate
@@ -726,7 +730,7 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 		denominator := float64(0.0)
 
 		for nodeNr, node := range model {
-			var weights, grad Value
+			var weights, grad values.Value
 			if weights, grad, err = extractWeightGrad(node); err != nil {
 				return err
 			}
@@ -743,19 +747,19 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 					return errors.Errorf("Expected a *tensor.Dense in %v. Got %T instead", node, s.prevDV[nodeNr].Value)
 				}
 
-				gOld, ok := s.prevDV[nodeNr].d.(*tensor.Dense)
+				gOld, ok := s.prevDV[nodeNr].Deriv().(*tensor.Dense)
 				if !ok {
-					return errors.Errorf("Expected a *tensor.Dense in %v. Got %T instead", node, s.prevDV[nodeNr].d)
+					return errors.Errorf("Expected a *tensor.Dense in %v. Got %T instead", node, s.prevDV[nodeNr].Deriv())
 				}
 
 				valueDiff, err := tensor.Sub(w, wOld)
-				defer returnTensor(valueDiff)
+				defer tensor.ReturnTensor(valueDiff)
 				if err != nil {
 					return errors.Wrap(err, subFail)
 				}
 
 				gradDiff, err := tensor.Sub(g, gOld)
-				defer returnTensor(gradDiff)
+				defer tensor.ReturnTensor(gradDiff)
 				if err != nil {
 					return errors.Wrap(err, subFail)
 				}
@@ -773,7 +777,7 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 				if err != nil {
 					return errors.New("operationError, Contracting value / gradient difference")
 				}
-				defer returnTensor(valGradDiffscalarProd)
+				defer tensor.ReturnTensor(valGradDiffscalarProd)
 
 				nominator += valGradDiffscalarProd.Data().(float64)
 
@@ -782,12 +786,12 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 				if err != nil {
 					return errors.New("operationError, Contracting value / gradient difference")
 				}
-				defer returnTensor(gradDiffscalarProd)
+				defer tensor.ReturnTensor(gradDiffscalarProd)
 
 				denominator += gradDiffscalarProd.Data().(float64)
 
 			default:
-				return errors.Errorf(nyiFail, "Barizai-Borwein step", w)
+				return errors.Errorf(gerrors.NYIFail, "Barizai-Borwein step", w)
 			}
 		}
 
@@ -804,16 +808,16 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 
 	// Save this iteration's values for the next run
 	for nodeNr, node := range model {
-		var weights, grad Value
+		var weights, grad values.Value
 		if weights, grad, err = extractWeightGrad(node); err != nil {
 			return err
 		}
 
 		if false == firstRun {
 			// return memory for the old dual value used in this iteration
-			returnDV(s.prevDV[nodeNr])
+			dual.ReturnDV(s.prevDV[nodeNr])
 		}
-		var oldDV *values.Dual
+		var oldDV *dual.Dual
 		if oldDV, err = newCachedDV(node, weights, grad, false); err != nil {
 			return err
 		}
@@ -822,7 +826,7 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 
 	// Update the weights
 	for _, node := range model {
-		var weights, grad Value
+		var weights, grad values.Value
 		if weights, grad, err = extractWeightGrad(node); err != nil {
 			return err
 		}
@@ -835,10 +839,10 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 			}
 
 			upd, err := tensor.Mul(g, s.eta)
-			defer returnTensor(upd)
+			defer tensor.ReturnTensor(upd)
 
 			if err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
+				return errors.Wrap(err, pointwiseMulFail)
 			}
 
 			if _, err = tensor.Sub(w, upd, tensor.UseUnsafe()); err != nil {
@@ -848,7 +852,7 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 			g.Zero()
 
 		default:
-			return errors.Errorf(nyiFail, "Barizai-Borwein step", w)
+			return errors.Errorf(gerrors.NYIFail, "Barizai-Borwein step", w)
 		}
 	}
 

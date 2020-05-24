@@ -11,6 +11,7 @@ import (
 	"gorgonia.org/tensor"
 )
 
+// AnyToScalar converts any primitive type into a scalar type, and the dtype.
 func AnyToScalar(any interface{}) (Scalar, tensor.Dtype) {
 	switch at := any.(type) {
 	case Scalar:
@@ -34,6 +35,7 @@ func AnyToScalar(any interface{}) (Scalar, tensor.Dtype) {
 	}
 }
 
+// AnyToValue converts any known type into a Value. It also returns the Type and Dtype.
 func AnyToValue(any interface{}) (val Value, t hm.Type, dt tensor.Dtype, err error) {
 	switch a := any.(type) {
 	case Value:
@@ -70,6 +72,7 @@ func AnyToValue(any interface{}) (val Value, t hm.Type, dt tensor.Dtype, err err
 	}
 }
 
+// One creates a Value of the given Dtype with the equivalent of 1.
 func One(dt tensor.Dtype) Scalar {
 	switch dt {
 	case tensor.Float64:
@@ -91,6 +94,7 @@ func One(dt tensor.Dtype) Scalar {
 	}
 }
 
+// Zero creates a Value of the given Dtype with the equivalent value of 0.
 func Zero(dt tensor.Dtype) Scalar {
 	switch dt {
 	case tensor.Float64:

@@ -6,6 +6,7 @@ import (
 	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
 )
 
@@ -21,7 +22,7 @@ type RMSPropSolver struct {
 	useClip, useL2Reg bool
 
 	// unsettable
-	cache []*dualValue
+	cache []*dual.Dual
 }
 
 // NewRMSPropSolver creates an RMSProp solver with these default values:
@@ -43,19 +44,19 @@ func NewRMSPropSolver(opts ...SolverOpt) *RMSPropSolver {
 
 // Step steps through each node in the model and applies the RMSProp gradient descent algorithm on the value.
 //
-// This function will error out if the nodes do not have an associated Grad value.
+// This function will error out if the nodes do not have an associted Grad value.
 func (s *RMSPropSolver) Step(model []ValueGrad) (err error) {
 	if s.cache == nil {
-		s.cache = make([]*values.Dual, len(model))
+		s.cache = make([]*dual.Dual, len(model))
 	}
 
 	for i, n := range model {
-		var weights, grad Value
+		var weights, grad values.Value
 		if weights, grad, err = extractWeightGrad(n); err != nil {
 			return err
 		}
 
-		var cached *values.Dual
+		var cached *dual.Dual
 		if cached = s.cache[i]; cached == nil {
 			if cached, err = newCachedDV(n, weights, grad, true); err != nil {
 				return err
@@ -90,12 +91,12 @@ func (s *RMSPropSolver) Step(model []ValueGrad) (err error) {
 
 			gt = grad.(tensor.Tensor)
 			if gt2, err = tensor.Square(gt); err != nil {
-				return errors.Wrap(err, pointWiseSquareFail)
+				return errors.Wrap(err, pointwiseSquareFail)
 			}
 			tensor.Mul(cw, decay, tensor.UseUnsafe())
 			tensor.Mul(gt2, omdecay, tensor.UseUnsafe())
 			tensor.Add(cw, gt2, tensor.UseUnsafe())
-			defer returnTensor(gt2)
+			defer tensor.ReturnTensor(gt2)
 
 			if s.useClip {
 				if _, err = tensor.Clamp(gt, negClip, clip, tensor.UseUnsafe()); err != nil {
@@ -113,75 +114,74 @@ func (s *RMSPropSolver) Step(model []ValueGrad) (err error) {
 				return errors.Wrap(err, invSqrtFail)
 			}
 			if _, err = tensor.Mul(gt, stepSize, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
+				return errors.Wrap(err, pointwiseMulFail)
 			}
 			if _, err = tensor.Mul(upd, gt, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
+				return errors.Wrap(err, pointwiseMulFail)
 			}
 
 			// update
 			w = weights.(*tensor.Dense)
 			if s.useL2Reg {
 				if regularized, err = tensor.Mul(w, l2reg); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
+					return errors.Wrap(err, pointwiseMulFail)
 				}
 				if _, err = tensor.Sub(upd, regularized, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, subFail)
 				}
-				defer returnTensor(regularized)
+				defer tensor.ReturnTensor(regularized)
 			}
 
 			if _, err = tensor.Add(w, upd, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, addFail)
 			}
-			defer returnTensor(upd)
+			defer tensor.ReturnTensor(upd)
 
 			// zero all
 			gt.Zero()
 
-		case *F32:
+		case *values.F32:
 			decay := float32(s.decay)
 			omdecay := float32(1.0 - s.decay)
 			stepSize := float32(s.eta)
 			eps := float32(s.eps)
 			l2reg := float32(s.l2reg)
 
-			gs := grad.(*F32).any()
-			c := cw.any()
+			gs := grad.(*values.F32).Any()
+			c := cw.Any()
 			c = c*decay + omdecay*gs*gs
 
-			cached.Value, _ = anyToScalar(c)
+			cached.Value, _ = values.AnyToScalar(c)
 
-			w := weights.(*F32).any()
+			w := weights.(*values.F32).Any()
 			upd := -stepSize*gs/math32.Sqrt(c+eps) - l2reg*w
 			w += upd
 
-			// because scalar values are copies, and not pointers, we have to actually re-update the dualValu in model[i]
-			*(weights.(*F32)) = F32(w)
-			*(grad.(*F32)) = F32(0.0)
-		case *F64:
+			// because scalar values are copies, and not pointers, we have to actually re-update the dual value in model[i]
+			*(weights.(*values.F32)) = values.F32(w)
+			*(grad.(*values.F32)) = values.F32(0.0)
+		case *values.F64:
 			decay := s.decay
 			omdecay := 1.0 - s.decay
 			stepSize := s.eta
 			eps := s.eps
 			l2reg := s.l2reg
 
-			gs := grad.(*F64).any()
-			c := cw.any()
+			gs := grad.(*values.F64).Any()
+			c := cw.Any()
 			c = c*decay + omdecay*gs*gs
 
-			cached.Value, _ = anyToScalar(c)
+			cached.Value, _ = values.AnyToScalar(c)
 
-			w := weights.(*F64).any()
+			w := weights.(*values.F64).Any()
 			upd := -stepSize*gs/math.Sqrt(c+eps) - l2reg*w
 			w += upd
 
-			// because scalar values are copies, and not pointers, we have to actually re-update the dualValu in model[i]
-			*(weights.(*F64)) = F64(w)
-			*(grad.(*F64)) = F64(0.0)
+			// because scalar values are copies, and not pointers, we have to actually re-update the dual value in model[i]
+			*(weights.(*values.F64)) = values.F64(w)
+			*(grad.(*values.F64)) = values.F64(0.0)
 		default:
 		}
-		solverLogf("AFTER %1.1s", n)
 	}
 	return nil
 }

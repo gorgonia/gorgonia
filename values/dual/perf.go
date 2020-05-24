@@ -13,7 +13,10 @@ var dvpool = &sync.Pool{
 
 func borrowDV() *Dual { return dvpool.Get().(*Dual) }
 
-func returnDV(dv *Dual) {
+// ReturnDV returns the values associated in a *Dual, then returns the *Dual to a pool
+//
+// USE WITH CAUTION.
+func ReturnDV(dv *Dual) {
 	returnValue(dv.d)
 	returnValue(dv.Value)
 	dv.d = nil

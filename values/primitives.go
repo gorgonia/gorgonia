@@ -94,33 +94,49 @@ func (v *B) Size() int { return 0 }
 /* Data() */
 
 // Data returns the original representation of the Value
-func (v *F64) Data() interface{} { return v.any() }
+func (v *F64) Data() interface{} { return v.Any() }
 
 // Data returns the original representation of the Value
-func (v *F32) Data() interface{} { return v.any() }
+func (v *F32) Data() interface{} { return v.Any() }
 
 // Data returns the original representation of the Value
-func (v *I) Data() interface{} { return v.any() }
+func (v *I) Data() interface{} { return v.Any() }
 
 // Data returns the original representation of the Value
-func (v *I64) Data() interface{} { return v.any() }
+func (v *I64) Data() interface{} { return v.Any() }
 
 // Data returns the original representation of the Value
-func (v *I32) Data() interface{} { return v.any() }
+func (v *I32) Data() interface{} { return v.Any() }
 
 // Data returns the original representation of the Value
-func (v *U8) Data() interface{} { return v.any() }
+func (v *U8) Data() interface{} { return v.Any() }
 
 // Data returns the original representation of the Value
-func (v *B) Data() interface{} { return v.any() }
+func (v *B) Data() interface{} { return v.Any() }
 
-func (v *F64) any() float64 { return float64(*v) }
-func (v *F32) any() float32 { return float32(*v) }
-func (v *I) any() int       { return int(*v) }
-func (v *I64) any() int64   { return int64(*v) }
-func (v *I32) any() int32   { return int32(*v) }
-func (v *U8) any() byte     { return byte(*v) }
-func (v *B) any() bool      { return bool(*v) }
+/* Any() */
+// Any() is a method that returns the Go type.
+
+// Any returns the Go type for the given value
+func (v *F64) Any() float64 { return float64(*v) }
+
+// Any returns the Go type for the given value
+func (v *F32) Any() float32 { return float32(*v) }
+
+// Any returns the Go type for the given value
+func (v *I) Any() int { return int(*v) }
+
+// Any returns the Go type for the given value
+func (v *I64) Any() int64 { return int64(*v) }
+
+// Any returns the Go type for the given value
+func (v *I32) Any() int32 { return int32(*v) }
+
+// Any returns the Go type for the given value
+func (v *U8) Any() byte { return byte(*v) }
+
+// Any returns the Go type for the given value
+func (v *B) Any() bool { return bool(*v) }
 
 /* implements fmt.Formatter */
 
