@@ -16,6 +16,12 @@ type Op func(vals ...values.Value) (values.Value, error)
 // PreallocOp is a function that has the return value specified and preallocated, then takes an arbitrary number of Values and returns a Value.
 type PreallocOp func(prealloc values.Value, inputs ...values.Value) (values.Value, error)
 
+// DualOp is any op that can perform its forwards operation on *Dual.
+type DualOp interface {
+	Do(vals ...values.Value) (values.Value, error)
+	Dual(vals ...*Dual) (values.Value, error)
+}
+
 /*
 type Op interface {
 	Do(...values.Value) (values.Value, error)

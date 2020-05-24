@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 )
@@ -22,7 +23,7 @@ func Example_new() {
 
 	// New() creates a new *Dual, assuming that the input value represents a constatn
 	d0 := New(c)
-	fmt.Printf("c: %v, d0 %#v\n", c, d0)
+	fmt.Printf("c: %v, d0 %#v\n", d0, d0)
 
 	// if a *Dual gets passed into New(), it returns the input arg.
 	d1 := New(d0)
@@ -85,7 +86,7 @@ func Example_new() {
 
 // This example shows how to use *Dual.
 // See  the related exampled of Lift
-func Example_bind() {
+func Example_bindVar() {
 	times := func(vals ...values.Value) (values.Value, error) {
 		if len(vals) != 2 {
 			return nil, errors.New("Expected 2")
@@ -104,9 +105,6 @@ func Example_bind() {
 	threetimestwo, err := BindVar(times, NewVar(three), NewVar(two))
 	fmt.Printf("Using BindVar: 3 × 2 = %#v. Err: %v\n", threetimestwo, err)
 
-	threetimestwo, err = Bind(times, NewVar(three), NewVar(two))
-	fmt.Printf("Using Bind: 3 × 2 = %#v. Err: %v\n", threetimestwo, err)
-
 	preallocTimes := func(prealloc values.Value, inputs ...values.Value) (values.Value, error) {
 		p := prealloc.(*values.F64)
 		ret, err := times(inputs...)
@@ -121,12 +119,11 @@ func Example_bind() {
 
 	// Output:
 	// Using BindVar: 3 × 2 = {6 | 1}. Err: <nil>
-	// Using Bind: 3 × 2 = {6 | 0}. Err: <nil>
 	// Using Bind0: 3 × 2 = {6 | 5}. Err: <nil>
 }
 
-// TestBind  tests the failure modes not covered in ExampleBind
-func TestBind(t *testing.T) {
+// TestBindVar  tests the failure modes not covered in ExampleBind
+func TestBindVar(t *testing.T) {
 	times := func(vals ...values.Value) (values.Value, error) {
 		if len(vals) != 2 {
 			return nil, errors.New("Expected 2")
@@ -141,10 +138,6 @@ func TestBind(t *testing.T) {
 	three := values.NewF64(3)
 	two := values.NewF64(2)
 	five := values.NewF64(5)
-
-	if _, err := Bind(times, NewVar(three), New(two), New(three)); err == nil {
-		t.Errorf("Expected an error.")
-	}
 
 	if _, err := BindVar(times, New(three), New(two), New(three)); err == nil {
 		t.Errorf("Expected an error.")
@@ -177,11 +170,60 @@ func Example_lift() {
 	}
 	three := values.NewF64(3)
 	two := values.NewF64(2)
-	liftedTimes := Lift(times)
+	liftedTimes := LiftVar(times)
 	threetimestwo, err := liftedTimes(NewVar(three), NewVar(two))
 	fmt.Printf("Using lifttedTimes %T: 3 × 2 = %#v. Err: %v\n", liftedTimes, threetimestwo, err)
 
 	// Output:
-	// Using lifttedTimes func(...*dual.Dual) (*dual.Dual, error): 3 × 2 = {6 | 0}. Err: <nil>
+	// Using lifttedTimes func(...*dual.Dual) (*dual.Dual, error): 3 × 2 = {6 | 1}. Err: <nil>
 
+}
+
+func TestClone(t *testing.T) {
+	assert := assert.New(t)
+
+	f := values.NewF64(3.14)
+	fds := New(f)
+	fds2, err := fds.Clone()
+
+	assert.Nil(err)
+	assert.Equal(fds, fds2, "expected fds2 == fds")
+	assert.True(fds.ValueEq(fds2.(*Dual)))
+	if fds == fds2 {
+		t.Error("Cloned values should never be the same pointer!")
+	}
+
+	T := tensor.New(tensor.WithShape(3, 4), tensor.WithBacking([]float32{1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6}))
+	Tds := NewVar(T)
+	Tds2, err := Tds.Clone()
+	assert.Nil(err)
+	assert.True(Tds.ValueEq(Tds2.(*Dual)))
+
+}
+
+func TestNewAlike(t *testing.T) {
+	assert := assert.New(t)
+	f := values.NewF64(3.14)
+	fds := NewVar(f)
+	fds2, err := NewAlike(fds)
+
+	assert.Nil(err)
+	assert.Equal(0.0, fds2.Value.Data().(float64))
+	assert.Equal(0.0, fds2.Deriv().Data().(float64))
+	assert.False(fds.ValueEq(fds2))
+	if fds == fds2 {
+		t.Error("Cloned values should never be the same pointer!")
+	}
+
+	T := tensor.New(tensor.WithShape(3, 4), tensor.WithBacking([]float32{1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6}))
+	Tds := NewVar(T)
+	Tds2, err := NewAlike(Tds)
+	assert.Nil(err)
+	assert.False(Tds.ValueEq(Tds2))
+}
+
+func TestSetEngine(t *testing.T) {
+	f := values.NewF64(3.14)
+	fds := NewVar(f)
+	fds.SetEngine(tensor.StdEng{}) // should not panic
 }
