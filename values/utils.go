@@ -35,14 +35,3 @@ func makeScalarFromMem(dt tensor.Dtype, mem tensor.Memory) (retVal Value, err er
 	}
 	return
 }
-
-func calcMemSize(dt tensor.Dtype, s tensor.Shape) int64 {
-	var elemSize int64
-	if s.IsScalar() {
-		elemSize = 1
-	} else {
-		elemSize = int64(s.TotalSize())
-	}
-	dtSize := int64(dt.Size())
-	return elemSize * dtSize
-}

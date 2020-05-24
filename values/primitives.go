@@ -115,7 +115,7 @@ func (v *U8) Data() interface{} { return v.Any() }
 func (v *B) Data() interface{} { return v.Any() }
 
 /* Any() */
-// Any() is a method that returns the Go type.
+// Any() is a method that returns the Go type. Hence it doesn't actually fulfil any Go interface.
 
 // Any returns the Go type for the given value
 func (v *F64) Any() float64 { return float64(*v) }

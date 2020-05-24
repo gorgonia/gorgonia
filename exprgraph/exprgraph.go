@@ -34,6 +34,9 @@ type Graph struct {
 	isStdEng bool
 }
 
+// New creates a new *Graph.
+func New(eng tensor.StdEng) *Graph { return &Graph{StdEng: eng} }
+
 // Node returns the node with the given ID, if it exists. Nil otherwise.
 func (g *Graph) Node(id int64) graph.Node {
 	if int(id) >= len(g.nodes) || id < 0 {

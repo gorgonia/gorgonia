@@ -114,7 +114,7 @@ func singlesMul(vals ...values.Value) values.Value{
 func Mul(vals ...values.Value)(values.Value, error){
 	ds, ok := checkDuals(vals...)
 	if !ok {
-		return singlesMul(vals...)
+		return singlesMul(vals...), nil
 	}
 
 	a := *(ds[0].Value.(*values.F64))

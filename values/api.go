@@ -72,7 +72,7 @@ func AnyToValue(any interface{}) (val Value, t hm.Type, dt tensor.Dtype, err err
 	}
 }
 
-// One creates a Value of the given Dtype with the equivalent of 1.
+// One creates a Value of the given Dtype with the equivalent value of 1.
 func One(dt tensor.Dtype) Scalar {
 	switch dt {
 	case tensor.Float64:
