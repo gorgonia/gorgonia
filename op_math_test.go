@@ -343,6 +343,19 @@ var binOpTests = []binOpTest{
 		newF32(-1.0),
 		scalarShape,
 	},
+
+	{
+		func(a *Node, b *Node) (*Node, error) {
+			return BatchedMatMul(a, b, false, false)
+		},
+		tensor.New(tensor.WithShape(2, 3, 4), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12})),
+		tensor.New(tensor.WithShape(2, 4, 1), tensor.WithBacking([]float64{1, 2, 3, 4, 1, 2, 3, 4})),
+
+		tensor.New(tensor.WithBacking([]float64{30, 70, 110, 30, 70, 110})),
+		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4})),
+		tensor.New(tensor.WithBacking([]float64{15, 18, 21, 24, 15, 18, 21, 24})),
+		tensor.Shape{2, 3, 1},
+	},
 }
 
 func TestBasicArithmetic(t *testing.T) {
@@ -440,6 +453,8 @@ func testOneArithTape(t *testing.T, bot binOpTest, i int) error {
 	}
 
 	as := newAssertState(assert.New(t))
+	as.True(bot.a.Shape().Eq(x.Shape()), "Test op doesn't change shape of input node")
+	as.True(bot.b.Shape().Eq(y.Shape()), "Test op doesn't change shape of input node")
 	as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
 	as.True(bot.correctShape.Eq(ret.Shape()))
 	as.Equal(2, len(grads))
