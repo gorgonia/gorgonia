@@ -592,9 +592,7 @@ func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err e
 			innerY = transpose2D(innerY)
 			defer tensor.ReturnInts(innerY)
 		}
-		retVal = make(tensor.Shape, 0, len(outerX)+2)
-		retVal = append(retVal, outerX...)
-		retVal = append(retVal, innerX[0], innerY[1])
+		retVal = append(outerX, innerX[0], innerY[1])
 	}
 	return
 }
