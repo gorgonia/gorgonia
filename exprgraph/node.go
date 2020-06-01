@@ -15,20 +15,10 @@ type Node struct {
 	name string
 }
 
-// MakeNode creates a new Node.
-func MakeNode(a tensor.Tensor) Node {
-	switch n := a.(type) {
-	case Node:
-		return n
-	case *Node:
-		if n == nil {
-			return Node{}
-		}
-		return *n
-		// case nil:
-		// 	return Node{}
-	}
-	return Node{Tensor: a}
+func Make(g *Graph, name string, opts ...tensor.ConsOpt) Node {
+	consOpts := append([]tensor.ConsOpt{tensor.WithEngine(g.StdEng), inGraph(), WithName(name)}, opts...)
+	t := tensor.New(consOpts...)
+	return g.nodeOf(t)
 }
 
 // OK returns true if the Node is good for processing.
@@ -65,11 +55,6 @@ type node struct {
 }
 
 /* TODO */
-
-type dualValue interface {
-	Value() interface{} //tmp
-	Deriv() interface{}
-}
 
 type Op interface{}
 

@@ -8,7 +8,7 @@ import (
 // Graph is a representation of an expression graph
 type Graph struct {
 	// A Graph implements a StandardEngine.
-	tensor.StdEng
+	tensor.Engine
 
 	// adj is an adjacency list
 	adj [][]NodeID
@@ -33,9 +33,19 @@ type Graph struct {
 	// flags
 	isStdEng bool
 }
+type graphSetter interface {
+	SetGraph(g *Grph)
+}
 
 // New creates a new *Graph.
-func New(eng tensor.StdEng) *Graph { return &Graph{StdEng: eng} }
+func New(eng tensor.Engine) *Graph {
+	g := &Graph{}
+	if gs, ok := eng.(graphSetter); ok {
+		gs.SetGraph(g)
+	}
+	g.Engine = eng
+	return g
+}
 
 // Node returns the node with the given ID, if it exists. Nil otherwise.
 func (g *Graph) Node(id int64) graph.Node {
@@ -62,6 +72,17 @@ func (g *Graph) HaEdgeFromTo(x, y int64) bool { panic("NYI") }
 
 // To returns all the nodes that can reach the given id.
 func (g *Graph) To(id int64) graph.Nodes { panic("NYI") }
+
+/* functions dealing with data in the graph */
+
+// Insert inserts a tensor.Tensor and returns the Node ID.
+func (g *Graph) Insert(t tensor.Tensor) NodeID { return NodeID(g.idOrInsert) }
+
+// NameOf returns the name of a given tensor
+func (g *Graph) NameOf(t tensor.Tensor) string { return g.nameOf(t) }
+
+// Name associates a name with a given tensor.
+func (g *Graph) Name(t tensor.Tensor, s string) { g.name(t, s) }
 
 /* unexported methods */
 

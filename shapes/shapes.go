@@ -28,15 +28,26 @@ type BinOp struct {
 
 func (op BinOp) TotalSize() int {
 	switch op.OpType {
+	case Arrow:
+		return 0
 	case Add, Sub:
 	case Mul, Div:
 
 	}
 }
 
+// UnaryOp represetns a unary operation on a shape expression
 type UnaryOp struct {
 	Op OpType
 	A  Expr
+}
+
+func (op UnaryOp) TotalSize() int {
+	switch op.Op {
+	case Const:
+	case Index:
+	default:
+	}
 }
 
 type OpType byte
@@ -47,6 +58,7 @@ const (
 	Index
 
 	// Binary
+	Arrow
 	Add
 	Sub
 	Mul

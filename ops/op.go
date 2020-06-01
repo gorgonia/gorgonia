@@ -6,8 +6,8 @@ import (
 	"runtime/trace"
 
 	"github.com/chewxy/hm"
+	"gorgonia.org/gorgonia/shapes"
 	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/tensor"
 )
 
 // An Op is a symbolic representation of an operation
@@ -26,8 +26,7 @@ type Op interface {
 	// Type informs the type of the Op (not the node). This will be used by the type system to infer the final type of the node.
 	Type() hm.Type
 
-	// returns the output shape as a function of the inputs
-	InferShape(...DimSizer) (tensor.Shape, error)
+	Shape() shapes.Expr
 
 	/* Machine related */
 

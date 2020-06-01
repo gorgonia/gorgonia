@@ -13,7 +13,7 @@ func WithName(name string) tensor.ConsOpt {
 	}
 }
 
-func AsVar() tensor.ConsOpt {
+func inGraph() tensor.ConsOpt {
 	return func(t tensor.Tensor) {
 		en := t.Engine()
 		if e, ok := en.(*Graph); ok {

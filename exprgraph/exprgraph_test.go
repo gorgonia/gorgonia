@@ -1,10 +1,30 @@
-package exprgraph
+package exprgraph_test
 
 import (
 	"fmt"
 
 	"gorgonia.org/tensor"
 )
+
+type SymbolicEngine struct {
+	tensor.StdEng
+	g *Graph
+}
+
+func (e *SymbolicEngine) SetGraph(g *Graph) { e.g = g }
+
+func (e *SymbolicEngine) MatMul(a, b, preallocated tensor.Tensor) error {
+	aEng := a.Engine().(*Graph) // TODO ERR
+	bEng := b.Engine().(*Graph) // TODO ERR
+	cEng := preallocated.Engine().(*Graph)
+	aName := aEng.nameOf(a)
+	bName := bEng.nameOf(b)
+	cEng.Insert(preallocated)
+
+	cName := aName + "×" + bName
+	cEng.name(preallocated, cName)
+
+}
 
 func Example() {
 	g := NewGraph()
