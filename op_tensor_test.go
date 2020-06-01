@@ -459,3 +459,73 @@ func TestUnconcatConcatOpSequence(t *testing.T) {
 	as.Equal([]float64{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, xG.Data())
 	as.True(tensor.Shape{2, 3, 3}.Eq(xG.Shape()))
 }
+
+func TestPoorMansAttentionNet(t *testing.T) {
+	defer runtime.GC()
+
+	as := assert.New(t)
+	g := NewGraph()
+
+	x := NewTensor(g, tensor.Float64, 3, WithShape(2, 3, 3), WithName("x"), WithValue(tensor.New(tensor.WithShape(2, 3, 3), tensor.WithBacking([]float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+
+		10, 11, 12,
+		13, 14, 15,
+		16, 17, 18,
+	}))))
+
+	ux, err := Unconcat(x, 2, 3)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	for i, n := range ux {
+		ux[i], err = Reshape(n, tensor.Shape{2, 3, 1})
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+	}
+
+	// In the actual model, I would have an LSTM layer here.
+
+	cx, err := Concat(2, ux...)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	// Take a slice of the pretend LSTM output and apply it to the whole.
+	// These ops kind of resemble that of my actual attention model.
+	ux0, err := Reshape(ux[0], tensor.Shape{2, 1, 3})
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	mm, err := BatchedMatMul(cx, ux0, false, false)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	ax, err := Add(cx, mm)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	cost := Must(Sum(ax))
+	_, err = Grad(cost, x)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	m := NewTapeMachine(g)
+	if err = m.RunAll(); err != nil {
+		t.Fatalf("%+v", err)
+	}
+	defer m.Close()
+
+	xG, err := x.Grad()
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	as.True(tensor.Shape{2, 3, 3}.Eq(xG.Shape()))
+}
