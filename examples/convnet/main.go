@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -15,7 +14,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/pkg/errors"
-	"gorgonia.org/gorgonia"
+	G "gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/examples/mnist"
 	"gorgonia.org/tensor"
 
@@ -47,28 +46,20 @@ func parseDtype() {
 	}
 }
 
-type sli struct {
-	start, end int
-}
-
-func (s sli) Start() int { return s.start }
-func (s sli) End() int   { return s.end }
-func (s sli) Step() int  { return 1 }
-
 type convnet struct {
-	g                  *gorgonia.ExprGraph
-	w0, w1, w2, w3, w4 *gorgonia.Node // weights. the number at the back indicates which layer it's used for
-	d0, d1, d2, d3     float64        // dropout probabilities
+	g                  *G.ExprGraph
+	w0, w1, w2, w3, w4 *G.Node // weights. the number at the back indicates which layer it's used for
+	d0, d1, d2, d3     float64 // dropout probabilities
 
-	out *gorgonia.Node
+	out *G.Node
 }
 
-func newConvNet(g *gorgonia.ExprGraph) *convnet {
-	w0 := gorgonia.NewTensor(g, dt, 4, gorgonia.WithShape(32, 1, 3, 3), gorgonia.WithName("w0"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
-	w1 := gorgonia.NewTensor(g, dt, 4, gorgonia.WithShape(64, 32, 3, 3), gorgonia.WithName("w1"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
-	w2 := gorgonia.NewTensor(g, dt, 4, gorgonia.WithShape(128, 64, 3, 3), gorgonia.WithName("w2"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
-	w3 := gorgonia.NewMatrix(g, dt, gorgonia.WithShape(128*3*3, 625), gorgonia.WithName("w3"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
-	w4 := gorgonia.NewMatrix(g, dt, gorgonia.WithShape(625, 10), gorgonia.WithName("w4"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
+func newConvNet(g *G.ExprGraph) *convnet {
+	w0 := G.NewTensor(g, dt, 4, G.WithShape(32, 1, 3, 3), G.WithName("w0"), G.WithInit(G.GlorotN(1.0)))
+	w1 := G.NewTensor(g, dt, 4, G.WithShape(64, 32, 3, 3), G.WithName("w1"), G.WithInit(G.GlorotN(1.0)))
+	w2 := G.NewTensor(g, dt, 4, G.WithShape(128, 64, 3, 3), G.WithName("w2"), G.WithInit(G.GlorotN(1.0)))
+	w3 := G.NewMatrix(g, dt, G.WithShape(128*3*3, 625), G.WithName("w3"), G.WithInit(G.GlorotN(1.0)))
+	w4 := G.NewMatrix(g, dt, G.WithShape(625, 10), G.WithName("w4"), G.WithInit(G.GlorotN(1.0)))
 	return &convnet{
 		g:  g,
 		w0: w0,
@@ -84,89 +75,86 @@ func newConvNet(g *gorgonia.ExprGraph) *convnet {
 	}
 }
 
-func (m *convnet) learnables() gorgonia.Nodes {
-	return gorgonia.Nodes{m.w0, m.w1, m.w2, m.w3, m.w4}
+func (m *convnet) learnables() G.Nodes {
+	return G.Nodes{m.w0, m.w1, m.w2, m.w3, m.w4}
 }
 
 // This function is particularly verbose for educational reasons. In reality, you'd wrap up the layers within a layer struct type and perform per-layer activations
-func (m *convnet) fwd(x *gorgonia.Node) (err error) {
-	var c0, c1, c2, fc *gorgonia.Node
-	var a0, a1, a2, a3 *gorgonia.Node
-	var p0, p1, p2 *gorgonia.Node
-	var l0, l1, l2, l3 *gorgonia.Node
+func (m *convnet) fwd(x *G.Node) (err error) {
+	var c0, c1, c2, fc *G.Node
+	var a0, a1, a2, a3 *G.Node
+	var p0, p1, p2 *G.Node
+	var l0, l1, l2, l3 *G.Node
 
 	// LAYER 0
 	// here we convolve with stride = (1, 1) and padding = (1, 1),
 	// which is your bog standard convolution for convnet
-	if c0, err = gorgonia.Conv2d(x, m.w0, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
+	if c0, err = G.Conv2d(x, m.w0, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
 		return errors.Wrap(err, "Layer 0 Convolution failed")
 	}
-	if a0, err = gorgonia.Rectify(c0); err != nil {
+	if a0, err = G.Rectify(c0); err != nil {
 		return errors.Wrap(err, "Layer 0 activation failed")
 	}
-	if p0, err = gorgonia.MaxPool2D(a0, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
+	if p0, err = G.MaxPool2D(a0, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
 		return errors.Wrap(err, "Layer 0 Maxpooling failed")
 	}
 	log.Printf("p0 shape %v", p0.Shape())
-	if l0, err = gorgonia.Dropout(p0, m.d0); err != nil {
+	if l0, err = G.Dropout(p0, m.d0); err != nil {
 		return errors.Wrap(err, "Unable to apply a dropout")
 	}
 
 	// Layer 1
-	if c1, err = gorgonia.Conv2d(l0, m.w1, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
+	if c1, err = G.Conv2d(l0, m.w1, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
 		return errors.Wrap(err, "Layer 1 Convolution failed")
 	}
-	if a1, err = gorgonia.Rectify(c1); err != nil {
+	if a1, err = G.Rectify(c1); err != nil {
 		return errors.Wrap(err, "Layer 1 activation failed")
 	}
-	if p1, err = gorgonia.MaxPool2D(a1, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
+	if p1, err = G.MaxPool2D(a1, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
 		return errors.Wrap(err, "Layer 1 Maxpooling failed")
 	}
-	if l1, err = gorgonia.Dropout(p1, m.d1); err != nil {
+	if l1, err = G.Dropout(p1, m.d1); err != nil {
 		return errors.Wrap(err, "Unable to apply a dropout to layer 1")
 	}
 
 	// Layer 2
-	if c2, err = gorgonia.Conv2d(l1, m.w2, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
+	if c2, err = G.Conv2d(l1, m.w2, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
 		return errors.Wrap(err, "Layer 2 Convolution failed")
 	}
-	if a2, err = gorgonia.Rectify(c2); err != nil {
+	if a2, err = G.Rectify(c2); err != nil {
 		return errors.Wrap(err, "Layer 2 activation failed")
 	}
-	if p2, err = gorgonia.MaxPool2D(a2, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
+	if p2, err = G.MaxPool2D(a2, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
 		return errors.Wrap(err, "Layer 2 Maxpooling failed")
 	}
-	log.Printf("p2 shape %v", p2.Shape())
 
-	var r2 *gorgonia.Node
+	var r2 *G.Node
 	b, c, h, w := p2.Shape()[0], p2.Shape()[1], p2.Shape()[2], p2.Shape()[3]
-	if r2, err = gorgonia.Reshape(p2, tensor.Shape{b, c * h * w}); err != nil {
+	if r2, err = G.Reshape(p2, tensor.Shape{b, c * h * w}); err != nil {
 		return errors.Wrap(err, "Unable to reshape layer 2")
 	}
 	log.Printf("r2 shape %v", r2.Shape())
-	if l2, err = gorgonia.Dropout(r2, m.d2); err != nil {
+	if l2, err = G.Dropout(r2, m.d2); err != nil {
 		return errors.Wrap(err, "Unable to apply a dropout on layer 2")
 	}
 
-	ioutil.WriteFile("tmp.dot", []byte(m.g.ToDot()), 0644)
-
 	// Layer 3
-	if fc, err = gorgonia.Mul(l2, m.w3); err != nil {
+	if fc, err = G.Mul(l2, m.w3); err != nil {
 		return errors.Wrapf(err, "Unable to multiply l2 and w3")
 	}
-	if a3, err = gorgonia.Rectify(fc); err != nil {
+	if a3, err = G.Rectify(fc); err != nil {
 		return errors.Wrapf(err, "Unable to activate fc")
 	}
-	if l3, err = gorgonia.Dropout(a3, m.d3); err != nil {
+	if l3, err = G.Dropout(a3, m.d3); err != nil {
 		return errors.Wrapf(err, "Unable to apply a dropout on layer 3")
 	}
 
 	// output decode
-	var out *gorgonia.Node
-	if out, err = gorgonia.Mul(l3, m.w4); err != nil {
+	var out *G.Node
+	if out, err = G.Mul(l3, m.w4); err != nil {
 		return errors.Wrapf(err, "Unable to multiply l3 and w4")
 	}
-	m.out, err = gorgonia.SoftMax(out)
+	m.out, err = G.SoftMax(out)
 	return
 }
 
@@ -208,24 +196,24 @@ func main() {
 	if err := inputs.Reshape(numExamples, 1, 28, 28); err != nil {
 		log.Fatal(err)
 	}
-	g := gorgonia.NewGraph()
-	x := gorgonia.NewTensor(g, dt, 4, gorgonia.WithShape(bs, 1, 28, 28), gorgonia.WithName("x"))
-	y := gorgonia.NewMatrix(g, dt, gorgonia.WithShape(bs, 10), gorgonia.WithName("y"))
+	g := G.NewGraph()
+	x := G.NewTensor(g, dt, 4, G.WithShape(bs, 1, 28, 28), G.WithName("x"))
+	y := G.NewMatrix(g, dt, G.WithShape(bs, 10), G.WithName("y"))
 	m := newConvNet(g)
 	if err = m.fwd(x); err != nil {
 		log.Fatalf("%+v", err)
 	}
-	losses := gorgonia.Must(gorgonia.Log(gorgonia.Must(gorgonia.HadamardProd(m.out, y))))
-	cost := gorgonia.Must(gorgonia.Mean(losses))
-	cost = gorgonia.Must(gorgonia.Neg(cost))
+	losses := G.Must(G.Log(G.Must(G.HadamardProd(m.out, y))))
+	cost := G.Must(G.Mean(losses))
+	cost = G.Must(G.Neg(cost))
 
 	// we wanna track costs
-	var costVal gorgonia.Value
-	gorgonia.Read(cost, &costVal)
+	var costVal G.Value
+	G.Read(cost, &costVal)
 
-	// if _, err = gorgonia.Grad(cost, m.learnables()...); err != nil {
-	// 	log.Fatal(err)
-	// }
+	if _, err = G.Grad(cost, m.learnables()...); err != nil {
+		log.Fatal(err)
+	}
 
 	// debug
 	// ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
@@ -233,11 +221,11 @@ func main() {
 	// logger := log.New(os.Stderr, "", 0)
 	// vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...), gorgonia.WithLogger(logger), gorgonia.WithWatchlist())
 
-	prog, locMap, _ := gorgonia.Compile(g)
-	log.Printf("%v", prog)
+	prog, locMap, _ := G.Compile(g)
+	//log.Printf("%v", prog)
 
-	vm := gorgonia.NewTapeMachine(g, gorgonia.WithPrecompiled(prog, locMap), gorgonia.BindDualValues(m.learnables()...))
-	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)))
+	vm := G.NewTapeMachine(g, G.WithPrecompiled(prog, locMap), G.BindDualValues(m.learnables()...))
+	solver := G.NewRMSPropSolver(G.WithBatchSize(float64(bs)))
 	defer vm.Close()
 	// pprof
 	// handlePprof(sigChan, doneChan)
@@ -275,23 +263,25 @@ func main() {
 			}
 
 			var xVal, yVal tensor.Tensor
-			if xVal, err = inputs.Slice(sli{start, end}); err != nil {
+			if xVal, err = inputs.Slice(G.S(start, end)); err != nil {
 				log.Fatal("Unable to slice x")
 			}
 
-			if yVal, err = targets.Slice(sli{start, end}); err != nil {
+			if yVal, err = targets.Slice(G.S(start, end)); err != nil {
 				log.Fatal("Unable to slice y")
 			}
 			if err = xVal.(*tensor.Dense).Reshape(bs, 1, 28, 28); err != nil {
 				log.Fatalf("Unable to reshape %v", err)
 			}
 
-			gorgonia.Let(x, xVal)
-			gorgonia.Let(y, yVal)
+			G.Let(x, xVal)
+			G.Let(y, yVal)
 			if err = vm.RunAll(); err != nil {
-				log.Fatalf("Failed at epoch  %d: %v", i, err)
+				log.Fatalf("Failed at epoch  %d, batch %d. Error: %v", i, b, err)
 			}
-			solver.Step(gorgonia.NodesToValueGrads(m.learnables()))
+			if err = solver.Step(G.NodesToValueGrads(m.learnables())); err != nil {
+				log.Fatalf("Failed to update nodes with gradients at epoch %d, batch %d. Error %v", i, b, err)
+			}
 			vm.Reset()
 			bar.Increment()
 		}

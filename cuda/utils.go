@@ -74,6 +74,7 @@ func binaryCheck(a, b tensor.Tensor) (err error) {
 	if at.Kind() != bt.Kind() {
 		return errors.Errorf(typeMismatch, at, bt)
 	}
+
 	if !a.Shape().Eq(b.Shape()) {
 		log.Printf("BINARY CHECK %v %v", a.Shape(), b.Shape())
 		return errors.Errorf(shapeMismatch, b.Shape(), a.Shape())

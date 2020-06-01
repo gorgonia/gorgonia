@@ -598,7 +598,7 @@ func (op *sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 		if v.IsScalar() {
 			retVal, _ = anyToScalar(v.ScalarValue())
 		} else {
-			retVal = v
+			retVal = v.(tensor.View).Materialize()
 		}
 	case Scalar:
 		return nil, errors.New("Cannot slice a scalar value")
@@ -1223,7 +1223,12 @@ func (op reshapeOp) CUDADo(extern External, dev Device, prealloc Value, vals ...
 		}
 		return v, nil
 	case Scalar:
-		return nil, errors.Errorf(nyiTypeFail, "reshape.Do", "Scalar")
+		vT := ScalarAsTensor(v, op.to.Dims(), nil)
+		if err := vT.(tensor.Tensor).Reshape(op.to...); err != nil {
+
+			return nil, errors.Errorf(nyiTypeFail, "reshape.Do", "Scalar")
+		}
+		return vT, nil
 	}
 
 	panic("Unreachable")

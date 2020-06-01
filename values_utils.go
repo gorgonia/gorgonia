@@ -53,6 +53,7 @@ func ValueEq(a, b Value) bool {
 	case tensor.Tensor:
 		if bt, ok := b.(tensor.Tensor); ok {
 			return at.Eq(bt)
+			//log.Printf("at.info %#v, bt.info %#v", a.(*tensor.Dense).Info(), b.(*tensor.Dense).Info())
 		}
 		return false
 	case ValueEqualer:
