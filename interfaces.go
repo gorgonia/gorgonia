@@ -7,6 +7,10 @@ import (
 	"gorgonia.org/tensor"
 )
 
+var (
+	_ Tensor = tensor.New()
+)
+
 // Tensor is an interface that describes an ndarray
 type Tensor interface {
 	// info about the ndarrayN
