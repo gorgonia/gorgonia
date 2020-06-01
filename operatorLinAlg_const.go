@@ -5,11 +5,11 @@ import "github.com/chewxy/hm"
 // āBinOpStrs is the string representation for binLAOperator
 // It should be held constant
 var āBinOpStrs = [maxĀBinaryOperator]string{
-	"×",
-	"×",
-	"⋅",
-	"⊗",
-	"×××",
+	"×",   // matMulOperator
+	"×",   // matVecMulOperator
+	"⋅",   // vecDotOperator
+	"⊗",   // outerProdOperator
+	"×××", // batchedMatMulOperator
 }
 
 var āBinOpDiffExprs = [maxĀBinaryOperator]func(tA, tB bool, x, y, z, grad *Node) (Nodes, error){

@@ -16,7 +16,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/pkg/errors"
-	"gorgonia.org/gorgonia"
+	G "gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/examples/mnist"
 	nnops "gorgonia.org/gorgonia/ops/nn"
 	"gorgonia.org/tensor"
@@ -49,28 +49,20 @@ func parseDtype() {
 	}
 }
 
-type sli struct {
-	start, end int
-}
-
-func (s sli) Start() int { return s.start }
-func (s sli) End() int   { return s.end }
-func (s sli) Step() int  { return 1 }
-
 type convnet struct {
-	g                  *gorgonia.ExprGraph
-	w0, w1, w2, w3, w4 *gorgonia.Node // weights. the number at the back indicates which layer it's used for
-	d0, d1, d2, d3     float64        // dropout probabilities
+	g                  *G.ExprGraph
+	w0, w1, w2, w3, w4 *G.Node // weights. the number at the back indicates which layer it's used for
+	d0, d1, d2, d3     float64 // dropout probabilities
 
-	out *gorgonia.Node
+	out *G.Node
 }
 
-func newConvNet(g *gorgonia.ExprGraph) *convnet {
-	w0 := gorgonia.NewTensor(g, dt, 4, gorgonia.WithShape(32, 1, 3, 3), gorgonia.WithName("w0"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
-	w1 := gorgonia.NewTensor(g, dt, 4, gorgonia.WithShape(64, 32, 3, 3), gorgonia.WithName("w1"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
-	w2 := gorgonia.NewTensor(g, dt, 4, gorgonia.WithShape(128, 64, 3, 3), gorgonia.WithName("w2"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
-	w3 := gorgonia.NewMatrix(g, dt, gorgonia.WithShape(128*3*3, 625), gorgonia.WithName("w3"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
-	w4 := gorgonia.NewMatrix(g, dt, gorgonia.WithShape(625, 10), gorgonia.WithName("w4"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
+func newConvNet(g *G.ExprGraph) *convnet {
+	w0 := G.NewTensor(g, dt, 4, G.WithShape(32, 1, 3, 3), G.WithName("w0"), G.WithInit(G.GlorotN(1.0)))
+	w1 := G.NewTensor(g, dt, 4, G.WithShape(64, 32, 3, 3), G.WithName("w1"), G.WithInit(G.GlorotN(1.0)))
+	w2 := G.NewTensor(g, dt, 4, G.WithShape(128, 64, 3, 3), G.WithName("w2"), G.WithInit(G.GlorotN(1.0)))
+	w3 := G.NewMatrix(g, dt, G.WithShape(128*3*3, 625), G.WithName("w3"), G.WithInit(G.GlorotN(1.0)))
+	w4 := G.NewMatrix(g, dt, G.WithShape(625, 10), G.WithName("w4"), G.WithInit(G.GlorotN(1.0)))
 	return &convnet{
 		g:  g,
 		w0: w0,
@@ -86,16 +78,16 @@ func newConvNet(g *gorgonia.ExprGraph) *convnet {
 	}
 }
 
-func (m *convnet) learnables() gorgonia.Nodes {
-	return gorgonia.Nodes{m.w0, m.w1, m.w2, m.w3, m.w4}
+func (m *convnet) learnables() G.Nodes {
+	return G.Nodes{m.w0, m.w1, m.w2, m.w3, m.w4}
 }
 
 // This function is particularly verbose for educational reasons. In reality, you'd wrap up the layers within a layer struct type and perform per-layer activations
-func (m *convnet) fwd(x *gorgonia.Node) (err error) {
-	var c0, c1, c2, fc *gorgonia.Node
-	var a0, a1, a2, a3 *gorgonia.Node
-	var p0, p1, p2 *gorgonia.Node
-	var l0, l1, l2, l3 *gorgonia.Node
+func (m *convnet) fwd(x *G.Node) (err error) {
+	var c0, c1, c2, fc *G.Node
+	var a0, a1, a2, a3 *G.Node
+	var p0, p1, p2 *G.Node
+	var l0, l1, l2, l3 *G.Node
 
 	// LAYER 0
 	// here we convolve with stride = (1, 1) and padding = (1, 1),
@@ -141,9 +133,9 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	}
 	log.Printf("p2 shape %v", p2.Shape())
 
-	var r2 *gorgonia.Node
+	var r2 *G.Node
 	b, c, h, w := p2.Shape()[0], p2.Shape()[1], p2.Shape()[2], p2.Shape()[3]
-	if r2, err = gorgonia.Reshape(p2, tensor.Shape{b, c * h * w}); err != nil {
+	if r2, err = G.Reshape(p2, tensor.Shape{b, c * h * w}); err != nil {
 		return errors.Wrap(err, "Unable to reshape layer 2")
 	}
 	log.Printf("r2 shape %v", r2.Shape())
@@ -153,7 +145,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	log.Printf("l2 shape %v | %v", l2.Shape(), m.w3.Shape())
 
 	// Layer 3
-	if fc, err = gorgonia.Mul(l2, m.w3); err != nil {
+	if fc, err = G.Mul(l2, m.w3); err != nil {
 		return errors.Wrapf(err, "Unable to multiply l2 and w3")
 	}
 	if a3, err = nnops.Rectify(fc); err != nil {
@@ -165,11 +157,11 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	log.Printf("l3 name %v | a3 name %v", l3, a3)
 
 	// output decode
-	var out *gorgonia.Node
-	if out, err = gorgonia.Mul(l3, m.w4); err != nil {
+	var out *G.Node
+	if out, err = G.Mul(l3, m.w4); err != nil {
 		return errors.Wrapf(err, "Unable to multiply l3 and w4")
 	}
-	m.out, err = gorgonia.SoftMax(out)
+	m.out, err = G.SoftMax(out)
 	log.Printf("DONE")
 	return
 }
@@ -179,7 +171,7 @@ func main() {
 	parseDtype()
 	rand.Seed(1337)
 
-	log.Printf("gorgonia. %t", gorgonia.CUDA)
+	log.Printf("gorgonia. %t", G.CUDA)
 
 	// intercept Ctrl+C
 	sigChan := make(chan os.Signal, 1)
@@ -214,24 +206,24 @@ func main() {
 	if err := inputs.Reshape(numExamples, 1, 28, 28); err != nil {
 		log.Fatal(err)
 	}
-	g := gorgonia.NewGraph()
-	x := gorgonia.NewTensor(g, dt, 4, gorgonia.WithShape(bs, 1, 28, 28), gorgonia.WithName("x"))
-	y := gorgonia.NewMatrix(g, dt, gorgonia.WithShape(bs, 10), gorgonia.WithName("y"))
+	g := G.NewGraph()
+	x := G.NewTensor(g, dt, 4, G.WithShape(bs, 1, 28, 28), G.WithName("x"))
+	y := G.NewMatrix(g, dt, G.WithShape(bs, 10), G.WithName("y"))
 	m := newConvNet(g)
 	if err = m.fwd(x); err != nil {
 		log.Fatalf("%+v", err)
 	}
 	log.Printf("m.out.Shape %v, y.Shape %v", m.out.Shape(), y.Shape())
-	losses := gorgonia.Must(gorgonia.Log(gorgonia.Must(gorgonia.HadamardProd(m.out, y))))
-	cost := gorgonia.Must(gorgonia.Neg(losses))
-	cost = gorgonia.Must(gorgonia.Mean(cost))
+	losses := G.Must(G.Log(G.Must(G.HadamardProd(m.out, y))))
+	cost := G.Must(G.Neg(losses))
+	cost = G.Must(G.Mean(cost))
 
 	// we wanna track costs
-	var costVal, lossesVal gorgonia.Value
-	gorgonia.Read(losses, &lossesVal)
-	gorgonia.Read(cost, &costVal)
+	var costVal, lossesVal G.Value
+	G.Read(losses, &lossesVal)
+	G.Read(cost, &costVal)
 
-	if _, err = gorgonia.Grad(cost, m.learnables()...); err != nil {
+	if _, err = G.Grad(cost, m.learnables()...); err != nil {
 		log.Fatalf("%+v", err)
 	}
 
@@ -245,8 +237,8 @@ func main() {
 	// log.Printf("%v", prog)
 
 	// vm := gorgonia.NewTapeMachine(g, gorgonia.WithPrecompiled(prog, locMap), gorgonia.BindDualValues(m.learnables()...))
-	vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...))
-	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)), gorgonia.WithLearnRate(0.05))
+	vm := G.NewTapeMachine(g, G.BindDualValues())
+	solver := G.NewRMSPropSolver(G.WithBatchSize(float64(bs)), G.WithLearnRate(0.01))
 	defer vm.Close()
 
 	// pprof
@@ -270,9 +262,8 @@ func main() {
 	bar.SetRefreshRate(time.Second)
 	bar.SetMaxWidth(80)
 
-	var xxx int
 	var avgcost float64
-
+	var costs []float64
 	for i := 0; i < *epochs; i++ {
 		bar.Prefix(fmt.Sprintf("Epoch %d", i))
 		bar.Set(0)
@@ -288,34 +279,41 @@ func main() {
 			}
 
 			var xVal, yVal tensor.Tensor
-			if xVal, err = inputs.Slice(sli{start, end}); err != nil {
+			if xVal, err = inputs.Slice(G.S(start, end)); err != nil {
 				log.Fatal("Unable to slice x")
 			}
 
-			if yVal, err = targets.Slice(sli{start, end}); err != nil {
+			if yVal, err = targets.Slice(G.S(start, end)); err != nil {
 				log.Fatal("Unable to slice y")
 			}
 			if err = xVal.(*tensor.Dense).Reshape(bs, 1, 28, 28); err != nil {
 				log.Fatal("Unable to reshape %v", err)
 			}
 
-			gorgonia.Let(x, xVal)
-			gorgonia.Let(y, yVal)
+			G.Let(x, xVal)
+			G.Let(y, yVal)
 			if err = vm.RunAll(); err != nil {
 				log.Fatalf("Failed at epoch  %d: %+v", i, err)
 			}
-			solver.Step(gorgonia.NodesToValueGrads(m.learnables()))
+			solver.Step(G.NodesToValueGrads(m.learnables()))
 			vm.Reset()
 			bar.Increment()
-			if xxx < 5 {
-				log.Printf("Cost %v", costVal)
-				log.Printf("Y\n%#1.3f", y.Value())
-				log.Printf("Losses\n%#1.3f", lossesVal)
-				xxx++
+			switch dt {
+			case tensor.Float32:
+				c := float64(costVal.Data().(float32))
+				avgcost += c
+				costs = append(costs, c)
+
+			case tensor.Float64:
+				c := costVal.Data().(float64)
+				avgcost += c
+				costs = append(costs, c)
+			default:
+				panic("unsupported dtype")
 			}
-			avgcost += costVal.Data().(float64)
 		}
 		log.Printf("Epoch %d | cost %v", i, avgcost/float64(batches))
+		log.Printf("Costs %v", costs)
 		avgcost = 0
 
 	}
