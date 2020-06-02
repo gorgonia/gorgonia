@@ -377,15 +377,12 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 				compileLogf("Inserting new alloc")
 				var instr alloc
 				instr = newAlloc(node, writeTo)
-				// cg.instructions = append(cg.instructions, instr)
-
 				cg.addInstr(node, instr)
 				cg.updateLastWrites(writeTo, node)
 
 				prealloc = true
 
 				cg.queue = append(cg.queue, i)
-				// cg.queue = append(cg.queue, len(cg.instructions)) // no -1.
 				cg.allocated[writeTo] = struct{}{}
 			}
 		}

@@ -233,7 +233,8 @@ func (op linAlgBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 	case outerProdOperator:
 		return tensor.Outer(aT, bT, tensor.WithReuse(pT))
 	case batchedMatMulOperator:
-		return nil, errors.New("NYI")
+		// checks were done when the op was created
+		return batchedMatMul(aT, bT, nil, op.transA, op.transB, false)
 	}
 	panic("Unreachable")
 }

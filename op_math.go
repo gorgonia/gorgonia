@@ -575,6 +575,8 @@ func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err e
 		// outerprods only handles vec x vec for now
 		retVal = tensor.Shape{x.TotalSize(), y.TotalSize()}
 	case batchedMatMulOperator:
+		x = x.Clone()
+		y = y.Clone()
 		innerX := x[len(x)-2:]
 		outerX := x[:len(x)-2]
 		innerY := y[len(y)-2:]
@@ -651,7 +653,7 @@ func (op linAlgBinOp) String() string {
 	var buf bytes.Buffer
 
 	switch op.āBinaryOperator {
-	case matMulOperator, matVecMulOperator:
+	case matMulOperator, matVecMulOperator, batchedMatMulOperator:
 		buf.WriteString("A")
 	case vecDotOperator, outerProdOperator:
 		buf.WriteString("a")
@@ -662,7 +664,7 @@ func (op linAlgBinOp) String() string {
 	}
 
 	switch op.āBinaryOperator {
-	case matMulOperator:
+	case matMulOperator, batchedMatMulOperator:
 		fmt.Fprintf(&buf, " %v B", op.āBinaryOperator)
 	case matVecMulOperator, vecDotOperator, outerProdOperator:
 		fmt.Fprintf(&buf, " %v b", op.āBinaryOperator)
