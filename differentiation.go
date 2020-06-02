@@ -252,6 +252,86 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 		symdiffLogf("nodeGradMap[%x]: %d", node.ID(), nodeGradMap[node])
 		if len(nodeGradMap[node]) > 1 {
 
+			grads := nodeGradMap[node]
+			want := grads[0].Shape().Clone()
+			for _, grad := range grads[1:] {
+				s := grad.Shape()
+				if want.Eq(s) {
+					continue
+				}
+				// Some SymDiff methods don't return a shape with the same number of
+				// dims for the gradient as the original input.
+				if want.Dims() < s.Dims() {
+					want = append(want, s[want.Dims():]...)
+				}
+				for i := range s {
+					if s[i] == want[i] || (s[i] == 1 && want[i] >= 1) || (s[i] >= 1 && want[i] == 1) {
+						continue
+					}
+					return nil, SymDiffError{
+						single:  node,
+						nodes:   nodeGradMap[node],
+						gradMap: nodeGradMap,
+						err:     errors.Errorf("Shape mismatch: %v (accumulated) and %v", want, s),
+					}
+				}
+				for i := range s {
+					if want[i] < s[i] {
+						want[i] = s[i]
+					}
+				}
+			}
+			for i, grad := range grads {
+				s := grad.Shape()
+				if want.Eq(s) {
+					continue
+				}
+
+				var broadcastOn []int
+				for j := range want {
+					if s.Dims() <= j || want[j] != s[j] {
+						broadcastOn = append(broadcastOn, j)
+					}
+				}
+				newShape := calcBroadcastShape(grad, want.Dims(), broadcastOn)
+				if grad, err = Reshape(grad, newShape); err != nil {
+					return nil, SymDiffError{
+						single:  node,
+						nodes:   nodeGradMap[node],
+						gradMap: nodeGradMap,
+						err:     errors.Wrap(err, "Reshape failed during differentiation"),
+					}
+				}
+
+				children := Nodes{grad}
+				for _, a := range broadcastOn {
+					op := sizeOp{
+						axis: a,
+						d:    want.Dims(),
+						val:  want[a],
+					}
+					size, err := ApplyOp(op, grad)
+					if err != nil {
+						return nil, SymDiffError{
+							single:  node,
+							nodes:   nodeGradMap[node],
+							gradMap: nodeGradMap,
+							err:     errors.Wrap(err, "ApplyOp of sizeOp failed during differentiation"),
+						}
+					}
+					children = append(children, size)
+				}
+
+				if grads[i], err = repeatedApply(broadcastOn, children); err != nil {
+					return nil, SymDiffError{
+						single:  node,
+						nodes:   nodeGradMap[node],
+						gradMap: nodeGradMap,
+						err:     errors.Wrap(err, "RepeatedApply failed during differentiation"),
+					}
+				}
+			}
+
 			var n *Node
 			symdiffLogf("reduce adding")
 			if n, err = ReduceAdd(nodeGradMap[node], WithGroupName(gradClust)); err != nil {

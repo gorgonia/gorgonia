@@ -497,15 +497,11 @@ func TestPoorMansAttentionNet(t *testing.T) {
 
 	// Take a slice of the pretend LSTM output and apply it to the whole.
 	// These ops kind of resemble that of my actual attention model.
-	ux0, err := Reshape(ux[0], tensor.Shape{2, 1, 3})
+	mm, err := BatchedMatMul(cx, ux[0], false, false)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
-	mm, err := BatchedMatMul(cx, ux0, false, false)
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-	ax, err := Add(cx, mm)
+	ax, err := BroadcastAdd(cx, mm, []byte{}, []byte{2})
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
