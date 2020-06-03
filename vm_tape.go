@@ -232,7 +232,6 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	for ; m.pc < len(m.p.instructions); m.pc++ {
 		instr := m.p.instructions[m.pc]
 		m.logf("PC %d", m.pc)
-		// log.Printf("PC %d", m.pc)
 		if err := instr.exec(m); err != nil {
 			err = errors.Wrapf(err, "PC %d. Failed to execute instruction %v", m.pc, instr)
 			errChan <- err
@@ -283,7 +282,6 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 			}
 		}
 	}
-
 	doneChan <- struct{}{}
 }
 
@@ -508,10 +506,16 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 		return errors.Wrapf(err, dtypeExtractionFail, instr.t)
 	}
 
+	reg := m.getValue(instr.writeTo)
+	if reg != nil && reg.Dtype() == dt && reg.Shape().Eq(instr.s) {
+		return nil
+	}
+
 	dev := instr.writeTo.device
 	var v Value
 	switch dev {
 	case CPU:
+
 		v, err = makeValue(instr.t, instr.s)
 
 	default:
@@ -686,6 +690,12 @@ func (instr *readInstr) exec(m *tapeMachine) (err error) {
 	v := m.getValue(instr.readFrom)
 	if v == nil {
 		return nyi("value of nil", "readInstr.exec")
+	}
+
+	if *instr.into != nil {
+		dest := *instr.into
+		_, err = Copy(dest, v)
+		return err
 	}
 
 	v2, err := CloneValue(v)
