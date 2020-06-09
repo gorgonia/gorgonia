@@ -52,24 +52,19 @@ func reductionInferShape(along []int, in tensor.Shape) (tensor.Shape, error) {
 		if d >= shape.Dims() {
 			return nil, fmt.Errorf("shape error, along %d is not a valid axis for shape %v", d, in)
 		}
-		shape[d] = 1
+		shape[d] = 0
 	}
-	// special cases: if all dimensions are 1 -> ScalarShape, if exactly one dimension is != 1 -> vector
-	vecD := 0
-	numNot1 := 0
+
+	var dims []int
 	for _, d := range shape {
-		if d != 1 {
-			vecD = d
-			numNot1++
-			if numNot1 > 1 {
-				return shape, nil
-			}
+		if d != 0 {
+			dims = append(dims, d)
 		}
 	}
-	if numNot1 == 0 {
+	if len(dims) == 0 {
 		return tensor.ScalarShape(), nil
 	}
-	return tensor.Shape{vecD}, nil
+	return tensor.Shape(dims), nil
 }
 
 func reductionDo(op Op, s string, f func(*tensor.Dense, ...int) (*tensor.Dense, error), along []int, inputs ...Value) (retVal Value, err error) {
