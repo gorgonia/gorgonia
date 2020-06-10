@@ -1,5 +1,6 @@
 package exprgraph
 
+/*
 import "gorgonia.org/tensor"
 
 func (e *Graph) MatMul(a, b, preallocated tensor.Tensor) error {
@@ -41,3 +42,4 @@ func (e *Graph) Add(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (t
 func (e *Graph) AddScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (tensor.Tensor, error) {
 	panic("not implemented") // TODO: Implement
 }
+*/

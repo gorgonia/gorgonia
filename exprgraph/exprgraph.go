@@ -2,13 +2,14 @@ package exprgraph
 
 import (
 	"gonum.org/v1/gonum/graph"
+	"gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
 
 // Graph is a representation of an expression graph
 type Graph struct {
 	// A Graph implements a StandardEngine.
-	tensor.Engine
+	tensor.StandardEngine
 
 	// adj is an adjacency list
 	adj [][]NodeID
@@ -29,21 +30,19 @@ type Graph struct {
 	// 	derivOf[3] = []ID{1,2}
 	// that means that node ID 3 is the deriv of nodes with ID 1 and 2.
 	derivOf [][]NodeID
-
-	// flags
-	isStdEng bool
 }
 type graphSetter interface {
-	SetGraph(g *Grph)
+	SetGraph(g *Graph)
 }
 
 // New creates a new *Graph.
-func New(eng tensor.Engine) *Graph {
+func New(eng tensor.StandardEngine) *Graph {
 	g := &Graph{}
 	if gs, ok := eng.(graphSetter); ok {
 		gs.SetGraph(g)
 	}
-	g.Engine = eng
+	g.StandardEngine = eng
+	g.nodes = make([]Node, 0, 1024)
 	return g
 }
 
@@ -75,31 +74,43 @@ func (g *Graph) To(id int64) graph.Nodes { panic("NYI") }
 
 /* functions dealing with data in the graph */
 
-// Insert inserts a tensor.Tensor and returns the Node ID.
-func (g *Graph) Insert(t tensor.Tensor) NodeID { return NodeID(g.idOrInsert) }
+// Insert inserts a gorgonia.Tensor and returns the Node ID.
+func (g *Graph) Insert(t gorgonia.Tensor) NodeID { return NodeID(g.idOrInsert(t)) }
 
 // NameOf returns the name of a given tensor
-func (g *Graph) NameOf(t tensor.Tensor) string { return g.nameOf(t) }
+func (g *Graph) NameOf(t gorgonia.Tensor) string { return g.nameOf(t) }
 
-// Name associates a name with a given tensor.
-func (g *Graph) Name(t tensor.Tensor, s string) { g.name(t, s) }
+// Name associates a name with a given gorgonia.
+func (g *Graph) Name(t gorgonia.Tensor, s string) { g.name(t, s) }
 
-/* unexported methods */
-
-// id returns the ID of the given tensor.
-func (g *Graph) id(t tensor.Tensor) int64 {
+// ID returns the ID of the given gorgonia.
+func (g *Graph) ID(t gorgonia.Tensor) NodeID {
 	// search backwards because it's more probable that you're using newer created nodes
 	for i := len(g.nodes) - 1; i >= 0; i-- {
-		if t == g.nodes[i].Tensor {
-			return int64(i)
+		if t == g.nodes[i] || t == g.nodes[i].Tensor {
+			return NodeID(i)
 		}
 	}
 	return -1
 }
 
+func (g *Graph) AddChildren(id NodeID, children []NodeID) {
+	diff := int(id) - len(g.adj)
+	if diff >= 0 {
+		g.adj = append(g.adj, make([][]NodeID, diff+1)...)
+	}
+	g.adj[id] = append(g.adj[id], children...)
+}
+
+/* Monoidy stuff */
+
+func (g *Graph) Graph() *Graph { return g }
+
+/* unexported methods */
+
 // idOrInsert returns the ID of the given tensor if the tensor is in the expression graph. Otherwise it adds it.
-func (g *Graph) idOrInsert(t tensor.Tensor) int64 {
-	id := g.id(t)
+func (g *Graph) idOrInsert(t gorgonia.Tensor) NodeID {
+	id := g.ID(t)
 	if id < 0 {
 		return g.insert(t)
 	}
@@ -107,32 +118,30 @@ func (g *Graph) idOrInsert(t tensor.Tensor) int64 {
 }
 
 // insert inserts the tensor into the expression graph, and returns the ID
-func (g *Graph) insert(t tensor.Tensor) int64 {
+func (g *Graph) insert(t gorgonia.Tensor) NodeID {
 	l := len(g.nodes)
 	g.nodes = append(g.nodes, Node{Tensor: t})
 	g.nodes[l].NodeID = NodeID(l)
-	return int64(l)
+	return g.nodes[l].NodeID
 }
 
-// nameOf returns the name of the tensor.
-func (g *Graph) nameOf(t tensor.Tensor) string {
-	id := g.id(t)
+// nameOf returns the name of the gorgonia.
+func (g *Graph) nameOf(t gorgonia.Tensor) string {
+	id := g.ID(t)
 	// TODO: if not found?
 	return g.nodes[id].name
 }
 
 // name gives a name to a tensor in the expression graph
-func (g *Graph) name(t tensor.Tensor, s string) error {
-	id := g.id(t)
+func (g *Graph) name(t gorgonia.Tensor, s string) error {
+	id := g.ID(t)
 	g.nodes[id].name = s
 
 	return nil //TODO: if not found
 }
 
-// nodeOf returns the node of the given tensor. If not found _______ TODO
-func (g *Graph) nodeOf(t tensor.Tensor) Node {
-	id := g.id(t)
+// nodeOf returns the node of the given gorgonia. If not found _______ TODO
+func (g *Graph) nodeOf(t gorgonia.Tensor) Node {
+	id := g.ID(t)
 	return g.nodes[id] // TODO: if not found?
 }
-
-func (g *Graph) addChildren(id int64, children []int64) { panic("NYI") }

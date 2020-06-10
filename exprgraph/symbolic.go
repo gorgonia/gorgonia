@@ -1,6 +1,7 @@
 package exprgraph
 
 import (
+	"fmt"
 	"unsafe"
 
 	"gorgonia.org/gorgonia"
@@ -14,6 +15,12 @@ type Symbolic struct {
 	tensor.AP
 	dt tensor.Dtype
 	g  *Graph
+}
+
+func NewSymbolic(g *Graph, dt tensor.Dtype, shape tensor.Shape) *Symbolic {
+	strides := shape.CalcStrides()
+	ap := tensor.MakeAP(shape, strides, 0, 0)
+	return &Symbolic{AP: ap, dt: dt, g: g}
 }
 
 // DataSize returns the amount of data stored or accessible within the *Symbolic type. It's 0.
@@ -42,3 +49,5 @@ func (t *Symbolic) Pointer() unsafe.Pointer { return nil }
 
 // ScalarValue will always return nil. (There is no data)
 func (t *Symbolic) ScalarValue() interface{} { return nil }
+
+func (t *Symbolic) Format(f fmt.State, c rune) { fmt.Fprintf(f, t.g.NameOf(t)) }

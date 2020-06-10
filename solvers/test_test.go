@@ -1,6 +1,25 @@
 package solvers
 
-import "gorgonia.org/tensor"
+import (
+	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/gorgonia/values/dual"
+	"gorgonia.org/tensor"
+)
+
+type DV struct {
+	*dual.Dual
+}
+
+func (d DV) Value() values.Value { return d.Dual.Value }
+
+func (d DV) Grad() (values.Value, error) {
+	deriv := d.Dual.Deriv()
+	if deriv == nil {
+		return nil, errors.New("No Grad")
+	}
+	return deriv, nil
+}
 
 func clampFloat64(v, min, max float64) float64 {
 	if v < min {
@@ -28,11 +47,11 @@ func tf64Node() []ValueGrad {
 	v := tensor.New(tensor.WithBacking(backingV), tensor.WithShape(2, 2))
 	d := tensor.New(tensor.WithBacking(backingD), tensor.WithShape(2, 2))
 
-	dv := dvUnit0(v)
-	dv.d = d
+	dv := new(dual.Dual)
+	dv.SetValue(v)
+	dv.SetDeriv(d)
 
-	n := new(Node)
-	n.boundTo = dv
+	n := DV{dv}
 
 	model := []ValueGrad{n}
 	return model
@@ -45,12 +64,11 @@ func tf32Node() []ValueGrad {
 	v := tensor.New(tensor.WithBacking(backingV), tensor.WithShape(2, 2))
 	d := tensor.New(tensor.WithBacking(backingD), tensor.WithShape(2, 2))
 
-	dv := dvUnit0(v)
-	dv.d = d
+	dv := new(dual.Dual)
+	dv.SetValue(v)
+	dv.SetDeriv(d)
 
-	n := new(Node)
-	n.boundTo = dv
-
+	n := DV{dv}
 	model := []ValueGrad{n}
 	return model
 }

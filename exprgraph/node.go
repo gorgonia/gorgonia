@@ -1,6 +1,11 @@
 package exprgraph
 
-import "gorgonia.org/tensor"
+import (
+	"fmt"
+
+	"gorgonia.org/gorgonia"
+	"gorgonia.org/tensor"
+)
 
 // NodeID represents a Node's ID
 type NodeID int64
@@ -10,15 +15,20 @@ func (n NodeID) ID() int64 { return int64(n) }
 
 // Node is a tuple of a Tensor, ID, and name.
 type Node struct {
-	tensor.Tensor
+	gorgonia.Tensor
 	NodeID
 	name string
 }
 
 func Make(g *Graph, name string, opts ...tensor.ConsOpt) Node {
-	consOpts := append([]tensor.ConsOpt{tensor.WithEngine(g.StdEng), inGraph(), WithName(name)}, opts...)
+	var eng tensor.Engine = g.StandardEngine
+	if _, ok := g.StandardEngine.(tensor.StdEng); ok {
+		eng = g
+	}
+	consOpts := append([]tensor.ConsOpt{tensor.WithEngine(eng), inGraph(), WithName(name)}, opts...)
 	t := tensor.New(consOpts...)
-	return g.nodeOf(t)
+	id := g.idOrInsert(t)
+	return g.nodes[id]
 }
 
 // OK returns true if the Node is good for processing.
@@ -27,8 +37,17 @@ func (n *Node) OK() bool { return n.Tensor != nil }
 // Node implements gorgonia.Result
 
 func (n *Node) Node() Node   { return *n }
-func (n *Node) Nodes() Nodes { return Nodes{n} }
+func (n *Node) Nodes() Nodes { return Nodes{*n} }
 func (n *Node) Err() error   { return nil }
+
+func (n Node) Format(f fmt.State, c rune) {
+	switch c {
+	case 's':
+		fmt.Fprintf(f, "%s", n.name)
+	default:
+		// TODO: pass on
+	}
+}
 
 // GraphNode is a tuple of a graph object and a node. This allows for querying the payload of the Node.
 //

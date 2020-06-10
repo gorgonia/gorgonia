@@ -27,14 +27,14 @@ func WithChildren(a []tensor.Tensor) tensor.ConsOpt {
 		en := t.Engine()
 		if e, ok := en.(*Graph); ok {
 			id := e.idOrInsert(t)
-			ids := make([]int64, len(a))
+			ids := make([]NodeID, len(a))
 			for i, child := range a {
-				ids[i] = e.id(child)
+				ids[i] = NodeID(e.ID(child))
 				if ids[i] == -1 {
 					panic("Tensor not in graph")
 				}
 			}
-			e.addChildren(id, ids)
+			e.AddChildren(NodeID(id), ids)
 		}
 	}
 }
