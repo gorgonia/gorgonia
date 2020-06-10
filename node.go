@@ -229,7 +229,7 @@ func WithGroupName(name string) NodeConsOpt {
 // withGroup is a node construction option to group a *Node within a particular group. This option is useful for debugging with graphs.
 func withGroup(group encoding.Group) NodeConsOpt {
 	f := func(n *Node) {
-		n.groups.Upsert(group)
+		n.groups = n.groups.Upsert(group)
 	}
 	return f
 }
@@ -245,11 +245,11 @@ func (n *Node) Groups() encoding.Groups {
 
 	switch {
 	case isConst:
-		n.groups.Upsert(encoding.ConstantCluster)
+		n.groups = n.groups.Upsert(encoding.ConstantCluster)
 	case isInput:
-		n.groups.Upsert(encoding.InputCluster)
+		n.groups = n.groups.Upsert(encoding.InputCluster)
 	default:
-		n.groups.Upsert(encoding.ExprGraphCluster)
+		n.groups = n.groups.Upsert(encoding.ExprGraphCluster)
 	}
 	return n.groups
 }

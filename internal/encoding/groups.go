@@ -28,21 +28,41 @@ type Grouper interface {
 type Groups []Group
 
 // Upsert the GroupID in the groups
-func (g *Groups) Upsert(grp Group) {
-	for i := 0; i < len(*g); i++ {
-		if (*g)[i].ID == grp.ID {
-			return
+func (g Groups) Upsert(grp Group) Groups {
+	for i := 0; i < len(g); i++ {
+		if (g)[i].ID == grp.ID {
+			return g
 		}
 	}
-	*g = append(*g, grp)
+	return append(g, grp)
 }
 
 // Have returns true if GroupID is in groups
-func (g *Groups) Have(grp Group) bool {
-	for i := 0; i < len(*g); i++ {
-		if (*g)[i].ID == grp.ID {
+func (g Groups) Have(grp Group) bool {
+	for i := 0; i < len(g); i++ {
+		if (g)[i].ID == grp.ID {
 			return true
 		}
 	}
 	return false
 }
+
+/* Groups by default sort by the group ID */
+
+// Len returns the length of a bag of groups
+func (g Groups) Len() int { return len(g) }
+
+// Less checks if an ID is less than or not
+func (g Groups) Less(i, j int) bool { return g[i].ID < g[j].ID }
+
+// Swap swaps the elements
+func (g Groups) Swap(i, j int) { g[i], g[j] = g[j], g[i] }
+
+// ByName is a sorting for a slice of groups, where the groups are sorted by name
+type ByName []Group
+
+func (g ByName) Len() int { return len(g) }
+
+func (g ByName) Less(i, j int) bool { return g[i].Name < g[j].Name }
+
+func (g ByName) Swap(i, j int) { g[i], g[j] = g[j], g[i] }
