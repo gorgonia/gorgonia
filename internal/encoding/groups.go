@@ -53,7 +53,7 @@ func (g Groups) Have(grp Group) bool {
 func (g Groups) Len() int { return len(g) }
 
 // Less checks if an ID is less than or not
-func (g Groups) Less(i, j int) bool { return g[i].ID < g[i].ID }
+func (g Groups) Less(i, j int) bool { return g[i].ID < g[j].ID }
 
 // Swap swaps the elements
 func (g Groups) Swap(i, j int) { g[i], g[j] = g[j], g[i] }

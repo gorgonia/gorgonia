@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"gorgonia.org/gorgonia"
 )
 
@@ -28,7 +29,7 @@ func unmangleName(marshalled string, node *gorgonia.Node) string {
 func TestIssue_407(t *testing.T) {
 	// originally written by @wzzhu
 
-	//assert := assert.New(t)
+	assert := assert.New(t)
 	g := gorgonia.NewGraph()
 	var x, y, z *gorgonia.Node
 	var err error
@@ -64,7 +65,16 @@ func TestIssue_407(t *testing.T) {
 	snd = unmangleName(snd, x2)
 	snd = unmangleName(snd, y2)
 	snd = unmangleName(snd, z2)
-	//assert.Equal(fst, snd, "XXX")
-	// they are the same but due to Gonum's marshaling issue, it is marshalled undeterministically using a map.
+	assert.Equal(fst, snd, "XXX")
 	t.Logf("%v %v", z, z2)
+}
+
+func TestStressTest407(t *testing.T) {
+	for i := 0; i < 1024; i++ {
+		TestIssue_407(t)
+		if t.Failed() {
+			t.Errorf("Failed at iteration %d", i)
+			break
+		}
+	}
 }
