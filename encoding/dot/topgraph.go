@@ -1,6 +1,8 @@
 package dot
 
 import (
+	"sort"
+
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/encoding"
 	gonumDot "gonum.org/v1/gonum/graph/encoding/dot"
@@ -9,8 +11,8 @@ import (
 	internalEncoding "gorgonia.org/gorgonia/internal/encoding"
 )
 
-var (
-	subGraphs = map[internalEncoding.Group]subgrapher{
+func subGraphs() map[internalEncoding.Group]subgrapher {
+	return map[internalEncoding.Group]subgrapher{
 		internalEncoding.ConstantCluster: constantSubGraph{
 			DirectedBuilder: simple.NewDirectedGraph(),
 			name:            "Constants",
@@ -26,26 +28,36 @@ var (
 		},
 		internalEncoding.UndefinedCluster: exprSubGraph{
 			DirectedBuilder: simple.NewDirectedGraph(),
-			name:            "ExprGraph",
+			name:            "Undefined",
 		},
 	}
-)
+
+}
 
 type attributer []encoding.Attribute
 
 func (a attributer) Attributes() []encoding.Attribute { return a }
 
+func sortedKeys(m map[internalEncoding.Group]subgrapher) (retVal internalEncoding.Groups) {
+	for k := range m {
+		retVal = append(retVal, k)
+	}
+	sort.Sort(retVal)
+	return retVal
+}
+
 func generateDotGraph(g *gorgonia.ExprGraph) (graph.Graph, error) {
 	dg := simple.NewDirectedGraph()
 	copyGraph(dg, g)
 	nodes := dg.Nodes()
+	subgraphs := subGraphs()
 
 	for nodes.Next() {
 		n := nodes.Node()
 		if _, ok := n.(internalEncoding.Grouper); ok {
 			groups := n.(internalEncoding.Grouper).Groups()
 			for _, group := range groups {
-				if subgrapher, ok := subGraphs[group]; ok {
+				if subgrapher, ok := subgraphs[group]; ok {
 					subgrapher.(graph.DirectedBuilder).AddNode(n)
 				} else {
 					// check if we are in the ExprGraphCluster
@@ -56,7 +68,7 @@ func generateDotGraph(g *gorgonia.ExprGraph) (graph.Graph, error) {
 						name:            group.Name,
 					}
 					if groups.Have(internalEncoding.ExprGraphCluster) {
-						exprSubg := subGraphs[internalEncoding.ExprGraphCluster].(exprSubGraph)
+						exprSubg := subgraphs[internalEncoding.ExprGraphCluster].(exprSubGraph)
 						var ok bool
 						if _, ok = exprSubg.subs[group]; ok {
 							subgraph = exprSubg.subs[group]
@@ -67,14 +79,15 @@ func generateDotGraph(g *gorgonia.ExprGraph) (graph.Graph, error) {
 						continue
 					}
 					subgraph.AddNode(n)
-					subGraphs[group] = subgraph
+					subgraphs[group] = subgraph
 				}
 			}
 		}
 	}
-	subs := make([]gonumDot.Graph, 0, len(subGraphs))
-	for _, g := range subGraphs {
-		subs = append(subs, g)
+	subs := make([]gonumDot.Graph, 0, len(subgraphs))
+	keys := sortedKeys(subgraphs)
+	for _, k := range keys {
+		subs = append(subs, subgraphs[k])
 	}
 	return dotGraph{
 		Directed: dg,
