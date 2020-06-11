@@ -199,7 +199,7 @@ func ApplyOp(op Op, children ...*Node) (retVal *Node, err error) {
 	var s tensor.Shape
 	if s, err = op.InferShape(ds...); err == nil {
 		shapeLogf("inferred shape %v", s)
-		retVal = NewUniqueNode(WithType(retType), WithOp(op), WithChildren(children), In(g), WithShape(s...))
+		retVal = NewUniqueNode(WithOp(op), WithChildren(children), In(g), WithShape(s...), WithType(retType))
 	} else {
 		err = errors.Wrapf(err, "Failed to infer shape. Op: %v", op)
 		// retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g))
