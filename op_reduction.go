@@ -20,7 +20,7 @@ import (
 
 func reductionType(d int, along []int) hm.Type {
 	a := hm.TypeVariable('a')
-	t := makeTensorType(d, a)
+	t := makeTensorType(d-len(along), a)
 
 	axes := make(map[int]bool)
 	for _, axis := range along {
