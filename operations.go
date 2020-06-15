@@ -323,16 +323,7 @@ func Sum(a *Node, along ...int) (retVal *Node, err error) {
 
 	dims := a.Dims()
 	if len(along) == 0 {
-		switch {
-		case a.IsRowVec():
-			along = []int{1}
-			dims = 1
-		case a.IsColVec(), a.IsVector():
-			along = []int{0}
-			dims = 1
-		default:
-			along = intRange(0, dims)
-		}
+		along = intRange(0, dims)
 	}
 
 	op := newSumOp(along, a.shape, dims)

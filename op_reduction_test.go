@@ -254,7 +254,7 @@ func TestMaxOp(t *testing.T) {
 			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 			op:        Max,
 			along:     []int{0},
-			wantShape: []int{1, 2, 2, 2},
+			wantShape: []int{2, 2, 2},
 			wantData:  []float32{9, 10, 11, 12, 13, 14, 15, 16},
 		},
 		{
@@ -263,7 +263,7 @@ func TestMaxOp(t *testing.T) {
 			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 			op:        Max,
 			along:     []int{1},
-			wantShape: []int{2, 1, 2, 2},
+			wantShape: []int{2, 2, 2},
 			wantData:  []float32{5, 6, 7, 8, 13, 14, 15, 16},
 		},
 		{
@@ -272,7 +272,7 @@ func TestMaxOp(t *testing.T) {
 			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 			op:        Max,
 			along:     []int{2},
-			wantShape: []int{2, 2, 1, 2},
+			wantShape: []int{2, 2, 2},
 			wantData:  []float32{3, 4, 7, 8, 11, 12, 15, 16},
 		},
 		{
@@ -281,7 +281,7 @@ func TestMaxOp(t *testing.T) {
 			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 			op:        Max,
 			along:     []int{3},
-			wantShape: []int{2, 2, 2, 1},
+			wantShape: []int{2, 2, 2},
 			wantData:  []float32{2, 4, 6, 8, 10, 12, 14, 16},
 		},
 		{
@@ -290,7 +290,7 @@ func TestMaxOp(t *testing.T) {
 			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 			op:        Max,
 			along:     []int{1, 3},
-			wantShape: []int{2, 1, 2, 1},
+			wantShape: []int{2, 2},
 			wantData:  []float32{6, 8, 14, 16},
 		},
 		{
@@ -342,7 +342,7 @@ func TestSumOp(t *testing.T) {
 			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 			op:        Sum,
 			along:     []int{0},
-			wantShape: []int{1, 2, 2, 2},
+			wantShape: []int{2, 2, 2},
 			wantData:  []float32{10, 12, 14, 16, 18, 20, 22, 24},
 		},
 		{
@@ -351,7 +351,7 @@ func TestSumOp(t *testing.T) {
 			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 			op:        Sum,
 			along:     []int{1},
-			wantShape: []int{2, 1, 2, 2},
+			wantShape: []int{2, 2, 2},
 			wantData:  []float32{6, 8, 10, 12, 22, 24, 26, 28},
 		},
 		{
@@ -360,7 +360,7 @@ func TestSumOp(t *testing.T) {
 			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 			op:        Sum,
 			along:     []int{2},
-			wantShape: []int{2, 2, 1, 2},
+			wantShape: []int{2, 2, 2},
 			wantData:  []float32{4, 6, 12, 14, 20, 22, 28, 30},
 		},
 		{
@@ -369,7 +369,7 @@ func TestSumOp(t *testing.T) {
 			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 			op:        Sum,
 			along:     []int{3},
-			wantShape: []int{2, 2, 2, 1},
+			wantShape: []int{2, 2, 2},
 			wantData:  []float32{3, 7, 11, 15, 19, 23, 27, 31},
 		},
 		{
@@ -378,7 +378,7 @@ func TestSumOp(t *testing.T) {
 			inData:    []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 			op:        Sum,
 			along:     []int{1, 3},
-			wantShape: []int{2, 1, 2, 1},
+			wantShape: []int{2, 2},
 			wantData:  []float32{14, 22, 46, 54},
 		},
 		{
@@ -562,12 +562,12 @@ func TestFollowupOp(t *testing.T) {
 	Xn := NewTensor(g, tensor.Float64, 4, WithShape(2, 2, 2, 2), WithInit(RangedFrom(1)))
 	mx := Must(Max(Xn, 1, 2))
 	sx := Must(Sum(Xn, 1, 2))
-	y := NewTensor(g, tensor.Float64, 4, WithShape(2, 1, 1, 2), WithInit(RangedFrom(1)))
+	y := NewTensor(g, tensor.Float64, 2, WithShape(2, 2), WithInit(RangedFrom(1)))
 
 	amx := Must(Add(mx, y))
 	asx := Must(Add(sx, y))
-	assert.Equal(t, amx.Shape(), tensor.Shape{2, 1, 1, 2})
-	assert.Equal(t, asx.Shape(), tensor.Shape{2, 1, 1, 2})
+	assert.Equal(t, amx.Shape(), tensor.Shape{2, 2})
+	assert.Equal(t, asx.Shape(), tensor.Shape{2, 2})
 	vm := NewTapeMachine(g)
 	defer vm.Close()
 	err := vm.RunAll()

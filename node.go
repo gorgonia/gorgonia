@@ -197,10 +197,11 @@ func WithShape(shp ...int) NodeConsOpt {
 	s := tensor.Shape(tensor.BorrowInts(len(shp)))
 	copy(s, shp)
 	f := func(n *Node) {
+		if n.t == nil && n.shape == nil {
+			n.shape = s
+			return
+		}
 		nd := n.Dims()
-		// if nd == 1 && s.IsVector() {
-		// 	goto safe
-		// }
 		isVec := s.IsColVec() || s.IsRowVec()
 		acceptVec := (isVec && (nd == 1))
 		sameDims := nd == s.Dims()
@@ -209,7 +210,6 @@ func WithShape(shp ...int) NodeConsOpt {
 		if !acceptVec && !sameDims && !acceptScalar {
 			panic(fmt.Sprintf("Node %v, has %d dimensions(Shape: %v). Input shape is %v, which has %d dimensions", n, n.Dims(), n.shape, s, s.Dims()))
 		}
-		// safe:
 		n.shape = s
 	}
 	return f
@@ -258,6 +258,8 @@ func newNode(opts ...NodeConsOpt) *Node {
 	n := borrowNode()
 	n.dataOn = CPU
 	n.id = -1
+	n.t = nil
+	n.shape = nil
 
 	for _, opt := range opts {
 		opt(n)
