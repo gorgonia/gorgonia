@@ -9,6 +9,7 @@ require (
 	github.com/chewxy/math32 v1.0.4
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/go-gota/gota v0.10.1
+	github.com/gogo/protobuf v1.3.0
 	github.com/leesper/go_rng v0.0.0-20171009123644-5344a9259b21
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/pkg/errors v0.9.1

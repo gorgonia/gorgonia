@@ -2,6 +2,8 @@ package exprgraph
 
 import (
 	"fmt"
+	"log"
+	"strconv"
 
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
@@ -27,7 +29,12 @@ func Make(g *Graph, name string, opts ...tensor.ConsOpt) Node {
 	}
 	consOpts := append([]tensor.ConsOpt{tensor.WithEngine(eng), inGraph(), WithName(name)}, opts...)
 	t := tensor.New(consOpts...)
+	return Cons(g, name, t)
+}
+
+func Cons(g *Graph, name string, t tensor.Tensor) Node {
 	id := g.idOrInsert(t)
+	g.nodes[id].name = name
 	return g.nodes[id]
 }
 
@@ -45,7 +52,13 @@ func (n Node) Format(f fmt.State, c rune) {
 	case 's':
 		fmt.Fprintf(f, "%s", n.name)
 	default:
-		// TODO: pass on
+		switch t := n.Tensor.(type) {
+		case tensor.Tensor:
+			str := consFmtStr(f, c)
+			fmt.Fprintf(f, str, t)
+		default:
+			log.Printf("tensor type %T unsupported for node.Format", n.Tensor)
+		}
 	}
 }
 
@@ -71,6 +84,26 @@ type node struct {
 	flag
 	device
 	Op
+}
+
+func consFmtStr(a fmt.State, c rune) string {
+	retVal := "%"
+	acceptable := []rune{'+', '-', ' ', '#', '0'}
+	for _, f := range acceptable {
+		if a.Flag(int(f)) {
+			retVal = retVal + string(f)
+		}
+	}
+	width, wok := a.Width()
+	prec, pok := a.Precision()
+	if wok {
+		retVal = retVal + strconv.Itoa(width)
+	}
+	if pok {
+		retVal = retVal + "." + strconv.Itoa(prec)
+	}
+	retVal = retVal + string(c)
+	return retVal
 }
 
 /* TODO */

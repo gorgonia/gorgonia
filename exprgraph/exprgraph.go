@@ -87,6 +87,9 @@ func (g *Graph) Name(t gorgonia.Tensor, s string) { g.name(t, s) }
 func (g *Graph) ID(t gorgonia.Tensor) NodeID {
 	// search backwards because it's more probable that you're using newer created nodes
 	for i := len(g.nodes) - 1; i >= 0; i-- {
+		// this little trick here (to inspect the internal structure - i.e g.nodes[i].Tensor == t)
+		// is the real reason why you cannot really create Node{Node{Node{...}}}
+		// without doing it explicitly
 		if t == g.nodes[i] || t == g.nodes[i].Tensor {
 			return NodeID(i)
 		}
