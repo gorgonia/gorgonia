@@ -3,9 +3,10 @@ package exprgraph
 import (
 	"fmt"
 	"log"
-	"strconv"
 
 	"gorgonia.org/gorgonia"
+	"gorgonia.org/gorgonia/execution"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -82,62 +83,7 @@ type gn struct {
 // if the ID is negative, it means that the node is in-progress
 type node struct {
 	Node
-	children []*node
 	flag
-	device
-	Op
+	execution.Device
+	ops.Op
 }
-
-func tonode(t gorgonia.Tensor) node {
-	switch a := t.(type) {
-	case Node:
-		return node{Node: a}
-	case *Symbolic:
-		return node{
-			Node: Node{
-				Tensor: a,
-				NodeID: -1,
-			},
-		}
-	case tensor.Tensor:
-		return node{
-			Node: Node{
-				Tensor: a,
-				NodeID: -1,
-			},
-		}
-	case *node:
-		return *a
-	case *Node:
-		return node{Node: *a}
-	default:
-		log.Printf("tonode %T not handleed", t)
-	}
-	panic("Unreachable")
-}
-
-func consFmtStr(a fmt.State, c rune) string {
-	retVal := "%"
-	acceptable := []rune{'+', '-', ' ', '#', '0'}
-	for _, f := range acceptable {
-		if a.Flag(int(f)) {
-			retVal = retVal + string(f)
-		}
-	}
-	width, wok := a.Width()
-	prec, pok := a.Precision()
-	if wok {
-		retVal = retVal + strconv.Itoa(width)
-	}
-	if pok {
-		retVal = retVal + "." + strconv.Itoa(prec)
-	}
-	retVal = retVal + string(c)
-	return retVal
-}
-
-/* TODO */
-
-type Op interface{}
-
-type device int16 // only reason why it's int16 is so that we fill up the struct

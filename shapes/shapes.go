@@ -27,13 +27,14 @@ type BinOp struct {
 }
 
 func (op BinOp) TotalSize() int {
-	switch op.OpType {
+	switch op.Op {
 	case Arrow:
 		return 0
 	case Add, Sub:
 	case Mul, Div:
 
 	}
+	panic("Unreachable")
 }
 
 // UnaryOp represetns a unary operation on a shape expression
@@ -48,6 +49,7 @@ func (op UnaryOp) TotalSize() int {
 	case Index:
 	default:
 	}
+	panic("Unreachable")
 }
 
 type OpType byte

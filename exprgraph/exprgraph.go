@@ -89,7 +89,16 @@ func (g *Graph) NameOf(t gorgonia.Tensor) string { return g.nameOf(t) }
 // Name associates a name with a given gorgonia.
 func (g *Graph) Name(t gorgonia.Tensor, s string) { g.name(t, s) }
 
-// ID returns the ID of the given gorgonia.
+// NodeOf returns the actual node, given an `n` that knows its own ID.
+func (g *Graph) NodeOf(n graph.Node) Node {
+	id := int(n.ID())
+	if id < 0 || id >= len(g.nodes) {
+		panic("No such ID")
+	}
+	return g.nodes[id].Node
+}
+
+// ID returns the ID of the given gorgonia.Tensor.
 func (g *Graph) ID(t gorgonia.Tensor) NodeID {
 	// search backwards because it's more probable that you're using newer created nodes
 	for i := len(g.nodes) - 1; i >= 0; i-- {
@@ -103,6 +112,7 @@ func (g *Graph) ID(t gorgonia.Tensor) NodeID {
 	return -1
 }
 
+// AddChildren adds the children to the attached Node.
 func (g *Graph) AddChildren(id NodeID, children []NodeID) {
 	diff := int(id) - len(g.adj)
 	if diff >= 0 {
@@ -148,10 +158,4 @@ func (g *Graph) name(t gorgonia.Tensor, s string) error {
 	g.nodes[id].name = s
 
 	return nil //TODO: if not found
-}
-
-// nodeOf returns the node of the given gorgonia. If not found _______ TODO
-func (g *Graph) nodeOf(t gorgonia.Tensor) Node {
-	id := g.ID(t)
-	return g.nodes[id].Node // TODO: if not found?
 }

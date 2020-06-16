@@ -30,4 +30,8 @@ func TestConstruction(t *testing.T) {
 	id3 := g.Insert(rawX2)
 	assert.NotEqual(id, id3)
 	assert.Equal(2, len(g.nodes))
+
+	// inserting the same raw tensor would not change the ID
+	id4 := g.Insert(rawX2)
+	assert.Equal(id3, id4)
 }

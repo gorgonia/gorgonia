@@ -8,6 +8,7 @@ import (
 	"gorgonia.org/tensor"
 )
 
+// SymbolicEngine is a engine that performs symbolic operations.
 type SymbolicEngine struct {
 	tensor.StdEng
 	g *Graph
@@ -17,6 +18,9 @@ func (e *SymbolicEngine) Graph() *Graph { return e.g }
 
 func (e *SymbolicEngine) SetGraph(g *Graph) { e.g = g }
 
+// HybridEngine creates symbolic nodes and also performs the operations immediately.
+//
+// However when it encounters a Symbolic node, the remaining operations are symbolic only.
 type HybridEngine struct {
 	tensor.StdEng
 	g *Graph
@@ -26,14 +30,15 @@ func (e *HybridEngine) Graph() *Graph { return e.g }
 
 func (e *HybridEngine) SetGraph(g *Graph) { e.g = g }
 
-type FwdEngine struct {
+// DualEngine is an engine that does automatic differentiation
+type DualEngine struct {
 	tensor.StdEng
 	g *Graph
 }
 
-func (e *FwdEngine) Graph() *Graph { return e.g }
+func (e *DualEngine) Graph() *Graph { return e.g }
 
-func (e *FwdEngine) SetGraph(g *Graph) { e.g = g }
+func (e *DualEngine) SetGraph(g *Graph) { e.g = g }
 
 type GraphEngine interface {
 	tensor.Engine
@@ -65,10 +70,10 @@ func MatMul(a, b gorgonia.Tensor) (gorgonia.Tensor, error) {
 		e.AddChildren(id, []NodeID{aid, bid})
 		return retVal, nil
 	case tensor.MatMuler:
-		at := getTensor(a)
-		bt := getTensor(b)
+		at := T2T(a)
+		bt := T2T(b)
 		prealloc := Make(g, cname, tensor.WithShape(shp...), tensor.Of(dt))
-		ct := getTensor(prealloc)
+		ct := T2T(prealloc)
 		if err := e.MatMul(at, bt, ct); err != nil {
 			return nil, err
 		}
@@ -105,28 +110,15 @@ func Add(a, b gorgonia.Tensor) (gorgonia.Tensor, error) {
 		e.AddChildren(id, []NodeID{aid, bid})
 		return retVal, nil
 	case tensor.Adder:
-		at := getTensor(a)
-		bt := getTensor(b)
+		at := T2T(a)
+		bt := T2T(b)
 		ct, err := e.AddScalar(at, bt, true) // note this brief example is specific to the examples. More switch cases are needed to figure out leftScalar vs rightScalar
 		if err != nil {
 			return nil, err
 		}
 		return Cons(g, cname, ct), nil
-
-	case *FwdEngine:
 	}
 	panic("NYI2")
-}
-
-func getTensor(a gorgonia.Tensor) tensor.Tensor {
-	switch t := a.(type) {
-	case Node:
-		return getTensor(t.Tensor)
-	case tensor.Tensor:
-		return t
-	default:
-		panic("XXX")
-	}
 }
 
 func ExampleSymbolic() {
