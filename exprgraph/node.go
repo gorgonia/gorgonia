@@ -35,7 +35,7 @@ func Make(g *Graph, name string, opts ...tensor.ConsOpt) Node {
 func Cons(g *Graph, name string, t tensor.Tensor) Node {
 	id := g.idOrInsert(t)
 	g.nodes[id].name = name
-	return g.nodes[id]
+	return g.nodes[id].Node
 }
 
 // OK returns true if the Node is good for processing.
@@ -56,6 +56,8 @@ func (n Node) Format(f fmt.State, c rune) {
 		case tensor.Tensor:
 			str := consFmtStr(f, c)
 			fmt.Fprintf(f, str, t)
+		case *Symbolic:
+			fmt.Fprintf(f, "%s", n.name)
 		default:
 			log.Printf("tensor type %T unsupported for node.Format", n.Tensor)
 		}
@@ -84,6 +86,34 @@ type node struct {
 	flag
 	device
 	Op
+}
+
+func tonode(t gorgonia.Tensor) node {
+	switch a := t.(type) {
+	case Node:
+		return node{Node: a}
+	case *Symbolic:
+		return node{
+			Node: Node{
+				Tensor: a,
+				NodeID: -1,
+			},
+		}
+	case tensor.Tensor:
+		return node{
+			Node: Node{
+				Tensor: a,
+				NodeID: -1,
+			},
+		}
+	case *node:
+		return *a
+	case *Node:
+		return node{Node: *a}
+	default:
+		log.Printf("tonode %T not handleed", t)
+	}
+	panic("Unreachable")
 }
 
 func consFmtStr(a fmt.State, c rune) string {

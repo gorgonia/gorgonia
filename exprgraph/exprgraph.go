@@ -15,7 +15,7 @@ type Graph struct {
 	adj [][]NodeID
 
 	// nodes is a flat list of nodes
-	nodes []Node
+	nodes []node
 
 	// track derivatives
 
@@ -42,7 +42,7 @@ func New(eng tensor.StandardEngine) *Graph {
 		gs.SetGraph(g)
 	}
 	g.StandardEngine = eng
-	g.nodes = make([]Node, 0, 1024)
+	g.nodes = make([]node, 0, 1024)
 	return g
 }
 
@@ -55,7 +55,13 @@ func (g *Graph) Node(id int64) graph.Node {
 }
 
 // Nodes returns the list of all nodes in the graph.
-func (g *Graph) Nodes() graph.Nodes { return &iterator{nodes: g.nodes} } // TODO: copy g.nodes?
+func (g *Graph) Nodes() graph.Nodes {
+	var nodes []NodeID
+	for _, n := range g.nodes {
+		nodes = append(nodes, n.NodeID)
+	}
+	return &iterator{nodes: nodes}
+}
 
 // From returns the list of nodes that can be reached directly from the given ID.
 func (g *Graph) From(id int64) Nodes { panic("NYI") }
@@ -90,7 +96,7 @@ func (g *Graph) ID(t gorgonia.Tensor) NodeID {
 		// this little trick here (to inspect the internal structure - i.e g.nodes[i].Tensor == t)
 		// is the real reason why you cannot really create Node{Node{Node{...}}}
 		// without doing it explicitly
-		if t == g.nodes[i] || t == g.nodes[i].Tensor {
+		if t == g.nodes[i].Node || t == g.nodes[i].Tensor {
 			return NodeID(i)
 		}
 	}
@@ -123,7 +129,8 @@ func (g *Graph) idOrInsert(t gorgonia.Tensor) NodeID {
 // insert inserts the tensor into the expression graph, and returns the ID
 func (g *Graph) insert(t gorgonia.Tensor) NodeID {
 	l := len(g.nodes)
-	g.nodes = append(g.nodes, Node{Tensor: t})
+	n := tonode(t)
+	g.nodes = append(g.nodes, n)
 	g.nodes[l].NodeID = NodeID(l)
 	return g.nodes[l].NodeID
 }
@@ -146,5 +153,5 @@ func (g *Graph) name(t gorgonia.Tensor, s string) error {
 // nodeOf returns the node of the given gorgonia. If not found _______ TODO
 func (g *Graph) nodeOf(t gorgonia.Tensor) Node {
 	id := g.ID(t)
-	return g.nodes[id] // TODO: if not found?
+	return g.nodes[id].Node // TODO: if not found?
 }
