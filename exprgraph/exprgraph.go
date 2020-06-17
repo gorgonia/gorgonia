@@ -3,6 +3,7 @@ package exprgraph
 import (
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia"
+	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 )
 
@@ -33,6 +34,12 @@ type Graph struct {
 }
 type graphSetter interface {
 	SetGraph(g *Graph)
+}
+
+// lifter is usually a *Graph data structure that converts the underlying type of gorgonia.Tensor.
+// this is useful in cases where the data has to be stored as different underlying types (e.g dual values)
+type lifter interface {
+	Lift(oldTensorType values.Value) (newTensorType values.Value)
 }
 
 // New creates a new *Graph.
@@ -105,7 +112,7 @@ func (g *Graph) ID(t gorgonia.Tensor) NodeID {
 		// this little trick here (to inspect the internal structure - i.e g.nodes[i].Tensor == t)
 		// is the real reason why you cannot really create Node{Node{Node{...}}}
 		// without doing it explicitly
-		if t == g.nodes[i].Node || t == g.nodes[i].Tensor {
+		if t == g.nodes[i].Node || t == g.nodes[i].Value.(gorgonia.Tensor) {
 			return NodeID(i)
 		}
 	}
@@ -139,7 +146,11 @@ func (g *Graph) idOrInsert(t gorgonia.Tensor) NodeID {
 // insert inserts the tensor into the expression graph, and returns the ID
 func (g *Graph) insert(t gorgonia.Tensor) NodeID {
 	l := len(g.nodes)
-	n := tonode(t)
+	v := t.(values.Value)
+	if l, ok := t.Engine().(lifter); ok {
+		v = l.Lift(v)
+	}
+	n := tonode(v)
 	g.nodes = append(g.nodes, n)
 	g.nodes[l].NodeID = NodeID(l)
 	return g.nodes[l].NodeID

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"gorgonia.org/gorgonia"
+	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 )
 
@@ -13,7 +14,7 @@ import (
 func T2T(a gorgonia.Tensor) tensor.Tensor {
 	switch t := a.(type) {
 	case Node:
-		return T2T(t.Tensor)
+		return T2T(t.Value.(gorgonia.Tensor))
 	case tensor.Tensor:
 		return t
 	default:
@@ -21,21 +22,21 @@ func T2T(a gorgonia.Tensor) tensor.Tensor {
 	}
 }
 
-func tonode(t gorgonia.Tensor) node {
+func tonode(t values.Value) node {
 	switch a := t.(type) {
 	case Node:
 		return node{Node: a}
 	case *Symbolic:
 		return node{
 			Node: Node{
-				Tensor: a,
+				Value:  a,
 				NodeID: -1,
 			},
 		}
 	case tensor.Tensor:
 		return node{
 			Node: Node{
-				Tensor: a,
+				Value:  a,
 				NodeID: -1,
 			},
 		}

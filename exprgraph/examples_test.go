@@ -5,6 +5,8 @@ import (
 
 	"gorgonia.org/gorgonia"
 	. "gorgonia.org/gorgonia/exprgraph"
+	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
 )
 
@@ -30,15 +32,29 @@ func (e *HybridEngine) Graph() *Graph { return e.g }
 
 func (e *HybridEngine) SetGraph(g *Graph) { e.g = g }
 
-// DualEngine is an engine that does automatic differentiation
-type DualEngine struct {
+// FwdEngine is a Engine that performs forwards mode differentiation
+//
+// Here the implementation is done by means of implementing MatMul and AddScalar
+// Obviously in the real world situation, Add also needs to be implemented, but in this example
+// we are not going to call Add, only AddScalar.
+type FwdEngine struct {
 	tensor.StdEng
 	g *Graph
 }
 
-func (e *DualEngine) Graph() *Graph { return e.g }
+func (e *FwdEngine) Graph() *Graph { return e.g }
 
-func (e *DualEngine) SetGraph(g *Graph) { e.g = g }
+func (e *FwdEngine) SetGraph(g *Graph) { e.g = g }
+
+func (e *FwdEngine) Lift(a values.Value) values.Value {
+	switch t := a.(type) {
+	case *dual.Dual:
+		return a
+	case tensor.Tensor:
+		return dual.New(t)
+	}
+	panic("Unreachable")
+}
 
 type GraphEngine interface {
 	tensor.Engine

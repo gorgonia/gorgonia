@@ -51,3 +51,5 @@ func (t *Symbolic) Pointer() unsafe.Pointer { return nil }
 func (t *Symbolic) ScalarValue() interface{} { return nil }
 
 func (t *Symbolic) Format(f fmt.State, c rune) { fmt.Fprintf(f, t.g.NameOf(t)) }
+
+func (t *Symbolic) Data() interface{} { return nil }

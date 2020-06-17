@@ -10,6 +10,7 @@ import (
 )
 
 var scalarShape = tensor.ScalarShape()
+var scalarStrides []int
 
 // Scalar represents a scalar(non-array-based) value. Do note that it's the pointers of the scalar types (F64, F32, etc) that implement
 // the Scalar interface. The main reason is primarily due to optimizations with regards to memory allocation and copying for device interoperability.
@@ -17,35 +18,6 @@ type Scalar interface {
 	Value
 	isScalar() bool
 }
-
-// F64 represents a float64 value.
-type F64 float64
-
-// F32 represents a float32 value.
-type F32 float32
-
-// I represents a int value.
-type I int
-
-// I64 represents a int64 value.
-type I64 int64
-
-// I32 represents a int32 value.
-type I32 int32
-
-// U8 represents a byte value.
-type U8 byte
-
-// B represents a bool value.
-type B bool
-
-func NewF64(v float64) *F64 { r := F64(v); return &r }
-func NewF32(v float32) *F32 { r := F32(v); return &r }
-func NewI(v int) *I         { r := I(v); return &r }
-func NewI64(v int64) *I64   { r := I64(v); return &r }
-func NewI32(v int32) *I32   { r := I32(v); return &r }
-func NewU8(v byte) *U8      { r := U8(v); return &r }
-func NewB(v bool) *B        { r := B(v); return &r }
 
 /* Shape() */
 
@@ -69,6 +41,31 @@ func (v *U8) Shape() tensor.Shape { return scalarShape }
 
 // Shape returns a scalar shape for all scalar values
 func (v *B) Shape() tensor.Shape { return scalarShape }
+
+/* Shape() */
+
+// Strides returns a scalar shape for all scalar values
+func (v *F64) Strides() []int { return scalarStrides }
+
+// Strides returns a scalar shape for all scalar values
+func (v *F32) Strides() []int { return scalarStrides }
+
+// Strides returns a scalar shape for all scalar values
+func (v *I) Strides() []int { return scalarStrides }
+
+// Strides returns a scalar shape for all scalar values
+func (v *I64) Strides() []int { return scalarStrides }
+
+// Strides returns a scalar shape for all scalar values
+func (v *I32) Strides() []int { return scalarStrides }
+
+// Strides returns a scalar shape for all scalar values
+func (v *U8) Strides() []int { return scalarStrides }
+
+// Strides returns a scalar shape for all scalar values
+func (v *B) Strides() []int { return scalarStrides }
+
+/* Size */
 
 // Size returns 0 for all scalar Values
 func (v *F64) Size() int { return 0 }
