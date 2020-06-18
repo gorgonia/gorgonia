@@ -12,29 +12,39 @@ import (
 
 type upsampleOp struct {
 	stride int
-	//дополнительный код?
 }
 
 func newUpsampleOp(inputShape tensor.Shape, stride int) *upsampleOp {
 	upsampleop := &upsampleOp{
 		stride: stride,
 	}
-	//дополнительный код?
 	return upsampleop
 }
 
-func Upsample2D(x *Node, stride int) (*Node, error) {
+//Upsample2D -  simply upscaling Tensor by scale factor.
+/*
+	1, 2
+	3, 4
+	converts to
+	1,1,2,2
+	1,1,2,2
+	3,3,4,4,
+	3,3,4,4,
+*/
+func Upsample2D(x *Node, scale int) (*Node, error) {
+	if scale < 1 {
+		return nil, errors.Errorf("Upsample scale %v does not make sense", scale)
+	}
 	group := encoding.NewGroup("Upsample")
 	xShape := x.Shape()
-	op := newUpsampleOp(xShape, stride)
+	op := newUpsampleOp(xShape, scale-1)
 	_ = group
-	//дополнительный код?
 	retVal, err := ApplyOp(op, x)
 	return retVal, err
 }
 
 func (op *upsampleOp) Arity() int {
-	//копипаста
+
 	return 1
 }
 func (op *upsampleOp) ReturnsPtr() bool { return false }
@@ -54,7 +64,7 @@ func (op *upsampleOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
 	return s, nil
 }
 func (op *upsampleOp) Type() hm.Type {
-	//копипаста
+
 	a := hm.TypeVariable('a')
 	t := newTensorType(4, a)
 	return hm.NewFnType(t, t)
