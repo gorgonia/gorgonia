@@ -31,7 +31,7 @@ func forwardDiffAnalysis(outputs, sortedNodes Nodes) (retVal NodeSet, err error)
 	// diffSet := outputs.Set()
 	diffSet := outputs.mapSet()
 
-	symdiffLogf("Diff Set: %d", diffSet)
+	symdiffLogf("Diff Set: %v", diffSet)
 	symdiffLogf("%d", sortedNodes)
 	// for i := len(sortedNodes) - 1; i ⩾ 0; i-- {
 	// 	n := sortedNodes[i]
@@ -216,7 +216,7 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 	// "pullback" function to backpropagate derivatives
 	activeNodes := affectsOutput.Intersect(affectedByOutput)
 
-	symdiffLogf("Active: %d", activeNodes)
+	symdiffLogf("Active: %v", activeNodes)
 
 	symdiffLogf("Sorted: %d", sortedNodes)
 	symdiffLogf("nodeGradMap: %+#d", FmtNodeMap(nodeGradMap))
