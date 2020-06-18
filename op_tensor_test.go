@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"fmt"
 	"runtime"
 	"testing"
 
@@ -297,51 +298,230 @@ func TestTransposeOp(t *testing.T) {
 	assert.True(ValueEq(ag, bg))
 }
 
+type concatOpTest struct {
+	name string
+	axes int
+	vals []Value
+
+	correct Value
+}
+
+var concatOpTests = []concatOpTest{
+	{
+		"concat 2 vectors",
+		0,
+		[]Value{
+			tensor.New(tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2)),
+			tensor.New(tensor.WithBacking([]float64{3, 4}), tensor.WithShape(2)),
+		},
+		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4}), tensor.WithShape(4)),
+	},
+	{
+		"concat 2 matrices on dim with size of 1",
+		1,
+		[]Value{
+			tensor.New(tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2, 1)),
+			tensor.New(tensor.WithBacking([]float64{3, 4}), tensor.WithShape(2, 1)),
+		},
+		tensor.New(tensor.WithBacking([]float64{1, 3, 2, 4}), tensor.WithShape(2, 2)),
+	},
+}
+
 func TestConcatOp(t *testing.T) {
+	for _, cot := range concatOpTests {
+		t.Run(cot.name, func(t *testing.T) {
+			testConcatOp(t, cot)
+		})
+	}
+}
+
+func testConcatOp(t *testing.T, cot concatOpTest) {
 	defer runtime.GC()
 
-	assert := assert.New(t)
-	g := NewGraph()
-	x := NewVector(g, Float64, WithShape(2))
-	xx, err := Concat(0, x, x)
+	as := assert.New(t)
+	g1 := NewGraph()
+	g2 := NewGraph()
+
+	var n1, n2 Nodes
+	for i, v := range cot.vals {
+		n1 = append(n1, NodeFromAny(g1, v, WithName(fmt.Sprintf("n1_%d", i))))
+		n2 = append(n2, NodeFromAny(g2, v, WithName(fmt.Sprintf("n2_%d", i))))
+	}
+
+	xx, err := Concat(cot.axes, n1...)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	aa, err := Concat(cot.axes, n2...)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
 
-	cost := Must(Sum(xx))
-	Grad(cost, x)
-
-	g2 := NewGraph()
-	a := NewVector(g2, Float64, WithShape(2))
-	aa, err := Concat(0, a, a)
+	cost1 := Must(Sum(xx))
+	_, err = Grad(cost1, n1...)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
 	Must(Sum(aa)) // cost
 
-	aBack := []float64{1, 2}
-	aT := tensor.New(tensor.WithShape(2), tensor.WithBacking(aBack))
-
-	xBack := []float64{1, 2}
-	xT := tensor.New(tensor.WithShape(2), tensor.WithBacking(xBack))
-
-	Let(a, aT)
-	Let(x, xT)
-	m1 := NewTapeMachine(g)
-	m2 := NewLispMachine(g2)
-	defer m1.Close()
-	defer m2.Close()
-
+	m1 := NewTapeMachine(g1)
 	if err = m1.RunAll(); err != nil {
 		t.Fatal(err)
 	}
-
+	defer m1.Close()
+	m2 := NewLispMachine(g2)
 	if err = m2.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+	defer m2.Close()
+
+	xG, err := xx.Grad()
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	aG, err := aa.Grad()
+	if err != nil {
 		t.Fatalf("%+v", err)
 	}
 
-	xG, _ := x.Grad()
-	aG, _ := a.Grad()
-	assert.True(ValueEq(xG, aG))
-	assert.True(ValueEq(xx.Value(), aa.Value()))
+	as.True(ValueEq(cot.correct, xx.Value()))
+	as.True(ValueEq(xG, aG))
+
+	// Grads must have the same shapes as the input values
+	for i, v := range cot.vals {
+		g1, err := n1[i].Grad()
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		as.Equal(v.Shape(), g1.Shape())
+
+		g2, err := n1[i].Grad()
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		as.Equal(v.Shape(), g2.Shape())
+	}
+}
+
+func TestUnconcatConcatOpSequence(t *testing.T) {
+	defer runtime.GC()
+
+	as := assert.New(t)
+	g := NewGraph()
+
+	x := NewTensor(g, tensor.Float64, 3, WithShape(2, 3, 3), WithName("x"), WithValue(tensor.New(tensor.WithShape(2, 3, 3), tensor.WithBacking([]float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+
+		10, 11, 12,
+		13, 14, 15,
+		16, 17, 18,
+	}))))
+
+	ux, err := Unconcat(x, 2, 3)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	as.Len(ux, 3)
+
+	for i, n := range ux {
+		ux[i], err = Reshape(n, tensor.Shape{2, 3, 1})
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+	}
+
+	cx, err := Concat(2, ux...)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	cost := Must(Sum(cx))
+	_, err = Grad(cost, x)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	m := NewTapeMachine(g)
+	if err = m.RunAll(); err != nil {
+		t.Fatalf("%+v", err)
+	}
+	defer m.Close()
+
+	xG, err := x.Grad()
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	as.True(ValueEq(x.Value(), cx.Value()))
+	as.Equal([]float64{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, xG.Data())
+	as.True(tensor.Shape{2, 3, 3}.Eq(xG.Shape()))
+}
+
+func TestPoorMansAttentionNet(t *testing.T) {
+	defer runtime.GC()
+
+	as := assert.New(t)
+	g := NewGraph()
+
+	x := NewTensor(g, tensor.Float64, 3, WithShape(2, 3, 3), WithName("x"), WithValue(tensor.New(tensor.WithShape(2, 3, 3), tensor.WithBacking([]float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+
+		10, 11, 12,
+		13, 14, 15,
+		16, 17, 18,
+	}))))
+
+	ux, err := Unconcat(x, 2, 3)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	for i, n := range ux {
+		ux[i], err = Reshape(n, tensor.Shape{2, 3, 1})
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+	}
+
+	// In the actual model, I would have an LSTM layer here.
+
+	cx, err := Concat(2, ux...)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	// Take a slice of the pretend LSTM output and apply it to the whole.
+	// These ops kind of resemble that of my actual attention model.
+	mm, err := BatchedMatMul(cx, ux[0], false, false)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	ax, err := BroadcastAdd(cx, mm, []byte{}, []byte{2})
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	cost := Must(Sum(ax))
+	_, err = Grad(cost, x)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	m := NewTapeMachine(g)
+	if err = m.RunAll(); err != nil {
+		t.Fatalf("%+v", err)
+	}
+	defer m.Close()
+
+	xG, err := x.Grad()
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	as.True(tensor.Shape{2, 3, 3}.Eq(xG.Shape()))
 }
