@@ -5,10 +5,13 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia"
 	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 )
+
+var _ gorgonia.Tensor = &Dual{}
 
 // Op is a function that takes an arbitrary number of Values and returns a Value
 type Op func(vals ...values.Value) (values.Value, error)

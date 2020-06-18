@@ -2,10 +2,10 @@ package exprgraph_test
 
 import (
 	"fmt"
+	"log"
 
 	"gorgonia.org/gorgonia"
 	. "gorgonia.org/gorgonia/exprgraph"
-	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
 )
@@ -46,7 +46,7 @@ func (e *FwdEngine) Graph() *Graph { return e.g }
 
 func (e *FwdEngine) SetGraph(g *Graph) { e.g = g }
 
-func (e *FwdEngine) Lift(a values.Value) values.Value {
+func (e *FwdEngine) Lift(a gorgonia.Tensor) gorgonia.Tensor {
 	switch t := a.(type) {
 	case *dual.Dual:
 		return a
@@ -57,6 +57,9 @@ func (e *FwdEngine) Lift(a values.Value) values.Value {
 }
 
 func (e *FwdEngine) MatMul(a, b, c tensor.Tensor) error {
+	log.Printf("a %T, b %T c %T", a, b, c)
+
+	return nil
 }
 
 type GraphEngine interface {
@@ -206,4 +209,27 @@ func ExampleHybrid() {
 	// ⎡21  15⎤
 	// ⎣57  42⎦
 
+}
+
+func ExampleFwd() {
+	g := New(&FwdEngine{})
+
+	x := Make(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	y := Make(g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
+	z := Make(g, "z", tensor.WithShape(), tensor.WithBacking([]float64{1}))
+
+	xy, err := MatMul(x, y)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	xypz, err := Add(xy, z)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Printf("x:\n%v\ny:\n%v\nxy:\n%v\nxy+z:\n%v\n", x, y, xy, xypz)
+
+	// Output:
+	// xx
 }

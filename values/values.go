@@ -18,14 +18,7 @@ import (
 // This also means for the most part most Values will be allocated on the heap.
 // There are some performance tradeoffs made in this decision, but ultimately this is better than having to manually manage blocks of memory
 type Value interface {
-	Shape() tensor.Shape // Shape  returns the shape of the Value. Scalar values return ScalarShape()
-	Size() int           // Size represents the number of elements in the Value. Note that in cases such as a *tensor.Dense, the underlying slice MAY have more elements than the Size() reports. This is correct.
-	Strides() []int      // Strides to get the data. Scalars return nil.
-	Data() interface{}   // Data returns the original representation of the Value
-	Dtype() tensor.Dtype // Dtype returns the Dtype of the value
-
-	Engine() tensor.Engine
-	tensor.Memory
+	tensor.Tensor
 	fmt.Formatter
 }
 

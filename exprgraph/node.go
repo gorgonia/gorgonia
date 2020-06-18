@@ -7,7 +7,6 @@ import (
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/execution"
 	"gorgonia.org/gorgonia/ops"
-	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 )
 
@@ -24,8 +23,8 @@ func (n NodeID) ID() int64 { return int64(n) }
 
 // Node is a tuple of a Tensor, ID, and name.
 type Node struct {
-	values.Value
-	NodeID
+	gorgonia.Tensor
+	id   int64
 	name string
 }
 
@@ -46,7 +45,10 @@ func Cons(g *Graph, name string, t tensor.Tensor) Node {
 }
 
 // OK returns true if the Node is good for processing.
-func (n *Node) OK() bool { return n.Value != nil }
+func (n *Node) OK() bool { return n.Tensor != nil }
+
+// ID allows Node  to implement gonum.org/graph.Node
+func (n *Node) ID() int64 { return n.id }
 
 // Node implements gorgonia.Result
 
@@ -59,12 +61,12 @@ func (n Node) Format(f fmt.State, c rune) {
 	case 's':
 		fmt.Fprintf(f, "%s", n.name)
 	default:
-		switch t := n.Value.(type) {
+		switch t := n.Tensor.(type) {
 		case tensor.Tensor:
 			str := consFmtStr(f, c)
 			fmt.Fprintf(f, str, t)
 		default:
-			log.Printf("tensor type %T unsupported for node.Format", n.Value)
+			log.Printf("tensor type %T unsupported for node.Format", n.Tensor)
 		}
 	}
 }
@@ -90,64 +92,4 @@ type node struct {
 	flag
 	execution.Device
 	ops.Op
-}
-
-/* Node implements gorgonia.Tensor */
-
-func (n Node) DataSize() int {
-	if t, ok := n.Value.(gorgonia.Tensor); ok {
-		return t.DataSize()
-	}
-
-	size := n.Value.Size()
-	if size == 0 { // Scalars have 0 size
-		size = 1
-	}
-	return size * int(n.Dtype().Size())
-}
-
-func (n Node) Dims() int {
-	if t, ok := n.Value.(gorgonia.Tensor); ok {
-		return t.Dims()
-	}
-	return n.Shape().Dims()
-}
-
-func (n Node) IsManuallyManaged() bool {
-	// WARNING: POSSIBLE ERROR
-	// Might want to check for a specific interface instead of gorgonia.Tensor
-	if t, ok := n.Value.(gorgonia.Tensor); ok {
-		return t.IsManuallyManaged()
-	}
-	return false
-}
-
-func (n Node) IsNativelyAccessible() bool {
-	// WARNING: POSSIBLE ERROR
-	if t, ok := n.Value.(gorgonia.Tensor); ok {
-		return t.IsNativelyAccessible()
-	}
-	return true
-}
-
-func (n Node) IsScalar() bool {
-	// WARNING: INCOMPLETE PATTERN MATCHING
-	if t, ok := n.Value.(gorgonia.Tensor); ok {
-		return t.IsScalar()
-	}
-	if _, ok := n.Value.(values.Scalar); ok {
-		return true
-	}
-	return false
-}
-
-func (n Node) ScalarValue() interface{} {
-	// WARNING: INCOMPLETE PATTERN MATCHING
-	if t, ok := n.Value.(gorgonia.Tensor); ok {
-		return t.ScalarValue()
-	}
-	if _, ok := n.Value.(values.Scalar); ok {
-		return true
-	}
-	return nil
 }

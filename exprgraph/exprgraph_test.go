@@ -17,10 +17,10 @@ func TestConstruction(t *testing.T) {
 	assert.Equal(1, len(g.nodes))
 	id := g.Insert(x)
 	assert.Equal(1, len(g.nodes))
-	assert.Equal(id, x.NodeID)
+	assert.Equal(id, NodeID(x.id))
 
 	// when we insert the tensor with data back into the graph we expect the same ID
-	rawX := x.Value.(tensor.Tensor)
+	rawX := x.Tensor.(tensor.Tensor)
 	id2 := g.Insert(rawX)
 	assert.Equal(id, id2)
 	assert.Equal(1, len(g.nodes))

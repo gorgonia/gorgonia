@@ -65,6 +65,29 @@ func (v *U8) Strides() []int { return scalarStrides }
 // Strides returns a scalar shape for all scalar values
 func (v *B) Strides() []int { return scalarStrides }
 
+/* Dims */
+
+// Dims returns 0 for all scalar Values
+func (v *F64) Dims() int { return 0 }
+
+// Dims returns 0 for all scalar Values
+func (v *F32) Dims() int { return 0 }
+
+// Dims returns 0 for all scalar Values
+func (v *I) Dims() int { return 0 }
+
+// Dims returns 0 for all scalar Values
+func (v *I64) Dims() int { return 0 }
+
+// Dims returns 0 for all scalar Values
+func (v *I32) Dims() int { return 0 }
+
+// Dims returns 0 for all scalar Values
+func (v *U8) Dims() int { return 0 }
+
+// Dims returns 0 for all scalar Values
+func (v *B) Dims() int { return 0 }
+
 /* Size */
 
 // Size returns 0 for all scalar Values
@@ -87,6 +110,29 @@ func (v *U8) Size() int { return 0 }
 
 // Size returns 0 for all scalar Values
 func (v *B) Size() int { return 0 }
+
+/* DataSize */
+
+// DataSize returns 8.
+func (v *F64) DataSize() int { return 8 }
+
+// DataSize returns 4
+func (v *F32) DataSize() int { return 4 }
+
+// DataSize returns the system defined data size for ints
+func (v *I) DataSize() int { return int(v.Dtype().Size()) }
+
+// DataSize returns 8
+func (v *I64) DataSize() int { return 8 }
+
+// DataSize returns 4
+func (v *I32) DataSize() int { return 4 }
+
+// DataSize returns 1
+func (v *U8) DataSize() int { return 1 }
+
+// DataSize returns 1
+func (v *B) DataSize() int { return 1 }
 
 /* Data() */
 
@@ -191,6 +237,39 @@ func (v *I32) isScalar() bool { return true }
 func (v *U8) isScalar() bool  { return true }
 func (v *B) isScalar() bool   { return true }
 
+/* IsScalar */
+
+func (v *F64) IsScalar() bool { return true }
+func (v *F32) IsScalar() bool { return true }
+func (v *I) IsScalar() bool   { return true }
+func (v *I64) IsScalar() bool { return true }
+func (v *I32) IsScalar() bool { return true }
+func (v *U8) IsScalar() bool  { return true }
+func (v *B) IsScalar() bool   { return true }
+
+/* ScalarValue() */
+
+// ScalarValue returns the original representation of the Value
+func (v *F64) ScalarValue() interface{} { return v.Any() }
+
+// ScalarValue returns the original representation of the Value
+func (v *F32) ScalarValue() interface{} { return v.Any() }
+
+// ScalarValue returns the original representation of the Value
+func (v *I) ScalarValue() interface{} { return v.Any() }
+
+// ScalarValue returns the original representation of the Value
+func (v *I64) ScalarValue() interface{} { return v.Any() }
+
+// ScalarValue returns the original representation of the Value
+func (v *I32) ScalarValue() interface{} { return v.Any() }
+
+// ScalarValue returns the original representation of the Value
+func (v *U8) ScalarValue() interface{} { return v.Any() }
+
+// ScalarValue returns the original representation of the Value
+func (v *B) ScalarValue() interface{} { return v.Any() }
+
 /* Uintptr */
 
 // Uintptr satisfies the tensor.Memory interface
@@ -259,6 +338,52 @@ func (v *U8) Pointer() unsafe.Pointer { return unsafe.Pointer(v) }
 
 // Pointer returns the pointer as an unsafe.Pointer. Satisfies the tensor.Memory interface
 func (v *B) Pointer() unsafe.Pointer { return unsafe.Pointer(v) }
+
+/* IsManuallyManaged */
+
+// IsManuallyManaged returns false for all scalar Values
+func (v *F64) IsManuallyManaged() bool { return false }
+
+// IsManuallyManaged returns false for all scalar Values
+func (v *F32) IsManuallyManaged() bool { return false }
+
+// IsManuallyManaged returns false for all scalar Values
+func (v *I) IsManuallyManaged() bool { return false }
+
+// IsManuallyManaged returns false for all scalar Values
+func (v *I64) IsManuallyManaged() bool { return false }
+
+// IsManuallyManaged returns false for all scalar Values
+func (v *I32) IsManuallyManaged() bool { return false }
+
+// IsManuallyManaged returns false for all scalar Values
+func (v *U8) IsManuallyManaged() bool { return false }
+
+// IsManuallyManaged returns false for all scalar Values
+func (v *B) IsManuallyManaged() bool { return false }
+
+/* IsNativelyAccessible */
+
+// IsNativelyAccessible returns true for all scalar Values
+func (v *F64) IsNativelyAccessible() bool { return true }
+
+// IsNativelyAccessible returns true for all scalar Values
+func (v *F32) IsNativelyAccessible() bool { return true }
+
+// IsNativelyAccessible returns true for all scalar Values
+func (v *I) IsNativelyAccessible() bool { return true }
+
+// IsNativelyAccessible returns true for all scalar Values
+func (v *I64) IsNativelyAccessible() bool { return true }
+
+// IsNativelyAccessible returns true for all scalar Values
+func (v *I32) IsNativelyAccessible() bool { return true }
+
+// IsNativelyAccessible returns true for all scalar Values
+func (v *U8) IsNativelyAccessible() bool { return true }
+
+// IsNativelyAccessible returns true for all scalar Values
+func (v *B) IsNativelyAccessible() bool { return true }
 
 /* Oner */
 

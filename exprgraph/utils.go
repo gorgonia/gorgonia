@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"gorgonia.org/gorgonia"
-	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
 )
 
@@ -14,7 +14,9 @@ import (
 func T2T(a gorgonia.Tensor) tensor.Tensor {
 	switch t := a.(type) {
 	case Node:
-		return T2T(t.Value.(gorgonia.Tensor))
+		return T2T(t.Tensor.(gorgonia.Tensor))
+	case *dual.Dual:
+		return t
 	case tensor.Tensor:
 		return t
 	default:
@@ -22,22 +24,29 @@ func T2T(a gorgonia.Tensor) tensor.Tensor {
 	}
 }
 
-func tonode(t values.Value) node {
+func tonode(t gorgonia.Tensor) node {
 	switch a := t.(type) {
 	case Node:
 		return node{Node: a}
 	case *Symbolic:
 		return node{
 			Node: Node{
-				Value:  a,
-				NodeID: -1,
+				Tensor: a,
+				id:     -1,
+			},
+		}
+	case *dual.Dual:
+		return node{
+			Node: Node{
+				Tensor: a,
+				id:     -1,
 			},
 		}
 	case tensor.Tensor:
 		return node{
 			Node: Node{
-				Value:  a,
-				NodeID: -1,
+				Tensor: a,
+				id:     -1,
 			},
 		}
 	case *node:
@@ -45,7 +54,7 @@ func tonode(t values.Value) node {
 	case *Node:
 		return node{Node: *a}
 	default:
-		log.Printf("tonode %T not handleed", t)
+		log.Printf("tonode %T not handled", t)
 	}
 	panic("Unreachable")
 }
