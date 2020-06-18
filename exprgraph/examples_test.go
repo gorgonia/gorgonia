@@ -56,6 +56,9 @@ func (e *FwdEngine) Lift(a values.Value) values.Value {
 	panic("Unreachable")
 }
 
+func (e *FwdEngine) MatMul(a, b, c tensor.Tensor) error {
+}
+
 type GraphEngine interface {
 	tensor.Engine
 	Graph() *Graph
