@@ -73,15 +73,16 @@ func (dv *Dual) SetEngine(e tensor.Engine) {
 func (dv *Dual) Deriv() values.Value { return dv.d }
 
 // Clone clones a *Dual.
-func (dv *Dual) Clone() (retVal interface{}, err error) {
+func (dv *Dual) Clone() (retVal interface{}) {
 	var v, d values.Value
+	var err error
 	if v, err = values.Clone(dv.Value); err != nil {
-		return nil, errors.Wrap(err, gerrors.CloneFail)
+		panic(errors.Wrap(err, gerrors.CloneFail))
 	}
 
 	if dv.d != nil {
 		if d, err = values.Clone(dv.d); err != nil {
-			return nil, errors.Wrap(err, gerrors.CloneFail)
+			panic(errors.Wrap(err, gerrors.CloneFail))
 		}
 	}
 
