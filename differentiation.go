@@ -23,18 +23,14 @@ func forwardDiffAnalysis(outputs, sortedNodes Nodes) (retVal NodeSet, err error)
 	enterLogScope()
 	defer leaveLogScope()
 
-	sane := outputs.AllSameGraph()
-	if !sane {
+	if !outputs.AllSameGraph() {
 		return nil, errors.New("The supplied output Nodes are not the same graph")
 	}
 
-	// diffSet := outputs.Set()
 	diffSet := outputs.mapSet()
 
 	symdiffLogf("Diff Set: %v", diffSet)
 	symdiffLogf("%d", sortedNodes)
-	// for i := len(sortedNodes) - 1; i ⩾ 0; i-- {
-	// 	n := sortedNodes[i]
 	for _, n := range sortedNodes {
 		if diffSet.Contains(n) && !n.isInput() {
 			diffs := n.diffWRT()
@@ -42,7 +38,6 @@ func forwardDiffAnalysis(outputs, sortedNodes Nodes) (retVal NodeSet, err error)
 				d := diffs[j]
 				if d {
 					symdiffLogf("Adding %x to  differentiable set", child.ID())
-					// diffSet = append(diffSet, child)
 					diffSet.Add(child)
 				}
 			}
@@ -58,20 +53,16 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 	enterLogScope()
 	defer leaveLogScope()
 
-	sane := wrt.AllSameGraph()
-	if !sane {
+	if !wrt.AllSameGraph() {
 		return nil, errors.New("The supplied output Nodes are not the same graph")
 	}
 
-	// diffSet := wrt.Set()
 	diffSet := wrt.mapSet()
-	// autodiffLogf("Diff Set: %d", diffSet)
 	symdiffLogf("wrt:%d diffset: %d", len(wrt), len(diffSet))
 	symdiffLogf("%v", diffSet)
 	symdiffLogf("sorted: %d", sortedNodes)
 
 	enterLogScope()
-	// for _, n := range sortedNodes {
 	for i := len(sortedNodes) - 1; i >= 0; i-- {
 		n := sortedNodes[i]
 		symdiffLogf("working on %v. Has %d children", n, len(n.children))
@@ -104,8 +95,6 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 			g := n.g
 			for _, child := range n.children {
 				parents := graph.NodesOf(g.To(child.ID()))
-
-				// symdiffLogf("parents of %v: %v", child, graphNodeToNode(parents))
 				if len(parents) == 1 && len(child.children) > 0 {
 					leaveLogScope()
 					return nil, errors.Errorf("Being unable to differentiate %v would leave a portion of the graph unreachable. Unable to continue", n)
@@ -121,7 +110,6 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 			d := diffs[j]
 			if diffSet.Contains(child) && d {
 				symdiffLogf("Adding %x to differentiable set", child.ID())
-				// diffSet = append(diffSet, n)
 				diffSet.Add(n)
 				break inner
 			}

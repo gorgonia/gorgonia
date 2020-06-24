@@ -191,7 +191,7 @@ func (op elemBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err err
 //		c = a ** b
 // The result of the differentiation wrt to a and b would be:
 // 		dc/da = b * a ** (b-1)
-// 		dc/db = <insert exp rule expansion here.. don't quite remember it> //TODO
+// 		dc/db = a ** b * ln(a)
 //
 // However, operators like < and > are NOT differentiable
 //
