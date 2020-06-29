@@ -60,11 +60,7 @@ func (op atOp) Do(inputs ...Value) (retVal Value, err error) {
 }
 
 func (op atOp) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "atOp")
-	if err := binary.Write(h, binary.LittleEndian, op.d); err != nil {
-		panic(err)
-	}
-	fmt.Fprintf(h, "at%v", op.coordinates)
+	fmt.Fprintf(h, "atOp%v%v", op.d, op.coordinates)
 }
 
 func (op atOp) Hashcode() uint32 { return simpleHash(op) }
