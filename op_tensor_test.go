@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"crypto/sha256"
 	"runtime"
 	"testing"
 
@@ -344,4 +345,16 @@ func TestConcatOp(t *testing.T) {
 	aG, _ := a.Grad()
 	assert.True(ValueEq(xG, aG))
 	assert.True(ValueEq(xx.Value(), aa.Value()))
+}
+
+func Test_atOp_WriteHash(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fail()
+		}
+	}()
+	h := sha256.New()
+
+	at := &atOp{}
+	at.WriteHash(h)
 }
