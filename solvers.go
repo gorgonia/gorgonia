@@ -519,7 +519,7 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 
 			if s.useL2Reg {
 				var l2regs tensor.Tensor
-				if l2regs, err = tensor.Mul(l2reg, w); err != nil {
+				if l2regs, err = tensor.Mul(w, l2reg); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 
@@ -531,7 +531,7 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 			}
 
 			if s.batch > 1 {
-				if _, err = tensor.Mul(onePerBatch, g, tensor.UseUnsafe()); err != nil {
+				if _, err = tensor.Mul(g, onePerBatch, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 			}
@@ -549,7 +549,7 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 
 			// equation(1)
 			t1 := g.Clone().(*tensor.Dense)
-			if _, err = tensor.Mul(omβ1, t1, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(t1, omβ1, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
@@ -557,17 +557,17 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 			if _, err = tensor.Mul(g, g, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
-			if _, err = tensor.Mul(omβ2, g, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(g, omβ2, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
 			// equation (1)
-			if _, err = tensor.Mul(beta1, m, tensor.WithIncr(t1)); err != nil {
+			if _, err = tensor.Mul(m, beta1, tensor.WithIncr(t1)); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
 			// equation (2)
-			if _, err = tensor.Mul(beta2, v, tensor.WithIncr(g)); err != nil {
+			if _, err = tensor.Mul(v, beta2, tensor.WithIncr(g)); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
@@ -580,11 +580,11 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 			mHats := t1.Clone().(*tensor.Dense)
 			vHats := g.Clone().(*tensor.Dense)
 
-			if _, err = tensor.Mul(correctionV1, mHats, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(mHats, correctionV1, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			if _, err = tensor.Mul(correctionV2, vHats, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(vHats, correctionV2, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
@@ -593,11 +593,11 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 				return // TODO: rewrite this to use InvSqrt
 			}
 
-			if _, err = tensor.Add(eps, vHats, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Add(vHats, eps, tensor.UseUnsafe()); err != nil {
 				return
 			}
 
-			if _, err = tensor.Mul(eta, mHats, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(mHats, eta, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
@@ -803,7 +803,7 @@ func (s *VanillaSolver) Step(model []ValueGrad) (err error) {
 			}
 
 			if s.useL2Reg {
-				if l2regs, err = tensor.Mul(l2reg, w); err != nil {
+				if l2regs, err = tensor.Mul(w, l2reg); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 
@@ -815,7 +815,7 @@ func (s *VanillaSolver) Step(model []ValueGrad) (err error) {
 			}
 
 			if s.batch > 1 {
-				if _, err = tensor.Mul(onePerBatch, g, tensor.UseUnsafe()); err != nil {
+				if _, err = tensor.Mul(g, onePerBatch, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 			}
@@ -826,7 +826,7 @@ func (s *VanillaSolver) Step(model []ValueGrad) (err error) {
 				}
 			}
 
-			if _, err = tensor.Mul(eta, g, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(g, eta, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
@@ -1017,7 +1017,7 @@ func (s *Momentum) Step(model []ValueGrad) (err error) {
 			}
 
 			if s.useL2Reg {
-				if l2regs, err = tensor.Mul(l2reg, cw); err != nil {
+				if l2regs, err = tensor.Mul(cw, l2reg); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 
@@ -1029,7 +1029,7 @@ func (s *Momentum) Step(model []ValueGrad) (err error) {
 			}
 
 			if s.batch > 1 {
-				if _, err = tensor.Mul(onePerBatch, g, tensor.UseUnsafe()); err != nil {
+				if _, err = tensor.Mul(g, onePerBatch, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 			}
