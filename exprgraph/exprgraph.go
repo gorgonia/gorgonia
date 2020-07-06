@@ -31,6 +31,7 @@ type Graph struct {
 	// that means that node ID 3 is the deriv of nodes with ID 1 and 2.
 	derivOf [][]NodeID
 }
+
 type graphSetter interface {
 	SetGraph(g *Graph)
 }
@@ -67,6 +68,15 @@ func (g *Graph) Nodes() graph.Nodes {
 		nodes = append(nodes, NodeID(n.id))
 	}
 	return &iterator{nodes: nodes}
+}
+
+// AllNodes returns all the nodes
+func (g *Graph) AllNodes() []Node {
+	retVal := make([]Node, len(g.nodes))
+	for i := range g.nodes {
+		retVal[i] = g.nodes[i].Node
+	}
+	return retVal
 }
 
 // From returns the list of nodes that can be reached directly from the given ID.

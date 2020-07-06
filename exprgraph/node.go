@@ -26,8 +26,10 @@ type Node struct {
 	gorgonia.Tensor
 	id   int64
 	name string
+	Op   ops.Op
 }
 
+// Make makes a node in a given graph.
 func Make(g *Graph, name string, opts ...tensor.ConsOpt) Node {
 	var eng tensor.Engine = g.StandardEngine
 	if _, ok := g.StandardEngine.(tensor.StdEng); ok {
@@ -38,10 +40,15 @@ func Make(g *Graph, name string, opts ...tensor.ConsOpt) Node {
 	return Cons(g, name, t)
 }
 
+// Cons constructs a Node. It should be used very carefully.
+// If the provided graph is nil, then Cons simply constructs the node by itself. No node will be added to the graph.
 func Cons(g *Graph, name string, t tensor.Tensor) Node {
-	id := g.idOrInsert(t)
-	g.nodes[id].name = name
-	return g.nodes[id].Node
+	if g != nil {
+		id := g.idOrInsert(t)
+		g.nodes[id].name = name
+		return g.nodes[id].Node
+	}
+	return Node{Tensor: t, name: name}
 }
 
 // OK returns true if the Node is good for processing.
@@ -91,5 +98,4 @@ type node struct {
 	Node
 	flag
 	execution.Device
-	ops.Op
 }
