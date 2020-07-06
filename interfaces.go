@@ -44,3 +44,5 @@ type hashWriter interface {
 type arityer interface {
 	Arity() int
 }
+
+type Tensors []Tensor

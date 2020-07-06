@@ -2,8 +2,14 @@ package exprgraph
 
 import (
 	"gonum.org/v1/gonum/graph"
+	"gonum.org/v1/gonum/graph/iterator"
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
+)
+
+// constraints
+var (
+	_ graph.Directed = &Graph{}
 )
 
 // Graph is a representation of an expression graph
@@ -63,11 +69,11 @@ func (g *Graph) Node(id int64) graph.Node {
 
 // Nodes returns the list of all nodes in the graph.
 func (g *Graph) Nodes() graph.Nodes {
-	var nodes []NodeID
+	var nodes []graph.Node
 	for _, n := range g.nodes {
 		nodes = append(nodes, NodeID(n.id))
 	}
-	return &iterator{nodes: nodes}
+	return iterator.NewOrderedNodes(nodes)
 }
 
 // AllNodes returns all the nodes
@@ -80,19 +86,37 @@ func (g *Graph) AllNodes() []Node {
 }
 
 // From returns the list of nodes that can be reached directly from the given ID.
-func (g *Graph) From(id int64) Nodes { panic("NYI") }
+func (g *Graph) From(id int64) graph.Nodes { return nodeIDsToGraphNodes(g.adj[id]) }
 
 // HasEdgeBetween returns whether an edge exists between x and y.
-func (g *Graph) HasEdgeBetween(x, y int64) bool { panic("NYI") }
+func (g *Graph) HasEdgeBetween(x, y int64) bool {
+	xchildren := g.adj[x]
+	ychildren := g.adj[y]
+	return nodeIDs(xchildren).Contains(NodeID(y)) || nodeIDs(ychildren).Contains(NodeID(x))
+}
 
 // Edge returns an edge object, if an edge exists. Nil otherwise.
-func (g *Graph) Edge(x, y int64) graph.Edge { panic("NYI") }
+func (g *Graph) Edge(u, v int64) graph.Edge {
+	uchildren := g.adj[u]
+	if !nodeIDs(uchildren).Contains(NodeID(v)) {
+		return nil
+	}
+	return edge{from: NodeID(u), to: NodeID(v)}
+}
 
 // HasEdgeFromTo returns whether a directed edge between x and y.
-func (g *Graph) HaEdgeFromTo(x, y int64) bool { panic("NYI") }
+func (g *Graph) HasEdgeFromTo(u, v int64) bool { return nodeIDs(g.adj[u]).Contains(NodeID(v)) }
 
 // To returns all the nodes that can reach the given id.
-func (g *Graph) To(id int64) graph.Nodes { panic("NYI") }
+func (g *Graph) To(id int64) graph.Nodes {
+	var nodes []NodeID
+	for n, adj := range g.adj {
+		if nodeIDs(adj).Contains(NodeID(id)) {
+			nodes = append(nodes, NodeID(n))
+		}
+	}
+	return nodeIDsToGraphNodes(nodes)
+}
 
 /* functions dealing with data in the graph */
 

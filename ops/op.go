@@ -2,10 +2,10 @@ package ops
 
 import (
 	"fmt"
-	"hash"
 	"runtime/trace"
 
 	"github.com/chewxy/hm"
+	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/shapes"
 	"gorgonia.org/gorgonia/values"
 )
@@ -62,9 +62,23 @@ type Op interface {
 	// -1 is returned if overwriting of input is disallowed
 	OverwritesInput() int
 
-	/* Other methods */
-
-	WriteHash(h hash.Hash)
-	Hashcode() uint32
 	fmt.Stringer
+}
+
+// SDOp is any Op that supports symbolic differentiation
+type SDOp interface {
+	Op
+
+	// DiffWRT indicates if the op is differentiable with regards to the given number of inputs
+	// returns []bool to indicate which input it is differentiable to
+	DiffWRT(inputs int) []bool
+
+	// SymDiff symbolically differentiates the op
+	SymDiff(inputs gorgonia.Tensors, output, grad gorgonia.Tensor) (retVal gorgonia.Tensors, err error)
+}
+
+// ADOp is any Op that supports automatic differentiation. TODO
+type ADOp interface {
+	Op
+	DoDiff() // TODO
 }

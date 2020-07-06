@@ -31,7 +31,9 @@ func (op BinOp) TotalSize() int {
 	case Arrow:
 		return 0
 	case Add, Sub:
+		return -1
 	case Mul, Div:
+		return -1
 
 	}
 	panic("Unreachable")
@@ -46,7 +48,9 @@ type UnaryOp struct {
 func (op UnaryOp) TotalSize() int {
 	switch op.Op {
 	case Const:
+		return op.A.TotalSize()
 	case Index:
+		return -1
 	default:
 	}
 	panic("Unreachable")
@@ -56,19 +60,53 @@ type OpType byte
 
 const (
 	// Unary
-	Const OpType = iota
-	Index
+	Const OpType = iota // K
+	Index               // []
 
 	// Binary
-	Arrow
-	Add
-	Sub
-	Mul
-	Div
+	Arrow // →
+	App   // @
+	Add   // +
+	Sub   // -
+	Mul   // ×
+	Div   // ÷
 )
 
-// (a, b) -> (b, a)
+/* Example
 
-// (a, b) -> (a + b)
+MatMul:
+(a, b) → (b, c) → (a, c)
 
-// (a, b) -> (a * b, 1)
+is represented as:
+
+BinOp{
+	Arrow,
+	BinOp{
+		Arrow,
+		tensor.Shape{-1, -2},
+		tensor.Shape{-2, -3},
+	},
+	tensor.Shape{-1, -3},
+}
+
+
+Flatten/Ravel:
+(a, b) → (a × b)
+
+is represented as:
+
+BinOp{
+	Arrow,
+	tensor.Shape{-1, -2},
+	BinOp{
+		Mul,
+		-1, -2,
+	}
+}
+
+At:
+
+Sum:
+
+
+*/

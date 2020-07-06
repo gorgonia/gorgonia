@@ -1,27 +1,29 @@
 package exprgraph
 
-import "gonum.org/v1/gonum/graph"
-
-// iterator implements graph.Nodes
-//
-// e.g:
-//	for c := it.Next(); c{
-//		n := it.Node()
-//		... // use n
-//	}
-type iterator struct {
-	cur   int
-	nodes []NodeID
-}
-
-// iterator implements graph.Nodes
-
-func (it *iterator) Next() bool       { it.cur++; return it.cur < len(it.nodes) }
-func (it *iterator) Len() int         { return len(it.nodes) }
-func (it *iterator) Reset()           { it.cur = 0 }
-func (it *iterator) Node() graph.Node { return it.nodes[it.cur] }
-
-// Nodes returns the raw slice of nodes
-func (it *iterator) NodeIDs() []NodeID { return it.nodes }
+import (
+	"gonum.org/v1/gonum/graph"
+	"gonum.org/v1/gonum/graph/iterator"
+)
 
 type Nodes []Node
+
+type nodeIDs []NodeID
+
+func (ns nodeIDs) Contains(a NodeID) bool {
+	for _, n := range ns {
+		if n == a {
+			return true
+		}
+	}
+	return false
+}
+
+/* various other interop */
+
+func nodeIDsToGraphNodes(ids []NodeID) graph.Nodes {
+	retVal := make([]graph.Node, 0, len(ids))
+	for i := range ids {
+		retVal = append(retVal, ids[i])
+	}
+	return iterator.NewOrderedNodes(retVal)
+}
