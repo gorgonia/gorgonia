@@ -31,11 +31,11 @@ jobs:
       matrix:
         go: [1.13, 1.14]
         goos: [linux, darwin]
-        goarch: [amd64]
+        goarch: [amd64, arm]
         exclude:
           # windows/386 and darwin/386 seems useless
           - goarch: "arm"
-            goos: darwin
+          - goos: darwin
     runs-on: ubuntu-latest
     steps:
 
