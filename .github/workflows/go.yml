@@ -7,12 +7,6 @@ jobs:
     strategy:
       matrix:
         go: [1.13, 1.14]
-        goos: [linux, darwin]
-        goarch: [amd64, arm]
-        exclude:
-          # windows/386 and darwin/386 seems useless
-          - goarch: "arm"
-            goos: darwin
     runs-on: ubuntu-latest
     steps:
 
@@ -24,9 +18,6 @@ jobs:
       uses: actions/checkout@v2
     - name: Run tests
       run: go test -v
-      env:
-        GOOS: ${{ matrix.goos }}
-        GOARCH: ${{ matrix.goarch }}
 
   coverage:
     runs-on: ubuntu-latest
@@ -34,7 +25,7 @@ jobs:
     - name: Install Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.13.x
+        go-version: 1.14.x
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Calc coverage
@@ -53,14 +44,26 @@ jobs:
           path-to-lcov: coverage.lcov
 
   build:
+    strategy:
+      matrix:
+        go: [1.13, 1.14]
+        goos: [linux, darwin]
+        goarch: [amd64, arm]
+        exclude:
+          # windows/386 and darwin/386 seems useless
+          - goarch: "arm"
+            goos: darwin
     runs-on: ubuntu-latest
     needs: [test]
     steps:
-    - name: Install Go
+    - name: Install Go ${{ matrix.go }}
       uses: actions/setup-go@v2
       with:
-        go-version: 1.13.x
+        go-version: ${{ matrix.go }}
     - name: Checkout code
       uses: actions/checkout@v2
     - name: build
       run: go build .
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
