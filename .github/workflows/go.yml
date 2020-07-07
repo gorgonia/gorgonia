@@ -31,7 +31,7 @@ jobs:
       matrix:
         go: [1.13, 1.14]
         goos: [linux, darwin]
-        goarch: [arm, amd64]
+        goarch: [amd64]
         exclude:
           # windows/386 and darwin/386 seems useless
           - goarch: "arm"
