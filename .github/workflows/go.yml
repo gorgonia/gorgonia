@@ -19,6 +19,8 @@ jobs:
         go-version: ${{ matrix.go }}
     - name: Checkout code
       uses: actions/checkout@v2
+      with:
+        path: ./src/github.com/${{ github.repository }}
     - name: Run tests
       run: go test -v -covermode=count ./...
 
