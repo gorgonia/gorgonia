@@ -1,0 +1,69 @@
+on: [pull_request]
+name: test and build
+env:
+  GOPROXY: "https://proxy.golang.org"
+jobs:
+  test:
+    strategy:
+      matrix:
+        go: [1.13, 1.14]
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Install Go ${{ matrix.go }}
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go }}
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Run tests
+      run: go test -v
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.14.x
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Calc coverage
+      run: |
+        export PATH=$PATH:$(go env GOPATH)/bin
+        go test -v -covermode=count -coverprofile=coverage.out
+    - name: Convert coverage to lcov
+      uses: jandelgado/gcov2lcov-action@v1.0.0
+      with:
+          infile: coverage.out
+          outfile: coverage.lcov
+    - name: Coveralls
+      uses: coverallsapp/github-action@v1.0.1
+      with:
+          github-token: ${{ secrets.github_token }}
+          path-to-lcov: coverage.lcov
+
+  build:
+    strategy:
+      matrix:
+        go: [1.13, 1.14]
+        goos: [linux, darwin]
+        goarch: [amd64, arm]
+        exclude:
+          # windows/386 and darwin/386 seems useless
+          - goarch: "arm"
+            goos: darwin
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+    - name: Install Go ${{ matrix.go }}
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go }}
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: build
+      run: go build .
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
