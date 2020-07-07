@@ -9,7 +9,7 @@ jobs:
       GO111MODULE: off
     strategy:
       matrix:
-        go: [1.13, 1.14]
+        go: [1.14]
     runs-on: ubuntu-latest
     steps:
 
@@ -32,6 +32,10 @@ jobs:
         go: [1.13, 1.14]
         goos: [linux, darwin]
         goarch: [arm, amd64]
+        exclude:
+          # windows/386 and darwin/386 seems useless
+          - goarch: "arm"
+            goos: darwin
     runs-on: ubuntu-latest
     steps:
 
