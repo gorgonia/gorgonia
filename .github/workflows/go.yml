@@ -24,7 +24,7 @@ jobs:
       uses: actions/checkout@v1
       with:
         fetch-depth: 1
-        path: src/github.com/${{ github.repository }}
+        path: src/gorgonia.org/${{ github.repository }}
     - name: Get dependencies
       run: go get -t
     - name: Run tests
