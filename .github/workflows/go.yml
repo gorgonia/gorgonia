@@ -22,7 +22,7 @@ jobs:
       with:
         path: ./src/github.com/${{ github.repository }}
     - name: Get dependencies
-      run: go get ./...
+      run: go get -t .
     - name: Run tests
       run: go test -v -covermode=count .
 
