@@ -11,19 +11,20 @@ jobs:
         go: [1.14]
     runs-on: ubuntu-latest
     steps:
-    - name: setup env
-      shell: bash
-      run: |
-        echo "::set-env name=GOPATH::${{ github.workspace }}/go"
-        echo "::add-path::${{ github.workspace }}/go/bin"
     - name: Install Go ${{ matrix.go }}
       uses: actions/setup-go@v1
       with:
         go-version: ${{ matrix.go }}
+    - name: setup env
+      run: |
+        echo "::set-env name=GOPATH::${{ github.workspace }}/go"
+        echo "::add-path::${{ github.workspace }}/go/bin"
+      shell: bash
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v1
       with:
-        path: ./src/github.com/${{ github.repository }}
+        fetch-depth: 1
+        path: src/github.com/${{ github.repository }}
     - name: Get dependencies
       run: go get -t
     - name: Run tests
