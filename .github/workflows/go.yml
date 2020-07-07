@@ -1,4 +1,4 @@
-on: [push, pull_request]
+on: [pull_request]
 name: test and build
 env:
   GOPROXY: "https://proxy.golang.org"
