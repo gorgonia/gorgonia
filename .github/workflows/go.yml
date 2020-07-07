@@ -5,16 +5,19 @@ env:
 jobs:
   test-gopath:
     env:
-      GOPATH: ${{ github.workspace }}
       GO111MODULE: off
     strategy:
       matrix:
         go: [1.14]
     runs-on: ubuntu-latest
     steps:
-
+    - name: setup env
+      shell: bash
+      run: |
+        echo "::set-env name=GOPATH::${{ github.workspace }}/go"
+        echo "::add-path::${{ github.workspace }}/go/bin"
     - name: Install Go ${{ matrix.go }}
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v1
       with:
         go-version: ${{ matrix.go }}
     - name: Checkout code
