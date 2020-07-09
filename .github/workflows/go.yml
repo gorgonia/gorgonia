@@ -3,11 +3,26 @@ name: test and build
 env:
   GOPROXY: "https://proxy.golang.org"
 jobs:
-  test:
+  test_amd64:
     strategy:
       matrix:
         go: [1.13, 1.14]
-    runs-on: [self-hosted, linux, ARM64, ubuntu-latest]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Go ${{ matrix.go }}
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go }}
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Run tests
+      run: go test -v
+     
+  test_arm:
+    strategy:
+      matrix:
+        go: [1.13, 1.14]
+    runs-on: [self-hosted, linux, ARM64]
     steps:
 
     - name: Install Go ${{ matrix.go }}
@@ -54,7 +69,7 @@ jobs:
           - goarch: "arm"
             goos: darwin
     runs-on: ubuntu-latest
-    needs: [test]
+    needs: [test_amd64, test_arm]
     steps:
     - name: Install Go ${{ matrix.go }}
       uses: actions/setup-go@v2
