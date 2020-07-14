@@ -3,8 +3,10 @@ package xvm
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"gorgonia.org/gorgonia"
 )
@@ -205,6 +207,93 @@ func Test_node_ComputeForward(t *testing.T) {
 			}
 			if err := n.ComputeForward(tt.args.ctx); (err != nil) != tt.wantErr {
 				t.Errorf("node.ComputeForward() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+type sumF32 struct{}
+
+func (*sumF32) Do(v ...gorgonia.Value) (gorgonia.Value, error) {
+	val := v[0].Data().(float32) + v[1].Data().(float32)
+	value := gorgonia.F32(val)
+	return &value, nil
+}
+
+func ExampleComputeForward() {
+	forty := gorgonia.F32(40.0)
+	two := gorgonia.F32(2.0)
+	n := &node{
+		op:          &sumF32{},
+		inputValues: make([]gorgonia.Value, 2),
+		outputC:     make(chan gorgonia.Value, 0),
+		inputC: make(chan struct {
+			pos int
+			v   gorgonia.Value
+		}, 0),
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	// releases resources if ComputeForward completes before timeout elapses
+	defer cancel()
+
+	go n.ComputeForward(ctx)
+	n.inputC <- struct {
+		pos int
+		v   gorgonia.Value
+	}{
+		0,
+		&forty,
+	}
+	n.inputC <- struct {
+		pos int
+		v   gorgonia.Value
+	}{
+		1,
+		&two,
+	}
+	fmt.Println(<-n.outputC)
+	// output: 42
+}
+
+func Test_emitOutput(t *testing.T) {
+	cancelCtx, cancel := context.WithCancel(context.Background())
+	outputC := make(chan gorgonia.Value, 1)
+	type args struct {
+		ctx context.Context
+		n   *node
+	}
+	tests := []struct {
+		name string
+		args args
+		want stateFn
+	}{
+		{
+			"context cancelation",
+			args{
+				cancelCtx,
+				&node{},
+			},
+			nil,
+		},
+		{
+			"emit output",
+			args{
+				context.Background(),
+				&node{
+					outputC: outputC,
+				},
+			},
+			nil,
+		},
+	}
+	cancel()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := emitOutput(tt.args.ctx, tt.args.n)
+			gotPrt := reflect.ValueOf(got).Pointer()
+			wantPtr := reflect.ValueOf(tt.want).Pointer()
+			if gotPrt != wantPtr {
+				t.Errorf("emitOutput() = %v, want %v", got, tt.want)
 			}
 		})
 	}

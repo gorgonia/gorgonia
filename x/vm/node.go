@@ -7,8 +7,13 @@ import (
 	"gorgonia.org/gorgonia"
 )
 
+// Doer in implementing the Do method of gorgonia's Op interface
+type Doer interface {
+	Do(...gorgonia.Value) (gorgonia.Value, error)
+}
+
 type node struct {
-	op             gorgonia.Op
+	op             Doer
 	output         gorgonia.Value
 	outputC        chan gorgonia.Value
 	receivedValues int
@@ -58,7 +63,13 @@ func computeFwd(_ context.Context, n *node) stateFn {
 	return emitOutput
 }
 
-func emitOutput(_ context.Context, _ *node) stateFn {
+func emitOutput(ctx context.Context, n *node) stateFn {
+	select {
+	case <-ctx.Done():
+		n.err = ctx.Err()
+		return nil
+	case n.outputC <- n.output:
+	}
 	return nil
 }
 
