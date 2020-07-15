@@ -105,18 +105,10 @@ func broadcast(ctx context.Context, ch <-chan ioValue, cs []chan ioValue) {
 					select {
 					case c <- msg:
 					case <-ctx.Done():
-						for _, c := range cs {
-							// close all our fanOut channels when the input channel is exhausted.
-							close(c)
-						}
 						return
 					}
 				}
 			case <-ctx.Done():
-				for _, c := range cs {
-					// close all our fanOut channels when the input channel is exhausted.
-					close(c)
-				}
 				return
 			}
 		}
