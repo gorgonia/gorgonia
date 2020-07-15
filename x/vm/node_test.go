@@ -13,10 +13,7 @@ import (
 
 func Test_receiveInput(t *testing.T) {
 	cancelCtx, cancel := context.WithCancel(context.Background())
-	inputC := make(chan struct {
-		pos int
-		v   gorgonia.Value
-	}, 0)
+	inputC := make(chan ioValue, 0)
 	type args struct {
 		ctx context.Context
 		o   *node
@@ -168,10 +165,7 @@ func Test_node_ComputeForward(t *testing.T) {
 		receivedValues int
 		err            error
 		inputValues    []gorgonia.Value
-		inputC         chan struct {
-			pos int
-			v   gorgonia.Value
-		}
+		inputC         chan ioValue
 	}
 	type args struct {
 		ctx context.Context
@@ -220,17 +214,14 @@ func (*sumF32) Do(v ...gorgonia.Value) (gorgonia.Value, error) {
 	return &value, nil
 }
 
-func ExampleComputeForward() {
+func Examplenode_ComputeForward() {
 	forty := gorgonia.F32(40.0)
 	two := gorgonia.F32(2.0)
 	n := &node{
 		op:          &sumF32{},
 		inputValues: make([]gorgonia.Value, 2),
 		outputC:     make(chan gorgonia.Value, 0),
-		inputC: make(chan struct {
-			pos int
-			v   gorgonia.Value
-		}, 0),
+		inputC:      make(chan ioValue, 0),
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	// releases resources if ComputeForward completes before timeout elapses

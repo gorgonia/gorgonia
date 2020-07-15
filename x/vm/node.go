@@ -7,7 +7,7 @@ import (
 	"gorgonia.org/gorgonia"
 )
 
-// Doer in implementing the Do method of gorgonia's Op interface
+// Doer is implementing the Do method of gorgonia's Op interface
 type Doer interface {
 	Do(...gorgonia.Value) (gorgonia.Value, error)
 }
@@ -19,10 +19,12 @@ type node struct {
 	receivedValues int
 	err            error
 	inputValues    []gorgonia.Value
-	inputC         chan struct {
-		pos int
-		v   gorgonia.Value
-	}
+	inputC         chan ioValue
+}
+
+type ioValue struct {
+	pos int
+	v   gorgonia.Value
 }
 
 type stateFn func(context.Context, *node) stateFn
