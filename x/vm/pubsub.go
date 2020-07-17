@@ -8,11 +8,11 @@ import (
 )
 
 type pubsub struct {
-	publishers  []<-chan gorgonia.Value
+	publishers  []chan gorgonia.Value
 	subscribers []chan ioValue
 }
 
-func newPubsub(subscribers []chan ioValue, publishers []<-chan gorgonia.Value) *pubsub {
+func newPubsub(subscribers []chan ioValue, publishers []chan gorgonia.Value) *pubsub {
 	return &pubsub{
 		publishers:  publishers,
 		subscribers: subscribers,
@@ -24,7 +24,7 @@ func (p *pubsub) run(ctx context.Context) error {
 	return nil
 }
 
-func merge(ctx context.Context, cs ...<-chan gorgonia.Value) <-chan ioValue {
+func merge(ctx context.Context, cs ...chan gorgonia.Value) <-chan ioValue {
 	var wg sync.WaitGroup
 	out := make(chan ioValue)
 

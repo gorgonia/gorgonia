@@ -110,7 +110,7 @@ func Test_fanOut(t *testing.T) {
 func Test_newPubsub(t *testing.T) {
 	type args struct {
 		subscribers []chan ioValue
-		publishers  []<-chan gorgonia.Value
+		publishers  []chan gorgonia.Value
 	}
 	tests := []struct {
 		name string
@@ -137,7 +137,7 @@ func Test_newPubsub(t *testing.T) {
 
 func Test_pubsub_run(t *testing.T) {
 	type fields struct {
-		publishers  []<-chan gorgonia.Value
+		publishers  []chan gorgonia.Value
 		subscribers []chan ioValue
 	}
 	type args struct {
@@ -169,6 +169,41 @@ func Test_pubsub_run(t *testing.T) {
 			}
 		})
 	}
+	t.Run("functionnal test", func(t *testing.T) {
+		publishers := make([]chan gorgonia.Value, 4)
+		for i := range publishers {
+			publishers[i] = make(chan gorgonia.Value, 0)
+		}
+		subscribers := make([]chan ioValue, 2)
+		for i := range subscribers {
+			subscribers[i] = make(chan ioValue, 0)
+		}
+		p := &pubsub{
+			publishers:  publishers,
+			subscribers: subscribers,
+		}
+		p.run(context.Background())
+		fortyTwo := gorgonia.F32(42.0)
+		fortyThree := gorgonia.F32(43.0)
+		publishers[0] <- &fortyTwo
+		publishers[2] <- &fortyThree
+		sub0_0 := <-subscribers[0]
+		sub1_0 := <-subscribers[1]
+		sub0_1 := <-subscribers[0]
+		sub1_1 := <-subscribers[1]
+		if !reflect.DeepEqual(sub0_0, ioValue{pos: 0, v: &fortyTwo}) {
+			t.Errorf("sub0_0 - expected %v, got %v", ioValue{pos: 0, v: &fortyTwo}, sub0_0)
+		}
+		if !reflect.DeepEqual(sub1_0, ioValue{pos: 0, v: &fortyTwo}) {
+			t.Errorf("sub1_0 - expected %v, got %v", ioValue{pos: 0, v: &fortyTwo}, sub1_0)
+		}
+		if !reflect.DeepEqual(sub0_1, ioValue{pos: 2, v: &fortyThree}) {
+			t.Errorf("sub0_1 - expected %v, got %v", ioValue{pos: 2, v: &fortyThree}, sub0_1)
+		}
+		if !reflect.DeepEqual(sub1_1, ioValue{pos: 2, v: &fortyThree}) {
+			t.Errorf("sub1_1 - expected %v, got %v", ioValue{pos: 2, v: &fortyThree}, sub1_1)
+		}
+	})
 }
 
 func Test_broadcast(t *testing.T) {
