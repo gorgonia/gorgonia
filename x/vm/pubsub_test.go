@@ -42,7 +42,8 @@ func Test_merge(t *testing.T) {
 	})
 	t.Run("2 channels with two values", func(t *testing.T) {
 		ctx := context.Background()
-		cs := make([]chan gorgonia.Value, 2)
+		lenChan := 2
+		cs := make([]chan gorgonia.Value, lenChan)
 		for i := range cs {
 			// The size of the channels buffer controls how far behind the receivers
 			// of the fanOut channels can lag the other channels.
@@ -51,19 +52,21 @@ func Test_merge(t *testing.T) {
 		output := merge(ctx, cs[0], cs[1])
 		cs[1] <- &fortyThree
 		cs[0] <- &fortyTwo
-		out := <-output
-		if !reflect.DeepEqual(fortyThree.Data(), out.v.Data()) {
-			t.Errorf("Expected %v, got %v", fortyTwo, out)
+		missFortyTwo := true
+		missFortyThree := true
+		for i := 0; i < lenChan; i++ {
+			out := <-output
+			switch {
+			case out.pos == 0 && out.v.Data().(float32) == 42.0:
+				missFortyTwo = false
+			case out.pos == 1 && out.v.Data().(float32) == 43.0:
+				missFortyThree = false
+			default:
+				t.Errorf("bad conbination %v/%v", out.pos, out.v.Data())
+			}
 		}
-		if out.pos != 1 {
-			t.Errorf("bad position, expected 0, got %v", out.pos)
-		}
-		out = <-output
-		if !reflect.DeepEqual(fortyTwo.Data(), out.v.Data()) {
-			t.Errorf("Expected %v, got %v", fortyThree, out)
-		}
-		if out.pos != 0 {
-			t.Errorf("bad position, expected 0, got %v", out.pos)
+		if missFortyThree || missFortyTwo {
+			t.Error("Missing value")
 		}
 	})
 }
@@ -136,40 +139,7 @@ func Test_newPubsub(t *testing.T) {
 }
 
 func Test_pubsub_run(t *testing.T) {
-	type fields struct {
-		publishers  []chan gorgonia.Value
-		subscribers []chan ioValue
-	}
-	type args struct {
-		ctx context.Context
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		{
-			"nil channel",
-			fields{},
-			args{
-				context.Background(),
-			},
-			false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			p := &pubsub{
-				publishers:  tt.fields.publishers,
-				subscribers: tt.fields.subscribers,
-			}
-			if err := p.run(tt.args.ctx); (err != nil) != tt.wantErr {
-				t.Errorf("pubsub.run() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-	t.Run("functionnal test", func(t *testing.T) {
+	t.Run("functionnal test in goroutine", func(t *testing.T) {
 		publishers := make([]chan gorgonia.Value, 4)
 		for i := range publishers {
 			publishers[i] = make(chan gorgonia.Value, 0)
@@ -182,7 +152,7 @@ func Test_pubsub_run(t *testing.T) {
 			publishers:  publishers,
 			subscribers: subscribers,
 		}
-		p.run(context.Background())
+		go p.run(context.Background())
 		fortyTwo := gorgonia.F32(42.0)
 		fortyThree := gorgonia.F32(43.0)
 		publishers[0] <- &fortyTwo
@@ -216,7 +186,7 @@ func Test_broadcast(t *testing.T) {
 			cs[i] = make(chan ioValue, 0)
 		}
 		c := make(<-chan ioValue, 0)
-		broadcast(ctx, c, cs)
+		go broadcast(ctx, c, cs)
 		cancel()
 	})
 	t.Run("context cancel without value", func(t *testing.T) {
@@ -228,7 +198,7 @@ func Test_broadcast(t *testing.T) {
 			cs[i] = make(chan ioValue, 0)
 		}
 		c := make(chan ioValue, 0)
-		broadcast(ctx, c, cs)
+		go broadcast(ctx, c, cs)
 		c <- ioValue{}
 		cancel()
 	})
@@ -242,7 +212,7 @@ func Test_broadcast(t *testing.T) {
 			cs[i] = make(chan ioValue, 0)
 		}
 		c := make(chan ioValue, 0)
-		broadcast(ctx, c, cs)
+		go broadcast(ctx, c, cs)
 		val := ioValue{
 			pos: 0,
 			v:   &fortyTwo,

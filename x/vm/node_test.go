@@ -199,7 +199,7 @@ func Test_node_ComputeForward(t *testing.T) {
 				inputValues:    tt.fields.inputValues,
 				inputC:         tt.fields.inputC,
 			}
-			if err := n.ComputeForward(tt.args.ctx); (err != nil) != tt.wantErr {
+			if err := n.Compute(tt.args.ctx); (err != nil) != tt.wantErr {
 				t.Errorf("node.ComputeForward() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -214,7 +214,7 @@ func (*sumF32) Do(v ...gorgonia.Value) (gorgonia.Value, error) {
 	return &value, nil
 }
 
-func Examplenode_ComputeForward() {
+func Examplenode_Compute() {
 	forty := gorgonia.F32(40.0)
 	two := gorgonia.F32(2.0)
 	n := &node{
@@ -227,7 +227,7 @@ func Examplenode_ComputeForward() {
 	// releases resources if ComputeForward completes before timeout elapses
 	defer cancel()
 
-	go n.ComputeForward(ctx)
+	go n.Compute(ctx)
 	n.inputC <- struct {
 		pos int
 		v   gorgonia.Value

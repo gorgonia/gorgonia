@@ -79,7 +79,7 @@ func computeBackward(_ context.Context, _ *node) stateFn {
 	return nil
 }
 
-func (n *node) ComputeForward(ctx context.Context) error {
+func (n *node) Compute(ctx context.Context) error {
 	for state := defaultState; state != nil; {
 		state = state(ctx, n)
 	}

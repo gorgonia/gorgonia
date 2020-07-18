@@ -19,9 +19,9 @@ func newPubsub(subscribers []chan ioValue, publishers []chan gorgonia.Value) *pu
 	}
 }
 
-func (p *pubsub) run(ctx context.Context) error {
+// run is blocking and shoud be run in a goroutine
+func (p *pubsub) run(ctx context.Context) {
 	broadcast(ctx, merge(ctx, p.publishers...), p.subscribers)
-	return nil
 }
 
 func merge(ctx context.Context, cs ...chan gorgonia.Value) <-chan ioValue {
@@ -97,20 +97,18 @@ func fanOut(ctx context.Context, ch <-chan gorgonia.Value, size, lag int) []chan
 	return cs
 }
 func broadcast(ctx context.Context, ch <-chan ioValue, cs []chan ioValue) {
-	go func() {
-		for {
-			select {
-			case msg := <-ch:
-				for _, c := range cs {
-					select {
-					case c <- msg:
-					case <-ctx.Done():
-						return
-					}
+	for {
+		select {
+		case msg := <-ch:
+			for _, c := range cs {
+				select {
+				case c <- msg:
+				case <-ctx.Done():
+					return
 				}
-			case <-ctx.Done():
-				return
 			}
+		case <-ctx.Done():
+			return
 		}
-	}()
+	}
 }
