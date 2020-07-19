@@ -14,7 +14,22 @@ type Machine struct {
 
 // NewMachine creates an exeuction machine from an exprgraph
 func NewMachine(g *gorgonia.ExprGraph) *Machine {
-	return nil
+	if g == nil {
+		return nil
+	}
+	nodes := make([]*node, 0)
+	nodesIte := g.Nodes()
+	for nodesIte.Next() {
+		n := nodesIte.Node().(*gorgonia.Node)
+		if n.Op() != nil {
+			nodes = append(nodes, &node{
+				op: n.Op(),
+			})
+		}
+	}
+	return &Machine{
+		nodes: nodes,
+	}
 }
 
 // Run performs the computation
@@ -38,4 +53,10 @@ func (m *Machine) runAllNodes(ctx context.Context) error {
 	cancel()
 	close(errC)
 	return err
+}
+
+func (m *Machine) runAllPubSub(ctx context.Context) {
+	for _, p := range m.pubsubs {
+		go p.run(ctx)
+	}
 }

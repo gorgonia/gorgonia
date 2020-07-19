@@ -106,6 +106,17 @@ func TestMachine_runAllNodes(t *testing.T) {
 }
 
 func TestNewMachine(t *testing.T) {
+	simpleGraph := gorgonia.NewGraph()
+	forty := gorgonia.F32(40.0)
+	//fortyTwo := gorgonia.F32(42.0)
+	two := gorgonia.F32(2.0)
+	n1 := gorgonia.NodeFromAny(simpleGraph, forty)
+	n2 := gorgonia.NodeFromAny(simpleGraph, two)
+	added, err := gorgonia.ApplyOp(&addOpF32Test{}, n1, n2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	simpleGraph.AddNode(added)
 	type args struct {
 		g *gorgonia.ExprGraph
 	}
@@ -119,6 +130,19 @@ func TestNewMachine(t *testing.T) {
 			args{nil},
 			nil,
 		},
+		{
+			"simple graph WIP",
+			args{
+				simpleGraph,
+			},
+			&Machine{
+				nodes: []*node{
+					{
+						op: &addOpF32Test{},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -127,4 +151,76 @@ func TestNewMachine(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMachine_runAllPubSub(t *testing.T) {
+	type fields struct {
+		nodes   []*node
+		pubsubs []*pubsub
+	}
+	type args struct {
+		ctx context.Context
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		{
+			"no subscribers",
+			fields{},
+			args{
+				context.Background(),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &Machine{
+				nodes:   tt.fields.nodes,
+				pubsubs: tt.fields.pubsubs,
+			}
+			m.runAllPubSub(tt.args.ctx)
+		})
+	}
+	t.Run("functionnal test in goroutine", func(t *testing.T) {
+		publishers := make([]chan gorgonia.Value, 4)
+		for i := range publishers {
+			publishers[i] = make(chan gorgonia.Value, 0)
+		}
+		subscribers := make([]chan ioValue, 2)
+		for i := range subscribers {
+			subscribers[i] = make(chan ioValue, 0)
+		}
+		p := &pubsub{
+			publishers:  publishers,
+			subscribers: subscribers,
+		}
+		machine := &Machine{
+			pubsubs: []*pubsub{
+				p,
+			},
+		}
+		machine.runAllPubSub(context.Background())
+		fortyTwo := gorgonia.F32(42.0)
+		fortyThree := gorgonia.F32(43.0)
+		publishers[0] <- &fortyTwo
+		publishers[2] <- &fortyThree
+		sub0_0 := <-subscribers[0]
+		sub1_0 := <-subscribers[1]
+		sub0_1 := <-subscribers[0]
+		sub1_1 := <-subscribers[1]
+		if !reflect.DeepEqual(sub0_0, ioValue{pos: 0, v: &fortyTwo}) {
+			t.Errorf("sub0_0 - expected %v, got %v", ioValue{pos: 0, v: &fortyTwo}, sub0_0)
+		}
+		if !reflect.DeepEqual(sub1_0, ioValue{pos: 0, v: &fortyTwo}) {
+			t.Errorf("sub1_0 - expected %v, got %v", ioValue{pos: 0, v: &fortyTwo}, sub1_0)
+		}
+		if !reflect.DeepEqual(sub0_1, ioValue{pos: 2, v: &fortyThree}) {
+			t.Errorf("sub0_1 - expected %v, got %v", ioValue{pos: 2, v: &fortyThree}, sub0_1)
+		}
+		if !reflect.DeepEqual(sub1_1, ioValue{pos: 2, v: &fortyThree}) {
+			t.Errorf("sub1_1 - expected %v, got %v", ioValue{pos: 2, v: &fortyThree}, sub1_1)
+		}
+	})
 }
