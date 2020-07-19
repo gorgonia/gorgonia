@@ -22,6 +22,9 @@ type node struct {
 	inputC         chan ioValue
 }
 
+// ioValue is a value with a position. as the infrastructure cannot guaranty the
+// order of the input values, we use this structure carrying the position of the operator.
+// this is mandatory for non commutative operations
 type ioValue struct {
 	pos int
 	v   gorgonia.Value
