@@ -13,6 +13,7 @@ type Doer interface {
 }
 
 type node struct {
+	id             int64
 	op             Doer
 	output         gorgonia.Value
 	outputC        chan gorgonia.Value

@@ -23,6 +23,7 @@ func NewMachine(g *gorgonia.ExprGraph) *Machine {
 		n := nodesIte.Node().(*gorgonia.Node)
 		if n.Op() != nil {
 			nodes = append(nodes, &node{
+				id: n.ID(),
 				op: n.Op(),
 			})
 		}

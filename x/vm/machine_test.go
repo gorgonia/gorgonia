@@ -112,11 +112,7 @@ func TestNewMachine(t *testing.T) {
 	two := gorgonia.F32(2.0)
 	n1 := gorgonia.NodeFromAny(simpleGraph, forty)
 	n2 := gorgonia.NodeFromAny(simpleGraph, two)
-	added, err := gorgonia.ApplyOp(&addOpF32Test{}, n1, n2)
-	if err != nil {
-		t.Fatal(err)
-	}
-	simpleGraph.AddNode(added)
+	added, _ := gorgonia.Add(n1, n2)
 	type args struct {
 		g *gorgonia.ExprGraph
 	}
@@ -138,7 +134,8 @@ func TestNewMachine(t *testing.T) {
 			&Machine{
 				nodes: []*node{
 					{
-						op: &addOpF32Test{},
+						id: added.ID(),
+						op: added.Op(),
 					},
 				},
 			},
