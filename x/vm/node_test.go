@@ -289,3 +289,31 @@ func Test_emitOutput(t *testing.T) {
 		})
 	}
 }
+
+func Test_computeBackward(t *testing.T) {
+	type args struct {
+		in0 context.Context
+		in1 *node
+	}
+	tests := []struct {
+		name string
+		args args
+		want stateFn
+	}{
+		{
+			"simple",
+			args{
+				nil,
+				nil,
+			},
+			nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := computeBackward(tt.args.in0, tt.args.in1); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("computeBackward() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

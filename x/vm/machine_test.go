@@ -104,3 +104,27 @@ func TestMachine_runAllNodes(t *testing.T) {
 		})
 	}
 }
+
+func TestNewMachine(t *testing.T) {
+	type args struct {
+		g *gorgonia.ExprGraph
+	}
+	tests := []struct {
+		name string
+		args args
+		want *Machine
+	}{
+		{
+			"nil graph",
+			args{nil},
+			nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewMachine(tt.args.g); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewMachine() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
