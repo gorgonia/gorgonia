@@ -8,27 +8,27 @@ import (
 	"gorgonia.org/tensor"
 )
 
-type dummyTestOp struct {
+type noOpTest struct {
 	err error
 }
 
 /* Graph Building Related Methods */ // Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime
-func (u *dummyTestOp) Arity() int {
+func (u *noOpTest) Arity() int {
 	panic("not implemented") // TODO: Implement
 }
 
 // Informs the type of the Op (not the node). This will be used by the type system to infer the final type of the node
-func (u *dummyTestOp) Type() hm.Type {
+func (u *noOpTest) Type() hm.Type {
 	panic("not implemented") // TODO: Implement
 }
 
 // returns the output shape as a function of the inputs
-func (u *dummyTestOp) InferShape(_ ...gorgonia.DimSizer) (tensor.Shape, error) {
+func (u *noOpTest) InferShape(_ ...gorgonia.DimSizer) (tensor.Shape, error) {
 	panic("not implemented") // TODO: Implement
 }
 
 /* Machine related */ // executes the op
-func (u *dummyTestOp) Do(v ...gorgonia.Value) (gorgonia.Value, error) {
+func (u *noOpTest) Do(v ...gorgonia.Value) (gorgonia.Value, error) {
 	if u.err != nil {
 		return nil, u.err
 	}
@@ -37,12 +37,12 @@ func (u *dummyTestOp) Do(v ...gorgonia.Value) (gorgonia.Value, error) {
 
 /* Analysis Related Methods */ // indicates if the Op will return a pointer (allowing possible inplace edits) or by value
 // if it's false, the return value of the Op will be a copy of its input
-func (u *dummyTestOp) ReturnsPtr() bool {
+func (u *noOpTest) ReturnsPtr() bool {
 	panic("not implemented") // TODO: Implement
 }
 
 // Does this op potentially call external (cgo or cuda) functions (thereby requiring extra overhead for Go's trampolining thing)
-func (u *dummyTestOp) CallsExtern() bool {
+func (u *noOpTest) CallsExtern() bool {
 	panic("not implemented") // TODO: Implement
 }
 
@@ -53,19 +53,19 @@ func (u *dummyTestOp) CallsExtern() bool {
 // the IncrementOp would be a unary operator, and assuming we would like to overwrite the input,
 // the retVal of overwriteInput() will be 0 (inputs[0]).
 // -1 is returned if overwriting of input is disallowed
-func (u *dummyTestOp) OverwritesInput() int {
+func (u *noOpTest) OverwritesInput() int {
 	panic("not implemented") // TODO: Implement
 }
 
 /* Other methods */
-func (u *dummyTestOp) WriteHash(h hash.Hash) {
+func (u *noOpTest) WriteHash(h hash.Hash) {
 	panic("not implemented") // TODO: Implement
 }
 
-func (u *dummyTestOp) Hashcode() uint32 {
+func (u *noOpTest) Hashcode() uint32 {
 	panic("not implemented") // TODO: Implement
 }
 
-func (u *dummyTestOp) String() string {
+func (u *noOpTest) String() string {
 	panic("not implemented") // TODO: Implement
 }
