@@ -124,7 +124,7 @@ func Test_computeFwd(t *testing.T) {
 			args{
 				nil,
 				&node{
-					op:          &dummyTestOp{},
+					op:          &noOpTest{},
 					inputValues: []gorgonia.Value{nil},
 				},
 			},
@@ -135,7 +135,7 @@ func Test_computeFwd(t *testing.T) {
 			args{
 				nil,
 				&node{
-					op:          &dummyTestOp{err: errors.New("")},
+					op:          &noOpTest{err: errors.New("")},
 					inputValues: []gorgonia.Value{nil},
 				},
 			},
