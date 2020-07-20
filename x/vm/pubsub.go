@@ -7,26 +7,37 @@ import (
 	"gorgonia.org/gorgonia"
 )
 
+type publisher struct {
+	id          int64
+	publisher   chan gorgonia.Value
+	subscribers []chan gorgonia.Value
+}
+
+type subscriber struct {
+	id         int64
+	publishers []chan gorgonia.Value
+	subscriber chan ioValue
+}
+
 type pubsub struct {
-	publishers  []chan gorgonia.Value
-	subscribers []chan ioValue
+	publishers  []publisher
+	subscribers []subscriber
 }
 
-func newPubsub(subscribers []chan ioValue, publishers []chan gorgonia.Value) *pubsub {
-	return &pubsub{
-		publishers:  publishers,
-		subscribers: subscribers,
+func (p *pubsub) run(ctx context.Context) context.CancelFunc {
+	ctx, cancel := context.WithCancel(ctx)
+	for i := range p.publishers {
+		go broadcast(ctx, p.publishers[i].publisher, p.publishers[i].subscribers)
 	}
+	for i := range p.subscribers {
+		go merge(ctx, p.subscribers[i].publishers, p.subscribers[i].subscriber)
+	}
+	//broadcast(ctx, merge(ctx, p.publishers...), p.subscribers)
+	return cancel
 }
 
-// run is blocking and shoud be run in a goroutine
-func (p *pubsub) run(ctx context.Context) {
-	broadcast(ctx, merge(ctx, p.publishers...), p.subscribers)
-}
-
-func merge(ctx context.Context, cs ...chan gorgonia.Value) <-chan ioValue {
+func merge(ctx context.Context, cs []chan gorgonia.Value, out chan ioValue) {
 	var wg sync.WaitGroup
-	out := make(chan ioValue)
 
 	// Start an output goroutine for each input channel in cs.  output
 	// copies values from c to out until c or done is closed, then calls
@@ -60,7 +71,6 @@ func merge(ctx context.Context, cs ...chan gorgonia.Value) <-chan ioValue {
 		wg.Wait()
 		close(out)
 	}()
-	return out
 }
 
 func fanOut(ctx context.Context, ch <-chan gorgonia.Value, size, lag int) []chan gorgonia.Value {
@@ -96,7 +106,7 @@ func fanOut(ctx context.Context, ch <-chan gorgonia.Value, size, lag int) []chan
 	}()
 	return cs
 }
-func broadcast(ctx context.Context, ch <-chan ioValue, cs []chan ioValue) {
+func broadcast(ctx context.Context, ch <-chan gorgonia.Value, cs []chan gorgonia.Value) {
 	for {
 		select {
 		case msg := <-ch:

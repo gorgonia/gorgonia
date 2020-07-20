@@ -41,6 +41,11 @@ func defaultState(_ context.Context, n *node) stateFn {
 }
 
 func receiveInput(ctx context.Context, n *node) stateFn {
+	// if inputC is nil, it is a variable or a constant, don't
+	// wait for any input
+	if n.inputC == nil {
+		return computeFwd
+	}
 	select {
 	case <-ctx.Done():
 		n.err = ctx.Err()
@@ -70,6 +75,9 @@ func computeFwd(_ context.Context, n *node) stateFn {
 }
 
 func emitOutput(ctx context.Context, n *node) stateFn {
+	if n == nil || n.outputC == nil {
+		return nil
+	}
 	select {
 	case <-ctx.Done():
 		n.err = ctx.Err()
@@ -88,4 +96,35 @@ func (n *node) Compute(ctx context.Context) error {
 		state = state(ctx, n)
 	}
 	return n.err
+}
+
+func newOp(n *gorgonia.Node, hasOutputChan bool) *node {
+	if n == nil {
+		return nil
+	}
+	var outputC chan gorgonia.Value
+	if hasOutputChan {
+		outputC = make(chan gorgonia.Value, 0)
+
+	}
+	return &node{
+		id:          n.ID(),
+		op:          n.Op(),
+		inputValues: make([]gorgonia.Value, n.Op().Arity()),
+		inputC:      make(chan ioValue, 0),
+		outputC:     outputC,
+	}
+}
+
+func newInput(n *gorgonia.Node) *node {
+	if n == nil {
+		return nil
+	}
+	inputValues := make([]gorgonia.Value, 1)
+	inputValues[0] = n.Value()
+	return &node{
+		id:          n.ID(),
+		inputValues: inputValues,
+		outputC:     make(chan gorgonia.Value, 0),
+	}
 }

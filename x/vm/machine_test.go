@@ -28,7 +28,7 @@ func TestMachine_runAllNodes(t *testing.T) {
 	}
 	type fields struct {
 		nodes   []*node
-		pubsubs []*pubsub
+		pubsubs *pubsub
 	}
 	type args struct {
 		ctx context.Context
@@ -106,13 +106,25 @@ func TestMachine_runAllNodes(t *testing.T) {
 }
 
 func TestNewMachine(t *testing.T) {
-	simpleGraph := gorgonia.NewGraph()
+	g := gorgonia.NewGraph()
 	forty := gorgonia.F32(40.0)
 	//fortyTwo := gorgonia.F32(42.0)
 	two := gorgonia.F32(2.0)
-	n1 := gorgonia.NodeFromAny(simpleGraph, forty)
-	n2 := gorgonia.NodeFromAny(simpleGraph, two)
-	added, _ := gorgonia.Add(n1, n2)
+	n1 := gorgonia.NewScalar(g, gorgonia.Float32, gorgonia.WithValue(&forty), gorgonia.WithName("n1"))
+	n2 := gorgonia.NewScalar(g, gorgonia.Float32, gorgonia.WithValue(&two), gorgonia.WithName("n2"))
+
+	added, err := gorgonia.Add(n1, n2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	i1 := newInput(n1)
+	i2 := newInput(n2)
+	op := newOp(added, true)
+	gg := gorgonia.NewGraph()
+	c1 := gorgonia.NewConstant(&forty)
+	ic1 := newInput(c1)
+	ic1.id = 0
+	gg.AddNode(c1)
 	type args struct {
 		g *gorgonia.ExprGraph
 	}
@@ -129,95 +141,76 @@ func TestNewMachine(t *testing.T) {
 		{
 			"simple graph WIP",
 			args{
-				simpleGraph,
+				g,
 			},
 			&Machine{
 				nodes: []*node{
-					{
-						id: added.ID(),
-						op: added.Op(),
-					},
+					i1, i2, op,
+				},
+			},
+		},
+		{
+			"constant (arity 0)",
+			args{
+				gg,
+			},
+			&Machine{
+				nodes: []*node{
+					ic1,
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewMachine(tt.args.g); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewMachine() = %v, want %v", got, tt.want)
+			got := NewMachine(tt.args.g)
+			if got == nil && tt.want == nil {
+				return
 			}
+			if got == nil && tt.want != nil ||
+				got != nil && tt.want == nil {
+				t.Fatalf("NewMachine() = %v, want %v", got, tt.want)
+			}
+			if tt.want.nodes == nil && got.nodes != nil ||
+				tt.want.nodes != nil && got.nodes == nil {
+				t.Fatalf("NewMachine(nodes) = %v, want %v", got, tt.want)
+			}
+			if len(got.nodes) != len(tt.want.nodes) {
+				t.Fatalf("bad number of nodes, expecting %v, got %v", len(tt.want.nodes), len(got.nodes))
+			}
+			for i := 0; i < len(got.nodes); i++ {
+				compareNodes(t, got.nodes[i], tt.want.nodes[i])
+			}
+			/*
+				if tt.want.pubsubs == nil && got.pubsubs != nil ||
+					tt.want.pubsubs != nil && got.pubsubs == nil {
+					t.Fatalf("NewMachine(pubsubs) = %v, want %v", got, tt.want)
+				}
+				if !reflect.DeepEqual(got.pubsubs, tt.want.pubsubs) {
+					t.Fatalf("bad pubsubs, expecting %v, got %v", tt.want.pubsubs, got.pubsubs)
+				}
+			*/
 		})
 	}
 }
 
-func TestMachine_runAllPubSub(t *testing.T) {
-	type fields struct {
-		nodes   []*node
-		pubsubs []*pubsub
-	}
+func Test_createHub(t *testing.T) {
 	type args struct {
-		ctx context.Context
+		ns []*node
+		g  *gorgonia.ExprGraph
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name string
+		args args
+		want []*pubsub
 	}{
-		{
-			"no subscribers",
-			fields{},
-			args{
-				context.Background(),
-			},
-		},
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &Machine{
-				nodes:   tt.fields.nodes,
-				pubsubs: tt.fields.pubsubs,
+			if got := createNetwork(tt.args.ns, tt.args.g); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("createHub() = %v, want %v", got, tt.want)
 			}
-			m.runAllPubSub(tt.args.ctx)
 		})
 	}
-	t.Run("functionnal test in goroutine", func(t *testing.T) {
-		publishers := make([]chan gorgonia.Value, 4)
-		for i := range publishers {
-			publishers[i] = make(chan gorgonia.Value, 0)
-		}
-		subscribers := make([]chan ioValue, 2)
-		for i := range subscribers {
-			subscribers[i] = make(chan ioValue, 0)
-		}
-		p := &pubsub{
-			publishers:  publishers,
-			subscribers: subscribers,
-		}
-		machine := &Machine{
-			pubsubs: []*pubsub{
-				p,
-			},
-		}
-		machine.runAllPubSub(context.Background())
-		fortyTwo := gorgonia.F32(42.0)
-		fortyThree := gorgonia.F32(43.0)
-		publishers[0] <- &fortyTwo
-		publishers[2] <- &fortyThree
-		sub0_0 := <-subscribers[0]
-		sub1_0 := <-subscribers[1]
-		sub0_1 := <-subscribers[0]
-		sub1_1 := <-subscribers[1]
-		if !reflect.DeepEqual(sub0_0, ioValue{pos: 0, v: &fortyTwo}) {
-			t.Errorf("sub0_0 - expected %v, got %v", ioValue{pos: 0, v: &fortyTwo}, sub0_0)
-		}
-		if !reflect.DeepEqual(sub1_0, ioValue{pos: 0, v: &fortyTwo}) {
-			t.Errorf("sub1_0 - expected %v, got %v", ioValue{pos: 0, v: &fortyTwo}, sub1_0)
-		}
-		if !reflect.DeepEqual(sub0_1, ioValue{pos: 2, v: &fortyThree}) {
-			t.Errorf("sub0_1 - expected %v, got %v", ioValue{pos: 2, v: &fortyThree}, sub0_1)
-		}
-		if !reflect.DeepEqual(sub1_1, ioValue{pos: 2, v: &fortyThree}) {
-			t.Errorf("sub1_1 - expected %v, got %v", ioValue{pos: 2, v: &fortyThree}, sub1_1)
-		}
-	})
 }

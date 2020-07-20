@@ -26,7 +26,9 @@ func Test_receiveInput(t *testing.T) {
 			"context cancelation",
 			args{
 				cancelCtx,
-				&node{},
+				&node{
+					inputC: make(chan ioValue, 0),
+				},
 				nil,
 			},
 			nil,
@@ -70,6 +72,17 @@ func Test_receiveInput(t *testing.T) {
 				},
 			},
 			receiveInput,
+		},
+		{
+			"no input chan go to conpute",
+			args{
+				context.Background(),
+				&node{
+					inputValues: make([]gorgonia.Value, 1),
+				},
+				nil,
+			},
+			computeFwd,
 		},
 		{
 			"all done go to compute",
@@ -214,7 +227,8 @@ func (*sumF32) Do(v ...gorgonia.Value) (gorgonia.Value, error) {
 
 func Test_emitOutput(t *testing.T) {
 	cancelCtx, cancel := context.WithCancel(context.Background())
-	outputC := make(chan gorgonia.Value, 1)
+	outputC1 := make(chan gorgonia.Value, 0)
+	outputC2 := make(chan gorgonia.Value, 1)
 	type args struct {
 		ctx context.Context
 		n   *node
@@ -225,10 +239,17 @@ func Test_emitOutput(t *testing.T) {
 		want stateFn
 	}{
 		{
+			"nil node",
+			args{nil, nil},
+			nil,
+		},
+		{
 			"context cancelation",
 			args{
 				cancelCtx,
-				&node{},
+				&node{
+					outputC: outputC1,
+				},
 			},
 			nil,
 		},
@@ -237,7 +258,7 @@ func Test_emitOutput(t *testing.T) {
 			args{
 				context.Background(),
 				&node{
-					outputC: outputC,
+					outputC: outputC2,
 				},
 			},
 			nil,
@@ -282,4 +303,172 @@ func Test_computeBackward(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_newOp(t *testing.T) {
+	g := gorgonia.NewGraph()
+	fortyTwo := gorgonia.F32(42.0)
+	n1 := gorgonia.NodeFromAny(g, fortyTwo)
+	n2 := gorgonia.NodeFromAny(g, fortyTwo)
+	addOp, err := gorgonia.Add(n1, n2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	type args struct {
+		n             *gorgonia.Node
+		hasOutputChan bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want *node
+	}{
+		{
+			"no op",
+			args{nil, false},
+			nil,
+		},
+		{
+			"add with outputChan",
+			args{addOp, true},
+			&node{
+				id:          addOp.ID(),
+				op:          addOp.Op(),
+				inputC:      make(chan ioValue, 0),
+				outputC:     make(chan gorgonia.Value, 0),
+				inputValues: make([]gorgonia.Value, 2),
+			},
+		},
+		{
+			"add without outputChan",
+			args{addOp, false},
+			&node{
+				id:          addOp.ID(),
+				op:          addOp.Op(),
+				inputC:      make(chan ioValue, 0),
+				outputC:     nil,
+				inputValues: make([]gorgonia.Value, 2),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := newOp(tt.args.n, tt.args.hasOutputChan)
+			if got == tt.want {
+				return
+			}
+			if got.id != tt.want.id {
+				t.Errorf("newOp() = \n%#v, want \n%#v", got, tt.want)
+			}
+			if !reflect.DeepEqual(got.op, tt.want.op) {
+				t.Errorf("newOp() = \n%#v, want \n%#v", got, tt.want)
+			}
+			if !reflect.DeepEqual(got.inputValues, tt.want.inputValues) {
+				t.Errorf("newOp() = \n%#v, want \n%#v", got, tt.want)
+			}
+			if got.receivedValues != tt.want.receivedValues {
+				t.Errorf("newOp() = \n%#v, want \n%#v", got, tt.want)
+			}
+			if got.err != tt.want.err {
+				t.Errorf("newOp() = \n%#v, want \n%#v", got, tt.want)
+			}
+			if (got.inputC == nil && tt.want.inputC != nil) ||
+				(got.inputC != nil && tt.want.inputC == nil) {
+				t.Errorf("newOp() = \n%#v, want \n%#v", got, tt.want)
+			}
+			if (got.outputC == nil && tt.want.outputC != nil) ||
+				(got.outputC != nil && tt.want.outputC == nil) {
+				t.Errorf("newOp() = \n%#v, want \n%#v", got, tt.want)
+			}
+			if cap(got.outputC) != cap(tt.want.outputC) {
+				t.Errorf("newOp() = \n%#v, want \n%#v", got, tt.want)
+			}
+			if len(got.outputC) != len(tt.want.outputC) {
+				t.Errorf("newOp() = \n%#v, want \n%#v", got, tt.want)
+			}
+			if cap(got.inputC) != cap(tt.want.inputC) {
+				t.Errorf("newOp() = \n%#v, want \n%#v", got, tt.want)
+			}
+			if len(got.inputC) != len(tt.want.inputC) {
+				t.Errorf("newOp() = \n%#v, want \n%#v", got, tt.want)
+			}
+
+		})
+	}
+}
+
+func Test_newInput(t *testing.T) {
+	g := gorgonia.NewGraph()
+	fortyTwo := gorgonia.F32(42.0)
+	n1 := gorgonia.NodeFromAny(g, &fortyTwo)
+	type args struct {
+		n *gorgonia.Node
+	}
+	tests := []struct {
+		name string
+		args args
+		want *node
+	}{
+		{
+			"nil",
+			args{nil},
+			nil,
+		},
+		{
+			"simple",
+			args{n1},
+			&node{
+				outputC:     make(chan gorgonia.Value, 0),
+				inputValues: []gorgonia.Value{&fortyTwo},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := newInput(tt.args.n)
+			if got == tt.want {
+				return
+			}
+			compareNodes(t, got, tt.want)
+		})
+	}
+}
+
+func compareNodes(t *testing.T, got, want *node) {
+	if got.id != want.id {
+		t.Errorf("nodes ID are different = \n%#v, want \n%#v", got.id, want.id)
+	}
+	if !reflect.DeepEqual(got.op, want.op) {
+		t.Errorf("nodes OP are different = \n%#v, want \n%#v", got.op, want.op)
+	}
+	if !reflect.DeepEqual(got.inputValues, want.inputValues) {
+		t.Errorf("nodes inputValues are different = \n%#v, want \n%#v", got.inputValues, want.inputValues)
+	}
+	if got.receivedValues != want.receivedValues {
+		t.Errorf("nodes receivedValues are different = \n%#v, want \n%#v", got.receivedValues, want.receivedValues)
+	}
+	if got.err != want.err {
+		t.Errorf("nodes errors are different = \n%#v, want \n%#v", got.err, want.err)
+	}
+	if (got.inputC == nil && want.inputC != nil) ||
+		(got.inputC != nil && want.inputC == nil) {
+		t.Errorf("newInput() = \n%#v, want \n%#v", got, want)
+	}
+	if (got.outputC == nil && want.outputC != nil) ||
+		(got.outputC != nil && want.outputC == nil) {
+		t.Errorf("newInput() = \n%#v, want \n%#v", got, want)
+	}
+	if cap(got.outputC) != cap(want.outputC) {
+		t.Errorf("newInput() = \n%#v, want \n%#v", got, want)
+	}
+	if len(got.outputC) != len(want.outputC) {
+		t.Errorf("newInput() = \n%#v, want \n%#v", got, want)
+	}
+	if cap(got.inputC) != cap(want.inputC) {
+		t.Errorf("newInput() = \n%#v, want \n%#v", got, want)
+	}
+	if len(got.inputC) != len(want.inputC) {
+		t.Errorf("newInput() = \n%#v, want \n%#v", got, want)
+	}
+
 }
