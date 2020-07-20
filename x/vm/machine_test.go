@@ -119,7 +119,7 @@ func TestNewMachine(t *testing.T) {
 	}
 	i1 := newInput(n1)
 	i2 := newInput(n2)
-	op := newOp(added, true)
+	op := newOp(added, false)
 	gg := gorgonia.NewGraph()
 	c1 := gorgonia.NewConstant(&forty)
 	ic1 := newInput(c1)
@@ -210,6 +210,123 @@ func Test_createHub(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := createNetwork(tt.args.ns, tt.args.g); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("createHub() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMachine_Close(t *testing.T) {
+	c0 := make(chan gorgonia.Value, 0)
+	c1 := make(chan gorgonia.Value, 0)
+	c2 := make(chan gorgonia.Value, 0)
+	c3 := make(chan gorgonia.Value, 0)
+	c4 := make(chan gorgonia.Value, 0)
+	c5 := make(chan gorgonia.Value, 0)
+	i0 := make(chan ioValue, 0)
+	i1 := make(chan ioValue, 0)
+	ps := &pubsub{
+		publishers: []publisher{
+			{
+				publisher:   c0,
+				subscribers: []chan gorgonia.Value{c1, c2},
+			},
+			{
+				publisher:   c3,
+				subscribers: []chan gorgonia.Value{c1, c2},
+			},
+		},
+		subscribers: []subscriber{
+			{
+				subscriber: i0,
+				publishers: []chan gorgonia.Value{c3, c2},
+			},
+			{
+				subscriber: i0,
+				publishers: []chan gorgonia.Value{c4, c5},
+			},
+			{
+				subscriber: i1,
+				publishers: []chan gorgonia.Value{c4, c5},
+			},
+		},
+	}
+	type fields struct {
+		nodes   []*node
+		pubsubs *pubsub
+	}
+	tests := []struct {
+		name   string
+		fields fields
+	}{
+		{
+			"simple",
+			fields{
+				pubsubs: ps,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &Machine{
+				nodes:   tt.fields.nodes,
+				pubsubs: tt.fields.pubsubs,
+			}
+			m.Close()
+		})
+	}
+}
+
+func Test_createNetwork(t *testing.T) {
+	g := gorgonia.NewGraph()
+	forty := gorgonia.F32(40.0)
+	//fortyTwo := gorgonia.F32(42.0)
+	two := gorgonia.F32(2.0)
+	n1 := gorgonia.NewScalar(g, gorgonia.Float32, gorgonia.WithValue(&forty), gorgonia.WithName("n1"))
+	n2 := gorgonia.NewScalar(g, gorgonia.Float32, gorgonia.WithValue(&two), gorgonia.WithName("n2"))
+
+	added, err := gorgonia.Add(n1, n2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	i1 := newInput(n1)
+	i2 := newInput(n2)
+	op := newOp(added, false)
+
+	type args struct {
+		ns []*node
+		g  *gorgonia.ExprGraph
+	}
+	tests := []struct {
+		name string
+		args args
+		want *pubsub
+	}{
+		{
+			"simple add operation",
+			args{
+				ns: []*node{i1, i2, op},
+				g:  g,
+			},
+			&pubsub{
+				publishers: []publisher{
+					{
+						id: 0,
+					},
+				},
+				subscribers: []subscriber{
+					{
+						id:         2,
+						subscriber: make(chan ioValue, 0),
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Skip()
+			if got := createNetwork(tt.args.ns, tt.args.g); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("createNetwork() = %#v, want %#v", got, tt.want)
 			}
 		})
 	}

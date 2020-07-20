@@ -30,7 +30,7 @@ func NewMachine(g *gorgonia.ExprGraph) *Machine {
 		case op.Arity() == 0:
 			nn = newInput(n)
 		default:
-			nn = newOp(n, topNode)
+			nn = newOp(n, !topNode)
 		}
 		nodes = append(nodes, nn)
 	}
@@ -98,31 +98,29 @@ func (m *Machine) Run(ctx context.Context) error {
 	return err
 }
 
-// Close all the plumbing
+// Close all the plumbing to avoid leaking
 func (m *Machine) Close() {
+	chans := make(map[chan gorgonia.Value]struct{})
+	chans2 := make(map[chan ioValue]struct{})
 	for i := range m.pubsubs.publishers {
 		pub := m.pubsubs.publishers[i]
-		if pub.publisher != nil {
-			close(pub.publisher)
-		}
+		chans[pub.publisher] = struct{}{}
 		for j := range pub.subscribers {
-			sub := pub.subscribers[j]
-			if sub != nil {
-				close(sub)
-			}
+			chans[pub.subscribers[j]] = struct{}{}
 		}
 	}
 	for i := range m.pubsubs.subscribers {
 		sub := m.pubsubs.subscribers[i]
-		if sub.subscriber != nil {
-			close(sub.subscriber)
-		}
+		chans2[sub.subscriber] = struct{}{}
 		for j := range sub.publishers {
-			pub := sub.publishers[j]
-			if pub != nil {
-				close(pub)
-			}
+			chans[sub.publishers[j]] = struct{}{}
 		}
+	}
+	for c := range chans {
+		close(c)
+	}
+	for c := range chans2 {
+		close(c)
 	}
 }
 
