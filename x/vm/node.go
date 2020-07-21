@@ -35,7 +35,7 @@ type stateFn func(context.Context, *node) stateFn
 
 func defaultState(_ context.Context, n *node) stateFn {
 	if n.op == nil {
-		return nil
+		return emitOutput
 	}
 	return receiveInput
 }
@@ -120,11 +120,9 @@ func newInput(n *gorgonia.Node) *node {
 	if n == nil {
 		return nil
 	}
-	inputValues := make([]gorgonia.Value, 1)
-	inputValues[0] = n.Value()
 	return &node{
-		id:          n.ID(),
-		inputValues: inputValues,
-		outputC:     make(chan gorgonia.Value, 0),
+		id:      n.ID(),
+		output:  n.Value(),
+		outputC: make(chan gorgonia.Value, 0),
 	}
 }

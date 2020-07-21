@@ -312,6 +312,9 @@ func Test_createNetwork(t *testing.T) {
 					{
 						id: 0,
 					},
+					{
+						id: 1,
+					},
 				},
 				subscribers: []subscriber{
 					{
@@ -324,9 +327,126 @@ func Test_createNetwork(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Skip()
-			if got := createNetwork(tt.args.ns, tt.args.g); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("createNetwork() = %#v, want %#v", got, tt.want)
+			got := createNetwork(tt.args.ns, tt.args.g)
+			if got == nil && tt.want != nil {
+				t.Fail()
+			}
+			if got != nil && tt.want == nil {
+				t.Fail()
+			}
+			if got == nil && tt.want == nil {
+				return
+			}
+			if got.publishers != nil && tt.want.publishers != nil {
+				if len(got.publishers) != len(tt.want.publishers) {
+					t.Errorf("bad number of publishers, expected %v, got %v", len(tt.want.publishers), len(got.publishers))
+				}
+			}
+			if got.subscribers != nil && tt.want.subscribers != nil {
+				if len(got.subscribers) != len(tt.want.subscribers) {
+					t.Errorf("bad number of subscribers, expected %v, got %v", len(tt.want.subscribers), len(got.subscribers))
+				}
+			}
+			for i := range tt.want.publishers {
+				want := tt.want.publishers[i]
+				got := got.publishers[i]
+				if want.id != got.id {
+					t.Errorf("bad subscriber id, expected %v, got %v", want.id, got.id)
+				}
+			}
+			for i := range tt.want.subscribers {
+				want := tt.want.subscribers[i]
+				got := got.subscribers[i]
+				if want.id != got.id {
+					t.Errorf("bad subscriber id, expected %v, got %v", want.id, got.id)
+				}
+			}
+		})
+	}
+}
+
+func ExampleMachine_Run() {
+
+}
+
+func TestMachine_Run(t *testing.T) {
+	g := gorgonia.NewGraph()
+	forty := gorgonia.F32(40.0)
+	//fortyTwo := gorgonia.F32(42.0)
+	two := gorgonia.F32(2.0)
+	n1 := gorgonia.NewScalar(g, gorgonia.Float32, gorgonia.WithValue(&forty), gorgonia.WithName("n1"))
+	n2 := gorgonia.NewScalar(g, gorgonia.Float32, gorgonia.WithValue(&two), gorgonia.WithName("n2"))
+
+	added, err := gorgonia.Add(n1, n2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	i1 := newInput(n1)
+	i2 := newInput(n2)
+	op := newOp(added, false)
+	c1 := make(chan gorgonia.Value, 0)
+	c2 := make(chan gorgonia.Value, 0)
+	type fields struct {
+		nodes   []*node
+		pubsubs *pubsub
+	}
+	type args struct {
+		ctx context.Context
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			"simple",
+			fields{
+				nodes: []*node{i1, i2, op},
+				pubsubs: &pubsub{
+					publishers: []publisher{
+						{
+							id:        i1.id,
+							publisher: i1.outputC,
+							subscribers: []chan gorgonia.Value{
+								c1,
+							},
+						},
+						{
+							id:        i2.id,
+							publisher: i2.outputC,
+							subscribers: []chan gorgonia.Value{
+								c2,
+							},
+						},
+					},
+					subscribers: []subscriber{
+						{
+							id: op.id,
+							publishers: []chan gorgonia.Value{
+								c1, c2,
+							},
+							subscriber: op.inputC,
+						},
+					},
+				},
+			},
+			args{
+				context.Background(),
+			},
+			false,
+		},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &Machine{
+				nodes:   tt.fields.nodes,
+				pubsubs: tt.fields.pubsubs,
+			}
+			err := m.Run(tt.args.ctx)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Machine.Run() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

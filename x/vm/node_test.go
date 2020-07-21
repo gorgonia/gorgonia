@@ -418,8 +418,8 @@ func Test_newInput(t *testing.T) {
 			"simple",
 			args{n1},
 			&node{
-				outputC:     make(chan gorgonia.Value, 0),
-				inputValues: []gorgonia.Value{&fortyTwo},
+				outputC: make(chan gorgonia.Value, 0),
+				output:  &fortyTwo,
 			},
 		},
 	}
