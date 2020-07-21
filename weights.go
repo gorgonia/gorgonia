@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"math"
+	"reflect"
 	"time"
 
 	rng "github.com/leesper/go_rng"
@@ -30,8 +31,7 @@ func Zeroes() InitWFn {
 		case tensor.Int:
 			return make([]int, size)
 		default:
-			err := errors.Errorf(nyiTypeFail, "Zeroes", dt)
-			panic(err)
+			return reflect.MakeSlice(reflect.SliceOf(dt.Type), size, size).Interface()
 		}
 	}
 	return f
