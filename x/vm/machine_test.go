@@ -381,8 +381,9 @@ func ExampleMachine_Run() {
 		log.Fatal(err)
 	}
 	machine := NewMachine(g)
-	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
 	defer cancel()
+	defer machine.Close()
 	err = machine.Run(ctx)
 	if err != nil {
 		log.Fatal(err)
@@ -489,6 +490,21 @@ func TestMachine_GetResult(t *testing.T) {
 		args   args
 		want   gorgonia.Value
 	}{
+		{
+			"nil",
+			fields{
+				nodes: []*node{
+					{
+						id:     1,
+						output: &fortyTwo,
+					},
+				},
+			},
+			args{
+				2,
+			},
+			nil,
+		},
 		{
 			"simple",
 			fields{

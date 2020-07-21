@@ -64,8 +64,8 @@ func createNetwork(ns []*node, g *gorgonia.ExprGraph) *pubsub {
 			publisher:   currNode.outputC,
 			subscribers: make([]chan gorgonia.Value, to.Len()),
 		}
-		for to.Next() {
-			publisher.subscribers = append(publisher.subscribers, ids[to.Node().ID()].outputC)
+		for i := 0; to.Next(); i++ {
+			publisher.subscribers[i] = make(chan gorgonia.Value, 0)
 		}
 		publishers[currNode.id] = publisher
 		ps.publishers = append(ps.publishers, publisher)
@@ -82,8 +82,10 @@ func createNetwork(ns []*node, g *gorgonia.ExprGraph) *pubsub {
 			subscriber: currNode.inputC,
 			publishers: make([]chan gorgonia.Value, from.Len()),
 		}
-		for from.Next() {
-			subscriber.publishers = append(subscriber.publishers, publishers[from.Node().ID()].publisher)
+		for i := 0; from.Next(); i++ {
+			pub := publishers[from.Node().ID()]
+			subscriber.publishers[i] = pub.subscribers[pub.subscribed]
+			pub.subscribed++
 		}
 		ps.subscribers = append(ps.subscribers, subscriber)
 	}
@@ -101,25 +103,13 @@ func (m *Machine) Run(ctx context.Context) error {
 // Close all the plumbing to avoid leaking
 func (m *Machine) Close() {
 	chans := make(map[chan gorgonia.Value]struct{})
-	chans2 := make(map[chan ioValue]struct{})
 	for i := range m.pubsubs.publishers {
 		pub := m.pubsubs.publishers[i]
-		chans[pub.publisher] = struct{}{}
 		for j := range pub.subscribers {
 			chans[pub.subscribers[j]] = struct{}{}
 		}
 	}
-	for i := range m.pubsubs.subscribers {
-		sub := m.pubsubs.subscribers[i]
-		chans2[sub.subscriber] = struct{}{}
-		for j := range sub.publishers {
-			chans[sub.publishers[j]] = struct{}{}
-		}
-	}
 	for c := range chans {
-		close(c)
-	}
-	for c := range chans2 {
 		close(c)
 	}
 }

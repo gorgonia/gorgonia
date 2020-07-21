@@ -9,6 +9,7 @@ import (
 
 type publisher struct {
 	id          int64
+	subscribed  int
 	publisher   chan gorgonia.Value
 	subscribers []chan gorgonia.Value
 }
