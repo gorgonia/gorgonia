@@ -130,6 +130,10 @@ func (m *Machine) runAllNodes(ctx context.Context) error {
 			break
 		}
 	}
+	// drain the error channel
+	for ; total > 0; total-- {
+		<-errC
+	}
 	cancel()
 	close(errC)
 	return err
