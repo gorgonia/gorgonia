@@ -146,3 +146,13 @@ func (m *Machine) runAllNodes(ctx context.Context) error {
 	close(errC)
 	return err
 }
+
+// GetResult stored in a node
+func (m *Machine) GetResult(id int64) gorgonia.Value {
+	for i := range m.nodes {
+		if m.nodes[i].id == id {
+			return m.nodes[i].output
+		}
+	}
+	return nil
+}

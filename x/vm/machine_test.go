@@ -2,8 +2,11 @@ package xvm
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"reflect"
 	"testing"
+	"time"
 
 	"gorgonia.org/gorgonia"
 )
@@ -366,7 +369,26 @@ func Test_createNetwork(t *testing.T) {
 }
 
 func ExampleMachine_Run() {
+	g := gorgonia.NewGraph()
+	forty := gorgonia.F32(40.0)
+	//fortyTwo := gorgonia.F32(42.0)
+	two := gorgonia.F32(2.0)
+	n1 := gorgonia.NewScalar(g, gorgonia.Float32, gorgonia.WithValue(&forty), gorgonia.WithName("n1"))
+	n2 := gorgonia.NewScalar(g, gorgonia.Float32, gorgonia.WithValue(&two), gorgonia.WithName("n2"))
 
+	added, err := gorgonia.Add(n1, n2)
+	if err != nil {
+		log.Fatal(err)
+	}
+	machine := NewMachine(g)
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+	err = machine.Run(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(machine.GetResult(added.ID()))
+	// output: 42
 }
 
 func TestMachine_Run(t *testing.T) {
@@ -447,6 +469,50 @@ func TestMachine_Run(t *testing.T) {
 			err := m.Run(tt.args.ctx)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Machine.Run() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestMachine_GetResult(t *testing.T) {
+	fortyTwo := gorgonia.F32(42.0)
+	type fields struct {
+		nodes   []*node
+		pubsubs *pubsub
+	}
+	type args struct {
+		id int64
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   gorgonia.Value
+	}{
+		{
+			"simple",
+			fields{
+				nodes: []*node{
+					{
+						id:     1,
+						output: &fortyTwo,
+					},
+				},
+			},
+			args{
+				1,
+			},
+			&fortyTwo,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &Machine{
+				nodes:   tt.fields.nodes,
+				pubsubs: tt.fields.pubsubs,
+			}
+			if got := m.GetResult(tt.args.id); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Machine.GetResult() = %v, want %v", got, tt.want)
 			}
 		})
 	}
