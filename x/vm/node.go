@@ -92,6 +92,8 @@ func computeBackward(_ context.Context, _ *node) stateFn {
 }
 
 func (n *node) Compute(ctx context.Context) error {
+	n.receivedValues = 0
+	n.err = nil
 	for state := defaultState; state != nil; {
 		state = state(ctx, n)
 	}
