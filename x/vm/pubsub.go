@@ -9,7 +9,6 @@ import (
 
 type publisher struct {
 	id          int64
-	subscribed  int
 	publisher   chan gorgonia.Value
 	subscribers []chan gorgonia.Value
 }
@@ -21,8 +20,8 @@ type subscriber struct {
 }
 
 type pubsub struct {
-	publishers  []publisher
-	subscribers []subscriber
+	publishers  []*publisher
+	subscribers []*subscriber
 }
 
 func (p *pubsub) run(ctx context.Context) context.CancelFunc {

@@ -172,8 +172,8 @@ func Test_pubsub_run(t *testing.T) {
 	m1 := make(chan gorgonia.Value, 0)
 	o0 := make(chan ioValue, 0)
 	type fields struct {
-		publishers  []publisher
-		subscribers []subscriber
+		publishers  []*publisher
+		subscribers []*subscriber
 	}
 	type args struct {
 		ctx context.Context
@@ -186,7 +186,7 @@ func Test_pubsub_run(t *testing.T) {
 		{
 			"i0 -> m0 ; i0 -> m1; m0 -> o0; m1 -> o0",
 			fields{
-				publishers: []publisher{
+				publishers: []*publisher{
 					{
 						publisher: i0,
 						subscribers: []chan gorgonia.Value{
@@ -194,7 +194,7 @@ func Test_pubsub_run(t *testing.T) {
 						},
 					},
 				},
-				subscribers: []subscriber{
+				subscribers: []*subscriber{
 					{
 						publishers: []chan gorgonia.Value{
 							m0, m1,

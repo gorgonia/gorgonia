@@ -48,24 +48,20 @@ func createNetwork(ns []*node, g *gorgonia.ExprGraph) *pubsub {
 		ids[ns[i].id] = ns[i]
 	}
 	ps := &pubsub{
-		publishers:  make([]publisher, 0),
-		subscribers: make([]subscriber, 0),
+		publishers:  make([]*publisher, 0),
+		subscribers: make([]*subscriber, 0),
 	}
 	// Deal with publishers
-	publishers := make(map[int64]publisher, len(ns))
+	publishers := make(map[int64]*publisher, len(ns))
 	for i := range ns {
 		currNode := ns[i]
 		if currNode.outputC == nil {
 			continue
 		}
-		to := g.To(currNode.id)
-		publisher := publisher{
+		publisher := &publisher{
 			id:          currNode.id,
 			publisher:   currNode.outputC,
-			subscribers: make([]chan gorgonia.Value, to.Len()),
-		}
-		for i := 0; to.Next(); i++ {
-			publisher.subscribers[i] = make(chan gorgonia.Value, 0)
+			subscribers: make([]chan gorgonia.Value, 0),
 		}
 		publishers[currNode.id] = publisher
 		ps.publishers = append(ps.publishers, publisher)
@@ -77,15 +73,17 @@ func createNetwork(ns []*node, g *gorgonia.ExprGraph) *pubsub {
 			continue
 		}
 		from := g.From(currNode.id)
-		subscriber := subscriber{
+		subscriber := &subscriber{
 			id:         currNode.id,
 			subscriber: currNode.inputC,
 			publishers: make([]chan gorgonia.Value, from.Len()),
 		}
 		for i := 0; from.Next(); i++ {
 			pub := publishers[from.Node().ID()]
-			subscriber.publishers[i] = pub.subscribers[pub.subscribed]
-			pub.subscribed++
+			c := make(chan gorgonia.Value, 0)
+			pub.subscribers = append(pub.subscribers, c)
+
+			subscriber.publishers[i] = c
 		}
 		ps.subscribers = append(ps.subscribers, subscriber)
 	}

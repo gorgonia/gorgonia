@@ -228,7 +228,7 @@ func TestMachine_Close(t *testing.T) {
 	i0 := make(chan ioValue, 0)
 	i1 := make(chan ioValue, 0)
 	ps := &pubsub{
-		publishers: []publisher{
+		publishers: []*publisher{
 			{
 				publisher:   c0,
 				subscribers: []chan gorgonia.Value{c1, c2},
@@ -238,7 +238,7 @@ func TestMachine_Close(t *testing.T) {
 				subscribers: []chan gorgonia.Value{c1, c2},
 			},
 		},
-		subscribers: []subscriber{
+		subscribers: []*subscriber{
 			{
 				subscriber: i0,
 				publishers: []chan gorgonia.Value{c3, c2},
@@ -311,7 +311,7 @@ func Test_createNetwork(t *testing.T) {
 				g:  g,
 			},
 			&pubsub{
-				publishers: []publisher{
+				publishers: []*publisher{
 					{
 						id: 0,
 					},
@@ -319,7 +319,7 @@ func Test_createNetwork(t *testing.T) {
 						id: 1,
 					},
 				},
-				subscribers: []subscriber{
+				subscribers: []*subscriber{
 					{
 						id:         2,
 						subscriber: make(chan ioValue, 0),
@@ -427,7 +427,7 @@ func TestMachine_Run(t *testing.T) {
 			fields{
 				nodes: []*node{i1, i2, op},
 				pubsubs: &pubsub{
-					publishers: []publisher{
+					publishers: []*publisher{
 						{
 							id:        i1.id,
 							publisher: i1.outputC,
@@ -443,7 +443,7 @@ func TestMachine_Run(t *testing.T) {
 							},
 						},
 					},
-					subscribers: []subscriber{
+					subscribers: []*subscriber{
 						{
 							id: op.id,
 							publishers: []chan gorgonia.Value{
