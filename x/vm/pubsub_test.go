@@ -18,7 +18,7 @@ func Test_merge(t *testing.T) {
 		output := make(chan ioValue, 0)
 		merge(ctx, c, output)
 		cancel()
-		<-output
+		//<-output
 	})
 	t.Run("context cancel with one value", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())

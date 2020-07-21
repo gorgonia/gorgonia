@@ -32,7 +32,6 @@ func (p *pubsub) run(ctx context.Context) context.CancelFunc {
 	for i := range p.subscribers {
 		go merge(ctx, p.subscribers[i].publishers, p.subscribers[i].subscriber)
 	}
-	//broadcast(ctx, merge(ctx, p.publishers...), p.subscribers)
 	return cancel
 }
 
@@ -69,7 +68,7 @@ func merge(ctx context.Context, cs []chan gorgonia.Value, out chan ioValue) {
 	// done.  This must start after the wg.Add call.
 	go func() {
 		wg.Wait()
-		close(out)
+		//close(out)
 	}()
 }
 
