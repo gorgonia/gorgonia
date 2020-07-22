@@ -40,13 +40,11 @@ func (p *pubsub) run(ctx context.Context) (context.CancelFunc, *sync.WaitGroup) 
 
 func merge(ctx context.Context, globalWG *sync.WaitGroup, out chan<- ioValue, cs ...<-chan gorgonia.Value) {
 	defer globalWG.Done()
-	var wg sync.WaitGroup
 
 	// Start an output goroutine for each input channel in cs.  output
 	// copies values from c to out until c or done is closed, then calls
-	// wg.Done.
 	output := func(ctx context.Context, c <-chan gorgonia.Value, pos int) {
-		defer wg.Done()
+		defer globalWG.Done()
 		for {
 			select {
 			case n := <-c:
@@ -63,17 +61,10 @@ func merge(ctx context.Context, globalWG *sync.WaitGroup, out chan<- ioValue, cs
 			}
 		}
 	}
-	wg.Add(len(cs))
 	for i, c := range cs {
+		globalWG.Add(1)
 		go output(ctx, c, i)
 	}
-
-	// Start a goroutine to close out once all the output goroutines are
-	// done.  This must start after the wg.Add call.
-	go func() {
-		wg.Wait()
-		//close(out)
-	}()
 }
 
 func broadcast(ctx context.Context, globalWG *sync.WaitGroup, ch <-chan gorgonia.Value, cs ...chan<- gorgonia.Value) {
