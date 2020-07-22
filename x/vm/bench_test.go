@@ -33,13 +33,15 @@ func BenchmarkMachine_Run(b *testing.B) {
 	// logger := log.New(os.Stderr, "", 0)
 	// vm := NewTapeMachine(g, WithLogger(logger), WithWatchlist(), WithValueFmt("%#v"))
 
+	vm := NewMachine(g)
 	for i := 0; i < b.N; i++ {
-		vm := NewMachine(g)
-		if err := vm.Run(context.Background()); err != nil {
+		//ctx, cancel := context.WithTimeout(context.Background(), 900*time.Millisecond)
+		ctx := context.Background()
+		if err := vm.Run(ctx); err != nil {
 			b.Fatal(err)
 		}
-		vm.Close()
 	}
+	vm.Close()
 }
 func BenchmarkMachine_RunTapeMachine(b *testing.B) {
 	g := gorgonia.NewGraph()
@@ -66,11 +68,12 @@ func BenchmarkMachine_RunTapeMachine(b *testing.B) {
 	// logger := log.New(os.Stderr, "", 0)
 	// vm := NewTapeMachine(g, WithLogger(logger), WithWatchlist(), WithValueFmt("%#v"))
 
+	vm := gorgonia.NewTapeMachine(g)
 	for i := 0; i < b.N; i++ {
-		vm := gorgonia.NewTapeMachine(g)
 		if err := vm.RunAll(); err != nil {
 			b.Fatal(err)
 		}
-		vm.Close()
+		vm.Reset()
 	}
+	vm.Close()
 }

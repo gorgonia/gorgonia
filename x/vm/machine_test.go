@@ -231,25 +231,25 @@ func TestMachine_Close(t *testing.T) {
 		publishers: []*publisher{
 			{
 				publisher:   c0,
-				subscribers: []chan gorgonia.Value{c1, c2},
+				subscribers: []chan<- gorgonia.Value{c1, c2},
 			},
 			{
 				publisher:   c3,
-				subscribers: []chan gorgonia.Value{c1, c2},
+				subscribers: []chan<- gorgonia.Value{c1, c2},
 			},
 		},
 		subscribers: []*subscriber{
 			{
 				subscriber: i0,
-				publishers: []chan gorgonia.Value{c3, c2},
+				publishers: []<-chan gorgonia.Value{c3, c2},
 			},
 			{
 				subscriber: i0,
-				publishers: []chan gorgonia.Value{c4, c5},
+				publishers: []<-chan gorgonia.Value{c4, c5},
 			},
 			{
 				subscriber: i1,
-				publishers: []chan gorgonia.Value{c4, c5},
+				publishers: []<-chan gorgonia.Value{c4, c5},
 			},
 		},
 	}
@@ -431,14 +431,14 @@ func TestMachine_Run(t *testing.T) {
 						{
 							id:        i1.id,
 							publisher: i1.outputC,
-							subscribers: []chan gorgonia.Value{
+							subscribers: []chan<- gorgonia.Value{
 								c1,
 							},
 						},
 						{
 							id:        i2.id,
 							publisher: i2.outputC,
-							subscribers: []chan gorgonia.Value{
+							subscribers: []chan<- gorgonia.Value{
 								c2,
 							},
 						},
@@ -446,7 +446,7 @@ func TestMachine_Run(t *testing.T) {
 					subscribers: []*subscriber{
 						{
 							id: op.id,
-							publishers: []chan gorgonia.Value{
+							publishers: []<-chan gorgonia.Value{
 								c1, c2,
 							},
 							subscriber: op.inputC,

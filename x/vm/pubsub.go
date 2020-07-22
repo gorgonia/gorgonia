@@ -9,14 +9,14 @@ import (
 
 type publisher struct {
 	id          int64
-	publisher   chan gorgonia.Value
-	subscribers []chan gorgonia.Value
+	publisher   <-chan gorgonia.Value
+	subscribers []chan<- gorgonia.Value
 }
 
 type subscriber struct {
 	id         int64
-	publishers []chan gorgonia.Value
-	subscriber chan ioValue
+	publishers []<-chan gorgonia.Value
+	subscriber chan<- ioValue
 }
 
 type pubsub struct {
@@ -24,18 +24,22 @@ type pubsub struct {
 	subscribers []*subscriber
 }
 
-func (p *pubsub) run(ctx context.Context) context.CancelFunc {
+func (p *pubsub) run(ctx context.Context) (context.CancelFunc, *sync.WaitGroup) {
+	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(ctx)
 	for i := range p.publishers {
-		go broadcast(ctx, p.publishers[i].publisher, p.publishers[i].subscribers)
+		wg.Add(1)
+		go broadcast(ctx, &wg, p.publishers[i].publisher, p.publishers[i].subscribers...)
 	}
 	for i := range p.subscribers {
-		go merge(ctx, p.subscribers[i].publishers, p.subscribers[i].subscriber)
+		wg.Add(1)
+		go merge(ctx, &wg, p.subscribers[i].subscriber, p.subscribers[i].publishers...)
 	}
-	return cancel
+	return cancel, &wg
 }
 
-func merge(ctx context.Context, cs []chan gorgonia.Value, out chan ioValue) {
+func merge(ctx context.Context, globalWG *sync.WaitGroup, out chan<- ioValue, cs ...<-chan gorgonia.Value) {
+	defer globalWG.Done()
 	var wg sync.WaitGroup
 
 	// Start an output goroutine for each input channel in cs.  output
@@ -72,7 +76,8 @@ func merge(ctx context.Context, cs []chan gorgonia.Value, out chan ioValue) {
 	}()
 }
 
-func broadcast(ctx context.Context, ch <-chan gorgonia.Value, cs []chan gorgonia.Value) {
+func broadcast(ctx context.Context, globalWG *sync.WaitGroup, ch <-chan gorgonia.Value, cs ...chan<- gorgonia.Value) {
+	defer globalWG.Done()
 	for {
 		select {
 		case msg := <-ch:

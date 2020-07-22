@@ -61,7 +61,7 @@ func createNetwork(ns []*node, g *gorgonia.ExprGraph) *pubsub {
 		publisher := &publisher{
 			id:          currNode.id,
 			publisher:   currNode.outputC,
-			subscribers: make([]chan gorgonia.Value, 0),
+			subscribers: make([]chan<- gorgonia.Value, 0),
 		}
 		publishers[currNode.id] = publisher
 		ps.publishers = append(ps.publishers, publisher)
@@ -76,7 +76,7 @@ func createNetwork(ns []*node, g *gorgonia.ExprGraph) *pubsub {
 		subscriber := &subscriber{
 			id:         currNode.id,
 			subscriber: currNode.inputC,
-			publishers: make([]chan gorgonia.Value, from.Len()),
+			publishers: make([]<-chan gorgonia.Value, from.Len()),
 		}
 		for i := 0; from.Next(); i++ {
 			pub := publishers[from.Node().ID()]
@@ -92,23 +92,47 @@ func createNetwork(ns []*node, g *gorgonia.ExprGraph) *pubsub {
 
 // Run the computation
 func (m *Machine) Run(ctx context.Context) error {
-	cancel := m.pubsub.run(ctx)
+	cancel, wg := m.pubsub.run(ctx)
 	err := m.runAllNodes(ctx)
 	cancel()
+	// wait for the infrastructure to settle
+	wg.Wait()
+	// Drain...
+	for _, sub := range m.pubsub.subscribers {
+		for _, pub := range sub.publishers {
+			select {
+			case <-pub:
+			default:
+			}
+		}
+	}
+	for _, n := range m.nodes {
+		select {
+		case <-n.inputC:
+		default:
+		}
+	}
 	return err
 }
 
 // Close all the plumbing to avoid leaking
 func (m *Machine) Close() {
-	chans := make(map[chan gorgonia.Value]struct{})
-	for i := range m.pubsub.publishers {
-		pub := m.pubsub.publishers[i]
-		for j := range pub.subscribers {
-			chans[pub.subscribers[j]] = struct{}{}
+	allChans := make(map[chan<- gorgonia.Value]struct{}, 0)
+	for _, pub := range m.pubsub.publishers {
+		for i := range pub.subscribers {
+			allChans[pub.subscribers[i]] = struct{}{}
 		}
 	}
-	for c := range chans {
-		close(c)
+	for ch := range allChans {
+		close(ch)
+	}
+	for _, n := range m.nodes {
+		if n.inputC != nil {
+			close(n.inputC)
+		}
+		if n.outputC != nil {
+			close(n.outputC)
+		}
 	}
 }
 
