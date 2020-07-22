@@ -60,8 +60,8 @@ func TestMachine_runAllNodes(t *testing.T) {
 		two := gorgonia.F32(2.0)
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Machine{
-				nodes:   tt.fields.nodes,
-				pubsubs: tt.fields.pubsubs,
+				nodes:  tt.fields.nodes,
+				pubsub: tt.fields.pubsubs,
 			}
 			go func() {
 				inputC1 <- struct {
@@ -271,8 +271,8 @@ func TestMachine_Close(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Machine{
-				nodes:   tt.fields.nodes,
-				pubsubs: tt.fields.pubsubs,
+				nodes:  tt.fields.nodes,
+				pubsub: tt.fields.pubsubs,
 			}
 			m.Close()
 		})
@@ -464,8 +464,8 @@ func TestMachine_Run(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Machine{
-				nodes:   tt.fields.nodes,
-				pubsubs: tt.fields.pubsubs,
+				nodes:  tt.fields.nodes,
+				pubsub: tt.fields.pubsubs,
 			}
 			err := m.Run(tt.args.ctx)
 			if (err != nil) != tt.wantErr {
@@ -524,8 +524,8 @@ func TestMachine_GetResult(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Machine{
-				nodes:   tt.fields.nodes,
-				pubsubs: tt.fields.pubsubs,
+				nodes:  tt.fields.nodes,
+				pubsub: tt.fields.pubsubs,
 			}
 			if got := m.GetResult(tt.args.id); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Machine.GetResult() = %v, want %v", got, tt.want)

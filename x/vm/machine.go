@@ -8,8 +8,8 @@ import (
 
 // Machine is a top-level struture that will coordinate the execution of a graph
 type Machine struct {
-	nodes   []*node
-	pubsubs *pubsub
+	nodes  []*node
+	pubsub *pubsub
 }
 
 // NewMachine creates an exeuction machine from an exprgraph
@@ -37,7 +37,7 @@ func NewMachine(g *gorgonia.ExprGraph) *Machine {
 	m := &Machine{
 		nodes: nodes,
 	}
-	m.pubsubs = createNetwork(nodes, g)
+	m.pubsub = createNetwork(nodes, g)
 	return m
 }
 
@@ -92,7 +92,7 @@ func createNetwork(ns []*node, g *gorgonia.ExprGraph) *pubsub {
 
 // Run the computation
 func (m *Machine) Run(ctx context.Context) error {
-	cancel := m.pubsubs.run(ctx)
+	cancel := m.pubsub.run(ctx)
 	err := m.runAllNodes(ctx)
 	cancel()
 	return err
@@ -101,8 +101,8 @@ func (m *Machine) Run(ctx context.Context) error {
 // Close all the plumbing to avoid leaking
 func (m *Machine) Close() {
 	chans := make(map[chan gorgonia.Value]struct{})
-	for i := range m.pubsubs.publishers {
-		pub := m.pubsubs.publishers[i]
+	for i := range m.pubsub.publishers {
+		pub := m.pubsub.publishers[i]
 		for j := range pub.subscribers {
 			chans[pub.subscribers[j]] = struct{}{}
 		}
