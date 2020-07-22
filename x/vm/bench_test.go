@@ -34,9 +34,9 @@ func BenchmarkMachine_Run(b *testing.B) {
 	// vm := NewTapeMachine(g, WithLogger(logger), WithWatchlist(), WithValueFmt("%#v"))
 
 	vm := NewMachine(g)
+	ctx := context.Background()
 	for i := 0; i < b.N; i++ {
 		//ctx, cancel := context.WithTimeout(context.Background(), 900*time.Millisecond)
-		ctx := context.Background()
 		if err := vm.Run(ctx); err != nil {
 			b.Fatal(err)
 		}
