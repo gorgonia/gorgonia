@@ -78,45 +78,6 @@ func Test_merge(t *testing.T) {
 	})
 }
 
-func Test_fanOut(t *testing.T) {
-	t.Run("context cancel without value", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		c := make(chan gorgonia.Value, 0)
-		cs := fanOut(ctx, c, 1, 0)
-		cancel()
-		<-cs[0]
-	})
-	t.Run("context cancel with one value", func(t *testing.T) {
-		fortyTwo := gorgonia.F32(42.0)
-		ctx, cancel := context.WithCancel(context.Background())
-		c := make(chan gorgonia.Value, 0)
-		cs := fanOut(ctx, c, 1, 0)
-		c <- &fortyTwo
-		out := <-cs[0]
-		if !reflect.DeepEqual(fortyTwo.Data(), out.Data()) {
-			t.Errorf("Expected %v, got %v", fortyTwo, out)
-		}
-		c <- &fortyTwo
-		cancel()
-	})
-	t.Run("two chans", func(t *testing.T) {
-		fortyTwo := gorgonia.F32(42.0)
-		ctx := context.Background()
-		c := make(chan gorgonia.Value, 0)
-		cs := fanOut(ctx, c, 2, 0)
-		c <- &fortyTwo
-		out := <-cs[0]
-		if !reflect.DeepEqual(fortyTwo.Data(), out.Data()) {
-			t.Errorf("Expected %v, got %v", fortyTwo, out)
-		}
-		out = <-cs[1]
-		if !reflect.DeepEqual(fortyTwo.Data(), out.Data()) {
-			t.Errorf("Expected %v, got %v", fortyTwo, out)
-		}
-	})
-
-}
-
 func Test_broadcast(t *testing.T) {
 	t.Run("context cancel without value", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())

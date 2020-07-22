@@ -72,39 +72,6 @@ func merge(ctx context.Context, cs []chan gorgonia.Value, out chan ioValue) {
 	}()
 }
 
-func fanOut(ctx context.Context, ch <-chan gorgonia.Value, size, lag int) []chan gorgonia.Value {
-	cs := make([]chan gorgonia.Value, size)
-	for i := range cs {
-		// The size of the channels buffer controls how far behind the receivers
-		// of the fanOut channels can lag the other channels.
-		cs[i] = make(chan gorgonia.Value, lag)
-	}
-	go func() {
-		for {
-			select {
-			case msg := <-ch:
-				for _, c := range cs {
-					select {
-					case c <- msg:
-					case <-ctx.Done():
-						for _, c := range cs {
-							// close all our fanOut channels when the input channel is exhausted.
-							close(c)
-						}
-						return
-					}
-				}
-			case <-ctx.Done():
-				for _, c := range cs {
-					// close all our fanOut channels when the input channel is exhausted.
-					close(c)
-				}
-				return
-			}
-		}
-	}()
-	return cs
-}
 func broadcast(ctx context.Context, ch <-chan gorgonia.Value, cs []chan gorgonia.Value) {
 	for {
 		select {
