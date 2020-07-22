@@ -97,21 +97,6 @@ func (m *Machine) Run(ctx context.Context) error {
 	cancel()
 	// wait for the infrastructure to settle
 	wg.Wait()
-	// Drain...
-	for _, sub := range m.pubsub.subscribers {
-		for _, pub := range sub.publishers {
-			select {
-			case <-pub:
-			default:
-			}
-		}
-	}
-	for _, n := range m.nodes {
-		select {
-		case <-n.inputC:
-		default:
-		}
-	}
 	return err
 }
 
@@ -143,8 +128,7 @@ func (m *Machine) runAllNodes(ctx context.Context) error {
 	total := len(m.nodes)
 	for i := range m.nodes {
 		go func(n *node) {
-			err := n.Compute(ctx)
-			errC <- err
+			errC <- n.Compute(ctx)
 		}(m.nodes[i])
 	}
 	var err error
