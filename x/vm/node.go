@@ -34,6 +34,8 @@ type ioValue struct {
 type stateFn func(context.Context, *node) stateFn
 
 func defaultState(_ context.Context, n *node) stateFn {
+	n.receivedValues = 0
+	n.err = nil
 	if n.op == nil {
 		return emitOutput
 	}
@@ -92,8 +94,6 @@ func computeBackward(_ context.Context, _ *node) stateFn {
 }
 
 func (n *node) Compute(ctx context.Context) error {
-	n.receivedValues = 0
-	n.err = nil
 	for state := defaultState; state != nil; {
 		state = state(ctx, n)
 	}
