@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"gorgonia.org/gorgonia"
 )
 
@@ -10,4 +12,16 @@ type YOLOv3 struct {
 	classesNum, boxesPerCell, netSize int
 	out                               []*gorgonia.Node
 	layersInfo                        []string
+}
+
+// Print Print architecture of network
+func (net *YOLOv3) Print() {
+	for i := range net.layersInfo {
+		fmt.Println(net.layersInfo[i])
+	}
+}
+
+// GetOutput Get out YOLO layers (can be multiple of them)
+func (net *YOLOv3) GetOutput() []*gorgonia.Node {
+	return net.out
 }
