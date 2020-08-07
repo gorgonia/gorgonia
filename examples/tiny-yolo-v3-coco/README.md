@@ -7,6 +7,7 @@
 - [Run example](#run-example)
 - [Benchmark](#benchmark)
 
+## About
 This is an example of Tiny YOLO v3 neural network.
 
 **Note: do not try to use common yolov3, because shortcut layer is not implemented here**
