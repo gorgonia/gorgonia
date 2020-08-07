@@ -66,7 +66,49 @@ go run .
 
 What you can expect to see:
 ```shell
-@todo
+Loading network...
+Convolution layer: Filters->16 Padding->1 Kernel->3x3 Stride->1 Activation->leaky Batch->1 Bias->false
+Maxpooling layer: Size->2 Stride->2
+Convolution layer: Filters->32 Padding->1 Kernel->3x3 Stride->1 Activation->leaky Batch->1 Bias->false
+Maxpooling layer: Size->2 Stride->2
+Convolution layer: Filters->64 Padding->1 Kernel->3x3 Stride->1 Activation->leaky Batch->1 Bias->false
+Maxpooling layer: Size->2 Stride->2
+Convolution layer: Filters->128 Padding->1 Kernel->3x3 Stride->1 Activation->leaky Batch->1 Bias->false
+Maxpooling layer: Size->2 Stride->2
+Convolution layer: Filters->256 Padding->1 Kernel->3x3 Stride->1 Activation->leaky Batch->1 Bias->false
+Maxpooling layer: Size->2 Stride->2
+Convolution layer: Filters->512 Padding->1 Kernel->3x3 Stride->1 Activation->leaky Batch->1 Bias->false
+Maxpooling layer: Size->2 Stride->1
+Convolution layer: Filters->1024 Padding->1 Kernel->3x3 Stride->1 Activation->leaky Batch->1 Bias->false
+Convolution layer: Filters->256 Padding->0 Kernel->1x1 Stride->1 Activation->leaky Batch->1 Bias->false
+Convolution layer: Filters->512 Padding->1 Kernel->3x3 Stride->1 Activation->leaky Batch->1 Bias->false
+Convolution layer: Filters->255 Padding->0 Kernel->1x1 Stride->1 Activation->linear Batch->0 Bias->true
+YOLO layer: Mask->3 Anchors->[81, 82]   |       Mask->4 Anchors->[135, 169]     |       Mask->5 Anchors->[344, 319]
+Route layer: Start->13
+Convolution layer: Filters->128 Padding->0 Kernel->1x1 Stride->1 Activation->leaky Batch->1 Bias->false
+Upsample layer: Scale->2
+Route layer: Start->19 End->8
+Convolution layer: Filters->256 Padding->1 Kernel->3x3 Stride->1 Activation->leaky Batch->1 Bias->false
+Convolution layer: Filters->255 Padding->0 Kernel->1x1 Stride->1 Activation->linear Batch->0 Bias->true
+YOLO layer: Mask->0 Anchors->[10, 14]   |       Mask->1 Anchors->[23, 27]       |       Mask->2 Anchors->[37, 58]
+Feedforwarded in: 521.408584ms
+Postprocessed in: 908.879µs
+Detections:
+Detection:
+        Class = bicycle
+        Score = 0.968862
+        Confidence = 0.844044
+        Coordinates: [RightTopX = 51, RightTopY = 104, LeftBottomX = 372, LeftBottomY = 383]
+Detection:
+        Class = dog
+        Score = 0.994719
+        Confidence = 0.834090
+        Coordinates: [RightTopX = 59, RightTopY = 216, LeftBottomX = 248, LeftBottomY = 333]
+Detection:
+        Class = car
+        Score = 0.919483
+        Confidence = 0.897727
+        Coordinates: [RightTopX = 328, RightTopY = 81, LeftBottomX = 381, LeftBottomY = 178]
 ```
 
 ## Benchmark
