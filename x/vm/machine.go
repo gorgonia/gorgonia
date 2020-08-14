@@ -2,6 +2,9 @@ package xvm
 
 import (
 	"context"
+	"strconv"
+	"strings"
+	"time"
 
 	"gorgonia.org/gorgonia"
 )
@@ -121,33 +124,58 @@ func (m *Machine) Close() {
 	}
 }
 
+type nodeError struct {
+	id  int64
+	t   time.Time
+	err error
+}
+
+type nodeErrors []nodeError
+
+func (e nodeErrors) Error() string {
+	var sb strings.Builder
+	for _, e := range e {
+		sb.WriteString(strconv.Itoa(int(e.id)))
+		sb.WriteString(":")
+		sb.WriteString(e.err.Error())
+		sb.WriteString("\n")
+	}
+	return sb.String()
+}
+
 // Run performs the computation
 func (m *Machine) runAllNodes(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
-	errC := make(chan error, 0)
+	errC := make(chan nodeError, 0)
 	total := len(m.nodes)
 	for i := range m.nodes {
 		go func(n *node) {
-			errC <- n.Compute(ctx)
+			err := n.Compute(ctx)
+			errC <- nodeError{
+				id:  n.id,
+				t:   time.Now(),
+				err: err,
+			}
 		}(m.nodes[i])
 	}
-	var err error
-	for err = range errC {
+	errs := make([]nodeError, 0)
+	for e := range errC {
 		total--
-		if err != nil || total == 0 {
-			break
+		if e.err != nil {
+			errs = append(errs, e)
+			// failfast, on error, cancel
+			cancel()
 		}
-	}
-	for moreChannel := true; moreChannel; {
-		select {
-		case <-errC:
-		default:
-			moreChannel = false
+		if total == 0 {
+			break
 		}
 	}
 	cancel()
 	close(errC)
-	return err
+	if len(errs) != 0 {
+		return nodeErrors(errs)
+	}
+	return nil
 }
 
 // GetResult stored in a node

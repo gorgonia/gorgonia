@@ -2,6 +2,7 @@ package xvm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"reflect"
@@ -29,6 +30,12 @@ func TestMachine_runAllNodes(t *testing.T) {
 		outputC:     outputC2,
 		inputC:      inputC2,
 	}
+	errNode1 := &node{
+		op:          &errorOP{},
+		inputValues: make([]gorgonia.Value, 2),
+		outputC:     outputC2,
+		inputC:      inputC2,
+	}
 	type fields struct {
 		nodes   []*node
 		pubsubs *pubsub
@@ -52,7 +59,16 @@ func TestMachine_runAllNodes(t *testing.T) {
 			},
 			false,
 		},
-		// TODO: Add test cases.
+		{
+			"error",
+			fields{
+				nodes: []*node{n1, errNode1},
+			},
+			args{
+				context.Background(),
+			},
+			true,
+		},
 	}
 	for _, tt := range tests {
 		forty := gorgonia.F32(40.0)
@@ -95,6 +111,9 @@ func TestMachine_runAllNodes(t *testing.T) {
 			}()
 			if err := m.runAllNodes(tt.args.ctx); (err != nil) != tt.wantErr {
 				t.Errorf("Machine.runAllNodes() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.wantErr {
+				return
 			}
 			out1 := <-outputC1
 			out2 := <-outputC2
@@ -529,6 +548,32 @@ func TestMachine_GetResult(t *testing.T) {
 			}
 			if got := m.GetResult(tt.args.id); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Machine.GetResult() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_nodeErrors_Error(t *testing.T) {
+	tests := []struct {
+		name string
+		e    nodeErrors
+		want string
+	}{
+		{
+			"simple",
+			[]nodeError{
+				{
+					id:  0,
+					err: errors.New("error"),
+				},
+			},
+			"0:error\n",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.e.Error(); got != tt.want {
+				t.Errorf("nodeErrors.Error() = %v, want %v", got, tt.want)
 			}
 		})
 	}
