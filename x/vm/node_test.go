@@ -217,6 +217,12 @@ func Test_node_ComputeForward(t *testing.T) {
 	}
 }
 
+type errorOP struct{}
+
+func (*errorOP) Do(v ...gorgonia.Value) (gorgonia.Value, error) {
+	return nil, errors.New("error")
+}
+
 type sumF32 struct{}
 
 func (*sumF32) Do(v ...gorgonia.Value) (gorgonia.Value, error) {
