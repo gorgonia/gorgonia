@@ -1,3 +1,5 @@
+// +build !cuda
+
 package xvm
 
 import (
