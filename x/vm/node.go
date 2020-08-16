@@ -104,12 +104,12 @@ func (n *node) Compute(ctx context.Context) error {
 	return n.err
 }
 
-func newOp(n *gorgonia.Node, hasOutputChan bool) *node {
+func newOp(n *gorgonia.Node, withOutputChan bool) *node {
 	if n == nil {
 		return nil
 	}
 	var outputC chan gorgonia.Value
-	if hasOutputChan {
+	if withOutputChan {
 		outputC = make(chan gorgonia.Value, 0)
 
 	}
