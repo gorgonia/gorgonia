@@ -26,6 +26,7 @@ type Op interface {
 	// Type informs the type of the Op (not the node). This will be used by the type system to infer the final type of the node.
 	Type() hm.Type
 
+	// ShapeExpr informs the shape operations that the Op will do. A quick primer is given in the README of the shapes package.
 	ShapeExpr() shapes.Expr
 
 	/* Machine related */
@@ -44,7 +45,12 @@ type Op interface {
 	// call the task name "reshape", instead of "reshape(2,3)"
 	Task() *trace.Task
 
-	/* Analysis Related Methods */
+	fmt.Stringer
+}
+
+// AnalyzableOp is any Op that provides enough intensionality for analysis during compilation phase.
+type AnalyzableOp interface {
+	Op
 
 	// ReturnsPtr indicates if the Op will return a pointer (allowing possible inplace edits) or by value.
 	// If it's false, the return value of the Op will be a copy of its input.
@@ -61,8 +67,6 @@ type Op interface {
 	// the retVal of overwriteInput() will be 0 (inputs[0]).
 	// -1 is returned if overwriting of input is disallowed
 	OverwritesInput() int
-
-	fmt.Stringer
 }
 
 // SDOp is any Op that supports symbolic differentiation
