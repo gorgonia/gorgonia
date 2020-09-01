@@ -207,7 +207,7 @@ We wil leave the last part of the definition of  `S` (`S ::= ... | T`) to after 
 # Shape Expr: Semantics #
 
 ![\frac{}{E_1 \rightarrow E_2}\\
-\frac{E_1 \rightarrow E_2 \ \ \ \ \vdash E_1: S}{E_1 \rightarrow E_2 \Rightarrow  \{S/a\} E_2}](https://render.githubusercontent.com/render/math?math=%5CLarge+%5Cdisplaystyle+%5Cfrac%7B%7D%7BE_1+%5Crightarrow+E_2%7D%5C%5C%0A%5Cfrac%7BE_1+%5Crightarrow+E_2+%5C+%5C+%5C+%5C+%5Cvdash+E_1%3A+S%7D%7BE_1+%5Crightarrow+E_2+%5CRightarrow++%5C%7BS%2Fa%5C%7D+E_2%7D)
+\frac{E_1 \rightarrow E_2 \ \ \ \ \vdash E_3: S}{E_1 \rightarrow E_2  @ E_3 \Rightarrow  \{S/a\} E_2}](https://render.githubusercontent.com/render/math?math=%5CLarge+%5Cdisplaystyle+%5Cfrac%7B%7D%7BE_1+%5Crightarrow+E_2%7D%5C%5C%0A%5Cfrac%7BE_1+%5Crightarrow+E_2+%5C+%5C+%5C+%5C+%5Cvdash+E_3%3A+S%7D%7BE_1+%5Crightarrow+E_2++%40+E_3+%5CRightarrow++%5C%7BS%2Fa%5C%7D+E_2%7D)
 
 TODO: write more
 
