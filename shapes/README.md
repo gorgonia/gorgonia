@@ -42,14 +42,14 @@ Given a shape, let's explore the components of the shape:
  v  v  v
 (2, 3, 4) <------ shape
  ^̄  ^̄  ^̄
- +--+--+--------- dimensions
+ +--+--+--------- dimension/axis
 ```
 
-Each "slot" in a shape is called a dimension. The number of dimensions in a shape is called a rank (though confusingly enough, in the Gorgonia family of libraries, it's called `.Dims()`). There are 3 slots in the example, so it's a 3 dimensional shape. Each number in a slot is called the size of the dimension. For example, in dimension 1, the size is 3. We say that dimension 1 is of size 3.
+Each "slot" in a shape is called a dimension/axis. The number of dimensions in a shape is called a rank (though confusingly enough, in the Gorgonia family of libraries, it's called `.Dims()`). There are 3 slots in the example, so it's a 3 dimensional shape. Each number in a slot is called the size of the dimension. When refering to them by their number, the preferred term is to use "axis". So, axis 1 has a size of 3, therefore, the first dimension is of size 3.
 
-To use the traditional named dimensions - recall in this instance, that dimension 1 is "rows". So we say there are 3 rows.
+To use the traditional named dimensions - recall in this instance, that dimension 1 is "rows" - We say there are 3 rows.
 
-# Shape Expr #
+# Shape Expr: Syntax #
 
 
 The primary data structure that the package provides is the shape expression. A shape expression is given by the following [BNF](https://en.wikipedia.org/wiki/Backus–Naur_form)
@@ -123,7 +123,7 @@ In fact, the following are equivalent;
 
 What this says is that the primitive shape construction is [associative](https://en.wikipedia.org/wiki/Associative_property). This is useful as we can now omit the additional parentheses.
 
-### On <unit> ###
+### On `<unit>` ###
 
 The unit `()` is particularly interesting. In a while we'll see why it's called a "unit".
 
@@ -140,7 +140,7 @@ Now, let us focus, once again on line 2 of the BNF, but on the latter parts:
 <shape> ::= ... | (<variable>,) | ...
 ```
 
-What this says is that you can create a <shape>  using a variable. I'll use `x` and `y` for real variables.
+What this says is that you can create a `<shape>`  using a variable. I'll use `x` and `y` for real variables.
 
 Example: `(x,)` is a shape. Combining this rule with the rules from above, we can see that `(x, y)` is also a valid shape. So is `(10, x)` or `(x, 10)`
 
@@ -204,10 +204,99 @@ To recap, these are all examples valid shapes:
 
 We wil leave the last part of the definition of  `S` (`S ::= ... | T`) to after we've introduced the notion of expressions.
 
+# Shape Expr: Semantics #
+
+![\frac{}{E_1 \rightarrow E_2}\\
+\frac{E_1 \rightarrow E_2 \ \ \ \ \vdash E_1: S}{E_1 \rightarrow E_2 \Rightarrow  \{S/a\} E_2}](https://render.githubusercontent.com/render/math?math=%5CLarge+%5Cdisplaystyle+%5Cfrac%7B%7D%7BE_1+%5Crightarrow+E_2%7D%5C%5C%0A%5Cfrac%7BE_1+%5Crightarrow+E_2+%5C+%5C+%5C+%5C+%5Cvdash+E_1%3A+S%7D%7BE_1+%5Crightarrow+E_2+%5CRightarrow++%5C%7BS%2Fa%5C%7D+E_2%7D)
+
+TODO: write more
+
 
 
 # Why So Complicated? #
 Why introduce all these complicated things? We introduce these complicated things because we want to do things with shape expressions.
+
+
+## It is a System of Constraints ##
+
+Ideally, the shape expression should be enough to tell you what an operation does to the shape of its inputs.
+
+Consider for example, a shape expression that is the following:
+
+```
+(a, b) → (b, c) → (a, c)
+```
+
+What does this expression say? It says the operation takes a matrix with shape `(a, b)`, and then takes another matrix with the shape `(b, c)`, finally, it returns a matrix of shape `(a, c)`.
+
+This simple expression contains a lot of information:
+
+* The inputs are matrices only.
+* The inner dimension of the first input must be the same as the outer dimension of the second input.
+* The output is a matrix only, not of any other rank.
+* The matching dimensions disappear.
+
+In fact, there is precisely one operation that is described by this expression: Matrix Multiplication.
+
+Here we see one of the functions of the shape expression: it's to provide constraints to the inputs. e.g. the inputs must be matrices; the matching dimensions; etc.
+
+<details>
+<summary>A Second Example</summary>
+
+Here's another example. Consider this shape expression, can you guess what it does?
+
+```
+(a, b) → (a, c) → (a, b+c)
+```
+
+<details>
+<summary>Amswer</summary>
+
+It's a concatenation on axis 1. A concrete example is given:
+
+```
+t :=
+shape: (2, 3)
+⎡0  1  2⎤
+⎣3  4  5⎦
+
+u :=
+shape: (2, 2)
+⎡100  200⎤
+⎣300  400⎦
+
+Concat(1, t, u) =
+shape: (2, 5)
+⎡  0    1    2  100  200⎤
+⎣  3    4    5  300  400⎦
+
+```
+
+</details>
+
+
+</details>
+
+
+## It is a System of *Evolving* Constraints ##
+
+The shape expression system can not only *define* constraints, it can also evolve them.
+
+Going back to the matrix multiplication example, now let's extend it.
+
+```
+(a, b) → (b, c) → (a, c) @ (2, 3)
+```
+
+When this is run through the interpreter of the expression, the result will be the following shape expression:
+
+```
+(3, c) → (2, c)
+```
+
+The constraints have now evolved.
+
+Recall that the `@` symbol is an application of a function to an input. So when given an input matrix of a known size - `(2, 3)`, we can evolve the constraints, so the next input will only require one check instead of two.
 
 
 # Enumeration of Common Functions #
