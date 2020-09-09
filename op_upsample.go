@@ -61,6 +61,8 @@ func (op *upsampleOp) String() string {
 }
 func (op *upsampleOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
 	s := inputs[0].(tensor.Shape).Clone()
+	s[2] = s[2] * (1 + op.stride)
+	s[3] = s[3] * (1 + op.stride)
 	return s, nil
 }
 func (op *upsampleOp) Type() hm.Type {
