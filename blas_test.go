@@ -12,6 +12,7 @@ var gonumImpl = gonum.Implementation{}
 
 // testBLASImplementation of the interface
 type testBLASImplementation struct {
+	gonum.Implementation
 	used bool
 }
 
