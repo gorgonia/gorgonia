@@ -1,112 +1,130 @@
 package shapes
 
-import "gorgonia.org/tensor"
+import "fmt"
 
-var (
-	_ Expr = tensor.Shape{}
-)
+type Shape []int
 
-type Expr interface {
-	TotalSize() int
-}
-
-type Var int
-
-func (v Var) TotalSize() int { return -1 }
-func (v Var) isValid() bool  { return v < 0 }
-
-type Axis int
-
-func (a Axis) TotalSize() int { return 1 }
-func (a Axis) isValid() bool  { return a >= 0 }
-
-type BinOp struct {
-	A  Expr
-	B  Expr
-	Op OpType
-}
-
-func (op BinOp) TotalSize() int {
-	switch op.Op {
-	case Arrow:
-		return 0
-	case Add, Sub:
-		return -1
-	case Mul, Div:
-		return -1
-
+// Cons is an associative construction of shapes
+func (s Shape) Cons(other Conser) Conser {
+	switch ot := other.(type) {
+	case Shape:
+		return append(s, ot...)
+	case Abstract:
+		retVal := make(Abstract, 0, len(s)+len(ot))
+		for i := range s {
+			retVal = append(retVal, Size(s[i]))
+		}
+		retVal = append(retVal, ot...)
+		return retVal
 	}
 	panic("Unreachable")
 }
 
-// UnaryOp represetns a unary operation on a shape expression
-type UnaryOp struct {
-	Op OpType
-	A  Expr
+func (s Shape) isConser() {}
+
+// Eq indicates if a shape is equal with another. There is a soft concept of equality when it comes to vectors.
+//
+// If s is a column vector and other is a vanilla vector, they're considered equal if the size of the column dimension is the same as the vector size;
+// if s is a row vector and other is a vanilla vector, they're considered equal if the size of the row dimension is the same as the vector size
+func (s Shape) Eq(other Shape) bool {
+	if s.IsScalar() && other.IsScalar() {
+		return true
+	}
+
+	if s.IsVector() && other.IsVector() {
+		switch {
+		case len(s) == 2 && len(other) == 1:
+			if (s.IsColVec() && s[0] == other[0]) || (s.IsRowVec() && s[1] == other[0]) {
+				return true
+			}
+			return false
+		case len(s) == 1 && len(other) == 2:
+			if (other.IsColVec() && other[0] == s[0]) || (other.IsRowVec() && other[1] == s[0]) {
+				return true
+			}
+			return false
+		}
+	}
+
+	if len(s) != len(other) {
+		return false
+	}
+
+	for i, v := range s {
+		if other[i] != v {
+			return false
+		}
+	}
+	return true
 }
 
-func (op UnaryOp) TotalSize() int {
-	switch op.Op {
-	case Const:
-		return op.A.TotalSize()
-	case Index:
-		return -1
+// Dims returns the number of dimensions in the shape
+func (s Shape) Dims() int { return len(s) }
+
+// IsScalar returns true if the access pattern indicates it's a scalar value
+func (s Shape) IsScalar() bool { return len(s) == 0 }
+
+// IsScalarEquiv returns true if the access pattern indicates it's a scalar-like value
+func (s Shape) IsScalarEquiv() bool {
+	if s.IsScalar() {
+		return true
+	}
+	p := prodInts([]int(s))
+	return p == 1 || p == 0
+}
+
+// IsVector returns whether the access pattern falls into one of three possible definitions of vectors:
+//		vanilla vector (not a row or a col)
+//		column vector
+//		row vector
+func (s Shape) IsVector() bool { return s.IsColVec() || s.IsRowVec() || (len(s) == 1 && s[0] > 1) }
+
+// IsColVec returns true when the access pattern has the shape (x, 1)
+func (s Shape) IsColVec() bool { return len(s) == 2 && (s[1] == 1 && s[0] > 1) }
+
+// IsRowVec returns true when the access pattern has the shape (1, x)
+func (s Shape) IsRowVec() bool { return len(s) == 2 && (s[0] == 1 && s[1] > 1) }
+
+// IsMatrix returns true if it's a matrix. This is mostly a convenience method. RowVec and ColVecs are also considered matrices
+func (s Shape) IsMatrix() bool { return len(s) == 2 }
+
+func (s Shape) TotalSize() int {
+	panic("not implemented") // TODO: Implement
+}
+
+func (s Shape) DimSize(dim int) (Sizelike, error) {
+	panic("not implemented") // TODO: Implement
+}
+
+func (s Shape) T(axes ...Axis) (newShape Shapelike, err error) {
+	panic("not implemented") // TODO: Implement
+}
+
+func (s Shape) S(slices ...Slice) (newShape Shapelike, err error) {
+	panic("not implemented") // TODO: Implement
+}
+
+func (s Shape) Repeat(axis Axis, repeats ...int) (newShape Shapelike, finalRepeats []int, size int, err error) {
+	panic("not implemented") // TODO: Implement
+}
+
+func (s Shape) Concat(axis Axis, others ...Shapelike) (newShape Shapelike, err error) {
+	panic("not implemented") // TODO: Implement
+}
+
+// Format implements fmt.Formatter, and formats a shape nicely
+func (s Shape) Format(st fmt.State, r rune) {
+	switch r {
+	case 'v', 's':
+		st.Write([]byte("("))
+		for i, v := range s {
+			fmt.Fprintf(st, "%d", v)
+			if i < len(s)-1 {
+				st.Write([]byte(", "))
+			}
+		}
+		st.Write([]byte(")"))
 	default:
-	}
-	panic("Unreachable")
-}
-
-type OpType byte
-
-const (
-	// Unary
-	Const OpType = iota // K
-	Index               // []
-
-	// Binary
-	Arrow // →
-	App   // @
-	Add   // +
-	Sub   // -
-	Mul   // ×
-	Div   // ÷
-)
-
-/* Example
-
-MatMul:
-(a, b) → (b, c) → (a, c)
-
-is represented as:
-
-BinOp{
-	Arrow,
-	BinOp{
-		Arrow,
-		tensor.Shape{-1, -2},
-		tensor.Shape{-2, -3},
-	},
-	tensor.Shape{-1, -3},
-}
-
-
-Flatten/Ravel:
-(a, b) → (a × b)
-
-is represented as:
-
-BinOp{
-	Arrow,
-	tensor.Shape{-1, -2},
-	BinOp{
-		Mul,
-		-1, -2,
+		fmt.Fprintf(st, "%v", []int(s))
 	}
 }
-
-At:
-
-Sum:
-
-
-*/
