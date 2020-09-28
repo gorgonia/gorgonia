@@ -110,3 +110,32 @@ func ExampleReshape() {
 	// Output:
 	// a → b → b s.t. (Π a = Π b)
 }
+
+func ExampleColwiseSumMatrix() {
+	expr := Compound{
+		Arrow{
+			Var('a'),
+			Var('b'),
+		},
+		SubjectTo{
+			Eq,
+			UnaryOp{Dims, Var('b')},
+			BinOp{
+				Sub,
+				UnaryOp{Dims, Var('a')},
+				Size(1),
+			},
+		},
+	}
+	fmt.Printf("%v\n", expr)
+
+	expr2 := Arrow{
+		Abstract{Var('a'), Var('b')},
+		Abstract{Var('a')},
+	}
+	fmt.Printf("%v", expr2)
+
+	// Output:
+	// a → b s.t. (D b = D a - 1)
+	// (a, b) → (a)
+}

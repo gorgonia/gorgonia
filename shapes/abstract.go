@@ -90,3 +90,28 @@ func (s Abstract) Format(st fmt.State, r rune) {
 		fmt.Fprintf(st, "%v", []Sizelike(s))
 	}
 }
+
+func (s Abstract) apply(ss substitutions) substitutable {
+	retVal := make(Abstract, len(s))
+	copy(retVal, s)
+	for i, a := range s {
+		if v, ok := a.(Var); ok {
+			for _, sub := range ss {
+				if v == sub.For {
+					retVal[i] = sub.Sub.(Sizelike)
+					break
+				}
+			}
+		}
+	}
+	return retVal
+}
+
+func (s Abstract) freevars() (retVal varset) {
+	for _, a := range s {
+		if v, ok := a.(Var); ok {
+			retVal = append(retVal, v)
+		}
+	}
+	return unique(retVal)
+}

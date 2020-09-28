@@ -1,6 +1,9 @@
 package shapes
 
 type Slice interface {
+	Start() int
+	End() int
+	End() int
 }
 
 var (
