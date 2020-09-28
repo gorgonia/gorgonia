@@ -463,6 +463,9 @@ func (op repeatOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value,
 		err = errors.Errorf(nyiTypeFail, "repeatOp.Do()", inputs[0])
 		return
 	}
+	if rep == 1 {
+		return Copy(pt, t)
+	}
 
 	return tensor.RepeatReuse(t, pt, op.along, rep)
 }
