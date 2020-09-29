@@ -1,6 +1,8 @@
 package shapes
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Abstract is an abstract shape
 type Abstract []Sizelike

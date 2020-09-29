@@ -1,33 +1,97 @@
 package shapes
 
-import "fmt"
+import (
+	"fmt"
+)
 
-func ExampleMatMul() {
-	expr := Arrow{
+func Example_matMul() {
+	matmul := Arrow{
+		Abstract{Var('a'), Var('b')},
 		Arrow{
-			Abstract{Var('a'), Var('b')},
 			Abstract{Var('b'), Var('c')},
+			Abstract{Var('a'), Var('c')},
 		},
-		Abstract{Var('a'), Var('c')},
 	}
-	fmt.Printf("%v", expr)
+	fmt.Printf("MatMul: %v\n", matmul)
+
+	// Apply the first input to MatMul
+	fst := Shape{2, 3}
+	expr2, err := InferApp(matmul, fst)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+	fmt.Printf("Applying %v to MatMul:\n", fst)
+	fmt.Printf("%v @ %v ↠ %v\n", matmul, fst, expr2)
+
+	// Apply the second input
+	snd := Shape{3, 4}
+	expr3, err := InferApp(expr2, snd)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+	fmt.Printf("Applying %v to the result:\n", snd)
+	fmt.Printf("%v @ %v ↠ %v\n", expr2, snd, expr3)
+
+	// Bad example:
+	bad2nd := Shape{4, 5}
+	_, err = InferApp(expr2, bad2nd)
+	fmt.Printf("What happens when you pass in a bad value (e.g. %v instead of %v):\n", bad2nd, snd)
+	fmt.Printf("%v @ %v ↠ %v", expr2, bad2nd, err)
 
 	// Output:
-	// (a, b) → (b, c) → (a, c)
+	// MatMul: (a, b) → (b, c) → (a, c)
+	// Applying (2, 3) to MatMul:
+	// (a, b) → (b, c) → (a, c) @ (2, 3) ↠ (3, c) → (2, c)
+	// Applying (3, 4) to the result:
+	// (3, c) → (2, c) @ (3, 4) ↠ (2, 4)
+	// What happens when you pass in a bad value (e.g. (4, 5) instead of (3, 4)):
+	// (3, c) → (2, c) @ (4, 5) ↠ Failed to solve [{(3, c) → (2, c) = (4, 5) → d}] | d: Unification Fail. 3 ~ 4 cannot proceed
+
 }
 
-func ExampleAdd() {
-	expr := Arrow{
+func Example_add() {
+	add := Arrow{
+		Var('a'),
 		Arrow{
 			Var('a'),
 			Var('a'),
 		},
-		Var('a'),
 	}
-	fmt.Printf("%v", expr)
+	fmt.Printf("Add: %v\n", add)
+
+	// pass in the first input
+	fst := Shape{5, 2, 3, 1, 10}
+	retExpr, err := InferApp(add, fst)
+	if err != nil {
+		fmt.Printf("Error %v\n", err)
+	}
+	fmt.Printf("Applying %v to Add:\n", fst)
+	fmt.Printf("%v @ %v ↠ %v\n", add, fst, retExpr)
+
+	// pass in the second input
+	snd := Shape{5, 2, 3, 1, 10}
+	retExpr2, err := InferApp(retExpr, snd)
+	if err != nil {
+		fmt.Printf("Error %v\n", err)
+	}
+	fmt.Printf("Applying %v to the result\n", snd)
+	fmt.Printf("%v @ %v ↠ %v\n", retExpr, snd, retExpr2)
+
+	// bad example:
+	bad2nd := Shape{2, 3}
+	_, err = InferApp(retExpr, bad2nd)
+
+	fmt.Printf("Passing in a bad second input\n")
+	fmt.Printf("%v @ %v ↠ %v", retExpr, bad2nd, err)
 
 	// Output:
-	// a → a → a
+	// Add: a → a → a
+	// Applying (5, 2, 3, 1, 10) to Add:
+	// a → a → a @ (5, 2, 3, 1, 10) ↠ (5, 2, 3, 1, 10) → (5, 2, 3, 1, 10)
+	// Applying (5, 2, 3, 1, 10) to the result
+	// (5, 2, 3, 1, 10) → (5, 2, 3, 1, 10) @ (5, 2, 3, 1, 10) ↠ (5, 2, 3, 1, 10)
+	// Passing in a bad second input
+	// (5, 2, 3, 1, 10) → (5, 2, 3, 1, 10) @ (2, 3) ↠ Failed to solve [{(5, 2, 3, 1, 10) → (5, 2, 3, 1, 10) = (2, 3) → a}] | a: Unification Fail. (5, 2, 3, 1, 10) ~ (2, 3) cannot proceed as they do not contain the same amount of sub-expressions. (5, 2, 3, 1, 10) has 5 subexpressions while (2, 3) has 2 subexpressions
 
 }
 
