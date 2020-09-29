@@ -115,3 +115,10 @@ func (s Abstract) freevars() (retVal varset) {
 	}
 	return unique(retVal)
 }
+
+func (s Abstract) subExprs() (retVal []substitutableExpr) {
+	for i := range s {
+		retVal = append(retVal, s[i].(substitutableExpr))
+	}
+	return retVal
+}

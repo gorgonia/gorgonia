@@ -1,10 +1,5 @@
 package shapes
 
-type substitutable interface {
-	apply(substitutions) substitutable
-	freevars() varset // set of free variables
-}
-
 type substitution struct {
 	Sub Expr
 	For Var

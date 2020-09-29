@@ -128,3 +128,20 @@ func (s Shape) Format(st fmt.State, r rune) {
 		fmt.Fprintf(st, "%v", []int(s))
 	}
 }
+
+// apply doesn't apply any substitutions to Shape because there will not be anything to substitution.
+func (s Shape) apply(_ substitutions) substitutable { return s }
+
+// freevar returns nil because there are no free variables in a Shape.
+func (s Shape) freevars() varset { return nil }
+
+func (s Shape) isExpr() {}
+
+// subExprs returns the shape as a slice of Expr (specifically, it becomes a slice of Size)
+func (s Shape) subExprs() (retVal []substitutableExpr) {
+	retVal = make([]substitutableExpr, 0, len(s))
+	for i := range s {
+		retVal = append(retVal, Size(s[i]))
+	}
+	return retVal
+}

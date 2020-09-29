@@ -5,14 +5,9 @@ import "fmt"
 var ()
 
 type Expr interface {
-	// Shape | Abstract | Var | E->E | (E->E)@E | Slice | Axis | Axes | Size
+	// Shape | Abstract | Var | E->E | Slice | Axis | Axes | Size
 	// IndexOf | SliceOf | TransposeOf | RepeatOf | ConcatOf
 	isExpr()
-
-	// Exprs returns a slice of expressions if it is a container expression
-	// (Arrow, App, XXXOf)
-	// Otherwise it returns nil
-	Exprs() []Expr
 
 	substitutable
 }
@@ -34,8 +29,8 @@ func (v Var) apply(ss substitutions) substitutable {
 	}
 	return v
 }
-func (v Var) freevars() varset { return varset{v} }
-func (v Var) Exprs() []Expr    { return nil }
+func (v Var) freevars() varset              { return varset{v} }
+func (v Var) subExprs() []substitutableExpr { return nil }
 
 // Axis represents an axis in doing shape stuff.
 type Axis int
@@ -43,7 +38,7 @@ type Axis int
 func (a Axis) isExpr()                              {}
 func (a Axis) apply(ss substitutions) substitutable { return a }
 func (a Axis) freevars() varset                     { return nil }
-func (a Axis) Exprs() []Expr                        { return nil }
+func (a Axis) subExprs() []substitutableExpr        { return nil }
 
 // Axes represents a list of axes.
 // Despite being a container type (i.e. an Axis is an Expr),
@@ -54,7 +49,7 @@ func (a Axes) isExpr()                              {}
 func (a Axes) Format(s fmt.State, r rune)           { fmt.Fprintf(s, "X%v", axesToInts(a)) }
 func (a Axes) apply(ss substitutions) substitutable { return a }
 func (a Axes) freevars() varset                     { return nil }
-func (a Axes) Exprs() []Expr                        { return nil }
+func (a Axes) subExprs() []substitutableExpr        { return nil }
 
 // Size represents a size of a dimension/axis
 type Size int
@@ -63,47 +58,7 @@ func (s Size) isExpr()                              {}
 func (s Size) isSizelike()                          {}
 func (s Size) apply(ss substitutions) substitutable { return s }
 func (s Size) freevars() varset                     { return nil }
-func (s Size) Exprs() []Expr                        { return nil }
-
-// BinOp represents a binary operation. It is not an expression
-type BinOp struct {
-	Op OpType // CHECK!
-	A  Expr
-	B  Expr
-}
-
-func (op BinOp) isSizelike() {}
-func (op BinOp) isExpr()     {}
-func (op BinOp) apply(ss substitutions) substitutable {
-	return BinOp{
-		Op: op.Op,
-		A:  op.A.apply(ss).(Expr),
-		B:  op.B.apply(ss).(Expr),
-	}
-}
-func (op BinOp) freevars() varset {
-	retVal := op.A.freevars()
-	retVal = append(retVal, op.B.freevars()...)
-	return unique(retVal)
-}
-
-func (op BinOp) Format(s fmt.State, r rune) { fmt.Fprintf(s, "%v %v %v", op.A, op.Op, op.B) }
-
-// UnaryOp represetns a unary operation on a shape expression
-type UnaryOp struct {
-	Op OpType
-	A  Expr
-}
-
-func (op UnaryOp) isExpr()                    {}
-func (op UnaryOp) Format(s fmt.State, r rune) { fmt.Fprintf(s, "%v %v", op.Op, op.A) }
-func (op UnaryOp) apply(ss substitutions) substitutable {
-	return UnaryOp{
-		Op: op.Op,
-		A:  op.A.apply(ss).(Expr),
-	}
-}
-func (op UnaryOp) freevars() varset { return op.A.freevars() }
+func (s Size) subExprs() []substitutableExpr        { return nil }
 
 // complex expressions
 
@@ -122,36 +77,11 @@ func (a Arrow) apply(ss substitutions) substitutable {
 		B: a.B.apply(ss).(Expr),
 	}
 }
-func (a Arrow) freevars() varset {
-	retVal := a.A.freevars()
-	retVal = append(retVal, a.B.freevars()...)
-	return unique(retVal)
+func (a Arrow) freevars() varset { return arrowToTup(&a).freevars() }
+
+func (a Arrow) subExprs() []substitutableExpr {
+	return []substitutableExpr{a.A.(substitutableExpr), a.B.(substitutableExpr)}
 }
-
-func (a Arrow) Exprs() []Expr { return []Expr{a.A, a.B} }
-
-// App represents an application of a Arrow to another expression.
-type App struct {
-	A Arrow
-	B Expr
-}
-
-func (a App) isExpr() {}
-
-func (a App) Format(s fmt.State, r rune) { fmt.Fprintf(s, "%v @ %v", a.A, a.B) }
-
-func (a App) apply(ss substitutions) substitutable {
-	return App{
-		A: a.A.apply(ss).(Arrow),
-		B: a.B.apply(ss).(Expr),
-	}
-}
-func (a App) freevars() varset {
-	retVal := a.A.freevars()
-	retVal = append(retVal, a.B.freevars()...)
-	return unique(retVal)
-}
-func (a App) Exprs() []Expr { return []Expr{a.A, a.B} }
 
 // IndexOf represents a slice operation where the range is 1
 type IndexOf struct {
@@ -168,7 +98,9 @@ func (i IndexOf) apply(ss substitutions) substitutable {
 	}
 }
 func (i IndexOf) freevars() varset { return i.A.freevars() }
-func (i IndexOf) Exprs() []Expr    { return []Expr{i.I, i.A} }
+func (i IndexOf) subExprs() []substitutableExpr {
+	return []substitutableExpr{i.I, i.A.(substitutableExpr)}
+}
 
 // TransposeOf
 type TransposeOf struct {
@@ -185,7 +117,9 @@ func (t TransposeOf) apply(ss substitutions) substitutable {
 	}
 }
 func (t TransposeOf) freevars() varset { return t.A.freevars() }
-func (t TransposeOf) Exprs() []Expr    { return []Expr{t.Axes, t.A} }
+func (t TransposeOf) subExprs() []substitutableExpr {
+	return []substitutableExpr{t.Axes, t.A.(substitutableExpr)}
+}
 
 type SliceOf struct {
 	Slice Slice
@@ -201,59 +135,9 @@ func (s SliceOf) apply(ss substitutions) substitutable {
 	}
 }
 func (s SliceOf) freevars() varset { return s.A.freevars() }
-func (s SliceOf) Exprs() []Expr    { return []Expr{toSli(s.Slice), s.A} }
-
-// Sli is a expression representation of a slice.
-//
-// We are treating it as a monolithic shape expression
-type Sli struct {
-	start, end, step int
+func (s SliceOf) subExprs() []substitutableExpr {
+	return []substitutableExpr{toSli(s.Slice), s.A.(substitutableExpr)}
 }
-
-func (s Sli) isExpr() {}
-func (s Sli) Format(st fmt.State, r rune) {
-	fmt.Fprintf(st, "[%d", s.Start)
-	if s.Stop-s.Start > 1 {
-		fmt.Fprintf(st, ":%d", s.Stop)
-	}
-	if s.Step > 1 {
-		fmt.Fprintf(st, "~:%d", s.Step)
-	}
-	st.Write([]byte("]"))
-}
-func (s Sli) apply(ss substitutions) substitutable { return s }
-func (s Sli) freevars() varset                     { return nil }
-func (s Sli) Exprs() []Expr                        { return nil }
-
-func S(start int, others ...int) Sli {
-	var end, step int
-	if len(opt) > 0 {
-		end = opt[0]
-	} else {
-		end = start + 1
-	}
-
-	step = 1
-	if len(opt) > 1 {
-		step = opt[1]
-	} else if end == start+1 {
-		step = 0
-	}
-	return Sli{
-		start: start,
-		end:   end,
-		step:  step,
-	}
-}
-func toSli(s Slice) Sli {
-	if ss, ok := s.(Sli); ok {
-		return ss
-	}
-	return Sli{s.Start(), s.End(), s.Step()}
-}
-func (s Sli) Start() int { return s.start }
-func (s Sli) End() int   { return s.end }
-func (s Sli) Step() int  { return s.step }
 
 type ConcatOf struct {
 	Along Axis
@@ -269,10 +153,9 @@ func (c ConcatOf) apply(ss substitutions) substitutable {
 		B:     c.B.apply(ss).(Expr),
 	}
 }
-func (c ConcatOf) freevars() varset {
-	retVal := c.A.freevars()
-	retVal = append(retVal, c.B.freevars()...)
-	return unique(retVal)
+func (c ConcatOf) freevars() varset { return (exprtup{c.A, c.B}).freevars() }
+func (c ConcatOf) subExprs() []substitutableExpr {
+	return []substitutableExpr{c.Along, c.A.(substitutableExpr), c.B.(substitutableExpr)}
 }
 
 type RepeatOf struct {
@@ -293,15 +176,30 @@ func (r RepeatOf) apply(ss substitutions) substitutable {
 	}
 }
 func (r RepeatOf) freevars() varset { return r.A.freevars() }
+func (r RepeatOf) subExprs() []substitutableExpr {
+	return []substitutableExpr{r.Along, r.A.(substitutableExpr)}
+}
 
 type SubjectTo struct {
 	OpType
-	A, B Expr
+	A, B Operation
 }
 
 func (s SubjectTo) Format(st fmt.State, r rune) {
 	fmt.Fprintf(st, "(%v %v %v)", s.A, s.OpType, s.B)
 }
+
+func (s SubjectTo) apply(ss substitutions) substitutable {
+	return SubjectTo{
+		OpType: s.OpType,
+		A:      s.A.apply(ss).(Operation),
+		B:      s.B.apply(ss).(Operation),
+	}
+}
+
+func (s SubjectTo) freevars() varset { return append(s.A.freevars(), s.B.freevars()...) }
+
+func (s SubjectTo) subExprs() []substitutableExpr { return []substitutableExpr{s.A, s.B} }
 
 type Compound struct {
 	Expr
@@ -317,64 +215,10 @@ func (c Compound) apply(ss substitutions) substitutable {
 		SubjectTo: c.SubjectTo,
 	}
 }
-
-type OpType byte
-
-const (
-	// Unary
-	Const OpType = iota // K
-	Dims
-	Prod
-	Sum
-
-	// Binary
-	Add // +
-	Sub // -
-	Mul // ×
-	Div // ÷
-
-	// Cmp
-	Eq
-	Ne
-	Lt
-	Gt
-	Lte
-	Gte
-)
-
-func (o OpType) String() string {
-	switch o {
-	case Const:
-		return "K"
-	case Dims:
-		return "D"
-	case Prod:
-		return "Π"
-	case Sum:
-		return "Σ"
-	case Add:
-		return "+"
-	case Sub:
-		return "-"
-	case Mul:
-		return "×"
-	case Div:
-		return "÷"
-	case Eq:
-		return "="
-	case Ne:
-		return "≠"
-	case Lt:
-		return "<"
-	case Gt:
-		return ">"
-	case Lte:
-		return "≤"
-	case Gte:
-		return "≥"
-	default:
-		return "UNFORMATTED OPTYPE"
-	}
+func (c Compound) freevars() varset {
+	retVal := c.Expr.freevars()
+	retVal = append(retVal, c.SubjectTo.freevars()...)
+	return retVal
 }
 
 /* Example

@@ -1,11 +1,5 @@
 package shapes
 
-type Slice interface {
-	Start() int
-	End() int
-	End() int
-}
-
 var (
 	_ Shapelike = Abstract{}
 	_ Shapelike = Shape{}
@@ -25,6 +19,7 @@ var (
 	_ Sizelike = Size(0)
 	_ Sizelike = Var('a')
 	_ Sizelike = BinOp{}
+	_ Sizelike = UnaryOp{}
 )
 
 type Sizelike interface {
@@ -35,4 +30,22 @@ type Sizelike interface {
 type Conser interface {
 	Cons(Conser) Conser
 	isConser()
+}
+
+type substitutable interface {
+	apply(substitutions) substitutable
+	freevars() varset // set of free variables
+}
+
+// Expr | BinOp
+type substitutableExpr interface {
+	substitutable
+	subExprs() []substitutableExpr
+}
+
+type Operation interface {
+	isValid() bool
+	resolve() (Size, error)
+
+	substitutableExpr
 }
