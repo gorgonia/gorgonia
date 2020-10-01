@@ -43,9 +43,14 @@ type substitutableExpr interface {
 	subExprs() []substitutableExpr
 }
 
+// Operation represents an operation (BinOp or UnaryOp)
 type Operation interface {
 	isValid() bool
-	resolve() (Size, error)
-
+	resolveSize() (Size, error)
 	substitutableExpr
+}
+
+// ShapeResolver is anything that can resolve into a shape
+type ShapeResolver interface {
+	resolve() (Shape, error)
 }

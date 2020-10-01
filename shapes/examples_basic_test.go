@@ -2,6 +2,7 @@ package shapes
 
 import (
 	"fmt"
+	"log"
 )
 
 func Example_matMul() {
@@ -96,43 +97,70 @@ func Example_add() {
 }
 
 func ExampleRavel() {
-	expr := Arrow{
+	ravel := Arrow{
 		Var('a'),
 		UnaryOp{Prod, Var('a')},
 	}
-	fmt.Printf("%v", expr)
+	fmt.Printf("Ravel: %v\n", ravel)
+
+	fst := Shape{2, 3, 4}
+	retExpr, err := InferApp(ravel, fst)
+	if err != nil {
+		fmt.Printf("Error %v\n", err)
+	}
+	fmt.Printf("Applying %v to Ravel:\n", fst)
+	fmt.Printf("%v @ %v ↠ %v", ravel, fst, retExpr)
 
 	// Output:
-	// a → Π a
+	// Ravel: a → Π a
+	// Applying (2, 3, 4) to Ravel:
+	// a → Π a @ (2, 3, 4) ↠ (24)
 }
 
 func ExampleTranspose() {
+	axes := Axes{0, 1, 3, 2}
 	simple := Arrow{
+		Var('a'),
 		Arrow{
-			Var('a'),
-			Axes{0, 1, 3, 2},
-		},
-		TransposeOf{
-			Axes{0, 1, 3, 2},
-			Var('a'),
+			axes,
+			TransposeOf{
+				axes,
+				Var('a'),
+			},
 		},
 	}
 	fmt.Printf("%v\n", simple)
 
 	st := SubjectTo{
 		Eq,
-		UnaryOp{Dims, Axes{0, 1, 3, 2}},
+		UnaryOp{Dims, axes},
 		UnaryOp{Dims, Var('a')},
 	}
-	correct := Compound{
+	transpose := Compound{
 		Expr:      simple,
 		SubjectTo: st,
 	}
-	fmt.Printf("%v", correct)
+	fmt.Printf("Transpose: %v\n", transpose)
+
+	fst := Shape{1, 2, 3, 4}
+	retExpr, err := InferApp(transpose, fst)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+	fmt.Printf("Applying %v to %v:\n", fst, transpose)
+	fmt.Printf("%v @ %v ↠ %v\n", transpose, fst, retExpr)
+	log.Printf("retExpr %v", retExpr)
+	snd := axes
+	retExpr2, err := InferApp(retExpr, snd)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+	fmt.Printf("Applying %v to %v:\n", snd, retExpr)
+	fmt.Printf("%v @ %v ↠ %v", retExpr, snd, retExpr2)
 
 	// Output:
 	// a → X[0 1 3 2] → Tr X[0 1 3 2] a
-	// a → X[0 1 3 2] → Tr X[0 1 3 2] a s.t. (D X[0 1 3 2] = D a)
+	// Transpose: a → X[0 1 3 2] → Tr X[0 1 3 2] a s.t. (D X[0 1 3 2] = D a)
 }
 
 func ExampleSlice() {

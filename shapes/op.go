@@ -83,25 +83,13 @@ func (op BinOp) isSizelike() {}
 
 func (op BinOp) isValid() bool { return op.Op >= Add && op.Op < Eq }
 
-func (op BinOp) resolve() (Size, error) {
-	if len(op.A.freevars()) > 0 {
-		return 0, errors.Errorf("Cannot resolve BinOp %v - free vars found in A", op)
+func (op BinOp) resolveSize() (Size, error) {
+	if err := op.nofreeevars(); err != nil {
+		return 0, errors.Wrapf(err, "Cannot resolve BinOp %v to Size.", op)
 	}
-	if len(op.B.freevars()) > 0 {
-		return 0, errors.Errorf("Cannot resolve BinOp %v - free vars found in B", op)
-	}
-
-	// Note: the following two checks are unnecessary.  It should always be Size.
-	// TODO: get a theorem prover to prove this.
-
-	A, ok := op.A.(Size)
-	if !ok {
-		return 0, errors.Errorf("Cannot resolve BinOp %v - A is not resolved to a Size", op)
-	}
-
-	B, ok := op.B.(Size)
-	if !ok {
-		return 0, errors.Errorf("Cannot resolve BinOp %v - B is not resolved to a Size", op)
+	A, B, err := op.resolveAB()
+	if err != nil {
+		return 0, errors.Wrapf(err, "Cannot resolve BinOp %v to Size.", op)
 	}
 
 	switch op.Op {
@@ -114,9 +102,75 @@ func (op BinOp) resolve() (Size, error) {
 	case Div:
 		return A / B, nil
 	default:
-		panic("unreachable")
+		return 0, errors.Errorf("Unable to resolve op %v into a Size", op)
+	}
+	panic("unreachable")
+
+}
+
+// resolveBool is only ever used by SubjectTo's resolveBool.
+func (op BinOp) resolveBool() (bool, error) {
+	if err := op.nofreeevars(); err != nil {
+		return false, errors.Wrapf(err, "Cannot resolve BinOp %v to bool.", op)
+	}
+	A, B, err := op.resolveAB()
+	if err != nil {
+		return false, errors.Wrapf(err, "Cannot resolve BinOp %v to bool.", op)
+	}
+	switch op.Op {
+	case Eq:
+		return A == B, nil
+	case Ne:
+		return A != B, nil
+	case Lt:
+		return A < B, nil
+	case Gt:
+		return A > B, nil
+	case Lte:
+		return A <= B, nil
+	case Gte:
+		return A >= B, nil
+	default:
+		return false, errors.Errorf("Cannot resolve BinOp %v to bool.", op)
+
+	}
+}
+
+func (op BinOp) nofreeevars() error {
+	if len(op.A.freevars()) > 0 {
+		return errors.Errorf("Cannot resolve BinOp %v - free vars found in A", op)
+	}
+	if len(op.B.freevars()) > 0 {
+		return errors.Errorf("Cannot resolve BinOp %v - free vars found in B", op)
+	}
+	return nil
+}
+
+func (op BinOp) resolveAB() (A, B Size, err error) {
+	switch a := op.A.(type) {
+	case Size:
+		A = a
+	case Operation:
+		var err error
+		if A, err = a.resolveSize(); err != nil {
+			return A, B, errors.Wrapf(err, "BinOp %v - A (%v) does not resolve to a Size", op, op.A)
+		}
+	default:
+		return 0, 0, errors.Errorf("Cannot resolve BinOp %v - A (%v) is not resolved to a Size", op, op.A)
 	}
 
+	switch b := op.B.(type) {
+	case Size:
+		B = b
+	case Operation:
+		var err error
+		if B, err = b.resolveSize(); err != nil {
+			return A, B, errors.Wrapf(err, "BinOp %v - B (%v) does not resolve to a Size", op, op.B)
+		}
+	default:
+		return 0, 0, errors.Errorf("Cannot resolve BinOp %v - B is not resolved to a Size", op)
+	}
+	return
 }
 
 // BinOp implements substitutable
@@ -153,7 +207,7 @@ func (op UnaryOp) isSizelike() {}
 
 func (op UnaryOp) isValid() bool { return op.Op < Add }
 
-func (op UnaryOp) resolve() (Size, error) {
+func (op UnaryOp) resolveSize() (Size, error) {
 	if !op.isValid() {
 		return 0, errors.Errorf("Invalid UnaryOp %v", op)
 	}
@@ -174,7 +228,7 @@ func (op UnaryOp) resolve() (Size, error) {
 				case Size:
 					retVal *= int(a)
 				case Operation:
-					v, err := a.resolve()
+					v, err := a.resolveSize()
 					if err != nil {
 						return 0, errors.Wrapf(err, "Unable to resolve %v.", op)
 					}
@@ -191,7 +245,7 @@ func (op UnaryOp) resolve() (Size, error) {
 				case Size:
 					retVal += int(a)
 				case Operation:
-					v, err := a.resolve()
+					v, err := a.resolveSize()
 					if err != nil {
 						return 0, errors.Wrapf(err, "Unable to resolve %v.", op)
 					}
