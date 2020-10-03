@@ -50,7 +50,9 @@ type Operation interface {
 	substitutableExpr
 }
 
-// ShapeResolver is anything that can resolve into a shape
-type ShapeResolver interface {
-	resolve() (Shape, error)
+//  resolver is anything that can resolve an expression
+//
+// e.g. "built-in" unary terms like TransposeOf, ConcatOf, SliceOf, RepeatOf
+type resolver interface {
+	resolve() (Expr, error)
 }

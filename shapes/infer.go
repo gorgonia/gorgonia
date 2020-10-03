@@ -2,7 +2,6 @@ package shapes
 
 import (
 	"fmt"
-	"log"
 	"sort"
 
 	"github.com/pkg/errors"
@@ -41,11 +40,11 @@ func App(ar Expr, b Expr) ConstraintsExpr {
 	case Compound:
 		var ok bool
 		if a, ok = at.Expr.(Arrow); !ok {
-			panic("Stuck")
+			panic(fmt.Sprintf("Unhandled type at.Expr %v of  %T", at.Expr, at.Expr))
 		}
 		st = at.SubjectTo
 	default:
-		panic("Stuck")
+		panic(fmt.Sprintf("Unhandled type ar %v of  %T", ar, ar))
 	}
 
 	fv := a.freevars()
@@ -60,7 +59,6 @@ func App(ar Expr, b Expr) ConstraintsExpr {
 	// get a fresh variable given the set already used
 	fr := fresh(fv)
 	cs := constraints{{a, Arrow{b, fr}}}
-	log.Printf("st %v", st)
 	return ConstraintsExpr{cs, fr, st}
 }
 
@@ -75,28 +73,25 @@ func Infer(ce ConstraintsExpr) (Expr, error) {
 	}
 
 	retVal := ce.e.apply(subs).(Expr)
-	if o, ok := retVal.(Operation); ok {
-		if !o.isValid() {
-			return nil, errors.Errorf("Failed to infer - final expression %v is an invalid operation", retVal)
-		}
-		sz, err := o.resolveSize()
-		if err != nil {
-			return retVal, errors.Wrapf(err, "Cannot resolve final expresison. But it may still be used.")
-		}
-		return Shape{int(sz)}, nil
+	if retVal, err = recursiveResolve(retVal); err != nil {
+		return retVal, err
 	}
 
 	if ce.st.A != nil && ce.st.B != nil {
-		log.Printf("st exists")
 		st := ce.st.apply(subs).(SubjectTo)
-		if ok, err := st.resolveBool(); !ok || err != nil {
+		if len(st.freevars()) > 0 {
+			// don't try to resolve the st yet.
+			return Compound{Expr: retVal, SubjectTo: st}, nil
+		}
+
+		ok, err := st.resolveBool()
+		if err != nil {
 			return nil, errors.Errorf("Failed to resolve SubjectTo %v. Error %v", st, err)
 		}
-		if _, ok := retVal.(Shape); ok {
-			// strip the subject to
-			return retVal, nil
+		if !ok {
+			return nil, errors.Errorf("SubjectTo %v resolved to false. Cannot continue", st)
 		}
-		return Compound{Expr: retVal, SubjectTo: st}, nil
+		return retVal, nil
 	}
 
 	return retVal, nil
@@ -116,4 +111,27 @@ func fresh(set varset) Var {
 
 func alpha(set varset, a Expr) Expr {
 	return a // TODO
+}
+
+func recursiveResolve(a Expr) (Expr, error) {
+	switch at := a.(type) {
+	case Operation:
+		if !at.isValid() {
+			return nil, errors.Errorf("Expression %v is not a valid Operation", at)
+		}
+		sz, err := at.resolveSize()
+		if err != nil {
+			return a, errors.Wrapf(err, "Cannot resolve final expresison. But it may still be used.")
+		}
+		return Shape{int(sz)}, nil
+	case resolver:
+		retVal, err := at.resolve()
+		if err != nil {
+			return nil, errors.Wrapf(err, "Failed to recursively resolve %v", at)
+		}
+		return recursiveResolve(retVal)
+	default:
+		// nothing else can be resolved. return the identity
+		return a, nil
+	}
 }

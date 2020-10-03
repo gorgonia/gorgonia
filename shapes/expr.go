@@ -2,8 +2,6 @@ package shapes
 
 import (
 	"fmt"
-
-	"github.com/pkg/errors"
 )
 
 var ()
@@ -64,6 +62,11 @@ func (s Size) apply(ss substitutions) substitutable { return s }
 func (s Size) freevars() varset                     { return nil }
 func (s Size) subExprs() []substitutableExpr        { return nil }
 
+// Size also implements Operation (i.e. it's a Const)
+
+func (s Size) isValid() bool              { return true }
+func (s Size) resolveSize() (Size, error) { return s, nil }
+
 // complex expressions
 
 // Arrow represents a function of shapes, from A → B.
@@ -85,175 +88,6 @@ func (a Arrow) freevars() varset { return arrowToTup(&a).freevars() }
 
 func (a Arrow) subExprs() []substitutableExpr {
 	return []substitutableExpr{a.A.(substitutableExpr), a.B.(substitutableExpr)}
-}
-
-// IndexOf represents a slice operation where the range is 1
-type IndexOf struct {
-	I Size
-	A Expr
-}
-
-func (i IndexOf) isExpr()                    {}
-func (i IndexOf) Format(s fmt.State, r rune) { fmt.Fprintf(s, "%v[%d]", i.A, i.I) }
-func (i IndexOf) apply(ss substitutions) substitutable {
-	return IndexOf{
-		I: i.I,
-		A: i.A.apply(ss).(Expr),
-	}
-}
-func (i IndexOf) freevars() varset { return i.A.freevars() }
-func (i IndexOf) subExprs() []substitutableExpr {
-	return []substitutableExpr{i.I, i.A.(substitutableExpr)}
-}
-
-// TransposeOf
-type TransposeOf struct {
-	Axes Axes
-	A    Expr
-}
-
-func (t TransposeOf) isExpr()                    {}
-func (t TransposeOf) Format(s fmt.State, r rune) { fmt.Fprintf(s, "Tr %v %v", t.Axes, t.A) }
-func (t TransposeOf) apply(ss substitutions) substitutable {
-	return TransposeOf{
-		Axes: t.Axes,
-		A:    t.A.apply(ss).(Expr),
-	}
-}
-func (t TransposeOf) freevars() varset { return t.A.freevars() }
-func (t TransposeOf) subExprs() []substitutableExpr {
-	return []substitutableExpr{t.Axes, t.A.(substitutableExpr)}
-}
-func (t TransposeOf) resolve() (Shape, error) {
-	s, ok := t.A.(Shape)
-	if !ok {
-		return nil, errors.Errorf("Cannot resolve %v of %T into a Shape", t, t.A)
-	}
-	// transpose shape
-
-}
-
-type SliceOf struct {
-	Slice Slice
-	A     Expr
-}
-
-func (s SliceOf) isExpr()                     {}
-func (s SliceOf) Format(st fmt.State, r rune) { fmt.Fprintf(st, "%v%v", s.A, s.Slice) }
-func (s SliceOf) apply(ss substitutions) substitutable {
-	return SliceOf{
-		Slice: s.Slice,
-		A:     s.A.apply(ss).(Expr),
-	}
-}
-func (s SliceOf) freevars() varset { return s.A.freevars() }
-func (s SliceOf) subExprs() []substitutableExpr {
-	return []substitutableExpr{toSli(s.Slice), s.A.(substitutableExpr)}
-}
-
-type ConcatOf struct {
-	Along Axis
-	A, B  Expr
-}
-
-func (c ConcatOf) isExpr()                    {}
-func (c ConcatOf) Format(s fmt.State, r rune) { fmt.Fprintf(s, "%v :{%d}: %v", c.A, c.Along, c.B) }
-func (c ConcatOf) apply(ss substitutions) substitutable {
-	return ConcatOf{
-		Along: c.Along,
-		A:     c.A.apply(ss).(Expr),
-		B:     c.B.apply(ss).(Expr),
-	}
-}
-func (c ConcatOf) freevars() varset { return (exprtup{c.A, c.B}).freevars() }
-func (c ConcatOf) subExprs() []substitutableExpr {
-	return []substitutableExpr{c.Along, c.A.(substitutableExpr), c.B.(substitutableExpr)}
-}
-
-type RepeatOf struct {
-	Along   Axis
-	Repeats []Size
-	A       Expr
-}
-
-func (r RepeatOf) isExpr() {}
-func (r RepeatOf) Format(s fmt.State, ru rune) {
-	fmt.Fprintf(s, "Repeat{%d}{%v} %v", r.Along, r.Repeats, r.A)
-}
-func (r RepeatOf) apply(ss substitutions) substitutable {
-	return RepeatOf{
-		Along:   r.Along,
-		Repeats: r.Repeats,
-		A:       r.A.apply(ss).(Expr),
-	}
-}
-func (r RepeatOf) freevars() varset { return r.A.freevars() }
-func (r RepeatOf) subExprs() []substitutableExpr {
-	return []substitutableExpr{r.Along, r.A.(substitutableExpr)}
-}
-
-type SubjectTo struct {
-	OpType
-	A, B Operation
-}
-
-func (s SubjectTo) Format(st fmt.State, r rune) {
-	fmt.Fprintf(st, "(%v %v %v)", s.A, s.OpType, s.B)
-}
-
-// SubjectTo implements substitutable
-
-func (s SubjectTo) apply(ss substitutions) substitutable {
-	return SubjectTo{
-		OpType: s.OpType,
-		A:      s.A.apply(ss).(Operation),
-		B:      s.B.apply(ss).(Operation),
-	}
-}
-
-func (s SubjectTo) freevars() varset { return append(s.A.freevars(), s.B.freevars()...) }
-
-func (s SubjectTo) subExprs() []substitutableExpr { return []substitutableExpr{s.A, s.B} }
-
-// subjectTo is also an Operation
-
-func (s SubjectTo) isValid() bool { return s.OpType >= Eq && s.A.isValid() && s.B.isValid() }
-
-func (s SubjectTo) resolveSize() (Size, error) {
-	return 0, errors.Errorf("SubjectTo does not resolve to Size.")
-}
-
-func (s SubjectTo) resolveBool() (bool, error) {
-	A, err := s.A.resolveSize()
-	if err != nil {
-		return false, errors.Wrapf(err, "Failed to resolve SubjectTo %v into a bool. Operand A errored.", s)
-	}
-	B, err := s.B.resolveSize()
-	if err != nil {
-		return false, errors.Wrapf(err, "Failed to resolve SubjectTo %v into a bool. Operand B errored.", s)
-	}
-	op := BinOp{s.OpType, A, B}
-	return op.resolveBool()
-}
-
-type Compound struct {
-	Expr
-	SubjectTo
-}
-
-func (c Compound) Format(s fmt.State, r rune) {
-	fmt.Fprintf(s, "%v s.t. %v", c.Expr, c.SubjectTo)
-}
-func (c Compound) apply(ss substitutions) substitutable {
-	return Compound{
-		Expr:      c.Expr.apply(ss).(Expr),
-		SubjectTo: c.SubjectTo,
-	}
-}
-func (c Compound) freevars() varset {
-	retVal := c.Expr.freevars()
-	retVal = append(retVal, c.SubjectTo.freevars()...)
-	return retVal
 }
 
 /* Example

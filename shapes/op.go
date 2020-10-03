@@ -32,6 +32,11 @@ const (
 	Gt
 	Lte
 	Gte
+
+	// Logic: bool → bool → bool
+
+	And
+	Or
 )
 
 // String returns the string representation

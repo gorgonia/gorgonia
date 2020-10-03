@@ -2,7 +2,6 @@ package shapes
 
 import (
 	"fmt"
-	"log"
 )
 
 func Example_matMul() {
@@ -117,7 +116,7 @@ func ExampleRavel() {
 	// a → Π a @ (2, 3, 4) ↠ (24)
 }
 
-func ExampleTranspose() {
+func Example_transpose() {
 	axes := Axes{0, 1, 3, 2}
 	simple := Arrow{
 		Var('a'),
@@ -149,46 +148,92 @@ func ExampleTranspose() {
 	}
 	fmt.Printf("Applying %v to %v:\n", fst, transpose)
 	fmt.Printf("%v @ %v ↠ %v\n", transpose, fst, retExpr)
-	log.Printf("retExpr %v", retExpr)
 	snd := axes
 	retExpr2, err := InferApp(retExpr, snd)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 	}
 	fmt.Printf("Applying %v to %v:\n", snd, retExpr)
-	fmt.Printf("%v @ %v ↠ %v", retExpr, snd, retExpr2)
+	fmt.Printf("%v @ %v ↠ %v\n", retExpr, snd, retExpr2)
+
+	// bad axes
+	bad2nd := Axes{0, 2, 1, 3} // not the original axes {0,1,3,2}
+	_, err = InferApp(retExpr, bad2nd)
+	fmt.Printf("Bad Axes causes error: %v\n", err)
+
+	// bad first input
+	bad1st := Shape{2, 3, 4}
+	_, err = InferApp(transpose, bad1st)
+	fmt.Printf("Bad first input causes error: %v", err)
 
 	// Output:
 	// a → X[0 1 3 2] → Tr X[0 1 3 2] a
 	// Transpose: a → X[0 1 3 2] → Tr X[0 1 3 2] a s.t. (D X[0 1 3 2] = D a)
+	// Applying (1, 2, 3, 4) to a → X[0 1 3 2] → Tr X[0 1 3 2] a s.t. (D X[0 1 3 2] = D a):
+	// a → X[0 1 3 2] → Tr X[0 1 3 2] a s.t. (D X[0 1 3 2] = D a) @ (1, 2, 3, 4) ↠ X[0 1 3 2] → Tr X[0 1 3 2] (1, 2, 3, 4)
+	// Applying X[0 1 3 2] to X[0 1 3 2] → Tr X[0 1 3 2] (1, 2, 3, 4):
+	// X[0 1 3 2] → Tr X[0 1 3 2] (1, 2, 3, 4) @ X[0 1 3 2] ↠ (1, 2, 4, 3)
+	// Bad Axes causes error: Failed to solve [{X[0 1 3 2] → Tr X[0 1 3 2] (1, 2, 3, 4) = X[0 2 1 3] → a}] | a: Unification Fail. X[0 1 3 2] ~ X[0 2 1 3] cannot proceed
+	// Bad first input causes error: SubjectTo (D X[0 1 3 2] = D (2, 3, 4)) resolved to false. Cannot continue
+
 }
 
 func ExampleSlice() {
+	sli := Sli{0, 2, 1}
 	simple := Arrow{
+		Var('a'),
 		Arrow{
-			Var('a'),
-			Sli{0, 2, 1},
+			sli,
+			SliceOf{
+				sli,
+				Var('a'),
+			},
 		},
-		SliceOf{
-			Sli{0, 2, 1},
-			Var('a'),
+	}
+	slice := Compound{
+		Expr: simple,
+		SubjectTo: SubjectTo{
+			OpType: Gte,
+			A:      IndexOf{I: 0, A: Var('a')},
+			B:      Size(2),
 		},
 	}
 
-	fmt.Printf("%v", simple)
+	fmt.Printf("slice: %v\n", slice)
+
+	fst := Shape{2, 3, 4}
+	retExpr, err := InferApp(slice, fst)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("Applying %v to %v:\n", fst, slice)
+	fmt.Printf("%v @ %v ↠ %v\n", slice, fst, retExpr)
+
+	snd := sli
+	retExpr2, err := InferApp(retExpr, snd)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("Applying %v to %v:\n", snd, retExpr)
+	fmt.Printf("%v @ %v ↠ %v\n", retExpr, snd, retExpr2)
 
 	// Output:
-	// a → [0:2] → a[0:2]
+	// slice: a → [0:2] → a[0:2] s.t. (a[0] ≥ 2)
+	// Applying (2, 3, 4) to a → [0:2] → a[0:2] s.t. (a[0] ≥ 2):
+	// a → [0:2] → a[0:2] s.t. (a[0] ≥ 2) @ (2, 3, 4) ↠ [0:2] → (2, 3, 4)[0:2]
+	// Applying [0:2] to [0:2] → (2, 3, 4)[0:2]:
+	// [0:2] → (2, 3, 4)[0:2] @ [0:2] ↠ (2, 3, 4)[0:2]
+
 }
 
 func ExampleReshape() {
 	expr := Compound{
 		Arrow{
+			Var('a'),
 			Arrow{
-				Var('a'),
+				Var('b'),
 				Var('b'),
 			},
-			Var('b'),
 		},
 		SubjectTo{
 			Eq,

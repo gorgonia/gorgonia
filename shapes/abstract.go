@@ -2,6 +2,8 @@ package shapes
 
 import (
 	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 // Abstract is an abstract shape
@@ -37,24 +39,36 @@ func (a Abstract) ToShape() (s Shape, ok bool) {
 	return s, true
 }
 
+func (a Abstract) Clone() interface{} {
+	retVal := make(Abstract, len(a))
+	copy(retVal, a)
+	return retVal
+}
+
 func (a Abstract) isExpr() {}
 
 func ToShape(a Abstract) Shape { panic("NYI") }
 
-func (a Abstract) Dims() int {
-	panic("not implemented") // TODO: Implement
-}
+// Dims returns the number of dimensions in the shape
+func (a Abstract) Dims() int { return len(a) }
 
 func (a Abstract) TotalSize() int {
 	panic("not implemented") // TODO: Implement
 }
 
 func (a Abstract) DimSize(dim int) (Sizelike, error) {
-	panic("not implemented") // TODO: Implement
+	if a.Dims() <= dim {
+		return nil, errors.Errorf("Cannot get Dim %d of %v", dim, a)
+	}
+	return a[dim], nil
 }
 
 func (a Abstract) T(axes ...Axis) (newShape Shapelike, err error) {
-	panic("not implemented") // TODO: Implement
+	retVal := make(Abstract, len(a))
+	copy(retVal, a)
+	err = genericUnsafePermute(axesToInts(axes), retVal)
+	newShape = retVal
+	return
 }
 
 func (a Abstract) S(slices ...Slice) (newShape Shapelike, err error) {

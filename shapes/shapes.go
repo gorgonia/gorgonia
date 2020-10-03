@@ -1,6 +1,16 @@
 package shapes
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/pkg/errors"
+)
+
+var (
+	scalarShape = Shape{}
+)
+
+func ScalarShape() Shape { return scalarShape }
 
 type Shape []int
 
@@ -21,6 +31,12 @@ func (s Shape) Cons(other Conser) Conser {
 }
 
 func (s Shape) isConser() {}
+
+func (s Shape) Clone() interface{} {
+	retVal := make(Shape, len(s))
+	copy(retVal, s)
+	return retVal
+}
 
 // Eq indicates if a shape is equal with another. There is a soft concept of equality when it comes to vectors.
 //
@@ -58,9 +74,6 @@ func (s Shape) Eq(other Shape) bool {
 	return true
 }
 
-// Dims returns the number of dimensions in the shape
-func (s Shape) Dims() int { return len(s) }
-
 // IsScalar returns true if the access pattern indicates it's a scalar value
 func (s Shape) IsScalar() bool { return len(s) == 0 }
 
@@ -88,20 +101,79 @@ func (s Shape) IsRowVec() bool { return len(s) == 2 && (s[0] == 1 && s[1] > 1) }
 // IsMatrix returns true if it's a matrix. This is mostly a convenience method. RowVec and ColVecs are also considered matrices
 func (s Shape) IsMatrix() bool { return len(s) == 2 }
 
+// Dims returns the number of dimensions in the shape
+func (s Shape) Dims() int { return len(s) }
+
 func (s Shape) TotalSize() int {
 	panic("not implemented") // TODO: Implement
 }
 
 func (s Shape) DimSize(dim int) (Sizelike, error) {
-	panic("not implemented") // TODO: Implement
+	if s.Dims() <= dim {
+		return nil, errors.Errorf("Cannot get Dim %d of %v", dim, s)
+	}
+	return Size(s[dim]), nil
 }
 
 func (s Shape) T(axes ...Axis) (newShape Shapelike, err error) {
-	panic("not implemented") // TODO: Implement
+	retVal := make(Shape, len(s))
+	copy(retVal, s)
+	err = UnsafePermute(axesToInts(axes), []int(retVal))
+	newShape = retVal
+	return
 }
 
 func (s Shape) S(slices ...Slice) (newShape Shapelike, err error) {
-	panic("not implemented") // TODO: Implement
+	opDims := len(s)
+	if len(slices) > opDims {
+		err = errors.Errorf(dimsMismatch, opDims, len(slices))
+		return
+	}
+
+	retVal := s.Clone().(Shape)
+
+	for d, size := range s {
+		var sl Slice // default is a nil Slice
+		if d <= len(slices)-1 {
+			sl = slices[d]
+		}
+
+		var start, end, step int
+		if start, end, step, err = SliceDetails(sl, size); err != nil {
+			return
+		}
+
+		if step > 0 {
+			retVal[d] = (end - start) / step
+
+			//fix
+			if retVal[d] <= 0 {
+				retVal[d] = 1
+			}
+		} else {
+			retVal[d] = (end - start)
+		}
+
+	}
+
+	// drop any dimension with size 1, except the last dimension
+	offset := 0
+	dims := s.Dims()
+	for d := 0; d < dims; d++ {
+		if retVal[d] == 1 && offset+d <= len(slices)-1 && slices[offset+d] != nil /*&& d != t.dims-1  && dims > 2*/ {
+			retVal = append(retVal[:d], retVal[d+1:]...)
+			d--
+			dims--
+			offset++
+		}
+	}
+
+	if retVal.IsScalar() {
+		//ReturnInts(retVal)
+		return ScalarShape(), nil
+	}
+
+	return
 }
 
 func (s Shape) Repeat(axis Axis, repeats ...int) (newShape Shapelike, finalRepeats []int, size int, err error) {
