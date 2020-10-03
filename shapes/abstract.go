@@ -47,8 +47,6 @@ func (a Abstract) Clone() interface{} {
 
 func (a Abstract) isExpr() {}
 
-func ToShape(a Abstract) Shape { panic("NYI") }
-
 // Dims returns the number of dimensions in the shape
 func (a Abstract) Dims() int { return len(a) }
 

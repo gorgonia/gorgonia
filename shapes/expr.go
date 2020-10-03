@@ -76,7 +76,13 @@ type Arrow struct {
 
 func (a Arrow) isExpr() {}
 
-func (a Arrow) Format(s fmt.State, r rune) { fmt.Fprintf(s, "%v → %v", a.A, a.B) }
+func (a Arrow) Format(s fmt.State, r rune) {
+	if _, ok := a.A.(Arrow); ok {
+		fmt.Fprintf(s, "(%v) → %v", a.A, a.B)
+		return
+	}
+	fmt.Fprintf(s, "%v → %v", a.A, a.B)
+}
 
 func (a Arrow) apply(ss substitutions) substitutable {
 	return Arrow{

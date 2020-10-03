@@ -97,8 +97,33 @@ func Infer(ce ConstraintsExpr) (Expr, error) {
 	return retVal, nil
 }
 
-func InferApp(a Expr, b Expr) (Expr, error) {
-	return Infer(App(a, b))
+func InferApp(a Expr, others ...Expr) (retVal Expr, err error) {
+	if len(others) == 0 {
+		// error
+	}
+	fst := a
+	for _, e := range others {
+		if fst, err = Infer(App(fst, e)); err != nil {
+			return nil, err
+		}
+
+	}
+	return fst, nil
+}
+
+func ToShape(a Expr) (Shape, error) {
+	switch at := a.(type) {
+	case Shape:
+		return at, nil
+	case Abstract:
+		sh, ok := at.ToShape()
+		if !ok {
+			return nil, errors.Errorf("Unable to concretize %v of %T", a, a)
+		}
+		return sh, nil
+	default:
+		return nil, errors.Errorf("Unable to concretize %v of %T", a, a)
+	}
 }
 
 func fresh(set varset) Var {
@@ -110,7 +135,17 @@ func fresh(set varset) Var {
 }
 
 func alpha(set varset, a Expr) Expr {
-	return a // TODO
+	fv := a.freevars()
+	var subs substitutions
+	for _, v := range fv {
+		if set.Contains(v) {
+			fr := fresh(set)
+			set = append(set, fr)
+			subs = append(subs, substitution{Sub: fr, For: v})
+		}
+	}
+	a2 := a.apply(subs).(Expr)
+	return a2
 }
 
 func recursiveResolve(a Expr) (Expr, error) {

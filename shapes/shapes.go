@@ -104,9 +104,7 @@ func (s Shape) IsMatrix() bool { return len(s) == 2 }
 // Dims returns the number of dimensions in the shape
 func (s Shape) Dims() int { return len(s) }
 
-func (s Shape) TotalSize() int {
-	panic("not implemented") // TODO: Implement
-}
+func (s Shape) TotalSize() int { return prodInts([]int(s)) }
 
 func (s Shape) DimSize(dim int) (Sizelike, error) {
 	if s.Dims() <= dim {
