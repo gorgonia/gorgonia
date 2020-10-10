@@ -1,0 +1,149 @@
+\documentclass{article}
+\pdfinfo{
+  /Title (TITLE)
+  /Author (Xuanyi Chew)
+}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{bussproofs}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=magenta,
+}
+\urlstyle{same}
+\begin{document}
+\title{A System of Shapes Makes For Simpler Array Programming}
+\author{Xuanyi Chew \\
+  \mbox{}
+  chewxy@gmail.com
+}
+\maketitle
+
+\begin{abstract}
+  ABSTRACT HERE
+\end{abstract}
+
+That a system of shapes simplifies array programming.
+
+\section{Introduction}
+
+\href{https://gorgonia.org}{Gorgonia} is a family of libraries which brings the ability to create and manipulate deep neural networks to the Go programming language. This paper concerns two libraries in the family: \texttt{gorgonia.org/gorgonia} and \texttt{gorgonia.org/tensor}. The former is a library to define abstract mathematical expressions while the latter provides multidimensional array programming capabilities.
+
+Recently both libaries were augmented with an algebra of shapes, which provides constraints to the array programming operations, leading to a more correct implementation of neural networks. This paper describes said algebra.
+
+
+\section{Multidimensional Arrays, Their Shapes and Their Fundamental Operations}
+
+Multidimensional arrays may be described by their shape. For example, a matrix can be described by the number of rows $r$ and the number of columns $c$. A shorthand notation would be $(r, c)$. This is its shape.
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{|p{0.3\linewidth}|c|c|}
+    \hline
+    Name of Operation & Multidimensional Array & Unidimensional Array \\
+    \hline
+     Size Descriptor & Shape & Length \\
+    \hline
+    How many elements to skip to the next index & Strides & 1 \\
+    \hline
+    Rank/Dimensions & D & 1 \\
+    \hline
+    Slicing & Takes D ranges & Takes a range\\
+    \hline
+  \end{tabular}
+\caption{Analogies of operations}
+\label{analogies}
+\end{table}
+
+The usual, single dimensional array is a special case of a multidimensional array. By way of analogy, one may interrogate the fundamental operations of multidimensional arrays. Table \ref{analogies} enumerates the analogies of fundamental operations between multidimensional arrays and unidimensional arrays.
+
+
+\subsection{Transposition}
+
+Unidimensional arrays do not support the transposition operation. Thus there are no analogues for transposition. This is the first novel operation that can only occur in higher dimensions. This subsection briefly analyzes the operation.
+
+We begin with a two dimensional array, commonly known as a matrix. Let us use this matrix for example:
+\begin{equation*}
+  \mathbf{A} :=
+\begin{bmatrix}
+  1 & 2 & 3\\
+  4 & 5 & 6
+\end{bmatrix}
+\end{equation*}
+
+The transposition of the matrix $\mathbf{A}$ is defined as reflecting the values of the matrix along its central diagonal, so that
+
+\begin{equation*}
+  \mathbf{A}^T =
+  \begin{bmatrix}
+    1 & 4\\
+    2 & 5\\
+    3 & 6\\
+  \end{bmatrix}
+\end{equation*}
+
+\section {The Algebra of Shapes}
+
+The Algebra of Shapes
+
+The Shape Algebra is described by a BNF:
+
+\begin{align*}
+  E &::=\ a\ |\ S\ |\ E \rightarrow E\ |\ (E\ s.t.\ X)\ |\ P \\
+  S &::=\ (Sz,)\ |\ (Sz,\ S)\ |\ (S,\ Sz)\ |\ A \\
+  A &::=\ (a,)\ |\ (a,\ A)\ |\ (A,\ a)\ |\ (B,)\ |\ (B,\ A)\ |\ (A,\ B)\\
+  B &::=\ E\ O_A\ E \\
+  O_A &::=\ +\ |\ \times\ |\ -\ |\ \div \\
+  P &::=\ I\ n\ E\ |\ T\ [Ax]\ E\ |\ Sl\ :\ E\ |\ R\ Ax\ n\ E\ |\ C\ Ax\ E\ E\\
+  X &::=\ ST\ O_c\ E\ E\\
+  O_c &::=\ \wedge\ |\ \vee\ |\ =\ |\ \neq\ |\ <\ |\ \leq\ |\ >\ |\ \geq\\
+  Sz, Ax &::=\ \mathbb{N}
+\end{align*}
+
+\section{Unification}
+\begin{prooftree}
+  \AxiomC{$a \not\in E$}
+  \RightLabel{\scriptsize{(1)}\label{unif:def}}
+  \UnaryInfC{$a \sim E : \{a/E\}$ }
+\end{prooftree}
+\begin{prooftree}
+  \AxiomC{}
+  \RightLabel{\scriptsize{(2)}\label{unif:var}}
+  \UnaryInfC{$a \sim a : \{\} $}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomC{$E_1 = E_2$}
+  \RightLabel{\scriptsize{(3)}\label{unif:eq}}
+  \UnaryInfC{$E_1 \sim E_2 : \{\} $}
+\end{prooftree}
+
+Unification \ref{unif:def} \ref{unif:var} \ref{unif:eq} represents ss
+
+Unification 2 represents
+
+\section{Inference}
+
+We expect all functions to be well annotated, so inference for expresssions are less important.
+
+Only variables and application really matters:
+
+\begin{prooftree}
+  \AxiomC{$x: E \in \Gamma$}
+  \RightLabel{\quad \scriptsize{(Var)}}
+  \UnaryInfC{$\Gamma \vdash x : E$}
+\end{prooftree}
+
+\begin{prooftree}
+  \AxiomC{$\Gamma \vdash f := E_1 \rightarrow E_2$}
+  \AxiomC{$\Gamma \vdash x : E_1$}
+  \RightLabel{\quad \scriptsize{(App)}}
+  \BinaryInfC{$\Gamma \vdash f@x: E_2$}
+\end{prooftree}
+
+
+
+\section{Semantics}
+
+
+\end{document}

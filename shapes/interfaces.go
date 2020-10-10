@@ -5,6 +5,8 @@ var (
 	_ Shapelike = Shape{}
 )
 
+//go-sumtype:decl Sizelike
+
 type Shapelike interface {
 	Dims() int
 	TotalSize() int // needed?
@@ -15,6 +17,11 @@ type Shapelike interface {
 	Concat(axis Axis, others ...Shapelike) (newShape Shapelike, err error)
 }
 
+// Shaper is anything that can return a Shape.
+type Shaper interface {
+	Shape() Shape
+}
+
 var (
 	_ Sizelike = Size(0)
 	_ Sizelike = Var('a')
@@ -22,6 +29,8 @@ var (
 	_ Sizelike = UnaryOp{}
 )
 
+// Sizelike represents something that can go into a Abstract. The following types are Sizelike:
+// 	Size | Var | BinOp | UnaryOp
 type Sizelike interface {
 	// Size, Var, BinOp
 	isSizelike()
@@ -32,12 +41,30 @@ type Conser interface {
 	isConser()
 }
 
+// substitutable is anything that can apply a list of subsitution and then return a substitutable.
+//
+// The following implements substitutable:
+//
+// Exprs:
+//	Shape | Abstract | Arrow | Compound
+//	Var | Size | UnaryOp
+//	IndexOf | TransposeOf | SliceOf | RepeaOf | ConcatOf
+//	Sli | Axis | Axes
+//
+// Constraints:
+//	exprConstraint | constraints | SubjectTo
+//
+// Operations:
+//	BinOp
+//
+// Compound:
+//	Compound
 type substitutable interface {
 	apply(substitutions) substitutable
 	freevars() varset // set of free variables
 }
 
-// Expr | BinOp
+// same as substitutable, except doesn't apply to internal constraints (exprConstraint and constraints)
 type substitutableExpr interface {
 	substitutable
 	subExprs() []substitutableExpr

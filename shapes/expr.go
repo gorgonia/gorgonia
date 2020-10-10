@@ -4,11 +4,20 @@ import (
 	"fmt"
 )
 
-var ()
+//go-sumtype:decl Expr
 
+// Expr represents an expression. The following types are Expr:
+// 	Shape | Abstract | Arrow | Compound
+// 	Var | Size | UnaryOp
+// 	IndexOf | TransposeOf | SliceOf | RepeatOf | ConcatOf
+//	Sli | Axis | Axes
+//
+// A compact BNF is as follows:
+// 	E := S | A | E → E | (E s.t. X)
+//	a | Sz | Π E | Σ E | D E
+// 	I n E | T []Ax E | L : E | R Ax n E | C Ax E E
+//	: | Ax | []Ax
 type Expr interface {
-	// Shape | Abstract | Var | E->E | Slice | Axis | Axes | Size
-	// IndexOf | SliceOf | TransposeOf | RepeatOf | ConcatOf
 	isExpr()
 
 	substitutable

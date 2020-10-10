@@ -2,7 +2,6 @@ package shapes_test
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/shapes"
@@ -80,7 +79,6 @@ func (d *Dense) Add(other *Dense) (*Dense, error) {
 
 func (d *Dense) Apply(fn func(float64) float64) (*Dense, error) {
 	expr := applyFn((*Dense).Apply).Shape()
-	log.Printf("expr %v", expr)
 	fnShape := shapes.Arrow{shapes.Shape{}, shapes.Shape{}}
 	sh, err := infer(expr, d.Shape(), fnShape)
 	if err != nil {
@@ -128,16 +126,21 @@ func Example_package() {
 	}
 	fmt.Printf("e: %v\n", e.Shape())
 
+	f, err := e.Apply(func(a float64) float64 { return a * a })
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Printf("f: %v\n", f.Shape())
+
 	// trying to add to a bad shape will yield an error
 	_, err = e.Add(a)
-	fmt.Println(err)
-
-	_, err = e.Apply(func(a float64) float64 { return a * a })
 	fmt.Println(err)
 
 	// Output:
 	// c: (2, 2)
 	// e: (2, 2)
+	// f: (2, 2)
 	// Failed to solve [{(2, 2) → (2, 2) = (2, 3) → a}] | a: Unification Fail. 2 ~ 3 cannot proceed
 
 }

@@ -264,7 +264,7 @@ func (op UnaryOp) resolveSize() (Size, error) {
 	case Shape:
 		switch op.Op {
 		case Const:
-			/// ????? TODO maybe change the signature of resolve()
+			return 0, errors.Errorf(unaryOpResolveErr, op)
 		case Dims:
 			return Size(len(A)), nil
 		case Prod:
@@ -285,13 +285,13 @@ func (op UnaryOp) resolveSize() (Size, error) {
 	case Axes:
 		// only D is allowed. Error otherwise
 		if op.Op != Dims {
-			return 0, errors.Errorf("Expected only Dims to work with Axes")
+			return 0, errors.Errorf(unaryOpResolveErr, op)
 		}
 		return Size(len(A)), nil
 	case Size:
 		switch op.Op {
 		case Const:
-		// ???? TODO
+			return 0, errors.Errorf(unaryOpResolveErr, op)
 		case Dims:
 			return 0, nil
 		case Prod:
@@ -303,7 +303,7 @@ func (op UnaryOp) resolveSize() (Size, error) {
 	case Axis:
 		switch op.Op {
 		case Const:
-		// ???? TODO
+			return 0, errors.Errorf(unaryOpResolveErr, op)
 		case Dims:
 			return 0, nil
 		case Prod:
@@ -312,7 +312,7 @@ func (op UnaryOp) resolveSize() (Size, error) {
 			return Size(A), nil
 		}
 	default:
-		panic("Unreachable")
+		return 0, errors.Errorf(unaryOpResolveErr, op)
 	}
 	panic("Unreachable")
 }
@@ -325,6 +325,7 @@ func (op UnaryOp) apply(ss substitutions) substitutable {
 		A:  op.A.apply(ss).(Expr),
 	}
 }
+
 func (op UnaryOp) freevars() varset { return op.A.freevars() }
 
 // UnaryOp is an Expr

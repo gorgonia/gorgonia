@@ -2,9 +2,10 @@ package shapes
 
 const (
 	dimsMismatch      = "Dimension mismatch. Expected %v. Got  %v instead."
-	invalidAxis       = "Invalid axis %d for ndarray with %d dimensions"
-	repeatedAxis      = "repeated axis %d in permutation pattern"
-	invalidSliceIndex = "Invalid slice index. Start: %d, End: %d"
+	invalidAxis       = "Invalid axis %d for ndarray with %d dimensions."
+	repeatedAxis      = "repeated axis %d in permutation pattern."
+	invalidSliceIndex = "Invalid slice index. Start: %d, End: %d."
+	unaryOpResolveErr = "Cannot resolve %v to a Size."
 )
 
 // NoOpError is a useful for operations that have no op.
