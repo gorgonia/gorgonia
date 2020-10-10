@@ -20,7 +20,6 @@ func newSparsemaxOp() *sparsemaxOp {
 }
 
 // Sparsemax -  implements the sparsemax operation described here: http://proceedings.mlr.press/v48/martins16.pdf
-// Current implementation only supports float64
 func Sparsemax(x *Node) (*Node, error) {
 	op := newSparsemaxOp()
 
@@ -84,7 +83,64 @@ func (op *sparsemaxOp) Do(inputs ...Value) (Value, error) {
 		return nil, fmt.Errorf("Can't check Sparsemax input: %w", err)
 	}
 
+	var output interface{}
+
+	switch inputTensor.Dtype() {
+	case tensor.Float64:
+		output = op.float64sparseMax(inputTensor)
+	case tensor.Float32:
+		output = op.float32sparseMax(inputTensor)
+	default:
+		return nil, fmt.Errorf("invalid input type for Sparsemax, expected float64 or float32, got: %v", inputTensor.Dtype())
+	}
+
+	return tensor.New(tensor.Of(inputTensor.Dtype()), tensor.WithShape(inputTensor.Size()), tensor.WithEngine(inputTensor.Engine()), tensor.WithBacking(output)), nil
+}
+
+// FIXME: go2 generics
+func (op *sparsemaxOp) float32sparseMax(inputTensor tensor.Tensor) interface{} {
+	sortedData := make([]float32, inputTensor.Size())
+
+	copy(sortedData, inputTensor.Data().([]float32))
+
+	sort.Slice(sortedData, func(i, j int) bool {
+		return sortedData[i] > sortedData[j]
+	})
+
+	kArray := make([]float32, len(sortedData))
+	cumArray := make([]float32, len(sortedData))
+	cumSum := float32(0.0)
+	maxIndex := 0
+
+	for i := 0; i < len(sortedData); i++ {
+		kArray[i] = 1 + float32(i)*sortedData[i]
+		cumSum += sortedData[i]
+
+		cumArray[i] = cumSum - sortedData[i]
+
+		if kArray[i] > cumArray[i] {
+			maxIndex = i + 1
+		}
+	}
+
+	threshold := float32(cumArray[maxIndex-1]-1) / float32(maxIndex)
+	output := make([]float32, inputTensor.Size())
+
+	for i := 0; i < inputTensor.Size(); i++ {
+		v, _ := inputTensor.At(i)
+		vF := v.(float32)
+
+		if vF-threshold > 0 {
+			output[i] = vF - threshold
+		}
+	}
+
+	return output
+}
+
+func (op *sparsemaxOp) float64sparseMax(inputTensor tensor.Tensor) interface{} {
 	sortedData := make([]float64, inputTensor.Size())
+
 	copy(sortedData, inputTensor.Data().([]float64))
 
 	sort.Slice(sortedData, func(i, j int) bool {
@@ -119,7 +175,7 @@ func (op *sparsemaxOp) Do(inputs ...Value) (Value, error) {
 		}
 	}
 
-	return tensor.New(tensor.Of(inputTensor.Dtype()), tensor.WithShape(inputTensor.Size()), tensor.WithEngine(inputTensor.Engine()), tensor.WithBacking(output)), nil
+	return output
 }
 
 // DoDiff calculates the diff and sets its value to the output node. Implementation for ADOp interface.
@@ -229,7 +285,7 @@ func (op *sparsemaxDiffOp) checkInput(inputs ...Value) (tensor.Tensor, tensor.Te
 	switch t := inputs[0].(type) {
 	case *dualValue:
 		if in, ok = t.Value.(tensor.Tensor); !ok {
-			return nil, nil, errors.Errorf("input should be a tensor, got %T", inputs[0])
+			return nil, nil, errors.Errorf("input should be a tensor.Tensor, got %T", inputs[0])
 		}
 	case tensor.Tensor:
 		in = t
@@ -265,16 +321,68 @@ func (op *sparsemaxDiffOp) Do(inputs ...Value) (Value, error) {
 		return nil, fmt.Errorf("sparsemaxDiffOp.Do inputs sizes should be equal")
 	}
 
-	data, ok := inputTensor.Data().([]float64)
-	if !ok {
-		return nil, fmt.Errorf("sparsemaxDiffOp.Do expected input to be []float64, got %T", inputTensor.Data())
+	var diff interface{}
+
+	switch inputTensor.Dtype() {
+	case tensor.Float64:
+		outputData, ok := gradTensor.Data().([]float64)
+		if !ok {
+			return nil, fmt.Errorf("sparsemaxDiffOp.Do expected input to be []float64, got %T", inputTensor.Data())
+		}
+
+		diff = op.float64sparseMaxDiff(inputTensor.Data().([]float64), outputData)
+	case tensor.Float32:
+		outputData, ok := gradTensor.Data().([]float32)
+		if !ok {
+			return nil, fmt.Errorf("sparsemaxDiffOp.Do expected input to be []float32, got %T", inputTensor.Data())
+		}
+
+		diff = op.float32sparseMaxDiff(inputTensor.Data().([]float32), outputData)
+	default:
+		return nil, fmt.Errorf("sparsemaxDiffOp.Do expected input to be []float64 or []float32, got %T", inputTensor.Data())
 	}
 
-	outputData, ok := gradTensor.Data().([]float64)
-	if !ok {
-		return nil, fmt.Errorf("sparsemaxDiffOp.Do expected input to be []float64, got %T", inputTensor.Data())
+	val := tensor.New(
+		tensor.Of(inputTensor.Dtype()),
+		tensor.WithShape(inputTensor.Size()),
+		tensor.WithEngine(inputTensor.Engine()),
+		tensor.WithBacking(diff),
+	)
+
+	return val, nil
+}
+
+// FIXME: go2 generics
+func (op *sparsemaxDiffOp) float32sparseMaxDiff(data, outputData []float32) interface{} {
+	nonZeros := float32(0.0)
+	inputSum := float32(0.0)
+	diff := make([]float32, len(data))
+
+	for i, v := range data {
+		if v == 0.0 {
+			continue
+		}
+
+		diff[i] = 1.0
+
+		inputSum += outputData[i]
+		nonZeros++
 	}
 
+	sum := float32(0.0)
+
+	if nonZeros > 0 {
+		sum = inputSum / nonZeros
+	}
+
+	for i := range diff {
+		diff[i] *= (outputData[i] - sum)
+	}
+
+	return diff
+}
+
+func (op *sparsemaxDiffOp) float64sparseMaxDiff(data, outputData []float64) interface{} {
 	nonZeros := 0.0
 	inputSum := 0.0
 	diff := make([]float64, len(data))
@@ -300,14 +408,7 @@ func (op *sparsemaxDiffOp) Do(inputs ...Value) (Value, error) {
 		diff[i] *= (outputData[i] - sum)
 	}
 
-	val := tensor.New(
-		tensor.Of(inputTensor.Dtype()),
-		tensor.WithShape(inputTensor.Size()),
-		tensor.WithEngine(inputTensor.Engine()),
-		tensor.WithBacking(diff),
-	)
-
-	return val, nil
+	return diff
 }
 
 // ensure it complies with the Op interface
