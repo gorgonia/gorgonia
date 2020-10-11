@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gorgonia.org/tensor"
 )
 
@@ -1019,5 +1020,39 @@ func TestReshapeRuntime(t *testing.T) {
 
 	if !x.Value().Shape().Eq(tensor.Shape{28, 28}) {
 		t.Errorf("A mutation of shape has occurred")
+	}
+}
+
+var ravelTests = []struct {
+	input  tensor.Shape
+	output tensor.Shape
+}{
+	{
+		tensor.Shape{3, 3},
+		tensor.Shape{9},
+	},
+	{
+		tensor.Shape{2, 3},
+		tensor.Shape{6},
+	},
+	{
+		tensor.Shape{2, 1, 3},
+		tensor.Shape{6},
+	},
+	{
+		tensor.Shape{1, 1, 1},
+		tensor.Shape{1},
+	},
+}
+
+func TestRavel(t *testing.T) {
+	c := require.New(t)
+
+	for i, rst := range ravelTests {
+		g := NewGraph()
+		t := NewTensor(g, Float64, len(rst.input), WithShape(rst.input...))
+		t2 := Ravel(t)
+
+		c.Equal(rst.output, t2.Shape(), "expected to be flatten in test case: %d", i)
 	}
 }
