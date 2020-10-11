@@ -1051,8 +1051,9 @@ func TestRavel(t *testing.T) {
 	for i, rst := range ravelTests {
 		g := NewGraph()
 		t := NewTensor(g, Float64, len(rst.input), WithShape(rst.input...))
-		t2 := Ravel(t)
+		t2, err := Ravel(t)
 
+		c.NoError(err)
 		c.Equal(rst.output, t2.Shape(), "expected to be flatten in test case: %d", i)
 	}
 }
