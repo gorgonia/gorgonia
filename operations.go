@@ -632,13 +632,8 @@ func Reshape(n *Node, to tensor.Shape) (retVal *Node, err error) {
 }
 
 // Ravel flattens the given node and returns the new node
-func Ravel(n *Node) (retVal *Node) {
-	retVal, err := Reshape(n, tensor.Shape{n.shape.TotalSize()})
-	if err != nil {
-		panic(err)
-	}
-
-	return retVal
+func Ravel(n *Node) (retVal *Node, err error) {
+	return Reshape(n, tensor.Shape{n.shape.TotalSize()})
 }
 
 /* Contraction related operations */
