@@ -23,8 +23,8 @@ func newSoftmaxOp(inputShape tensor.Shape, axes ...int) *softmaxOp {
 	return softmaxop
 }
 
-// SoftMax2 -  implements the softmax operation
-func SoftMax2(x *Node, axis ...int) (*Node, error) {
+// SoftMax -  implements the softmax operation
+func SoftMax(x *Node, axis ...int) (*Node, error) {
 	xShape := x.Shape()
 	op := newSoftmaxOp(xShape, axis...)
 
@@ -120,6 +120,55 @@ func (op *softmaxOp) Do(inputs ...Value) (retVal Value, err error) {
 	return div, nil
 }
 
+// DoDiff calculates the diff and sets its value to the output node. Implementation for ADOp interface.
+func (op *softmaxOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
+	if len(inputs) != 1 {
+		return fmt.Errorf("SoftmaxOp.DoDiff needs 1 arguments")
+	}
+
+	odv := output.boundTo.(*dualValue)
+	odvd := odv.Value.(tensor.Tensor)
+	diffOp := newSoftmaxOpDiff()
+
+	result, err := diffOp.Do()
+	if err != nil {
+		return err
+	}
+
+	sum, err := odvd.(*tensor.Dense).Add(result.(*tensor.Dense), tensor.UseUnsafe())
+	if err != nil {
+		return err
+	}
+
+	odv.d = sum
+
+	return nil
+}
+
+// SymDiff applies the diff op. Implementation for SDOp interface.
+func (op *softmaxOp) SymDiff(inputs Nodes, output, grad *Node) (Nodes, error) {
+	err := checkArity(op, len(inputs))
+	if err != nil {
+		return nil, err
+	}
+
+	diffOp := newSoftmaxOpDiff()
+	nodes := make(Nodes, 1)
+
+	nodes[0], err = ApplyOp(diffOp, output)
+
+	return nodes, err
+}
+
+// DiffWRT is an implementation for the SDOp interface
+func (op *softmaxOp) DiffWRT(inputs int) []bool {
+	if inputs != 1 {
+		panic(fmt.Sprintf("softmax operator only supports one input, got %d instead", inputs))
+	}
+
+	return []bool{true}
+}
+
 type softmaxDiffOp struct {
 }
 
@@ -192,10 +241,7 @@ func (op *softmaxDiffOp) Do(inputs ...Value) (Value, error) {
 		return nil, fmt.Errorf("Can't check SoftmaxDiff input: %w", err)
 	}
 
-	diag, err := tensor.Diag(inputTensor)
-	if err != nil {
-		return nil, fmt.Errorf("softmaxDiffOp.Do error calculating diag: %w", err)
-	}
+	diag := tensor.New(tensor.AsDenseDiag(inputTensor))
 
 	sm := inputTensor.Clone().(tensor.Tensor)
 	sm.Reshape(inputTensor.Shape().TotalSize(), 1)
@@ -218,7 +264,9 @@ func (op *softmaxDiffOp) Do(inputs ...Value) (Value, error) {
 
 // ensure it complies with the Op interface
 var (
-	_ Op = &softmaxOp{}
+	_ Op   = &softmaxOp{}
+	_ ADOp = &softmaxOp{}
+	_ SDOp = &softmaxOp{}
 
 	_ Op = &softmaxDiffOp{}
 )

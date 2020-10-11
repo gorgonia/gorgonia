@@ -157,7 +157,7 @@ func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
 //		e^(a[i]) / sum((e^(a[i])))
 // For a more numerically stable SoftMax, use StableSoftMax.
 // TODO: MULTI RANK SOFTMAX
-func SoftMax(a *Node, axes ...int) (retVal *Node, err error) {
+func SoftMaxOld(a *Node, axes ...int) (retVal *Node, err error) {
 	aShape := a.Shape()
 	axis := aShape.Dims() - 1 // default: last dim
 	if a.IsColVec() || (a.IsVector() && !a.IsRowVec()) {

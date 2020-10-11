@@ -399,7 +399,8 @@ func TestMisha(t *testing.T) {
 
 func TestSoftMax(t *testing.T) {
 	defer runtime.GC()
-	assert := assert.New(t)
+
+	assert := require.New(t)
 	g := NewGraph()
 	xT := tensor.New(tensor.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
 	x := NewVector(g, Float64, WithShape(5), WithValue(xT))
