@@ -631,6 +631,16 @@ func Reshape(n *Node, to tensor.Shape) (retVal *Node, err error) {
 	return ApplyOp(op, n)
 }
 
+// Ravel flattens the given node and returns the new node
+func Ravel(n *Node) (retVal *Node) {
+	retVal, err := Reshape(n, tensor.Shape{n.shape.TotalSize()})
+	if err != nil {
+		panic(err)
+	}
+
+	return retVal
+}
+
 /* Contraction related operations */
 
 // Tensordot performs a tensor contraction of a and b along specified axes.
