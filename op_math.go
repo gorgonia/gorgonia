@@ -732,6 +732,7 @@ func (op linAlgBinOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 		if err = a.T(); err != nil {
 			return nil, errors.Wrap(err, tFail)
 		}
+
 		// untranspose
 		defer a.T()
 	}
@@ -740,6 +741,7 @@ func (op linAlgBinOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 		if err = b.T(); err != nil {
 			return nil, errors.Wrap(err, tFail)
 		}
+
 		// untranspose
 		defer b.T()
 	}
@@ -751,9 +753,11 @@ func (op linAlgBinOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 		retVal, err = tensor.MatVecMul(a, b, opts...)
 	case vecDotOperator:
 		var ret interface{}
+
 		if ret, err = tensor.Inner(a, b); err != nil {
 			return nil, errors.Wrapf(err, "Failed to carry out linalgBinOp operation %v", op)
 		}
+
 		retVal, _ = anyToScalar(ret)
 	case outerProdOperator:
 		retVal, err = tensor.Outer(a, b, opts...)
@@ -761,8 +765,12 @@ func (op linAlgBinOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 		// checks were done when the op was created
 		retVal, err = batchedMatMul(a, b, nil, op.transA, op.transB, false)
 	}
-	return
 
+	if err != nil {
+		return nil, fmt.Errorf("linAlgBinOp %v %s %v error: %w", a.Shape(), op.āBinaryOperator, b.Shape(), err)
+	}
+
+	return retVal, nil
 }
 
 func (op linAlgBinOp) preallocBatchMatMul(incr bool, prealloc Value, inputs ...Value) (retVal Value, err error) {

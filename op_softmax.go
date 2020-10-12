@@ -50,15 +50,16 @@ func (op *softmaxOp) String() string {
 }
 
 func (op *softmaxOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
-	s := inputs[0].(tensor.Shape).Clone()
-	return s, nil
+	s := inputs[0].(tensor.Shape)
+
+	return tensor.Shape{s.TotalSize()}, nil
 }
 
 func (op *softmaxOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	t := newTensorType(1, a)
 
-	return hm.NewFnType(t, t)
+	return hm.NewFnType(t, t) // f(float64) float64
 }
 
 func (op *softmaxOp) OverwritesInput() int { return -1 }
@@ -68,8 +69,10 @@ func (op *softmaxOp) checkInput(inputs ...Value) (tensor.Tensor, error) {
 		return nil, err
 	}
 
-	var in tensor.Tensor
-	var ok bool
+	var (
+		in tensor.Tensor
+		ok bool
+	)
 
 	if in, ok = inputs[0].(tensor.Tensor); !ok {
 		return nil, errors.Errorf("Expected input to be a tensor")
@@ -94,6 +97,7 @@ func (op *softmaxOp) Do(inputs ...Value) (retVal Value, err error) {
 		axis = 0
 	}
 
+	// FIXME: v0.10
 	if len(op.axes) > 0 {
 		if op.axes[0] >= axis+1 || op.axes[0] < 0 {
 			return nil, errors.Errorf("Cannot perform SoftMax on axis %d. Input has shape %v", op.axes[0], aShape)
@@ -242,7 +246,6 @@ func (op *softmaxDiffOp) Do(inputs ...Value) (Value, error) {
 	}
 
 	diag := tensor.New(tensor.AsDenseDiag(inputTensor))
-
 	sm := inputTensor.Clone().(tensor.Tensor)
 
 	err = sm.Reshape(inputTensor.Shape().TotalSize(), 1)
