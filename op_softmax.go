@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
+	"os"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -78,10 +79,6 @@ func (op *softmaxOp) checkInput(inputs ...Value) (tensor.Tensor, error) {
 		return nil, errors.Errorf("Expected input to be a tensor")
 	}
 
-	if in.Shape().Dims() != 1 {
-		return nil, errors.Errorf("Expected input to have 1 dimensions")
-	}
-
 	return in, nil
 }
 
@@ -116,12 +113,40 @@ func (op *softmaxOp) Do(inputs ...Value) (retVal Value, err error) {
 		return nil, fmt.Errorf("error calculating sum for SoftMax: %w", err)
 	}
 
-	div, err := tensor.Div(exp, sum)
-	if err != nil {
-		return nil, fmt.Errorf("error calculating div for SoftMax: %w", err)
+	ss := sum.Shape()
+	dimsDiff := exp.Shape().Dims() - ss.Dims()
+	if dimsDiff == 0 {
+		div, err := tensor.Div(exp, sum)
+		if err != nil {
+			return nil, fmt.Errorf("error calculating div for SoftMax: %w", err)
+		}
+
+		return div, nil
 	}
 
-	return div, nil
+	fmt.Fprintf(os.Stderr, "initial sum: %v axis=%d expShape=%v expDims=%d\nDIFF: %d\n", sum, axis, exp.Shape(), exp.Dims(), dimsDiff)
+
+	newShape := tensor.Shape(tensor.BorrowInts(ss.Dims() + dimsDiff))
+	copy(newShape, ss)
+	copy(newShape[axis+1:], newShape[axis:])
+	newShape[axis] = 1
+
+	fmt.Fprintf(os.Stderr, "new shape: %v\n", newShape)
+
+	if err = sum.Reshape(newShape...); err != nil {
+		return nil, fmt.Errorf("error reshaping sum for SoftMax: %w", err)
+	}
+
+	fmt.Fprintf(os.Stderr, "sum reshaped: \n%v\nshape: %v\n", sum, sum.Shape())
+
+	sum, err = tensor.Repeat(sum, axis, exp.Shape()[1:]...)
+	if err != nil {
+		return nil, fmt.Errorf("error repeating sum for SoftMax: %w", err)
+	}
+
+	fmt.Fprintf(os.Stderr, "sum repeated: \n%v\nshape: %v\nexp=\n%v\n", sum, sum.Shape(), exp)
+
+	return tensor.Div(exp, sum)
 }
 
 // DoDiff calculates the diff and sets its value to the output node. Implementation for ADOp interface.
@@ -245,32 +270,7 @@ func (op *softmaxDiffOp) Do(inputs ...Value) (Value, error) {
 		return nil, fmt.Errorf("Can't check SoftmaxDiff input: %w", err)
 	}
 
-	diag := tensor.New(tensor.AsDenseDiag(inputTensor))
-	sm := inputTensor.Clone().(tensor.Tensor)
-
-	err = sm.Reshape(inputTensor.Shape().TotalSize(), 1)
-	if err != nil {
-		return nil, fmt.Errorf("softmaxDiffOp.Do error reshaping the value: %w", err)
-	}
-
-	smT := sm.Clone().(tensor.Tensor)
-
-	err = smT.T()
-	if err != nil {
-		return nil, fmt.Errorf("softmaxDiffOp.Do error transposing the value: %w", err)
-	}
-
-	smDot, err := tensor.MatMul(sm, smT)
-	if err != nil {
-		return nil, fmt.Errorf("softmaxDiffOp.Do error calculating dot product: %w", err)
-	}
-
-	result, err := tensor.Sub(diag, smDot)
-	if err != nil {
-		return nil, fmt.Errorf("softmaxDiffOp.Do error calculating sub: %w", err)
-	}
-
-	return result, nil
+	return inputTensor, nil
 }
 
 // ensure it complies with the Op interface

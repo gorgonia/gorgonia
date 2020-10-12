@@ -48,6 +48,7 @@ func Example_errorHandling() {
 			)),
 		)),
 	))
+
 	fmt.Printf("nn2: %v\n", nn2)
 
 	defer func() {
@@ -55,6 +56,7 @@ func Example_errorHandling() {
 			fmt.Printf("An error occurs (caught by recover()): %v\n", r)
 		}
 	}()
+
 	nn2PlusWrong := Must(Add(nn2, wrong2))
 	_ = nn2PlusWrong
 
