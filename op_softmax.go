@@ -244,12 +244,20 @@ func (op *softmaxDiffOp) Do(inputs ...Value) (Value, error) {
 	diag := tensor.New(tensor.AsDenseDiag(inputTensor))
 
 	sm := inputTensor.Clone().(tensor.Tensor)
-	sm.Reshape(inputTensor.Shape().TotalSize(), 1)
+
+	err = sm.Reshape(inputTensor.Shape().TotalSize(), 1)
+	if err != nil {
+		return nil, fmt.Errorf("softmaxDiffOp.Do error reshaping the value: %w", err)
+	}
 
 	smT := sm.Clone().(tensor.Tensor)
-	smT.Transpose()
 
-	smDot, err := tensor.Dot(sm, smT)
+	err = smT.T()
+	if err != nil {
+		return nil, fmt.Errorf("softmaxDiffOp.Do error transposing the value: %w", err)
+	}
+
+	smDot, err := tensor.MatMul(sm, smT)
 	if err != nil {
 		return nil, fmt.Errorf("softmaxDiffOp.Do error calculating dot product: %w", err)
 	}
