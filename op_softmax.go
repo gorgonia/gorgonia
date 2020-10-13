@@ -126,6 +126,7 @@ func (op *softmaxOp) Do(inputs ...Value) (retVal Value, err error) {
 
 	// MULTIDIMENSIONAL SOFTMAX
 
+	// REPEAT SUM (traditionally called broadcasting)
 	newShape := tensor.Shape(tensor.BorrowInts(ss.Dims() + dimsDiff))
 	copy(newShape, ss)
 	copy(newShape[axis+1:], newShape[axis:])
@@ -152,7 +153,7 @@ func (op *softmaxOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) er
 	odvd := odv.Value.(tensor.Tensor)
 	diffOp := newSoftmaxOpDiff()
 
-	result, err := diffOp.Do()
+	result, err := diffOp.Do(odv)
 	if err != nil {
 		return err
 	}
@@ -262,8 +263,18 @@ func (op *softmaxDiffOp) Do(inputs ...Value) (Value, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Can't check SoftmaxDiff input: %w", err)
 	}
-
-	return inputTensor, nil
+	y := inputTensor.(*tensor.Dense)
+	s := y.Shape()
+	fst := tensor.ProdInts([]int(s))
+	y.Reshape(fst, 1)
+	yᵀ := y.ShallowClone()
+	yᵀ.T()
+	yyᵀ, err := tensor.MatMul(y, yᵀ)
+	if err != nil {
+		return nil, err
+	}
+	diag := tensor.New(tensor.AsDenseDiag(y.Data()))
+	return diag.Sub(yyᵀ.(*tensor.Dense)) // jacobian
 }
 
 // ensure it complies with the Op interface

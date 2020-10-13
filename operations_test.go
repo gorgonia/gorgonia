@@ -399,8 +399,7 @@ func TestMisha(t *testing.T) {
 
 func TestSoftMax(t *testing.T) {
 	defer runtime.GC()
-
-	assert := require.New(t)
+	assert := assert.New(t)
 	g := NewGraph()
 	xT := tensor.New(tensor.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
 	x := NewVector(g, Float64, WithShape(5), WithValue(xT))
@@ -412,7 +411,7 @@ func TestSoftMax(t *testing.T) {
 		t.Error(err)
 	}
 
-	m := NewTapeMachine(g)
+	m := NewTapeMachine(g, TraceExec())
 	defer m.Close()
 	if err := m.RunAll(); err != nil {
 		t.Error(err)
@@ -454,6 +453,14 @@ func TestSoftMax(t *testing.T) {
 
 	assert.Equal(smg, sm2g)
 	assert.Equal(xG, x2G)
+
+	correctGrad := []float64{
+		-0, -0, -8.379839604304342, -0, -0,
+	}
+
+	if !floatsEqual64(correctGrad, smg.Data().([]float64)) {
+		t.Errorf("Expected results to be %v. Got %v.", correctGrad, smg.Data())
+	}
 }
 
 var sliceTests = []struct {
