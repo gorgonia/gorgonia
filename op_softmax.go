@@ -148,7 +148,7 @@ func (op *softmaxOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) er
 	odv := output.boundTo.(*dualValue)
 	idv := inputs[0].boundTo.(*dualValue)
 	idvd := idv.d.(*tensor.Dense)
-	diffOp := newSoftmaxOpDiff()
+	diffOp := newSoftmaxOpDiff(op.axis)
 
 	result, err := diffOp.Do(odv.Value, odv.d)
 	if err != nil {
@@ -172,7 +172,7 @@ func (op *softmaxOp) SymDiff(inputs Nodes, output, grad *Node) (Nodes, error) {
 		return nil, err
 	}
 
-	diffOp := newSoftmaxOpDiff()
+	diffOp := newSoftmaxOpDiff(op.axis)
 	nodes := make(Nodes, 1)
 
 	nodes[0], err = ApplyOp(diffOp, output, grad)
@@ -193,8 +193,8 @@ type softmaxDiffOp struct {
 	axis int
 }
 
-func newSoftmaxOpDiff() *softmaxDiffOp {
-	return &softmaxDiffOp{}
+func newSoftmaxOpDiff(axis int) *softmaxDiffOp {
+	return &softmaxDiffOp{axis: axis}
 }
 
 func (op *softmaxDiffOp) Arity() int { return 2 }
@@ -289,7 +289,7 @@ func (op *softmaxDiffOp) Do(inputs ...Value) (Value, error) {
 
 		Now, we'll do some work:
 		1. Make scalars of shape (N,).
-		2. Make mulars of shape (D,). To facilitate multiplication, we set the initial valus
+		2. Make mulars of shape (D,). To facilitate multiplication, we set the initial values
 		   to the identity of multiplication: 1.
 		3. Populate scalars. This is abit tricky:
 			scalars[i] = Y[i] · dY[i]
