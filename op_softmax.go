@@ -56,7 +56,7 @@ func (op *softmaxOp) String() string {
 func (op *softmaxOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
 	s := inputs[0].(tensor.Shape)
 
-	return tensor.Shape{s.TotalSize()}, nil
+	return s, nil
 }
 
 func (op *softmaxOp) Type() hm.Type {
@@ -338,7 +338,25 @@ func (op *softmaxDiffOp) Do(inputs ...Value) (Value, error) {
 		impl.Dgemm(blas.NoTrans, blas.NoTrans, prodBefore, prodAfter, 1, -1, scaleData, 1, mulData, prodAfter, 1, C, prodAfter)
 		val = C
 	case []float32:
-		//TODO: use Sdot and Sgemm instead of Ddot and Dgemm
+		gradData := grad.Data().([]float32)
+		mulData := mulars.Data().([]float32)
+		var scaleData []float32
+		switch sd := scalars.Data().(type) {
+		case float32:
+			scaleData = make([]float32, 1)
+			scaleData[0] = sd
+		case []float32:
+			scaleData = sd
+
+		}
+		for i := 0; i < prodBefore; i++ {
+			scaleData[i] = impl.Sdot(prodAfter, yy[i*prodAfter:], 1, gradData[i*prodAfter:], 1)
+		}
+		C := make([]float32, s.TotalSize()) // output
+
+		// important note: here, alpha is -1 and beta is 1.
+		impl.Sgemm(blas.NoTrans, blas.NoTrans, prodBefore, prodAfter, 1, -1, scaleData, 1, mulData, prodAfter, 1, C, prodAfter)
+		val = C
 	case []complex64:
 		panic("Complex64 not done yet")
 	case []complex128:
