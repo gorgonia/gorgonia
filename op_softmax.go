@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
-	"os"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -114,7 +113,8 @@ func (op *softmaxOp) Do(inputs ...Value) (retVal Value, err error) {
 	}
 
 	ss := sum.Shape()
-	dimsDiff := exp.Shape().Dims() - ss.Dims()
+	es := exp.Shape()
+	dimsDiff := es.Dims() - ss.Dims()
 	if dimsDiff == 0 {
 		div, err := tensor.Div(exp, sum)
 		if err != nil {
@@ -124,27 +124,20 @@ func (op *softmaxOp) Do(inputs ...Value) (retVal Value, err error) {
 		return div, nil
 	}
 
-	fmt.Fprintf(os.Stderr, "initial sum: %v axis=%d expShape=%v expDims=%d\nDIFF: %d\n", sum, axis, exp.Shape(), exp.Dims(), dimsDiff)
+	// MULTIDIMENSIONAL SOFTMAX
 
 	newShape := tensor.Shape(tensor.BorrowInts(ss.Dims() + dimsDiff))
 	copy(newShape, ss)
 	copy(newShape[axis+1:], newShape[axis:])
 	newShape[axis] = 1
 
-	fmt.Fprintf(os.Stderr, "new shape: %v\n", newShape)
-
 	if err = sum.Reshape(newShape...); err != nil {
 		return nil, fmt.Errorf("error reshaping sum for SoftMax: %w", err)
 	}
 
-	fmt.Fprintf(os.Stderr, "sum reshaped: \n%v\nshape: %v\n", sum, sum.Shape())
-
-	sum, err = tensor.Repeat(sum, axis, exp.Shape()[1:]...)
-	if err != nil {
+	if sum, err = tensor.Repeat(sum, axis, es[axis]); err != nil {
 		return nil, fmt.Errorf("error repeating sum for SoftMax: %w", err)
 	}
-
-	fmt.Fprintf(os.Stderr, "sum repeated: \n%v\nshape: %v\nexp=\n%v\n", sum, sum.Shape(), exp)
 
 	return tensor.Div(exp, sum)
 }
