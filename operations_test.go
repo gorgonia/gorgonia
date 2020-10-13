@@ -2,7 +2,6 @@ package gorgonia
 
 import (
 	"io/ioutil"
-	"log"
 	"runtime"
 	"testing"
 
@@ -396,67 +395,6 @@ func TestMisha(t *testing.T) {
 	// assert non-monotonocity of Mish'
 	assert.Greater(extractF64(grad0[0].Value()), extractF64(grad1[0].Value()))
 	assert.Less(extractF64(grad1[0].Value()), extractF64(grad2[0].Value()))
-}
-
-func TestSoftMax(t *testing.T) {
-	defer runtime.GC()
-	g := NewGraph()
-	xT := tensor.New(tensor.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
-	x := NewVector(g, Float64, WithShape(5), WithValue(xT))
-	sm := Must(SoftMax(x))
-	logsm := Must(Neg(Must(Log(sm))))
-	cost := Must(Slice(logsm, S(2)))
-
-	if _, err := Grad(cost, x); err != nil {
-		t.Error(err)
-	}
-
-	m := NewTapeMachine(g, TraceExec())
-	defer m.Close()
-	if err := m.RunAll(); err != nil {
-		t.Error(err)
-	}
-
-	var xG Value
-	var err error
-	if xG, err = x.Grad(); err != nil {
-		t.Error(err)
-	}
-
-	// machine 2, graph 2
-	h := NewGraph()
-	xT2 := tensor.New(tensor.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
-	x2 := NewVector(h, Float64, WithShape(5), WithValue(xT2))
-	sm2 := Must(SoftMax(x2))
-	logsm2 := Must(Neg(Must(Log(sm2))))
-	Must(Slice(logsm2, S(2)))
-
-	m2 := NewLispMachine(h)
-	defer m2.Close()
-	if err = m2.RunAll(); err != nil {
-		log.Printf("ERR %v", err)
-		t.Error(err)
-	}
-
-	var x2G Value
-	if x2G, err = x2.Grad(); err != nil {
-		t.Error(err)
-	}
-
-	if !floatsEqual64(xG.Data().([]float64), x2G.Data().([]float64)) {
-		t.Errorf("Expected both gradients of X to be the same.")
-	}
-
-	correctXGrad := []float64{
-		0.178025447751409, 0.1967485475322529, 0.11933402633223977, 0.24030921861990098, 0.2655827597641975,
-	}
-
-	if !floatsEqual64(correctXGrad, x2G.Data().([]float64)) {
-		t.Errorf("Expected results to be %v. Got %v.", correctXGrad, x2G.Data())
-	}
-	if !floatsEqual64(correctXGrad, xG.Data().([]float64)) {
-		t.Errorf("Expected results to be %v. Got %v.", correctXGrad, xG.Data())
-	}
 }
 
 var sliceTests = []struct {

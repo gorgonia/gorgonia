@@ -29,7 +29,9 @@ func newSoftmaxOp(inputShape tensor.Shape, axes ...int) *softmaxOp {
 	return softmaxop
 }
 
-// SoftMax -  implements the softmax operation
+// SoftMax performs softmax on the input. Specifically this is used:
+//		e^(a[i]) / sum((e^(a[i])))
+// For a more numerically stable SoftMax, use StableSoftMax.
 func SoftMax(x *Node, axis ...int) (*Node, error) {
 	xShape := x.Shape()
 	op := newSoftmaxOp(xShape, axis...)

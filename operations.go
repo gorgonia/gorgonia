@@ -153,56 +153,6 @@ func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
 
 // more complex unaries
 
-// SoftMax performs softmax on the input. Specifically this is used:
-//		e^(a[i]) / sum((e^(a[i])))
-// For a more numerically stable SoftMax, use StableSoftMax.
-// TODO: MULTI RANK SOFTMAX
-func SoftMaxOld(a *Node, axes ...int) (retVal *Node, err error) {
-	aShape := a.Shape()
-	axis := aShape.Dims() - 1 // default: last dim
-	if a.IsColVec() || (a.IsVector() && !a.IsRowVec()) {
-		axis = 0
-	}
-
-	if len(axes) > 0 {
-		if axes[0] >= axis+1 || axes[0] < 0 {
-			return nil, errors.Errorf("Cannot perform SoftMax on axis %d. Input has shape %v", axes[0], a.Shape())
-		}
-		axis = axes[0]
-	}
-
-	var exp, sum *Node
-	if exp, err = Exp(a); err != nil {
-		return nil, errors.Wrap(err, operationError)
-	}
-	if sum, err = Sum(exp, axis); err != nil {
-		return nil, errors.Wrap(err, operationError)
-	}
-
-	if sum.IsScalar() {
-		return HadamardDiv(exp, sum)
-	}
-
-	// reshape if necessary
-	ss := sum.Shape()
-	diff := exp.Shape().Dims() - ss.Dims()
-
-	// TODO: multirank softmax
-	if diff > 0 {
-		newShape := tensor.Shape(tensor.BorrowInts(ss.Dims() + diff))
-		copy(newShape, ss)
-		copy(newShape[axis+1:], newShape[axis:])
-		newShape[axis] = 1
-
-		if sum, err = Reshape(sum, newShape); err != nil {
-			return nil, errors.Wrap(err, "Failed to reshape")
-		}
-	}
-
-	return BroadcastHadamardDiv(exp, sum, nil, []byte{byte(axis)})
-
-}
-
 // StableSoftMax performs a numerically stable softmax on the input. Specifically this is the formula used:
 //		e^(a - max(a)) / sum(e^(a - max(a)))
 func StableSoftMax(a *Node) (retVal *Node, err error) {
