@@ -1,10 +1,11 @@
 package gorgonia
 
 import (
-	"log"
+	"fmt"
 	"runtime"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorgonia.org/tensor"
 )
@@ -40,63 +41,99 @@ func TestSoftmaxDo(t *testing.T) {
 	}
 }
 
+var testCasesSoftMax = []struct {
+	input            []float64
+	inputShape       tensor.Shape
+	axis             []int
+	expectedGradient []float64
+}{
+	{
+		[]float64{0.1, 0.2, -0.3, 0.4, 0.5},
+		tensor.Shape{5},
+		[]int{},
+		[]float64{0.178025447751409, 0.1967485475322529, 0.11933402633223977, 0.24030921861990098, 0.2655827597641975},
+	},
+	{
+		[]float64{0.1, 0.2, -0.3, 0.4, 0.5},
+		tensor.Shape{5},
+		[]int{0},
+		[]float64{0.178025447751409, 0.1967485475322529, 0.11933402633223977, 0.24030921861990098, 0.2655827597641975},
+	},
+	{
+		[]float64{0.1, 0.2, -0.3, 0.4, 0.5, -0.6},
+		tensor.Shape{3, 2},
+		[]int{1},
+		[]float64{0, 0, 0, 0, 0.7502601055951175, 0.24973989440488234},
+	},
+}
+
 func TestSoftMax(t *testing.T) {
 	defer runtime.GC()
-	g := NewGraph()
-	xT := tensor.New(tensor.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
-	x := NewVector(g, Float64, WithShape(5), WithValue(xT))
-	sm := Must(SoftMax(x))
-	logsm := Must(Neg(Must(Log(sm))))
-	cost := Must(Slice(logsm, S(2)))
 
-	if _, err := Grad(cost, x); err != nil {
-		t.Error(err)
+	for _, tc := range testCasesSoftMax {
+		t.Run(fmt.Sprintf("SoftMax(%v,%v)", tc.input, tc.axis), func(t *testing.T) {
+			c := assert.New(t)
+
+			g := NewGraph()
+			xT := tensor.New(tensor.WithShape(tc.inputShape...), tensor.WithBacking(tc.input))
+			x := NewTensor(g, Float64, xT.Dims(), WithValue(xT))
+			sm := Must(SoftMax(x, tc.axis...))
+			logsm := Must(Neg(Must(Log(sm))))
+			cost := Must(Slice(logsm, S(2)))
+
+			if cost.Dims() > 0 {
+				cost = Must(Slice(cost, S(0)))
+			}
+
+			_, err := Grad(cost, x)
+			c.NoError(err)
+
+			m := NewTapeMachine(g, TraceExec())
+			defer m.Close()
+
+			err = m.RunAll()
+			c.NoError(err)
+
+			xG, err := x.Grad()
+			c.NoError(err)
+			c.NotNil(xG)
+
+			// machine 2, graph 2
+			h := NewGraph()
+			xT2 := tensor.New(tensor.WithShape(tc.inputShape...), tensor.WithBacking(tc.input))
+			x2 := NewTensor(h, Float64, xT2.Dims(), WithValue(xT2))
+			sm2 := Must(SoftMax(x2, tc.axis...))
+			logsm2 := Must(Neg(Must(Log(sm2))))
+
+			cost2 := Must(Slice(logsm2, S(2)))
+			if cost2.Dims() > 0 {
+				cost2 = Must(Slice(cost2, S(0)))
+			}
+
+			m2 := NewLispMachine(h)
+			defer m2.Close()
+
+			err = m2.RunAll()
+			c.NoError(err)
+
+			x2G, err := x2.Grad()
+			c.NoError(err)
+
+			c.Equal(tc.expectedGradient, xG.Data())
+			c.Equal(tc.expectedGradient, x2G.Data())
+		})
 	}
+}
 
-	m := NewTapeMachine(g, TraceExec())
-	defer m.Close()
-	if err := m.RunAll(); err != nil {
-		t.Error(err)
-	}
+func Benchmark(b *testing.B) {
+	c := require.New(b)
 
-	var xG Value
-	var err error
-	if xG, err = x.Grad(); err != nil {
-		t.Error(err)
-	}
+	tt := tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(5), tensor.WithBacking([]float64{0.1, 0.1, -0.1, 0.3, 0.2}))
 
-	// machine 2, graph 2
-	h := NewGraph()
-	xT2 := tensor.New(tensor.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
-	x2 := NewVector(h, Float64, WithShape(5), WithValue(xT2))
-	sm2 := Must(SoftMax(x2))
-	logsm2 := Must(Neg(Must(Log(sm2))))
-	Must(Slice(logsm2, S(2)))
+	for i := 0; i < b.N; i++ {
+		op := newSoftmaxOp(tt.Shape())
+		_, err := op.Do(tt)
 
-	m2 := NewLispMachine(h)
-	defer m2.Close()
-	if err = m2.RunAll(); err != nil {
-		log.Printf("ERR %v", err)
-		t.Error(err)
-	}
-
-	var x2G Value
-	if x2G, err = x2.Grad(); err != nil {
-		t.Error(err)
-	}
-
-	if !floatsEqual64(xG.Data().([]float64), x2G.Data().([]float64)) {
-		t.Errorf("Expected both gradients of X to be the same.")
-	}
-
-	correctXGrad := []float64{
-		0.178025447751409, 0.1967485475322529, 0.11933402633223977, 0.24030921861990098, 0.2655827597641975,
-	}
-
-	if !floatsEqual64(correctXGrad, x2G.Data().([]float64)) {
-		t.Errorf("Expected results to be %v. Got %v.", correctXGrad, x2G.Data())
-	}
-	if !floatsEqual64(correctXGrad, xG.Data().([]float64)) {
-		t.Errorf("Expected results to be %v. Got %v.", correctXGrad, xG.Data())
+		c.NoError(err)
 	}
 }

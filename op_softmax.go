@@ -96,6 +96,7 @@ func (op *softmaxOp) Do(inputs ...Value) (retVal Value, err error) {
 	if aShape.IsColVec() || (aShape.IsVector() && !aShape.IsRowVec()) {
 		axis = 0
 	}
+
 	if op.axis != -1 {
 		axis = op.axis
 	}
@@ -112,6 +113,7 @@ func (op *softmaxOp) Do(inputs ...Value) (retVal Value, err error) {
 
 	ss := sum.Shape()
 	es := exp.Shape()
+
 	dimsDiff := es.Dims() - ss.Dims()
 	if dimsDiff == 0 {
 		div, err := tensor.Div(exp, sum)
@@ -126,6 +128,10 @@ func (op *softmaxOp) Do(inputs ...Value) (retVal Value, err error) {
 
 	// REPEAT SUM (traditionally called broadcasting)
 	newShape := tensor.Shape(tensor.BorrowInts(ss.Dims() + dimsDiff))
+	if axis+1 > len(newShape) {
+		return nil, fmt.Errorf("can't calculate SoftMax for the given axis %d", axis)
+	}
+
 	copy(newShape, ss)
 	copy(newShape[axis+1:], newShape[axis:])
 	newShape[axis] = 1
@@ -276,6 +282,7 @@ func (op *softmaxDiffOp) Do(inputs ...Value) (Value, error) {
 	if axis == -1 {
 		axis = s.Dims() - 1
 	}
+
 	/*
 		What follows is an a bit of a splayed out algorithm
 		Let's imagine Y, and dY are both (a,b,c)-shaped tensors.
@@ -300,7 +307,7 @@ func (op *softmaxDiffOp) Do(inputs ...Value) (Value, error) {
 		5. Reshape the mulars to (1, D)
 		6. Perform matrix multiplication... WITH A TWIST. We need to multiply all the results by -1. Then add a bias of 1.
 
-		Step 6 can be done in the usual manner. However, the BLAS librarie contain `(D|S)gemm`, which allows you to set alpha and beta.
+		Step 6 can be done in the usual manner. However, the BLAS libraries contain `(D|S)gemm`, which allows you to set alpha and beta.
 	*/
 
 	prodBefore := tensor.ProdInts([]int(s[:axis])) // N
@@ -318,19 +325,21 @@ func (op *softmaxDiffOp) Do(inputs ...Value) (Value, error) {
 
 	impl := gonum.Implementation{}
 	var val interface{}
+
 	switch yy := y.Data().(type) {
 	case []float64:
 		gradData := grad.Data().([]float64)
 		mulData := mulars.Data().([]float64)
 		var scaleData []float64
+
 		switch sd := scalars.Data().(type) {
 		case float64:
 			scaleData = make([]float64, 1)
 			scaleData[0] = sd
 		case []float64:
 			scaleData = sd
-
 		}
+
 		for i := 0; i < prodBefore; i++ {
 			scaleData[i] = impl.Ddot(prodAfter, yy[i*prodAfter:], 1, gradData[i*prodAfter:], 1)
 		}
@@ -343,17 +352,19 @@ func (op *softmaxDiffOp) Do(inputs ...Value) (Value, error) {
 		gradData := grad.Data().([]float32)
 		mulData := mulars.Data().([]float32)
 		var scaleData []float32
+
 		switch sd := scalars.Data().(type) {
 		case float32:
 			scaleData = make([]float32, 1)
 			scaleData[0] = sd
 		case []float32:
 			scaleData = sd
-
 		}
+
 		for i := 0; i < prodBefore; i++ {
 			scaleData[i] = impl.Sdot(prodAfter, yy[i*prodAfter:], 1, gradData[i*prodAfter:], 1)
 		}
+
 		C := make([]float32, s.TotalSize()) // output
 
 		// important note: here, alpha is -1 and beta is 1.
@@ -366,6 +377,7 @@ func (op *softmaxDiffOp) Do(inputs ...Value) (Value, error) {
 	}
 
 	retVal := tensor.New(tensor.WithShape(s.Clone()...), tensor.WithBacking(val))
+
 	return tensor.Mul(retVal, y, tensor.UseUnsafe())
 }
 
