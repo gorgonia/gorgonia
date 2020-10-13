@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"io/ioutil"
+	"log"
 	"runtime"
 	"testing"
 
@@ -399,7 +400,6 @@ func TestMisha(t *testing.T) {
 
 func TestSoftMax(t *testing.T) {
 	defer runtime.GC()
-	assert := assert.New(t)
 	g := NewGraph()
 	xT := tensor.New(tensor.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
 	x := NewVector(g, Float64, WithShape(5), WithValue(xT))
@@ -417,49 +417,45 @@ func TestSoftMax(t *testing.T) {
 		t.Error(err)
 	}
 
-	var smg, xG Value
+	var xG Value
 	var err error
-	if smg, err = sm.Grad(); err != nil {
-		t.Error(err)
-	}
-
 	if xG, err = x.Grad(); err != nil {
 		t.Error(err)
 	}
 
 	// machine 2, graph 2
-
-	g2 := NewGraph()
+	h := NewGraph()
 	xT2 := tensor.New(tensor.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
-	x2 := NewVector(g, Float64, WithShape(5), WithValue(xT2))
+	x2 := NewVector(h, Float64, WithShape(5), WithValue(xT2))
 	sm2 := Must(SoftMax(x2))
 	logsm2 := Must(Neg(Must(Log(sm2))))
 	Must(Slice(logsm2, S(2)))
 
-	m2 := NewLispMachine(g2)
+	m2 := NewLispMachine(h)
 	defer m2.Close()
 	if err = m2.RunAll(); err != nil {
+		log.Printf("ERR %v", err)
 		t.Error(err)
 	}
 
-	var sm2g, x2G Value
-	if sm2g, err = sm2.Grad(); err != nil {
-		t.Error(err)
-	}
-
+	var x2G Value
 	if x2G, err = x2.Grad(); err != nil {
 		t.Error(err)
 	}
 
-	assert.Equal(smg, sm2g)
-	assert.Equal(xG, x2G)
-
-	correctGrad := []float64{
-		-0, -0, -8.379839604304342, -0, -0,
+	if !floatsEqual64(xG.Data().([]float64), x2G.Data().([]float64)) {
+		t.Errorf("Expected both gradients of X to be the same.")
 	}
 
-	if !floatsEqual64(correctGrad, smg.Data().([]float64)) {
-		t.Errorf("Expected results to be %v. Got %v.", correctGrad, smg.Data())
+	correctXGrad := []float64{
+		0.178025447751409, 0.1967485475322529, 0.11933402633223977, 0.24030921861990098, 0.2655827597641975,
+	}
+
+	if !floatsEqual64(correctXGrad, x2G.Data().([]float64)) {
+		t.Errorf("Expected results to be %v. Got %v.", correctXGrad, x2G.Data())
+	}
+	if !floatsEqual64(correctXGrad, xG.Data().([]float64)) {
+		t.Errorf("Expected results to be %v. Got %v.", correctXGrad, xG.Data())
 	}
 }
 

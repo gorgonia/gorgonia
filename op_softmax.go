@@ -6,18 +6,24 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gonum.org/v1/gonum/blas"
+	"gonum.org/v1/gonum/blas/gonum"
 	"gorgonia.org/tensor"
 )
 
 type softmaxOp struct {
 	shape tensor.Shape
-	axes  []int
+	axis  int
 }
 
 func newSoftmaxOp(inputShape tensor.Shape, axes ...int) *softmaxOp {
+	axis := -1
+	if len(axes) > 0 {
+		axis = axes[0]
+	}
 	softmaxop := &softmaxOp{
 		shape: inputShape,
-		axes:  axes,
+		axis:  axis,
 	}
 
 	return softmaxop
@@ -31,22 +37,20 @@ func SoftMax(x *Node, axis ...int) (*Node, error) {
 	return ApplyOp(op, x)
 }
 
-func (op *softmaxOp) Arity() int {
-	return 1
-}
+func (op *softmaxOp) Arity() int { return 1 }
 
 func (op *softmaxOp) ReturnsPtr() bool { return false }
 
 func (op *softmaxOp) CallsExtern() bool { return false }
 
 func (op *softmaxOp) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "Softmax{}()")
+	fmt.Fprintf(h, "Softmax{%v}()", op.axis)
 }
 
 func (op *softmaxOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op *softmaxOp) String() string {
-	return fmt.Sprintf("Softmax{}()")
+	return fmt.Sprintf("Softmax{%d}()", op.axis)
 }
 
 func (op *softmaxOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
@@ -57,9 +61,7 @@ func (op *softmaxOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
 
 func (op *softmaxOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	t := newTensorType(1, a)
-
-	return hm.NewFnType(t, t) // f(float64) float64
+	return hm.NewFnType(a, a) // f(float64) float64
 }
 
 func (op *softmaxOp) OverwritesInput() int { return -1 }
@@ -92,14 +94,8 @@ func (op *softmaxOp) Do(inputs ...Value) (retVal Value, err error) {
 	if aShape.IsColVec() || (aShape.IsVector() && !aShape.IsRowVec()) {
 		axis = 0
 	}
-
-	// FIXME: v0.10
-	if len(op.axes) > 0 {
-		if op.axes[0] >= axis+1 || op.axes[0] < 0 {
-			return nil, errors.Errorf("Cannot perform SoftMax on axis %d. Input has shape %v", op.axes[0], aShape)
-		}
-
-		axis = op.axes[0]
+	if op.axis != -1 {
+		axis = op.axis
 	}
 
 	exp, err := tensor.Exp(inputTensor)
@@ -150,15 +146,16 @@ func (op *softmaxOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) er
 	}
 
 	odv := output.boundTo.(*dualValue)
-	odvd := odv.Value.(tensor.Tensor)
+	idv := inputs[0].boundTo.(*dualValue)
+	idvd := idv.d.(*tensor.Dense)
 	diffOp := newSoftmaxOpDiff()
 
-	result, err := diffOp.Do(odv)
+	result, err := diffOp.Do(odv.Value, odv.d)
 	if err != nil {
 		return err
 	}
 
-	sum, err := odvd.(*tensor.Dense).Add(result.(*tensor.Dense), tensor.UseUnsafe())
+	sum, err := idvd.Add(result.(*tensor.Dense), tensor.UseUnsafe())
 	if err != nil {
 		return err
 	}
@@ -178,7 +175,7 @@ func (op *softmaxOp) SymDiff(inputs Nodes, output, grad *Node) (Nodes, error) {
 	diffOp := newSoftmaxOpDiff()
 	nodes := make(Nodes, 1)
 
-	nodes[0], err = ApplyOp(diffOp, output)
+	nodes[0], err = ApplyOp(diffOp, output, grad)
 
 	return nodes, err
 }
@@ -193,15 +190,14 @@ func (op *softmaxOp) DiffWRT(inputs int) []bool {
 }
 
 type softmaxDiffOp struct {
+	axis int
 }
 
 func newSoftmaxOpDiff() *softmaxDiffOp {
 	return &softmaxDiffOp{}
 }
 
-func (op *softmaxDiffOp) Arity() int {
-	return 1
-}
+func (op *softmaxDiffOp) Arity() int { return 2 }
 
 func (op *softmaxDiffOp) ReturnsPtr() bool { return false }
 
@@ -224,57 +220,133 @@ func (op *softmaxDiffOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
 }
 
 func (op *softmaxDiffOp) Type() hm.Type {
-	aType := hm.TypeVariable('a')
+	a := hm.TypeVariable('a')
 
-	ta := newTensorType(1, aType)
-
-	return hm.NewFnType(ta, ta) // f(float64) float64
+	return hm.NewFnType(a, a, a) // f(float64) float64
 }
 
 func (op *softmaxDiffOp) OverwritesInput() int { return -1 }
 
-func (op *softmaxDiffOp) checkInput(inputs ...Value) (tensor.Tensor, error) {
+func (op *softmaxDiffOp) checkInput(inputs ...Value) (tensor.Tensor, tensor.Tensor, error) {
 	if err := checkArity(op, len(inputs)); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var (
-		in tensor.Tensor
-
-		ok bool
+		in   tensor.Tensor
+		grad tensor.Tensor
+		ok   bool
 	)
 
 	switch t := inputs[0].(type) {
 	case *dualValue:
 		if in, ok = t.Value.(tensor.Tensor); !ok {
-			return nil, errors.Errorf("input should be a tensor, got %T", inputs[0])
+			return nil, nil, errors.Errorf("input should be a tensor, got %T", inputs[0])
 		}
 	case tensor.Tensor:
 		in = t
 	default:
-		return nil, errors.Errorf("input type is not supported, got %T", inputs[0])
+		return nil, nil, errors.Errorf("input type is not supported, got %T", inputs[0])
 	}
 
-	return in, nil
+	switch t := inputs[1].(type) {
+	case *dualValue:
+		if grad, ok = t.Value.(tensor.Tensor); !ok {
+			return nil, nil, errors.Errorf("input should be a tensor, got %T", inputs[1])
+		}
+	case tensor.Tensor:
+		grad = t
+	default:
+		return nil, nil, errors.Errorf("input type is not supported, got %T", inputs[1])
+	}
+
+	return in, grad, nil
 }
 
 func (op *softmaxDiffOp) Do(inputs ...Value) (Value, error) {
-	inputTensor, err := op.checkInput(inputs...)
+	y, grad, err := op.checkInput(inputs...)
 	if err != nil {
 		return nil, fmt.Errorf("Can't check SoftmaxDiff input: %w", err)
 	}
-	y := inputTensor.(*tensor.Dense)
+
 	s := y.Shape()
-	fst := tensor.ProdInts([]int(s))
-	y.Reshape(fst, 1)
-	yᵀ := y.ShallowClone()
-	yᵀ.T()
-	yyᵀ, err := tensor.MatMul(y, yᵀ)
-	if err != nil {
-		return nil, err
+	axis := op.axis
+	if axis == -1 {
+		axis = s.Dims() - 1
 	}
-	diag := tensor.New(tensor.AsDenseDiag(y.Data()))
-	return diag.Sub(yyᵀ.(*tensor.Dense)) // jacobian
+	/*
+		What follows is an a bit of a splayed out algorithm
+		Let's imagine Y, and dY are both (a,b,c)-shaped tensors.
+		We reshape it to a matrix. Let's examine the cases:
+		case axis = 0:
+			we reshape it to (1, a*b*c)
+		case axis = 1:
+			we reshape it to (a, b*c)
+		case axis = 2:
+			we reshape it to (a*b*c, 1)
+
+		We'll call the result matrix M, with shape (N, D)
+
+		Now, we'll do some work:
+		1. Make scalars of shape (N,).
+		2. Make mulars of shape (D,). To facilitate multiplication, we set the initial valus
+		   to the identity of multiplication: 1.
+		3. Populate scalars. This is abit tricky:
+			scalars[i] = Y[i] · dY[i]
+		   TODO: insert mathematical explanation of what accumulating gradients magic is happening here.
+		4. Reshape the scalars to (N, 1)
+		5. Reshape the mulars to (1, D)
+		6. Perform matrix multiplication... WITH A TWIST. We need to multiply all the results by -1. Then add a bias of 1.
+
+		Step 6 can be done in the usual manner. However, the BLAS librarie contain `(D|S)gemm`, which allows you to set alpha and beta.
+	*/
+
+	prodBefore := tensor.ProdInts([]int(s[:axis])) // N
+	prodAfter := tensor.ProdInts([]int(s[axis:]))  // D
+	if prodBefore == 0 {                           // indicating an error
+		prodBefore = 1
+	}
+	if prodAfter == 0 {
+		prodAfter = 1
+	}
+
+	scalars := tensor.New(tensor.WithShape(prodBefore), tensor.Of(y.Dtype()))
+	mulars := tensor.New(tensor.WithShape(prodAfter), tensor.Of(y.Dtype()))
+	mulars.Memset(one(y.Dtype()).Data()) // set all mulars to 1.
+
+	impl := gonum.Implementation{}
+	var val interface{}
+	switch yy := y.Data().(type) {
+	case []float64:
+		gradData := grad.Data().([]float64)
+		mulData := mulars.Data().([]float64)
+		var scaleData []float64
+		switch sd := scalars.Data().(type) {
+		case float64:
+			scaleData = make([]float64, 1)
+			scaleData[0] = sd
+		case []float64:
+			scaleData = sd
+
+		}
+		for i := 0; i < prodBefore; i++ {
+			scaleData[i] = impl.Ddot(prodAfter, yy[i*prodAfter:], 1, gradData[i*prodAfter:], 1)
+		}
+		C := make([]float64, s.TotalSize()) // output
+
+		// important note: here, alpha is -1 and beta is 1.
+		impl.Dgemm(blas.NoTrans, blas.NoTrans, prodBefore, prodAfter, 1, -1, scaleData, 1, mulData, prodAfter, 1, C, prodAfter)
+		val = C
+	case []float32:
+		//TODO: use Sdot and Sgemm instead of Ddot and Dgemm
+	case []complex64:
+		panic("Complex64 not done yet")
+	case []complex128:
+		panic("Complex128 not done yet")
+	}
+
+	retVal := tensor.New(tensor.WithShape(s.Clone()...), tensor.WithBacking(val))
+	return tensor.Mul(retVal, y, tensor.UseUnsafe())
 }
 
 // ensure it complies with the Op interface
