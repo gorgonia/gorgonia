@@ -61,9 +61,8 @@ func Example_errorHandling() {
 	_ = nn2PlusWrong
 
 	// Output:
-	// nn: ÷ false(%a, %f) :: Matrix float32
-	// An error occurs: Type inference error. Op: + false. Children: [Matrix float32, Matrix float64], OpType:Matrix a → Matrix a → Matrix a: Unable to unify while inferring type of + false: Unification Fail: float64 ~ float32 cannot be unified
-	// nn2: ÷ false(%a, %f) :: Matrix float32
-	// An error occurs (caught by recover()): Type inference error. Op: + false. Children: [Matrix float32, Matrix float64], OpType:Matrix a → Matrix a → Matrix a: Unable to unify while inferring type of + false: Unification Fail: float64 ~ float32 cannot be unified
-
+	// nn: Softmax{}()(%9) :: Vector float32
+	// An error occurs: Type inference error. Op: + false. Children: [Vector float32, Matrix float64], OpType:Vector a → Matrix a → Matrix a: Unable to unify while inferring type of + false: Unification Fail: float64 ~ float32 cannot be unified
+	// nn2: Softmax{}()(%9) :: Vector float32
+	// An error occurs (caught by recover()): Type inference error. Op: + false. Children: [Vector float32, Matrix float64], OpType:Vector a → Matrix a → Matrix a: Unable to unify while inferring type of + false: Unification Fail: float64 ~ float32 cannot be unified
 }
