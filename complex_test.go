@@ -1,6 +1,9 @@
 package gorgonia
 
-import "testing"
+import (
+	"runtime/debug"
+	"testing"
+)
 
 func TestWeirdNetwork(t *testing.T) {
 	const (
@@ -138,6 +141,8 @@ func TestWeirdNetwork(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		if err = m.RunAll(); err != nil {
 			t.Errorf("%d %v", i, err)
+			t.Log(string(debug.Stack()))
+
 			break
 		}
 
