@@ -1,0 +1,66 @@
+@startuml 
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
+
+title Gorgonia
+
+Person(inference,"Inference")
+Person(training,"Training")
+
+Enterprise_Boundary(gorgonia_org,"Gorgonia") {
+    System_Boundary(c1_tensor, "Tensor") {
+        Container(tensor,"Tensor", "package tensor","a package that provides efficient, generic (by some definitions of generic) n-dimensional arrays")
+    }
+    System_Boundary(c1_gorgonia_gorgonia, "Gorgonia") { 
+        Container(gorgonia_blase,"BLASE","package blase","a thin wrapper over Gonum's BLAS interface that provides a queue so that cgo calls are batched. This package was created so MKL usage can be improved.")
+        Container(gorgonia_compiler,"compiler","package compiler", "Interfaces and programs primitives to use with a VM")
+        Container(gorgonia_cuda,"cuda","package cuda", "Implementation of the cuda primitives to use in Gorgonia")
+        Container(gorgonia_solvers,"solvers","package solvers", "Implementation of solvers (algorithms), to use in learning phase")
+        System_Boundary(c1_gorgonia_encoding, "Encoding") { 
+            Container(c1_gorgonia_encoding_dot,"dot", "package encoding/dot", "implements the primitive to turn an ExprGraph into a graphviz compatible format")
+            Container(c1_gorgonia_encoding_onnx,"ONNX", "package encoding/onnx", "ONNX encoding and decoding capability")
+        }
+        System_Boundary(c1_gorgonia_values,"values") {
+            Container(c1_gorgonia_values_values,"values","package values", "implements the primitives to deal with values gorgonia accepts. Values are objetcs that knows their own types and shape")
+            Container(c1_gorgonia_values_dual,"dual values","package values/dual", "Dual values to deal with differentiation")
+        }
+        Container(gorgonia_execution,"execution","package execution")
+        Container(gorgonia_types,"Types", "package types", "type system of gorgonia (types a value can take)")
+        Container(gorgonia_shape,"Shape", "package shape", "Package shapes provides the machinery for dealing with the metainformation of shapes.")
+        Container(gorgonia_exprgraph, "Expression graph","package exprgraph", "an experimental rewrite of the basic graph data structure in Gorgonia")
+        Container(gorgonia_vms,"Virtual Machines", "package vms", "VM represents a structure that can execute a graph or program.")
+        System_Boundary(c1_gorgonia_ops, "ops") { 
+            Container(gorgonia_ops,"Operators", "package ops", "basic operations")
+            Container(gorgonia_ops_nn,"Neural network operators", "package ops/nn", "basic operations used in neural network")
+        }
+        'Rel(c1_gorgonia_ops, gorgonia_blase, "Uses")
+        'Rel(c1_gorgonia_ops, gorgonia_cuda, "Uses")
+    }
+    System_Boundary(c1_gorgonia_cu, "cu") { 
+        Container(gorgonia_cu,"cu","package cu", "Package cu is a package that interfaces with the CUDA Driver API. This package was directly inspired by Arne Vansteenkiste's cu package.")
+        Container(gorgonia_cu_blas,"blas","package blas", "implementation of the BLAS primitives with cuda")
+    }
+    'Rel(gorgonia_cuda,c1_gorgonia_cu,"Uses")
+    'Rel(tensor,c1_gorgonia_values,"implements")
+    'Rel(c1_gorgonia_values,gorgonia_shape,"Uses")
+    'Rel(c1_gorgonia_values,gorgonia_types,"Uses")
+    'Rel(gorgonia_vms,gorgonia_compiler,"Uses")
+    'Rel(gorgonia_vms,gorgonia_execution,"Uses")
+    'Rel(gorgonia_vms,gorgonia_exprgraph,"Uses")
+    'Rel(gorgonia_vms,gorgonia_solvers,"Uses")
+}
+System_Ext(c1_onnx,"onnx-go") {
+}
+'Rel(c1_gorgonia_encoding_onnx,c1_onnx,"Implements")
+System_Ext(c1_gonum,"Gonum") {
+    Container(gonum_graph, "Graph","graph package")
+    Container(gonum_blas, "blas","blas package")
+}
+'Rel(gorgonia_exprgraph,gonum_graph, "Implements")
+'Rel(c1_onnx,gonum_graph,"Implements")
+'Rel(inference,gorgonia_exprgraph,"read")
+'Rel(inference,gorgonia_vms,"run")
+'Rel(training,gorgonia_exprgraph,"build")
+'Rel(training,c1_tensor,"creates")
+'Rel(training,gorgonia_solvers,"uses")
+'Rel(training,gorgonia_vms,"run")
+@enduml
