@@ -3,6 +3,9 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
+	"math"
+	"runtime"
+	"sync"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -111,7 +114,7 @@ func (op *softmaxOp) Do(inputs ...Value) (retVal Value, err error) {
 	ss := sum.Shape()
 	es := exp.Shape()
 	dimsDiff := es.Dims() - ss.Dims()
-	if dimsDiff == 0 {
+	if dimsDiff == 0 || ss.IsScalar() {
 		div, err := tensor.Div(exp, sum)
 		if err != nil {
 			return nil, fmt.Errorf("error calculating div for SoftMax: %w", err)
@@ -187,6 +190,100 @@ func (op *softmaxOp) DiffWRT(inputs int) []bool {
 	}
 
 	return []bool{true}
+}
+
+func (op *softmaxOp) f64kernel(data, output []float64, inner, ostride, dimSize, dimStride int) {
+	for i := 0; i < len(data); i++ {
+		oi := i / inner
+		ii := i % inner
+		xidx := oi*ostride + ii
+		yidx := oi*ostride + ii
+
+		if xidx >= len(data) {
+			continue
+		}
+
+		if yidx >= len(data) {
+			continue
+		}
+
+		x := data[xidx:]
+		y := output[yidx:]
+		if len(x) == 0 {
+			continue
+		}
+
+		max := x[0]
+		for d := 1; d < dimSize && d*dimStride < len(x); d++ {
+			dm := x[d*dimStride]
+			if dm > max {
+				max = dm
+			}
+		}
+
+		var tmp float64
+		for d := 0; d < dimSize && d*dimStride < len(x); d++ {
+			z := math.Exp(x[d*dimStride] - max)
+			// TODO: log
+			y[d*dimStride] = z
+			tmp += z
+		}
+		tmp = 1 / tmp
+
+		// set output
+		for d := 0; d < dimSize && d*dimStride < len(y); d++ {
+			y[d*dimStride] *= tmp
+			// TODO: log
+		}
+	}
+}
+
+// output and data are of the same size
+func (op *softmaxOp) doF64s(shp tensor.Shape, axis int, data []float64, output []float64) {
+	blocks := runtime.GOMAXPROCS(0) + 1
+	//blocks := calcBlocks(len(data), defaultBlockSize)
+
+	dimSize := shp[axis]
+	outer := tensor.ProdInts([]int(shp[:axis]))
+	inner := tensor.ProdInts([]int(shp[axis+1:]))
+	if outer == 0 {
+		outer = 1
+	}
+	if inner == 0 {
+		inner = 1
+	}
+	dimStride := inner
+	ostride := dimSize * dimStride
+
+	if blocks < minParallelBlocks {
+		op.f64kernel(data, output, inner, ostride, dimSize, dimStride)
+		return
+	}
+
+	workers := workersChan()
+	var wg sync.WaitGroup
+
+	blockSize := len(data) / blocks
+	if blockSize == 0 {
+		blockSize = len(data)
+	}
+
+	for b := 0; b < len(data); b += blockSize {
+		end := b + blockSize
+		if end > len(data) {
+			end = len(data)
+		}
+		newdata := data[b:end]
+		newoutput := output[b:end]
+		wg.Add(1)
+		go func(data, output []float64, dimSize, dimStride int, wg *sync.WaitGroup) {
+			workers <- struct{}{}
+			op.f64kernel(data, output, inner, ostride, dimSize, dimStride)
+			wg.Done()
+			<-workers
+		}(newdata, newoutput, dimSize, dimStride, &wg)
+	}
+	wg.Wait()
 }
 
 type softmaxDiffOp struct {
