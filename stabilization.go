@@ -11,13 +11,21 @@ func init() {
 	unaryOpStabilizationFns[log1pOpType] = []func(*Node) (*Node, error){log1pExpStabilization, log1pNegSigmoidStabilization}
 }
 
-// logStabilization converts log(1+a) and log(a+1) to log1p(a) and log(1-a) to log1p(-a)
+// logStabilization converts
+// 	log(1+a) or log(a+1) to log1p(a)
+//	log(1-a) to log1p(-a)
+// 	log(softmax(a)) to softmax{isLog: true}(a)
+// 	log(softmax(a)*b) or log(a * softmax(b)) to softmax{isLog(true)}(a) + log(b) or log(a) + softmax(log(b))
 // place before log; a should be +
 func logStabilization(a *Node) (retVal *Node, err error) {
 	stabLogf("Stabilizing log(1+a) of %v", a)
 	enterLogScope()
 	defer leaveLogScope()
 
+	if smop, ok := a.op.(*softmaxOp); ok {
+		smop.isLog = true
+		return a, nil
+	}
 	var x *Node
 	var aop elemBinOp
 	var ok bool
@@ -53,6 +61,22 @@ func logStabilization(a *Node) (retVal *Node, err error) {
 			return a, noStabilizationErr{}
 		}
 		x = input1
+	case mulOpType:
+		var doAdd bool
+		if smop, ok := input0.op.(*softmaxOp); ok {
+			smop.isLog = true
+			doAdd = true
+		}
+		if smop, ok := input1.op.(*softmaxOp); ok {
+			smop.isLog = true
+			doAdd = true
+		}
+		if doAdd {
+			addop := newElemBinOp(addOpType, input0, input1)
+			return binOpNode(addop, input0, input1)
+		}
+		return nil, noStabilizationErr{}
+
 	default:
 		return a, noStabilizationErr{}
 	}

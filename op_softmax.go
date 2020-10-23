@@ -53,7 +53,7 @@ func (op *softmaxOp) WriteHash(h hash.Hash) {
 func (op *softmaxOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op *softmaxOp) String() string {
-	return fmt.Sprintf("Softmax{%d}()", op.axis)
+	return fmt.Sprintf("Softmax{%d, %v}()", op.axis, op.isLog)
 }
 
 func (op *softmaxOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
@@ -345,13 +345,13 @@ func (op *softmaxDiffOp) ReturnsPtr() bool { return false }
 func (op *softmaxDiffOp) CallsExtern() bool { return false }
 
 func (op *softmaxDiffOp) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "SoftmaxDiff{}()")
+	fmt.Fprintf(h, "SoftmaxDiff{%d, %v}()", op.axis, op.isLog)
 }
 
 func (op *softmaxDiffOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op *softmaxDiffOp) String() string {
-	return fmt.Sprintf("SoftmaxDiff{}()")
+	return fmt.Sprintf("SoftmaxDiff{%d, %v}()", op.axis, op.isLog)
 }
 
 func (op *softmaxDiffOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"gorgonia.org/tensor"
 )
 
@@ -27,15 +26,15 @@ var testCasesSoftMaxDo = []struct {
 }
 
 func TestSoftmaxDo(t *testing.T) {
-	c := require.New(t)
+	assert := assert.New(t)
 
 	for i, testCase := range testCasesSoftMaxDo {
 		tt := tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(len(testCase.input)), tensor.WithBacking(testCase.input))
 		op := newSoftmaxOp(tt.Shape())
 
 		out, err := op.Do(tt)
-		c.NoError(err, "failed test case: %d", i)
-		c.Equal(testCase.expected, out.Data(), "failed test case: %d", i)
+		assert.NoError(err, "failed test case: %d", i)
+		assert.True(floatsEqual64(out.Data().([]float64), testCase.expected))
 	}
 }
 
@@ -51,13 +50,13 @@ func TestSoftmaxKernel(t *testing.T) {
 
 	// across axis 0
 	out := make([]float64, 6)
-	op.doF64s(tensor.Shape{2, 3}, 0, a.Data().([]float64), out)
+	op.do(tensor.Shape{2, 3}, 0, a.Data().([]float64), out)
 	assert.True(floatsEqual64(out, b0.Data().([]float64)))
 	t.Logf("\n%v\n%v", out, b0.Data())
 
 	// acros axis 1
 	out = make([]float64, 6)
-	op.doF64s(tensor.Shape{2, 3}, 1, a.Data().([]float64), out)
+	op.do(tensor.Shape{2, 3}, 1, a.Data().([]float64), out)
 	assert.True(floatsEqual64(out, b1.Data().([]float64)))
 	/*
 		// super large
@@ -97,7 +96,37 @@ func BenchmarkSoftmaxLargeNewAxis0(b *testing.B) {
 	b.ResetTimer()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		op.doF64s(a.Shape(), 0, a.Data().([]float64), out)
+		op.do(a.Shape(), 0, a.Data().([]float64), out)
+	}
+
+}
+
+func BenchmarkSoftmaxMedOldAxis0(b *testing.B) {
+	b.StopTimer()
+	a := tensor.New(tensor.WithShape(1200, 2500), tensor.WithBacking(Uniform64(-1, 1, 1200, 2500)))
+	op := newSoftmaxOp(a.Shape())
+	op.axis = 0
+	var v Value
+
+	b.ResetTimer()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		v, _ = op.Do(a)
+	}
+	_ = v
+}
+
+func BenchmarkSoftmaxMedNewAxis0(b *testing.B) {
+	b.StopTimer()
+	a := tensor.New(tensor.WithShape(1200, 2500), tensor.WithBacking(Uniform64(-1, 1, 1200, 2500)))
+	op := newSoftmaxOp(a.Shape())
+	op.axis = 0
+	out := make([]float64, len(a.Data().([]float64)))
+
+	b.ResetTimer()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		op.do(a.Shape(), 0, a.Data().([]float64), out)
 	}
 
 }
