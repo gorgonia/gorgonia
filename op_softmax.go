@@ -495,12 +495,9 @@ func (op *softmaxDiffOp) f64Kernel(input, output, yGrad, xGrad []float64, inner,
 			continue
 		}
 
-		y := output[idx:]
-		dy := yGrad[idx:]
-		dydx := xGrad[idx:]
-		if len(y) <= dimSize*dimStride {
-			continue
-		}
+		y := output
+		dy := yGrad
+		dydx := xGrad
 
 		// calculate sum
 		var sum float64
@@ -567,7 +564,7 @@ func (op *softmaxDiffOp) f32Kernel(input, output, yGrad, xGrad []float32, inner,
 }
 
 func (op *softmaxDiffOp) do(shp tensor.Shape, axis int, x, y, dy, retVal interface{}) {
-	blocks := runtime.GOMAXPROCS(0) + 1
+	//blocks := runtime.GOMAXPROCS(0) + 1
 	dimSize := shp[axis]
 	outer := tensor.ProdInts([]int(shp[:axis]))
 	inner := tensor.ProdInts([]int(shp[axis+1:]))
@@ -580,78 +577,79 @@ func (op *softmaxDiffOp) do(shp tensor.Shape, axis int, x, y, dy, retVal interfa
 	dimStride := inner
 	ostride := dimSize * dimStride
 
-	datalen := shp.TotalSize()
+	//datalen := shp.TotalSize()
 
-	if blocks < minParallelBlocks {
-		switch x := x.(type) {
-		case []float64:
-			y := y.([]float64)
-			dy := dy.([]float64)
-			dydx := retVal.([]float64)
-			op.f64Kernel(x, y, dy, dydx, inner, ostride, dimSize, dimStride)
-		case []float32:
-			y := y.([]float32)
-			dy := dy.([]float32)
-			dydx := retVal.([]float32)
-			op.f32Kernel(x, y, dy, dydx, inner, ostride, dimSize, dimStride)
-		default:
-			panic(fmt.Sprintf("tensor of %T not handled for softmax diff ", x))
+	//if blocks < minParallelBlocks {
+	switch x := x.(type) {
+	case []float64:
+		y := y.([]float64)
+		dy := dy.([]float64)
+		dydx := retVal.([]float64)
+		op.f64Kernel(x, y, dy, dydx, inner, ostride, dimSize, dimStride)
+	case []float32:
+		y := y.([]float32)
+		dy := dy.([]float32)
+		dydx := retVal.([]float32)
+		op.f32Kernel(x, y, dy, dydx, inner, ostride, dimSize, dimStride)
+	default:
+		panic(fmt.Sprintf("tensor of %T not handled for softmax diff ", x))
 
+	}
+	//}
+	/*
+		workers := workersChan()
+		var wg sync.WaitGroup
+		blockSize := datalen / blocks
+		if blockSize == 0 {
+			blockSize = datalen // 1 block
 		}
-	}
 
-	workers := workersChan()
-	var wg sync.WaitGroup
-	blockSize := datalen / blocks
-	if blockSize == 0 {
-		blockSize = datalen // 1 block
-	}
+		for b := 0; b < datalen; b += blockSize {
+			wg.Add(1)
+			switch xData := x.(type) {
+			case []float64:
+				yData := y.([]float64)
+				dyData := dy.([]float64)
+				dydxData := retVal.([]float64)
+				end := b + blockSize
+				if end > len(xData) {
+					end = len(xData)
+				}
+				newX := xData[b:end]
+				newY := yData[b:end]
+				newDy := dyData[b:end]
+				newDydx := dydxData[b:end]
 
-	for b := 0; b < datalen; b += blockSize {
-		wg.Add(1)
-		switch xData := x.(type) {
-		case []float64:
-			yData := y.([]float64)
-			dyData := dy.([]float64)
-			dydxData := retVal.([]float64)
-			end := b + blockSize
-			if end > len(xData) {
-				end = len(xData)
+				go func(x, y, dy, dydx []float64, dimSize, dimStride int, wg *sync.WaitGroup) {
+					workers <- struct{}{}
+					op.f64Kernel(x, y, dy, dydx, inner, ostride, dimSize, dimStride)
+					wg.Done()
+					<-workers
+				}(newX, newY, newDy, newDydx, dimSize, dimStride, &wg)
+			case []float32:
+				yData := y.([]float32)
+				dyData := dy.([]float32)
+				dydxData := retVal.([]float32)
+				end := b + blockSize
+				if end > len(xData) {
+					end = len(xData)
+				}
+				newX := xData[b:end]
+				newY := yData[b:end]
+				newDy := dyData[b:end]
+				newDydx := dydxData[b:end]
+				go func(x, y, dy, dydx []float32, dimSize, dimStride int, wg *sync.WaitGroup) {
+					workers <- struct{}{}
+					op.f32Kernel(x, y, dy, dydx, inner, ostride, dimSize, dimStride)
+					wg.Done()
+					<-workers
+				}(newX, newY, newDy, newDydx, dimSize, dimStride, &wg)
+			default:
+				panic(fmt.Sprintf("tensor of %T not handled for softmax diff ", xData))
+
 			}
-			newX := xData[b:end]
-			newY := yData[b:end]
-			newDy := dyData[b:end]
-			newDydx := dydxData[b:end]
-
-			go func(x, y, dy, dydx []float64, dimSize, dimStride int, wg *sync.WaitGroup) {
-				workers <- struct{}{}
-				op.f64Kernel(x, y, dy, dydx, inner, ostride, dimSize, dimStride)
-				wg.Done()
-				<-workers
-			}(newX, newY, newDy, newDydx, dimSize, dimStride, &wg)
-		case []float32:
-			yData := y.([]float32)
-			dyData := dy.([]float32)
-			dydxData := retVal.([]float32)
-			end := b + blockSize
-			if end > len(xData) {
-				end = len(xData)
-			}
-			newX := xData[b:end]
-			newY := yData[b:end]
-			newDy := dyData[b:end]
-			newDydx := dydxData[b:end]
-			go func(x, y, dy, dydx []float32, dimSize, dimStride int, wg *sync.WaitGroup) {
-				workers <- struct{}{}
-				op.f32Kernel(x, y, dy, dydx, inner, ostride, dimSize, dimStride)
-				wg.Done()
-				<-workers
-			}(newX, newY, newDy, newDydx, dimSize, dimStride, &wg)
-		default:
-			panic(fmt.Sprintf("tensor of %T not handled for softmax diff ", xData))
-
 		}
-	}
+	*/
 }
 
 // ensure it complies with the Op interface
