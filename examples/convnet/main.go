@@ -203,6 +203,12 @@ func main() {
 	if err = m.fwd(x); err != nil {
 		log.Fatalf("%+v", err)
 	}
+
+	// Note: the correct losses should look like that
+	//
+	// The losses that are not commented out is used to test the stabilization function of Gorgonia.
+	//losses := G.Must(G.HadamardProd(G.Must(G.Neg(G.Must(G.Log(m.out)))), y))
+
 	losses := G.Must(G.Log(G.Must(G.HadamardProd(m.out, y))))
 	cost := G.Must(G.Mean(losses))
 	cost = G.Must(G.Neg(cost))

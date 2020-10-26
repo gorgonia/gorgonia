@@ -32,34 +32,20 @@ func newSoftmaxOp(inputShape tensor.Shape, axes ...int) *softmaxOp {
 	return softmaxop
 }
 
-// SoftMax -  implements the softmax operation
-func SoftMax(x *Node, axis ...int) (*Node, error) {
-	xShape := x.Shape()
-	op := newSoftmaxOp(xShape, axis...)
-
-	return ApplyOp(op, x)
-}
-
 func (op *softmaxOp) Arity() int { return 1 }
 
 func (op *softmaxOp) ReturnsPtr() bool { return false }
 
 func (op *softmaxOp) CallsExtern() bool { return false }
 
-func (op *softmaxOp) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "Softmax{%v}()", op.axis)
-}
+func (op *softmaxOp) WriteHash(h hash.Hash) { fmt.Fprintf(h, "Softmax{%v}()", op.axis) }
 
 func (op *softmaxOp) Hashcode() uint32 { return simpleHash(op) }
 
-func (op *softmaxOp) String() string {
-	return fmt.Sprintf("Softmax{%d, %v}()", op.axis, op.isLog)
-}
+func (op *softmaxOp) String() string { return fmt.Sprintf("Softmax{%d, %v}()", op.axis, op.isLog) }
 
 func (op *softmaxOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
-	s := inputs[0].(tensor.Shape)
-
-	return s, nil
+	return inputs[0].(tensor.Shape), nil
 }
 
 func (op *softmaxOp) Type() hm.Type {
@@ -108,6 +94,26 @@ func (op *softmaxOp) Do(inputs ...Value) (retVal Value, err error) {
 	op.do(aShape, axis, data, output)
 	return ret, nil
 
+}
+
+func (op *softmaxOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
+	inputTensor, err := op.checkInput(inputs...)
+	if err != nil {
+		return nil, fmt.Errorf("Can't check Softmax input: %w", err)
+	}
+
+	aShape := inputTensor.Shape()
+	axis := aShape.Dims() - 1 // default: last dim
+
+	if aShape.IsColVec() || (aShape.IsVector() && !aShape.IsRowVec()) {
+		axis = 0
+	}
+	if op.axis != -1 {
+		axis = op.axis
+	}
+
+	op.do(aShape, axis, inputTensor.Data(), prealloc.Data())
+	return prealloc, nil
 }
 
 // DoDiff calculates the diff and sets its value to the output node. Implementation for ADOp interface.
@@ -189,26 +195,26 @@ func (op *softmaxOp) f64skernel(data, output []float64, inner, ostride, dimSize,
 			}
 		}
 
-		var tmp float64
+		var sum float64
 		for d := 0; d < dimSize && d*dimStride < len(x); d++ {
 			z := math.Exp(x[d*dimStride] - max)
 			if !op.isLog {
 				y[d*dimStride] = z
 			}
-			tmp += z
+			sum += z
 		}
 		if op.isLog {
-			tmp = math.Log(tmp)
+			sum = math.Log(sum)
 		} else {
-			tmp = 1 / tmp
+			sum = 1 / sum
 		}
 
 		// set output
 		for d := 0; d < dimSize && d*dimStride < len(y); d++ {
 			if op.isLog {
-				output[d*dimStride] = data[d*dimStride] - max - tmp
+				y[d*dimStride] = x[d*dimStride] - max - sum
 			} else {
-				y[d*dimStride] *= tmp
+				y[d*dimStride] *= sum
 			}
 		}
 	}
@@ -261,7 +267,7 @@ func (op *softmaxOp) f32skernel(data, output []float32, inner, ostride, dimSize,
 		// set output
 		for d := 0; d < dimSize && d*dimStride < len(y); d++ {
 			if op.isLog {
-				output[d*dimStride] = data[d*dimStride] - max - tmp
+				y[d*dimStride] = x[d*dimStride] - max - tmp
 			} else {
 				y[d*dimStride] *= tmp
 			}
@@ -270,7 +276,7 @@ func (op *softmaxOp) f32skernel(data, output []float32, inner, ostride, dimSize,
 }
 
 // output and data are of the same size
-func (op *softmaxOp) do(shp tensor.Shape, axis int, data, output interface{}) {
+func (op *softmaxOp) do(shp tensor.Shape, axis int, input, output interface{}) {
 	blocks := runtime.GOMAXPROCS(0) + 1
 	//blocks := calcBlocks(len(data), defaultBlockSize)
 
@@ -288,11 +294,15 @@ func (op *softmaxOp) do(shp tensor.Shape, axis int, data, output interface{}) {
 
 	datalen := shp.TotalSize()
 	if blocks < minParallelBlocks {
-		switch data := data.(type) {
+		switch data := input.(type) {
 		case []float64:
 			output := output.([]float64)
 			op.f64skernel(data, output, inner, ostride, dimSize, dimStride)
 		case []float32:
+			output := output.([]float32)
+			op.f32skernel(data, output, inner, ostride, dimSize, dimStride)
+		default:
+			panic(fmt.Sprintf("tensor of %T not handled for softmax diff ", data))
 		}
 
 		return
@@ -308,7 +318,7 @@ func (op *softmaxOp) do(shp tensor.Shape, axis int, data, output interface{}) {
 
 	for b := 0; b < datalen; b += blockSize {
 		wg.Add(1)
-		switch data := data.(type) {
+		switch data := input.(type) {
 		case []float64:
 			output := output.([]float64)
 			end := b + blockSize
@@ -324,6 +334,22 @@ func (op *softmaxOp) do(shp tensor.Shape, axis int, data, output interface{}) {
 				<-workers
 			}(newdata, newoutput, dimSize, dimStride, &wg)
 		case []float32:
+			output := output.([]float32)
+			end := b + blockSize
+			if end > len(data) {
+				end = len(data)
+			}
+			newdata := data[b:end]
+			newoutput := output[b:end]
+			go func(data, output []float32, dimSize, dimStride int, wg *sync.WaitGroup) {
+				workers <- struct{}{}
+				op.f32skernel(data, output, inner, ostride, dimSize, dimStride)
+				wg.Done()
+				<-workers
+			}(newdata, newoutput, dimSize, dimStride, &wg)
+		default:
+			panic(fmt.Sprintf("tensor of %T not handled for softmax diff ", data))
+
 		}
 	}
 	wg.Wait()
@@ -427,149 +453,121 @@ func (op *softmaxDiffOp) Do(inputs ...Value) (Value, error) {
 	if axis == -1 {
 		axis = s.Dims() - 1
 	}
-	/*
-		What follows is an a bit of a splayed out algorithm
-		Let's imagine Y, and dY are both (a,b,c)-shaped tensors.
-		We reshape it to a matrix. Let's examine the cases:
-		case axis = 0:
-			we reshape it to (1, a*b*c)
-		case axis = 1:
-			we reshape it to (a, b*c)
-		case axis = 2:
-			we reshape it to (a*b*c, 1)
 
-		We'll call the result matrix M, with shape (N, D)
-
-		Now, we'll do some work:
-		1. Make scalars of shape (N,).
-		2. Make mulars of shape (D,). To facilitate multiplication, we set the initial values
-		   to the identity of multiplication: 1.
-		3. Populate scalars. This is abit tricky:
-			scalars[i] = Y[i] · dY[i]
-		   TODO: insert mathematical explanation of what accumulating gradients magic is happening here.
-		4. Reshape the scalars to (N, 1)
-		5. Reshape the mulars to (1, D)
-		6. Perform matrix multiplication... WITH A TWIST. We need to multiply all the results by -1. Then add a bias of 1.
-
-		Step 6 can be done in the usual manner. However, the BLAS librarie contain `(D|S)gemm`, which allows you to set alpha and beta.
-	*/
-	/*
-		prodBefore := tensor.ProdInts([]int(s[:axis])) // N
-		prodAfter := tensor.ProdInts([]int(s[axis:]))  // D
-		if prodBefore == 0 {                           // indicating an error
-			prodBefore = 1
-		}
-		if prodAfter == 0 {
-			prodAfter = 1
-		}
-
-		scalars := tensor.New(tensor.WithShape(prodBefore), tensor.Of(y.Dtype()))
-		mulars := tensor.New(tensor.WithShape(prodAfter), tensor.Of(y.Dtype()))
-		mulars.Memset(one(y.Dtype()).Data()) // set all mulars to 1.
-
-		impl := gonum.Implementation{}
-		var val interface{}
-		switch yy := y.Data().(type) {
-		case []float64:
-			gradData := grad.Data().([]float64)
-			mulData := mulars.Data().([]float64)
-			var scaleData []float64
-			switch sd := scalars.Data().(type) {
-			case float64:
-				scaleData = make([]float64, 1)
-				scaleData[0] = sd
-			case []float64:
-				scaleData = sd
-
-			}
-			for i := 0; i < prodBefore; i++ {
-				scaleData[i] = impl.Ddot(prodAfter, yy[i*prodAfter:], 1, gradData[i*prodAfter:], 1)
-			}
-			C := make([]float64, s.TotalSize()) // output
-
-			// important note: here, alpha is -1 and beta is 1.
-			impl.Dgemm(blas.NoTrans, blas.NoTrans, prodBefore, prodAfter, 1, -1, scaleData, 1, mulData, prodAfter, 1, C, prodAfter)
-			val = C
-		case []float32:
-			gradData := grad.Data().([]float32)
-			mulData := mulars.Data().([]float32)
-			var scaleData []float32
-			switch sd := scalars.Data().(type) {
-			case float32:
-				scaleData = make([]float32, 1)
-				scaleData[0] = sd
-			case []float32:
-				scaleData = sd
-
-			}
-			for i := 0; i < prodBefore; i++ {
-				scaleData[i] = impl.Sdot(prodAfter, yy[i*prodAfter:], 1, gradData[i*prodAfter:], 1)
-			}
-			C := make([]float32, s.TotalSize()) // output
-
-			// important note: here, alpha is -1 and beta is 1.
-			impl.Sgemm(blas.NoTrans, blas.NoTrans, prodBefore, prodAfter, 1, -1, scaleData, 1, mulData, prodAfter, 1, C, prodAfter)
-			val = C
-		case []complex64:
-			panic("Complex64 not done yet")
-		case []complex128:
-			panic("Complex128 not done yet")
-		}
-
-		retVal := tensor.New(tensor.WithShape(s.Clone()...), tensor.WithBacking(val))
-		return tensor.Mul(retVal, y, tensor.UseUnsafe())
-	*/
 	ret := tensor.New(tensor.WithShape(x.Shape().Clone()...), tensor.Of(x.Dtype()))
 	op.do(x.Shape(), axis, x.Data(), y.Data(), grad.Data(), ret.Data())
 	return ret, nil
+
 }
 
-func (op *softmaxDiffOp) f64Kernel(x, y, dy, retVal []float64, inner, ostride, dimSize, dimStride int) {
-	for i := 0; i < len(x); i++ {
+func (op *softmaxDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
+	x, y, grad, err := op.checkInput(inputs...)
+	if err != nil {
+		return nil, fmt.Errorf("Can't check SoftmaxDiff input: %w", err)
+	}
+
+	s := x.Shape()
+	axis := op.axis
+	if axis == -1 {
+		axis = s.Dims() - 1
+	}
+
+	op.do(x.Shape(), axis, x.Data(), y.Data(), grad.Data(), prealloc.Data())
+	return prealloc, nil
+}
+
+func (op *softmaxDiffOp) f64Kernel(input, output, yGrad, xGrad []float64, inner, ostride, dimSize, dimStride int) {
+	for i := 0; i < len(input); i++ {
 		oi := i / inner
 		ii := i % inner
-		xidx := oi*ostride + ii
-		yidx := oi*ostride + ii
-		dyidx := oi*ostride + ii
-		dxidx := oi*ostride + ii
-
-		if xidx >= len(x) {
+		idx := oi*ostride + ii
+		if idx >= len(input) {
 			continue
 		}
 
-		if yidx >= len(y) {
+		if idx >= len(output) {
 			continue
 		}
-		if dyidx >= len(dy) {
+		if idx >= len(yGrad) {
 			continue
 		}
-		if dxidx >= len(retVal) {
+		if idx >= len(xGrad) {
 			continue
 		}
 
+		y := output[idx:]
+		dy := yGrad[idx:]
+		dydx := xGrad[idx:]
+		if len(y) <= dimSize*dimStride {
+			continue
+		}
+
+		// calculate sum
+		var sum float64
 		for d := 0; d < dimSize; d++ {
-			// calculate sum
-			var sum float64
 			if op.isLog {
 				sum += dy[d*dimStride]
 			} else {
 				sum += dy[d*dimStride] * y[d*dimStride]
 			}
-
-			for d := 0; d < dimSize; d++ {
-				if op.isLog {
-					retVal[d*dimStride] = dy[d*dimStride] - math.Exp(y[d*dimStride]*sum)
-				} else {
-					retVal[d*dimStride] = y[d*dimStride] * (dy[d*dimStride] - sum)
-				}
+		}
+		for d := 0; d < dimSize; d++ {
+			if op.isLog {
+				dydx[d*dimStride] = dy[d*dimStride] - math.Exp(y[d*dimStride])*sum
+			} else {
+				dydx[d*dimStride] = y[d*dimStride] * (dy[d*dimStride] - sum)
 			}
+		}
 
+	}
+}
+
+func (op *softmaxDiffOp) f32Kernel(input, output, yGrad, xGrad []float32, inner, ostride, dimSize, dimStride int) {
+	for i := 0; i < len(input); i++ {
+		oi := i / inner
+		ii := i % inner
+		idx := oi*ostride + ii
+		if idx >= len(input) {
+			continue
+		}
+
+		if idx >= len(output) {
+			continue
+		}
+		if idx >= len(yGrad) {
+			continue
+		}
+		if idx >= len(xGrad) {
+			continue
+		}
+
+		y := output[idx:]
+		dy := yGrad[idx:]
+		dydx := xGrad[idx:]
+
+		// calculate sum
+		var sum float32
+		for d := 0; d < dimSize; d++ {
+
+			if op.isLog {
+				sum += dy[d*dimStride]
+			} else {
+				sum += dy[d*dimStride] * y[d*dimStride]
+			}
+		}
+		for d := 0; d < dimSize; d++ {
+			if op.isLog {
+				dydx[d*dimStride] = dy[d*dimStride] - math32.Exp(y[d*dimStride])*sum
+			} else {
+				dydx[d*dimStride] = y[d*dimStride] * (dy[d*dimStride] - sum)
+			}
 		}
 
 	}
 }
 
 func (op *softmaxDiffOp) do(shp tensor.Shape, axis int, x, y, dy, retVal interface{}) {
+	blocks := runtime.GOMAXPROCS(0) + 1
 	dimSize := shp[axis]
 	outer := tensor.ProdInts([]int(shp[:axis]))
 	inner := tensor.ProdInts([]int(shp[axis+1:]))
@@ -581,15 +579,79 @@ func (op *softmaxDiffOp) do(shp tensor.Shape, axis int, x, y, dy, retVal interfa
 	}
 	dimStride := inner
 	ostride := dimSize * dimStride
-	switch x := x.(type) {
-	case []float64:
-		y := y.([]float64)
-		dy := dy.([]float64)
-		dydx := retVal.([]float64)
-		op.f64Kernel(x, y, dy, dydx, inner, ostride, dimSize, dimStride)
-	case []float32:
+
+	datalen := shp.TotalSize()
+
+	if blocks < minParallelBlocks {
+		switch x := x.(type) {
+		case []float64:
+			y := y.([]float64)
+			dy := dy.([]float64)
+			dydx := retVal.([]float64)
+			op.f64Kernel(x, y, dy, dydx, inner, ostride, dimSize, dimStride)
+		case []float32:
+			y := y.([]float32)
+			dy := dy.([]float32)
+			dydx := retVal.([]float32)
+			op.f32Kernel(x, y, dy, dydx, inner, ostride, dimSize, dimStride)
+		default:
+			panic(fmt.Sprintf("tensor of %T not handled for softmax diff ", x))
+
+		}
 	}
 
+	workers := workersChan()
+	var wg sync.WaitGroup
+	blockSize := datalen / blocks
+	if blockSize == 0 {
+		blockSize = datalen // 1 block
+	}
+
+	for b := 0; b < datalen; b += blockSize {
+		wg.Add(1)
+		switch xData := x.(type) {
+		case []float64:
+			yData := y.([]float64)
+			dyData := dy.([]float64)
+			dydxData := retVal.([]float64)
+			end := b + blockSize
+			if end > len(xData) {
+				end = len(xData)
+			}
+			newX := xData[b:end]
+			newY := yData[b:end]
+			newDy := dyData[b:end]
+			newDydx := dydxData[b:end]
+
+			go func(x, y, dy, dydx []float64, dimSize, dimStride int, wg *sync.WaitGroup) {
+				workers <- struct{}{}
+				op.f64Kernel(x, y, dy, dydx, inner, ostride, dimSize, dimStride)
+				wg.Done()
+				<-workers
+			}(newX, newY, newDy, newDydx, dimSize, dimStride, &wg)
+		case []float32:
+			yData := y.([]float32)
+			dyData := dy.([]float32)
+			dydxData := retVal.([]float32)
+			end := b + blockSize
+			if end > len(xData) {
+				end = len(xData)
+			}
+			newX := xData[b:end]
+			newY := yData[b:end]
+			newDy := dyData[b:end]
+			newDydx := dydxData[b:end]
+			go func(x, y, dy, dydx []float32, dimSize, dimStride int, wg *sync.WaitGroup) {
+				workers <- struct{}{}
+				op.f32Kernel(x, y, dy, dydx, inner, ostride, dimSize, dimStride)
+				wg.Done()
+				<-workers
+			}(newX, newY, newDy, newDydx, dimSize, dimStride, &wg)
+		default:
+			panic(fmt.Sprintf("tensor of %T not handled for softmax diff ", xData))
+
+		}
+	}
 }
 
 // ensure it complies with the Op interface
