@@ -416,7 +416,7 @@ func TestSoftMax(t *testing.T) {
 	if err := m.RunAll(); err != nil {
 		t.Error(err)
 	}
-
+	ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
 	var xG Value
 	var err error
 	if xG, err = x.Grad(); err != nil {
@@ -446,9 +446,9 @@ func TestSoftMax(t *testing.T) {
 	if !floatsEqual64(xG.Data().([]float64), x2G.Data().([]float64)) {
 		t.Errorf("Expected both gradients of X to be the same.")
 	}
-
+	t.Logf("\n%v\n%v\n%v", sm.Value(), logsm.Value(), cost.Value())
 	correctXGrad := []float64{
-		0.178025447751409, 0.1967485475322529, 0.11933402633223977, 0.24030921861990098, 0.2655827597641975,
+		0.178025447751409, 0.1967485475322529, -0.8806659736677602, 0.24030921861990098, 0.2655827597641975,
 	}
 
 	if !floatsEqual64(correctXGrad, x2G.Data().([]float64)) {
