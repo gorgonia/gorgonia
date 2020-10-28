@@ -18,5 +18,5 @@ const (
 // 	<- ch
 func workersChan() chan struct{} { return make(chan struct{}, runtime.GOMAXPROCS(0)) }
 
-// calcBlocks calculuates the best number of blocks given a blocksize
-func calcBlocks(dim, blocksize int) int { return (dim + blocksize - 1) / blocksize }
+// calcConcurrentBlocks calculuates the best number of blocks given a blocksize
+func calcConcurrentBlocks(dim, blocksize int) int { return (dim + blocksize - 1) / blocksize }
