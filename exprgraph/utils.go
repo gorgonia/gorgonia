@@ -2,7 +2,6 @@ package exprgraph
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 
 	"gorgonia.org/gorgonia"
@@ -24,6 +23,7 @@ func T2T(a gorgonia.Tensor) tensor.Tensor {
 	}
 }
 
+/*
 func tonode(t gorgonia.Tensor) node {
 	switch a := t.(type) {
 	case Node:
@@ -58,6 +58,7 @@ func tonode(t gorgonia.Tensor) node {
 	}
 	panic("Unreachable")
 }
+*/
 
 func consFmtStr(a fmt.State, c rune) string {
 	retVal := "%"

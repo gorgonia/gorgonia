@@ -191,11 +191,11 @@ func Add(a, b gorgonia.Tensor) (gorgonia.Tensor, error) {
 }
 
 func ExampleSymbolic() {
-	g := New(tensor.StdEng{})
+	g := NewGraph()
 
-	x := Make(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	y := Make(g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
-	z := Make(g, "z", tensor.WithShape(), tensor.Of(tensor.Float64))
+	x := NewNode(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	y := NewNode(g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
+	z := NewNode(g, "z", tensor.WithShape(), tensor.Of(tensor.Float64))
 
 	xy, err := MatMul(x, y)
 	if err != nil {
@@ -221,11 +221,17 @@ func ExampleSymbolic() {
 }
 
 func ExampleHybrid() {
-	g := New(&HybridEngine{})
+	g := NewGraph(&HybridEngine{})
 
-	x := Make(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	y := Make(g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
-	z := Make(g, "z", tensor.WithShape(), tensor.WithBacking([]float64{1}))
+	x := NewNode(g, "x",
+		tensor.WithShape(2, 3),
+		tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	y := NewNode(g, "y",
+		tensor.WithShape(3, 2),
+		tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
+	z := NewNode(g, "z",
+		tensor.WithShape(),
+		tensor.WithBacking([]float64{1}))
 
 	xy, err := MatMul(x, y)
 	if err != nil {
@@ -259,11 +265,11 @@ func ExampleHybrid() {
 }
 
 func ExampleFwd() {
-	g := New(&FwdEngine{})
+	g := NewGraph(&FwdEngine{})
 
-	x := Make(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	y := Make(g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
-	z := Make(g, "z", tensor.WithShape(), tensor.WithBacking([]float64{1}))
+	x := NewNode(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	y := NewNode(g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
+	z := NewNode(g, "z", tensor.WithShape(), tensor.WithBacking([]float64{1}))
 
 	xy, err := MatMul(x, y)
 	if err != nil {

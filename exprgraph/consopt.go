@@ -1,7 +1,6 @@
 package exprgraph
 
-import "gorgonia.org/tensor"
-
+/*
 func WithName(name string) tensor.ConsOpt {
 	return func(t tensor.Tensor) {
 		en := t.Engine()
@@ -38,3 +37,4 @@ func WithChildren(a []tensor.Tensor) tensor.ConsOpt {
 		}
 	}
 }
+*/
