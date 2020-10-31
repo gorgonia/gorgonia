@@ -192,16 +192,31 @@ func (g *Graph) To(id int64) graph.Nodes {
 // NewNode returns a new Node with a unique
 // arbitrary ID and default values.
 func (g *Graph) NewNode() *Node {
-	panic("todo")
+	if len(g.nodes) == 0 {
+		return &Node{
+			id: MinNodeID,
+		}
+	}
+	if int64(len(g.nodes)) == uid.Max {
+		panic("simple: cannot allocate node: no slot")
+	}
+	return &Node{
+		id: g.nodeIDs.NewID(),
+	}
 }
 
 // AddNode adds a node to the graph. AddNode panics if
 // the added node ID matches an existing node ID.
-func (g *Graph) AddNode(n *Node) {
+func (g *Graph) AddNode(n *Node) error {
 	if n.ID() < MinNodeID {
-		panic("Cannot add a node with an ID less than MinNodeID")
+		return errors.New("Cannot add a node with an ID less than MinNodeID")
 	}
-	panic("todo")
+	if _, exists := g.nodes[n.ID()]; exists {
+		return fmt.Errorf("simple: node ID collision: %d", n.ID())
+	}
+	g.nodes[n.ID()] = n
+	g.nodeIDs.Use(n.ID())
+	return nil
 }
 
 // setWeightedEdge adds a weighted edge from one node to another. If the nodes do not exist, they are added

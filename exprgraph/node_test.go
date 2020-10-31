@@ -43,6 +43,65 @@ func TestCons(t *testing.T) {
 				"test",
 				tens,
 			},
+			&Node{
+				id:     1,
+				Tensor: tens,
+				name:   "test",
+				Op:     nil,
+			},
+			false,
+		},
+		{
+			"node collision in graph",
+			args{
+				&Graph{
+					nodes: map[int64]*Node{
+						1: {},
+					},
+				},
+				"test",
+				tens,
+			},
+			nil,
+			true,
+		},
+		{
+			"node exists with same name",
+			args{
+				&Graph{
+					nodes: map[int64]*Node{
+						1: {
+							Tensor: tens,
+							id:     1,
+							name:   "test",
+						},
+					},
+				},
+				"test",
+				tens,
+			},
+			&Node{
+				Tensor: tens,
+				id:     1,
+				name:   "test",
+			},
+			false,
+		},
+		{
+			"node exists with diffetent name",
+			args{
+				&Graph{
+					nodes: map[int64]*Node{
+						1: {
+							Tensor: tens,
+							id:     1,
+							name:   "test",
+						},
+					},
+				},
+				"test2",
+				tens,
+			},
 			nil,
 			true,
 		},

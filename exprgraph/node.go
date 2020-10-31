@@ -43,22 +43,21 @@ func NewNode(g *Graph, name string, opts ...tensor.ConsOpt) *Node {
 // If the provided graph is nil, then Cons simply constructs the node by itself. No node will be added to the graph.
 func Cons(g *Graph, name string, t tensor.Tensor) (*Node, error) {
 	if g != nil {
-		var id int64 = 0
-		nm, err := g.NameOf(t)
-		if err != nil {
-			return nil, err
+		nm := g.NodeOf(t)
+		if nm == nil {
+			nm = g.NewNode()
+			nm.Tensor = t
+			nm.name = name
+			err := g.AddNode(nm)
+			if err != nil {
+				return nil, err
+			}
+			return nm, nil
 		}
-		if nm != name {
+		if nm.name != name {
 			return nil, errors.New("A node holding the tensor exists with a different name")
 		}
-		return g.NodeOf(t), nil
-		// TODO id := g.idOrInsert(t)
-		if n, ok := g.nodes[id]; ok {
-			n.name = name
-			return n, nil
-		}
-		g.nodes[id].name = name
-		return g.nodes[id], nil
+		return nm, nil
 	}
 	return &Node{Tensor: t, name: name, id: 0, Op: nil}, nil
 }
