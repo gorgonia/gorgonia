@@ -52,8 +52,11 @@ func (t *Symbolic) Pointer() unsafe.Pointer { return nil }
 // ScalarValue will always return nil. (There is no data)
 func (t *Symbolic) ScalarValue() interface{} { return nil }
 
-//func (t *symbolic) Format(f fmt.State, c rune) { fmt.Fprintf(f, t.g.NameOf(t)) }
-func (t *Symbolic) Format(f fmt.State, c rune) { fmt.Fprintf(f, "TODO") }
+// Format ...
+func (t *Symbolic) Format(f fmt.State, c rune) {
+	name, _ := t.g.NameOf(t)
+	fmt.Fprintf(f, name)
+}
 
 // Data returns nil
 func (t *Symbolic) Data() interface{} { return nil }

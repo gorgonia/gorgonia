@@ -12,7 +12,7 @@ import (
 // T2T tries to find a `tensor.Tensor` from a gorgonia.Tensor
 func T2T(a gorgonia.Tensor) tensor.Tensor {
 	switch t := a.(type) {
-	case Node:
+	case *Node:
 		return T2T(t.Tensor.(gorgonia.Tensor))
 	case *dual.Dual:
 		return t
