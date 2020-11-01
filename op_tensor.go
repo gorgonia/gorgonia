@@ -1240,6 +1240,7 @@ func (op reshapeOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Node
 	if ret, err = Reshape(grad, op.from); err != nil {
 		return
 	}
+	ret.setGroup(gradClust)
 	return Nodes{ret}, nil
 }
 

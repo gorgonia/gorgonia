@@ -239,7 +239,6 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 		// so we sum up the gradients
 		symdiffLogf("nodeGradMap[%x]: %d", node.ID(), nodeGradMap[node])
 		if len(nodeGradMap[node]) > 1 {
-
 			var n *Node
 			symdiffLogf("reduce adding")
 			if n, err = ReduceAdd(nodeGradMap[node], WithGroupName(gradClust)); err != nil {
