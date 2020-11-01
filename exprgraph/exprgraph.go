@@ -62,6 +62,13 @@ func (g *Graph) NameOf(t gorgonia.Tensor) (string, error) {
 				return n.name, nil
 			}
 		}
+		if n.beforeLift != nil {
+			if tt, ok := n.beforeLift.(gorgonia.Tensor); ok {
+				if t == tt {
+					return n.name, nil
+				}
+			}
+		}
 		if t == n {
 			return n.name, nil
 		}
@@ -83,6 +90,13 @@ func (g *Graph) IDOf(t gorgonia.Tensor) (NodeID, error) {
 			}
 
 		}
+		if n.beforeLift != nil {
+			if tt, ok := n.beforeLift.(gorgonia.Tensor); ok {
+				if t == tt {
+					return NodeID(i), nil
+				}
+			}
+		}
 		if t == n {
 			return NodeID(i), nil
 		}
@@ -101,6 +115,13 @@ func (g *Graph) NodeOf(t gorgonia.Tensor) *Node {
 		if tt, ok := n.Tensor.(gorgonia.Tensor); ok {
 			if t == tt {
 				return n
+			}
+		}
+		if n.beforeLift != nil {
+			if tt, ok := (n.beforeLift).(gorgonia.Tensor); ok {
+				if t == tt {
+					return n
+				}
 			}
 		}
 		if t == n {
@@ -213,6 +234,11 @@ func (g *Graph) AddNode(n *Node) error {
 	}
 	if _, exists := g.nodes[n.ID()]; exists {
 		return fmt.Errorf("simple: node ID collision: %d", n.ID())
+	}
+	if l, ok := n.Tensor.Engine().(Lifter); ok {
+		t := n.Tensor
+		n.beforeLift = t
+		n.Tensor = l.Lift(t)
 	}
 	g.nodes[n.ID()] = n
 	g.nodeIDs.Use(n.ID())

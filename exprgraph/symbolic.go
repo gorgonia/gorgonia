@@ -54,8 +54,7 @@ func (t *Symbolic) ScalarValue() interface{} { return nil }
 
 // Format ...
 func (t *Symbolic) Format(f fmt.State, c rune) {
-	name, _ := t.g.NameOf(t)
-	fmt.Fprintf(f, name)
+	fmt.Fprintf(f, "TODO")
 }
 
 // Data returns nil

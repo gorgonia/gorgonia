@@ -7,6 +7,7 @@ import (
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/exprgraph/internal/uid"
+	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
 )
 
@@ -235,6 +236,12 @@ func TestGraph_NameOf(t *testing.T) {
 		name:   "test",
 		Tensor: sampleTensor,
 	}
+	sampleDV := dual.New(sampleTensor)
+	sampleNodeLifted := &Node{
+		name:       "test",
+		Tensor:     sampleDV,
+		beforeLift: sampleTensor,
+	}
 	type fields struct {
 		Engine  tensor.Engine
 		nodes   map[int64]*Node
@@ -275,6 +282,19 @@ func TestGraph_NameOf(t *testing.T) {
 						name:   "test",
 						Tensor: sampleTensor,
 					},
+				},
+			},
+			args{
+				t: sampleTensor,
+			},
+			"test",
+			false,
+		},
+		{
+			"tensor lifted found",
+			fields{
+				nodes: map[int64]*Node{
+					0: sampleNodeLifted,
 				},
 			},
 			args{
@@ -326,6 +346,12 @@ func TestGraph_IDOf(t *testing.T) {
 		name:   "test",
 		Tensor: sampleTensor,
 	}
+	sampleDV := dual.New(sampleTensor)
+	sampleNodeLifted := &Node{
+		name:       "test",
+		Tensor:     sampleDV,
+		beforeLift: sampleTensor,
+	}
 	type fields struct {
 		Engine  tensor.Engine
 		nodes   map[int64]*Node
@@ -366,6 +392,19 @@ func TestGraph_IDOf(t *testing.T) {
 						name:   "test",
 						Tensor: sampleTensor,
 					},
+				},
+			},
+			args{
+				t: sampleTensor,
+			},
+			NodeID(0),
+			false,
+		},
+		{
+			"tensor lifted found",
+			fields{
+				nodes: map[int64]*Node{
+					0: sampleNodeLifted,
 				},
 			},
 			args{
@@ -417,6 +456,12 @@ func TestGraph_NodeOf(t *testing.T) {
 	sampleNode := &Node{
 		name:   "test",
 		Tensor: sampleTensor,
+	}
+	sampleDV := dual.New(sampleTensor)
+	sampleNodeLifted := &Node{
+		name:       "test",
+		Tensor:     sampleDV,
+		beforeLift: sampleTensor,
 	}
 	type fields struct {
 		Engine  tensor.Engine
@@ -477,6 +522,18 @@ func TestGraph_NodeOf(t *testing.T) {
 				t: sampleNode,
 			},
 			sampleNode,
+		},
+		{
+			"lift",
+			fields{
+				nodes: map[int64]*Node{
+					0: sampleNodeLifted,
+				},
+			},
+			args{
+				t: sampleTensor,
+			},
+			sampleNodeLifted,
 		},
 		// TODO: Add test cases.
 	}
@@ -645,6 +702,86 @@ func TestGraph_setWeightedEdge(t *testing.T) {
 			}
 			if err := g.setWeightedEdge(tt.args.e); (err != nil) != tt.wantErr {
 				t.Errorf("Graph.setWeightedEdge() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestGraph_Graph(t *testing.T) {
+	type fields struct {
+		Engine  tensor.Engine
+		nodes   map[int64]*Node
+		from    map[int64]map[int64]graph.WeightedEdge
+		to      map[int64]map[int64]graph.WeightedEdge
+		self    float64
+		absent  float64
+		nodeIDs uid.Set
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   *Graph
+	}{
+		{
+			"simple",
+			fields{},
+			&Graph{},
+		},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &Graph{
+				Engine:  tt.fields.Engine,
+				nodes:   tt.fields.nodes,
+				from:    tt.fields.from,
+				to:      tt.fields.to,
+				self:    tt.fields.self,
+				absent:  tt.fields.absent,
+				nodeIDs: tt.fields.nodeIDs,
+			}
+			if got := g.Graph(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Graph.Graph() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGraph_Nodes(t *testing.T) {
+	type fields struct {
+		Engine  tensor.Engine
+		nodes   map[int64]*Node
+		from    map[int64]map[int64]graph.WeightedEdge
+		to      map[int64]map[int64]graph.WeightedEdge
+		self    float64
+		absent  float64
+		nodeIDs uid.Set
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   graph.Nodes
+	}{
+		{
+			"empty graph",
+			fields{},
+			graph.Empty,
+		},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &Graph{
+				Engine:  tt.fields.Engine,
+				nodes:   tt.fields.nodes,
+				from:    tt.fields.from,
+				to:      tt.fields.to,
+				self:    tt.fields.self,
+				absent:  tt.fields.absent,
+				nodeIDs: tt.fields.nodeIDs,
+			}
+			if got := g.Nodes(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Graph.Nodes() = %v, want %v", got, tt.want)
 			}
 		})
 	}

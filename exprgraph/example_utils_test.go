@@ -115,11 +115,19 @@ func Add(a, b gorgonia.Tensor) (gorgonia.Tensor, error) {
 	case tensor.Adder:
 		at := exprgraph.T2T(a)
 		bt := exprgraph.T2T(b)
-		ct, err := e.AddScalar(at, bt, true) // note this brief example is specific to the examples. More switch cases are needed to figure out leftScalar vs rightScalar
+		// note this brief example is specific to the examples.
+		// More switch cases are needed to figure out leftScalar vs rightScalar
+		ct, err := e.AddScalar(at, bt, true)
 		if err != nil {
 			return nil, err
 		}
 		return exprgraph.Cons(g, cname, ct)
 	}
 	return nil, errors.New("NotImplemented")
+}
+
+// ExampleOperations is a placeholder to display documentation of
+// the MatMul and Add functions used in the other examples.
+func Example_operations() {
+	// See other examples for usage
 }

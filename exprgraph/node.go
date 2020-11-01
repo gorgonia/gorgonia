@@ -27,6 +27,8 @@ type Node struct {
 	id   int64
 	name string
 	Op   ops.Op
+	// beforeLift tracks the old value of a tensor before it has been lifted
+	beforeLift gorgonia.Tensor
 }
 
 // GetName returns the name of the node
