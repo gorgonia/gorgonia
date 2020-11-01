@@ -19,6 +19,9 @@ func MatMul(a, b gorgonia.Tensor) (gorgonia.Tensor, error) {
 	if eng == nil {
 		eng = b.Engine().(GraphEngine)
 	}
+	if eng == nil {
+		return nil, errors.New("Nil engine")
+	}
 
 	g := eng.Graph()
 	aname, err := g.NameOf(a)

@@ -19,7 +19,9 @@ func (e *SymbolicEngine) SetGraph(g *exprgraph.Graph) { e.g = g }
 
 // ExampleSymbolic demonstrates how to implement a symbolic engine that does perform symbolic operations
 func Example_symbolicEngine() {
-	g := exprgraph.NewGraph(&SymbolicEngine{})
+	engine := &SymbolicEngine{}
+	g := exprgraph.NewGraph(engine)
+	engine.g = g
 
 	x := exprgraph.NewNode(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
 	y := exprgraph.NewNode(g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))

@@ -36,7 +36,7 @@ func (n *Node) GetName() string {
 
 // NewNode in a given graph.
 func NewNode(g *Graph, name string, opts ...tensor.ConsOpt) *Node {
-	t := tensor.New(opts...)
+	t := tensor.New(append(opts, tensor.WithEngine(g.Engine))...)
 	n, err := Cons(g, name, t)
 	if err != nil {
 		panic(err)
