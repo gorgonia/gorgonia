@@ -29,6 +29,11 @@ type Node struct {
 	Op   ops.Op
 }
 
+// GetName returns the name of the node
+func (n *Node) GetName() string {
+	return n.name
+}
+
 // NewNode in a given graph.
 func NewNode(g *Graph, name string, opts ...tensor.ConsOpt) *Node {
 	t := tensor.New(opts...)

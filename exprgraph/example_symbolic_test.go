@@ -36,7 +36,6 @@ func Example_symbolicEngine() {
 
 	fmt.Printf("x:\n%s\ny:\n%s\nxy:\n%s\nxy+z:\n%s\n", x, y, xy, xypz)
 
-	// TODO
 	// Output:
 	// x:
 	//x

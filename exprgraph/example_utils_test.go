@@ -37,18 +37,24 @@ func MatMul(a, b gorgonia.Tensor) (gorgonia.Tensor, error) {
 
 	switch e := eng.(type) {
 	case *exprgraph.Graph:
-	/*
-		aid := g.IDOf(a)
-		bid := g.IDOf(b)
-				retVal := exprgraph.NewSymbolic(g, e, dt, shp)
-				id := e.Insert(retVal)
-				e.Name(retVal, cname) // TODO: add op
-				err := e.AddChildren(id, aid, bid)
-				if err != nil {
-					return nil, err
-				}
-				return retVal, nil
-	*/
+		aNode := g.NodeOf(a)
+		if aNode == nil {
+			return nil, exprgraph.ErrNotFoundInGraph
+		}
+		bNode := g.NodeOf(b)
+		if bNode != nil {
+			return nil, exprgraph.ErrNotFoundInGraph
+		}
+		retVal := exprgraph.NewSymbolic(g, e, dt, shp)
+		n, err := exprgraph.Cons(e, cname, exprgraph.T2T(retVal))
+		if err != nil {
+			return nil, err
+		}
+		err = e.AddChildren(n, aNode, bNode)
+		if err != nil {
+			return nil, err
+		}
+		return retVal, nil
 	case tensor.MatMuler:
 		at := exprgraph.T2T(a)
 		bt := exprgraph.T2T(b)
@@ -61,7 +67,6 @@ func MatMul(a, b gorgonia.Tensor) (gorgonia.Tensor, error) {
 	default:
 		panic(fmt.Sprintf("ENGINE %T", eng))
 	}
-	return nil, errors.New("NotImplemented")
 }
 
 func Add(a, b gorgonia.Tensor) (gorgonia.Tensor, error) {
@@ -83,21 +88,27 @@ func Add(a, b gorgonia.Tensor) (gorgonia.Tensor, error) {
 
 	switch e := eng.(type) {
 	case *exprgraph.Graph:
-		/*
-			aid := g.IDOf(a)
-			bid := g.IDOf(b)
-			// TODO: check shapes obvs
-			shp := a.Shape().Clone()
-			dt := a.Dtype()
-					retVal := exprgraph.NewSymbolic(g, e, dt, shp)
-					id := e.Insert(retVal)
-					e.Name(retVal, aname+"+"+bname) // TODO: add op
-					err := e.AddChildren(id, aid, bid)
-					if err != nil {
-						return nil, err
-					}
-					return retVal, nil
-		*/
+		aNode := g.NodeOf(a)
+		if aNode == nil {
+			return nil, exprgraph.ErrNotFoundInGraph
+		}
+		bNode := g.NodeOf(b)
+		if bNode == nil {
+			return nil, exprgraph.ErrNotFoundInGraph
+		}
+		// TODO: check shapes obvs
+		shp := a.Shape().Clone()
+		dt := a.Dtype()
+		retVal := exprgraph.NewSymbolic(g, e, dt, shp)
+		c, err := exprgraph.Cons(e, aname+"+"+bname, exprgraph.T2T(retVal))
+		if err != nil {
+			return nil, err
+		}
+		err = e.AddChildren(c, aNode, bNode)
+		if err != nil {
+			return nil, err
+		}
+		return retVal, nil
 	case tensor.Adder:
 		at := exprgraph.T2T(a)
 		bt := exprgraph.T2T(b)

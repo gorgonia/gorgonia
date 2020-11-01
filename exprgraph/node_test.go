@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"gorgonia.org/gorgonia"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
@@ -115,6 +117,42 @@ func TestCons(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Cons() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNode_GetName(t *testing.T) {
+	type fields struct {
+		Tensor gorgonia.Tensor
+		id     int64
+		name   string
+		Op     ops.Op
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   string
+	}{
+		{
+			"ok",
+			fields{
+				name: "test",
+			},
+			"test",
+		},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			n := &Node{
+				Tensor: tt.fields.Tensor,
+				id:     tt.fields.id,
+				name:   tt.fields.name,
+				Op:     tt.fields.Op,
+			}
+			if got := n.GetName(); got != tt.want {
+				t.Errorf("Node.GetName() = %v, want %v", got, tt.want)
 			}
 		})
 	}
