@@ -10,16 +10,20 @@ import (
 )
 
 // T2T tries to find a `tensor.Tensor` from a gorgonia.Tensor
+// it returns nil if no tensor is found
 func T2T(a gorgonia.Tensor) tensor.Tensor {
 	switch t := a.(type) {
 	case *Node:
+		if t.Tensor == nil {
+			return nil
+		}
 		return T2T(t.Tensor.(gorgonia.Tensor))
 	case *dual.Dual:
 		return t
 	case tensor.Tensor:
 		return t
 	default:
-		panic("XXX")
+		return nil
 	}
 }
 
