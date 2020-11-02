@@ -52,7 +52,7 @@ func (n *Nodes) NodeSlice() []*Node {
 	if n.Len() == 0 {
 		return nil
 	}
-	nodes := make([]*Node, 0, n.Len())
+	nodes := make([]*Node, n.Len())
 	var ns []graph.Node
 	if n.NodesByEdge != nil {
 		ns = n.NodesByEdge.NodeSlice()
