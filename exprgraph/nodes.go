@@ -2,46 +2,47 @@ package exprgraph
 
 import (
 	"gonum.org/v1/gonum/graph"
+	"gonum.org/v1/gonum/graph/iterator"
 )
 
 // Nodes is an iterator over Nodes
 type Nodes struct {
-	nodes map[int64]*Node
-	edges int
-	iter  *mapIter
-	pos   int
-	curr  *Node
+	*iterator.Nodes
+	*iterator.NodesByEdge
 }
 
 // Len returns the remaining number of nodes to be iterated over.
 func (n *Nodes) Len() int {
-	return n.edges - n.pos
+	if n.NodesByEdge != nil {
+		return n.NodesByEdge.Len()
+	}
+	return n.Nodes.Len()
 }
 
 // Next returns whether the next call of Node will return a valid node.
 func (n *Nodes) Next() bool {
-	if n.pos >= n.edges {
-		return false
+	if n.NodesByEdge != nil {
+		return n.NodesByEdge.Next()
 	}
-	ok := n.iter.next()
-	if ok {
-		n.pos++
-		n.curr = n.nodes[n.iter.id()]
-	}
-	return ok
+	return n.Nodes.Next()
 }
 
 // Node returns the current node of the iterator. Next must have been
 // called prior to a call to Node.
 func (n *Nodes) Node() graph.Node {
-	return n.curr
+	if n.NodesByEdge != nil {
+		return n.NodesByEdge.Node()
+	}
+	return n.Nodes.Node()
 }
 
 // Reset returns the iterator to its initial state.
 func (n *Nodes) Reset() {
-	n.curr = nil
-	n.pos = 0
-	n.iter.it = nil
+	if n.NodesByEdge != nil {
+		n.NodesByEdge.Reset()
+		return
+	}
+	n.Nodes.Reset()
 }
 
 // NodeSlice returns all the remaining nodes in the iterator and advances
@@ -52,10 +53,15 @@ func (n *Nodes) NodeSlice() []*Node {
 		return nil
 	}
 	nodes := make([]*Node, 0, n.Len())
-	for n.iter.next() {
-		nodes = append(nodes, n.nodes[n.iter.id()])
+	var ns []graph.Node
+	if n.NodesByEdge != nil {
+		ns = n.NodesByEdge.NodeSlice()
+	} else {
+		ns = n.Nodes.NodeSlice()
 	}
-	n.pos = n.edges
+	for i, n := range ns {
+		nodes[i] = n.(*Node)
+	}
 	return nodes
 }
 
@@ -70,13 +76,17 @@ func (n *Nodes) NodeSlice() []*Node {
 // Behavior of the NodesByEdge is unspecified if nodes or edges
 // is mutated after the call the NewNodes.
 func NewNodes(nodes map[int64]*Node, edges map[int64]graph.WeightedEdge) *Nodes {
+	ns := make(map[int64]graph.Node, len(nodes))
+	for i, n := range nodes {
+		ns[i] = graph.Node(n)
+	}
 	if edges == nil {
-		return &Nodes{nodes: nodes, iter: newMapIterNodes(nodes)}
+		return &Nodes{
+			Nodes: iterator.NewNodes(ns),
+		}
 	}
 	return &Nodes{
-		nodes: nodes,
-		edges: len(edges),
-		iter:  newMapIterWeightedEdges(edges),
+		NodesByEdge: iterator.NewNodesByWeightedEdge(ns, edges),
 	}
 }
 
