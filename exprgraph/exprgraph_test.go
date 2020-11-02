@@ -786,3 +786,326 @@ func TestGraph_Nodes(t *testing.T) {
 		})
 	}
 }
+
+func TestGraph_From(t *testing.T) {
+	type fields struct {
+		Engine  tensor.Engine
+		nodes   map[int64]*Node
+		from    map[int64]map[int64]graph.WeightedEdge
+		to      map[int64]map[int64]graph.WeightedEdge
+		self    float64
+		absent  float64
+		nodeIDs uid.Set
+	}
+	type args struct {
+		id int64
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   graph.Nodes
+	}{
+		{
+			"empty graph",
+			fields{},
+			args{
+				0,
+			},
+			graph.Empty,
+		},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &Graph{
+				Engine:  tt.fields.Engine,
+				nodes:   tt.fields.nodes,
+				from:    tt.fields.from,
+				to:      tt.fields.to,
+				self:    tt.fields.self,
+				absent:  tt.fields.absent,
+				nodeIDs: tt.fields.nodeIDs,
+			}
+			if got := g.From(tt.args.id); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Graph.From() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGraph_HasEdgeBetween(t *testing.T) {
+	type fields struct {
+		Engine  tensor.Engine
+		nodes   map[int64]*Node
+		from    map[int64]map[int64]graph.WeightedEdge
+		to      map[int64]map[int64]graph.WeightedEdge
+		self    float64
+		absent  float64
+		nodeIDs uid.Set
+	}
+	type args struct {
+		xid int64
+		yid int64
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			"link between x and y",
+			fields{
+				from: map[int64]map[int64]graph.WeightedEdge{
+					0: {
+						1: &WeightedEdge{},
+					},
+				},
+			},
+			args{
+				0,
+				1,
+			},
+			true,
+		},
+		{
+			"link between y and x",
+			fields{
+				from: map[int64]map[int64]graph.WeightedEdge{
+					0: {
+						1: &WeightedEdge{},
+					},
+				},
+			},
+			args{
+				1,
+				0,
+			},
+			true,
+		},
+		{
+			"no link between y and x",
+			fields{
+				from: map[int64]map[int64]graph.WeightedEdge{
+					0: {
+						1: &WeightedEdge{},
+					},
+				},
+			},
+			args{
+				1,
+				2,
+			},
+			false,
+		},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &Graph{
+				Engine:  tt.fields.Engine,
+				nodes:   tt.fields.nodes,
+				from:    tt.fields.from,
+				to:      tt.fields.to,
+				self:    tt.fields.self,
+				absent:  tt.fields.absent,
+				nodeIDs: tt.fields.nodeIDs,
+			}
+			if got := g.HasEdgeBetween(tt.args.xid, tt.args.yid); got != tt.want {
+				t.Errorf("Graph.HasEdgeBetween() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGraph_HasEdgeFromTo(t *testing.T) {
+	type fields struct {
+		Engine  tensor.Engine
+		nodes   map[int64]*Node
+		from    map[int64]map[int64]graph.WeightedEdge
+		to      map[int64]map[int64]graph.WeightedEdge
+		self    float64
+		absent  float64
+		nodeIDs uid.Set
+	}
+	type args struct {
+		uid int64
+		vid int64
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			"link between x and y",
+			fields{
+				from: map[int64]map[int64]graph.WeightedEdge{
+					0: {
+						1: &WeightedEdge{},
+					},
+				},
+			},
+			args{
+				0,
+				1,
+			},
+			true,
+		},
+		{
+			"link between y and x",
+			fields{
+				from: map[int64]map[int64]graph.WeightedEdge{
+					0: {
+						1: &WeightedEdge{},
+					},
+				},
+			},
+			args{
+				1,
+				0,
+			},
+			false,
+		},
+		{
+			"no link between y and x",
+			fields{
+				from: map[int64]map[int64]graph.WeightedEdge{
+					0: {
+						1: &WeightedEdge{},
+					},
+				},
+			},
+			args{
+				1,
+				2,
+			},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &Graph{
+				Engine:  tt.fields.Engine,
+				nodes:   tt.fields.nodes,
+				from:    tt.fields.from,
+				to:      tt.fields.to,
+				self:    tt.fields.self,
+				absent:  tt.fields.absent,
+				nodeIDs: tt.fields.nodeIDs,
+			}
+			if got := g.HasEdgeFromTo(tt.args.uid, tt.args.vid); got != tt.want {
+				t.Errorf("Graph.HasEdgeFromTo() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGraph_AddNode(t *testing.T) {
+	type fields struct {
+		Engine  tensor.Engine
+		nodes   map[int64]*Node
+		from    map[int64]map[int64]graph.WeightedEdge
+		to      map[int64]map[int64]graph.WeightedEdge
+		self    float64
+		absent  float64
+		nodeIDs uid.Set
+	}
+	type args struct {
+		n *Node
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			"invalid node id",
+			fields{},
+			args{
+				&Node{
+					id: -1,
+				},
+			},
+			true,
+		},
+		{
+			"node collision",
+			fields{
+				nodes: map[int64]*Node{
+					MinNodeID + 1: {},
+				},
+			},
+			args{
+				&Node{
+					id: MinNodeID + 1,
+				},
+			},
+			true,
+		},
+		{
+			"node ok",
+			fields{
+				nodes: map[int64]*Node{
+					MinNodeID + 1: {},
+				},
+				nodeIDs: uid.NewSet(),
+			},
+			args{
+				&Node{
+					Tensor: tensor.NewDense(tensor.Float32, tensor.Shape{1, 1}),
+					id:     MinNodeID + 2,
+				},
+			},
+			false,
+		},
+		{
+			"node lifter ok",
+			fields{
+				nodes: map[int64]*Node{
+					MinNodeID + 1: {},
+				},
+				nodeIDs: uid.NewSet(),
+			},
+			args{
+				&Node{
+					Tensor: tensor.NewDense(tensor.Float32, tensor.Shape{1, 1},
+						tensor.WithEngine(&dummyLifter{}),
+					),
+					id: MinNodeID + 2,
+				},
+			},
+			false,
+		},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &Graph{
+				Engine:  tt.fields.Engine,
+				nodes:   tt.fields.nodes,
+				from:    tt.fields.from,
+				to:      tt.fields.to,
+				self:    tt.fields.self,
+				absent:  tt.fields.absent,
+				nodeIDs: tt.fields.nodeIDs,
+			}
+			if err := g.AddNode(tt.args.n); (err != nil) != tt.wantErr {
+				t.Errorf("Graph.AddNode() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+var _ Lifter = &dummyLifter{}
+
+type dummyLifter struct {
+	tensor.StdEng
+}
+
+func (*dummyLifter) Lift(t gorgonia.Tensor) gorgonia.Tensor {
+	return t.(tensor.Tensor).Clone().(tensor.Tensor)
+}
