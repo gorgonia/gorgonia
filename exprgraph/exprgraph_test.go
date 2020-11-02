@@ -1109,3 +1109,120 @@ type dummyLifter struct {
 func (*dummyLifter) Lift(t gorgonia.Tensor) gorgonia.Tensor {
 	return t.(tensor.Tensor).Clone().(tensor.Tensor)
 }
+
+func TestGraph_Edge(t *testing.T) {
+	type fields struct {
+		Engine  tensor.Engine
+		nodes   map[int64]*Node
+		from    map[int64]map[int64]graph.WeightedEdge
+		to      map[int64]map[int64]graph.WeightedEdge
+		self    float64
+		absent  float64
+		nodeIDs uid.Set
+	}
+	type args struct {
+		uid int64
+		vid int64
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   graph.Edge
+	}{
+		{
+			"simple",
+			fields{
+				from: map[int64]map[int64]graph.WeightedEdge{
+					0: {
+						1: &WeightedEdge{},
+					},
+				},
+			},
+			args{
+				0, 1,
+			},
+			&WeightedEdge{},
+		},
+		{
+			"no link",
+			fields{
+				from: map[int64]map[int64]graph.WeightedEdge{
+					0: {
+						1: &WeightedEdge{},
+					},
+				},
+			},
+			args{
+				0, 2,
+			},
+			nil,
+		},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &Graph{
+				Engine:  tt.fields.Engine,
+				nodes:   tt.fields.nodes,
+				from:    tt.fields.from,
+				to:      tt.fields.to,
+				self:    tt.fields.self,
+				absent:  tt.fields.absent,
+				nodeIDs: tt.fields.nodeIDs,
+			}
+			if got := g.Edge(tt.args.uid, tt.args.vid); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Graph.Edge() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGraph_To(t *testing.T) {
+	type fields struct {
+		Engine  tensor.Engine
+		nodes   map[int64]*Node
+		from    map[int64]map[int64]graph.WeightedEdge
+		to      map[int64]map[int64]graph.WeightedEdge
+		self    float64
+		absent  float64
+		nodeIDs uid.Set
+	}
+	type args struct {
+		id int64
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   graph.Nodes
+	}{
+		{
+			"nil graph",
+			fields{
+				to: map[int64]map[int64]graph.WeightedEdge{},
+			},
+			args{
+				0,
+			},
+			graph.Empty,
+		},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &Graph{
+				Engine:  tt.fields.Engine,
+				nodes:   tt.fields.nodes,
+				from:    tt.fields.from,
+				to:      tt.fields.to,
+				self:    tt.fields.self,
+				absent:  tt.fields.absent,
+				nodeIDs: tt.fields.nodeIDs,
+			}
+			if got := g.To(tt.args.id); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Graph.To() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
