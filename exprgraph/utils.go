@@ -27,43 +27,6 @@ func T2T(a gorgonia.Tensor) tensor.Tensor {
 	}
 }
 
-/*
-func tonode(t gorgonia.Tensor) node {
-	switch a := t.(type) {
-	case Node:
-		return node{Node: a}
-	case *Symbolic:
-		return node{
-			Node: Node{
-				Tensor: a,
-				id:     -1,
-			},
-		}
-	case *dual.Dual:
-		return node{
-			Node: Node{
-				Tensor: a,
-				id:     -1,
-			},
-		}
-	case tensor.Tensor:
-		return node{
-			Node: Node{
-				Tensor: a,
-				id:     -1,
-			},
-		}
-	case *node:
-		return *a
-	case *Node:
-		return node{Node: *a}
-	default:
-		log.Printf("tonode %T not handled", t)
-	}
-	panic("Unreachable")
-}
-*/
-
 func consFmtStr(a fmt.State, c rune) string {
 	retVal := "%"
 	acceptable := []rune{'+', '-', ' ', '#', '0'}

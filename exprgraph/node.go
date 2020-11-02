@@ -87,28 +87,3 @@ func (n Node) Format(f fmt.State, c rune) {
 		}
 	}
 }
-
-/*
-// GraphNode is a tuple of a graph object and a node. This allows for querying the payload of the Node.
-//
-// This is the object that should be used for any kind of query (topsort, etc)
-type GraphNode struct {
-	*Graph
-	Node
-}
-
-//go:notinheap
-type gn struct {
-	*Graph
-	Node
-}
-
-// node is a node for internal use. Its graph is defined by the links (i.e. pointers).
-// if the ID is negative, it means that the node is in-progress
-type node struct {
-	Node
-	flag
-	execution.Device
-}
-
-*/
