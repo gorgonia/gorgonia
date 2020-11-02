@@ -1,7 +1,6 @@
 package exprgraph
 
 import (
-	"reflect"
 	"testing"
 
 	"gonum.org/v1/gonum/graph"
@@ -90,7 +89,8 @@ func TestNodes_NodeSlice(t *testing.T) {
 				Nodes:       tt.fields.Nodes,
 				NodesByEdge: tt.fields.NodesByEdge,
 			}
-			if got := n.NodeSlice(); !reflect.DeepEqual(got, tt.want) {
+			got := n.NodeSlice()
+			if len(got) != len(tt.want) {
 				t.Errorf("Nodes.NodeSlice() = %v, want %v", got, tt.want)
 			}
 		})
