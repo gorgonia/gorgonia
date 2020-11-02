@@ -289,11 +289,6 @@ func (m *ExternMetadata) collectBLASWork() {}
 
 func (m *ExternMetadata) signal() { m.workAvailable <- true }
 
-// it's just a generic ceiling function. Added here to avoid mixing with any potential ceilInt operation
-func calcBlocks(n, maxThreads int) int {
-	return (n + maxThreads - 1) / maxThreads
-}
-
 func (m *ExternMetadata) setEngine(e tensor.Engine) {}
 
 // AddToStdLib allows for custom ops to be included into the "stdlib" of CUDA functions, so that when the VMs are created, they're loaded automatically

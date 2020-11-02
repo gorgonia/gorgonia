@@ -18,5 +18,7 @@ const (
 // 	<- ch
 func workersChan() chan struct{} { return make(chan struct{}, runtime.GOMAXPROCS(0)) }
 
-// calcBlocks calculuates the best number of blocks given a blocksize
-func calcBlocks(dim, blocksize int) int { return (dim + blocksize - 1) / blocksize }
+// it's just a generic ceiling function. Added here to avoid mixing with any potential ceilInt operation
+func calcBlocks(n, maxThreads int) int {
+	return (n + maxThreads - 1) / maxThreads
+}
