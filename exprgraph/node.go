@@ -3,7 +3,6 @@ package exprgraph
 import (
 	"errors"
 	"fmt"
-	"log"
 
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/ops"
@@ -83,7 +82,7 @@ func (n Node) Format(f fmt.State, c rune) {
 			str := consFmtStr(f, c)
 			fmt.Fprintf(f, str, t)
 		default:
-			log.Printf("tensor type %T unsupported for node.Format", n.Tensor)
+			fmt.Fprintf(f, "node id %v", n.id)
 		}
 	}
 }
