@@ -17,6 +17,7 @@ type softmaxOp struct {
 	shape tensor.Shape
 	axis  int
 	isLog bool
+	sum   interface{}
 }
 
 func newSoftmaxOp(inputShape tensor.Shape, axes ...int) *softmaxOp {
@@ -125,7 +126,7 @@ func (op *softmaxOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) er
 	odv := output.boundTo.(*dualValue)
 	idv := inputs[0].boundTo.(*dualValue)
 	idvd := idv.d.(*tensor.Dense)
-	diffOp := newSoftmaxOpDiff(op.axis, op.isLog)
+	diffOp := &softmaxDiffOp{op}
 
 	result, err := diffOp.Do(idv.Value, odv.Value, odv.d)
 	if err != nil {
@@ -149,7 +150,7 @@ func (op *softmaxOp) SymDiff(inputs Nodes, output, grad *Node) (Nodes, error) {
 		return nil, err
 	}
 
-	diffOp := newSoftmaxOpDiff(op.axis, op.isLog)
+	diffOp := &softmaxDiffOp{op}
 	nodes := make(Nodes, 1)
 
 	nodes[0], err = ApplyOp(diffOp, inputs[0], output, grad)
@@ -203,11 +204,13 @@ func (op *softmaxOp) f64skernel(data, output []float64, inner, ostride, dimSize,
 			}
 			sum += z
 		}
+
 		if op.isLog {
 			sum = math.Log(sum)
 		} else {
 			sum = 1 / sum
 		}
+		op.sum = sum
 
 		// set output
 		for d := 0; d < dimSize && d*dimStride < len(y); d++ {
@@ -217,6 +220,7 @@ func (op *softmaxOp) f64skernel(data, output []float64, inner, ostride, dimSize,
 				y[d*dimStride] *= sum
 			}
 		}
+
 	}
 }
 
@@ -277,8 +281,7 @@ func (op *softmaxOp) f32skernel(data, output []float32, inner, ostride, dimSize,
 
 // output and data are of the same size
 func (op *softmaxOp) do(shp tensor.Shape, axis int, input, output interface{}) {
-	blocks := runtime.GOMAXPROCS(0) + 1
-	//blocks := calcBlocks(len(data), defaultBlockSize)
+	threads := runtime.GOMAXPROCS(0) + 1
 
 	dimSize := shp[axis]
 	outer := tensor.ProdInts([]int(shp[:axis]))
@@ -291,8 +294,16 @@ func (op *softmaxOp) do(shp tensor.Shape, axis int, input, output interface{}) {
 	}
 	dimStride := inner
 	ostride := dimSize * dimStride
+	axisSize := shp[axis]
 
 	datalen := shp.TotalSize()
+	blockSize := calcBlocks(datalen, threads)
+	blocks := datalen / blockSize
+	if blockSize == 0 || blockSize < axisSize {
+		blockSize = datalen
+		blocks = 1
+	}
+
 	if blocks < minParallelBlocks {
 		switch data := input.(type) {
 		case []float64:
@@ -304,17 +315,11 @@ func (op *softmaxOp) do(shp tensor.Shape, axis int, input, output interface{}) {
 		default:
 			panic(fmt.Sprintf("tensor of %T not handled for softmax diff ", data))
 		}
-
 		return
 	}
 
 	workers := workersChan()
 	var wg sync.WaitGroup
-
-	blockSize := datalen / blocks
-	if blockSize == 0 {
-		blockSize = datalen // 1 block
-	}
 
 	for b := 0; b < datalen; b += blockSize {
 		wg.Add(1)
@@ -356,12 +361,7 @@ func (op *softmaxOp) do(shp tensor.Shape, axis int, input, output interface{}) {
 }
 
 type softmaxDiffOp struct {
-	axis  int
-	isLog bool
-}
-
-func newSoftmaxOpDiff(axis int, isLog bool) *softmaxDiffOp {
-	return &softmaxDiffOp{axis: axis, isLog: isLog}
+	*softmaxOp
 }
 
 func (op *softmaxDiffOp) Arity() int { return 3 }
@@ -515,7 +515,6 @@ func (op *softmaxDiffOp) f64Kernel(input, output, yGrad, xGrad []float64, inner,
 				dydx[d*dimStride] = y[d*dimStride] * (dy[d*dimStride] - sum)
 			}
 		}
-
 	}
 }
 
