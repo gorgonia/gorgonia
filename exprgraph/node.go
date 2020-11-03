@@ -82,7 +82,8 @@ func (n Node) Format(f fmt.State, c rune) {
 			str := consFmtStr(f, c)
 			fmt.Fprintf(f, str, t)
 		default:
-			fmt.Fprintf(f, "node id %v", n.id)
+			fmt.Fprintf(f, "node(%v,%s,%v)",
+				n.id, n.name, t)
 		}
 	}
 }

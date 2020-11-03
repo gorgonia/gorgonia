@@ -1,6 +1,7 @@
 package exprgraph
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -153,6 +154,79 @@ func TestNode_GetName(t *testing.T) {
 			}
 			if got := n.GetName(); got != tt.want {
 				t.Errorf("Node.GetName() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNode_Format(t *testing.T) {
+	t.Run("display name", func(t *testing.T) {
+		n := fmt.Sprintf("%s", &Node{name: "name"})
+		if n != "name" {
+			t.Fatal(n)
+		}
+	})
+	t.Run("display nil tensor", func(t *testing.T) {
+		n := fmt.Sprintf("%v", &Node{name: "name"})
+		if n != "node(0,name,<nil>)" {
+			t.Fatal(n)
+		}
+
+	})
+	t.Run("display tensor %v", func(t *testing.T) {
+		n := fmt.Sprintf("%v", &Node{
+			name:   "name",
+			Tensor: tensor.NewDense(tensor.Float32, []int{1}),
+		})
+		if n != "0" {
+			t.Fatal(n)
+		}
+	})
+	t.Run("display tensor %2.2v", func(t *testing.T) {
+		n := fmt.Sprintf("%2.2v", &Node{
+			name:   "name",
+			Tensor: tensor.NewDense(tensor.Float32, []int{1}, tensor.WithBacking([]float32{42.4242})),
+		})
+		if n != "42" {
+			t.Fatal(n)
+		}
+	})
+	t.Run("display tensor %2.2f", func(t *testing.T) {
+		n := fmt.Sprintf("%2.2f", &Node{
+			name:   "name",
+			Tensor: tensor.NewDense(tensor.Float32, []int{1}, tensor.WithBacking([]float32{42.4242})),
+		})
+		if n != "42.42" {
+			t.Fatal(n)
+		}
+	})
+	t.Run("display tensor %#v", func(t *testing.T) {
+		n := fmt.Sprintf("%#v", &Node{
+			name:   "name",
+			Tensor: tensor.NewDense(tensor.Float32, []int{1}, tensor.WithBacking([]float32{42.4242})),
+		})
+		if n != "42.4242" {
+			t.Fatal(n)
+		}
+	})
+}
+
+func TestNodeID_ID(t *testing.T) {
+	tests := []struct {
+		name string
+		n    NodeID
+		want int64
+	}{
+		{
+			"simple",
+			NodeID(0),
+			0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.n.ID(); got != tt.want {
+				t.Errorf("NodeID.ID() = %v, want %v", got, tt.want)
 			}
 		})
 	}
