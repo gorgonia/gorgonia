@@ -1,6 +1,8 @@
 package gorgonia
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/encoding"
 	"gorgonia.org/tensor"
@@ -218,22 +220,23 @@ func Im2Col(n *Node, kernel, pad, stride, dilation tensor.Shape) (retVal *Node, 
 	}
 
 	if dilation[0] <= 0 || dilation[1] <= 0 {
-		return nil, errors.Errorf("canot have negative or 0 in dilation. %v", dilation)
+		return nil, errors.Errorf("cannot have negative or 0 in dilation. %v", dilation)
 	}
 
 	op := makeIm2ColOp(kernel[0], kernel[1], pad[0], pad[1], stride[0], stride[1], dilation[0], dilation[1])
 	return ApplyOp(op, n)
 }
 
-// Conv2d is a simple 2D convoution, to be used for CPU computation only. If CuDNN is used, use the CUDAConv2D function.
+// Conv2d is a simple 2D convolution, to be used for CPU computation only.
+// If CuDNN is used, use the CUDAConv2D function.
 // These are the properties the inputs must fulfil:
 //
-// im: must have 4D shape. Expected format is BCHW (batch, channel, height, width)
-// filter: must have 4D shape: (batch, kernel, height, width)
-// kernelShape: shape of the filter kernel
-// pad: len(pad) == 2
-// stride: len(stride) == 2
-// dilation: len(dilation) == 2
+// - im: must have 4D shape. Expected format is BCHW (batch, channels, height, width)
+// - filter: must have 4D shape: (batch, kernel, height, width)
+// - kernelShape: shape of the filter kernel
+// - pad: len(pad) == 2, defaults to []int{0, 0} if nil is passed
+// - stride: len(stride) == 2, example: []int{1, 1}
+// - dilation: len(dilation) == 2, defaults to []int{1, 1} if nil is passed
 func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []int) (retVal *Node, err error) {
 	group := encoding.NewGroup("Convolution")
 	// niceness for defaults
@@ -242,6 +245,14 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []
 	}
 	if dilation == nil {
 		dilation = []int{1, 1}
+	}
+
+	if im.Shape().Dims() != 4 {
+		return nil, fmt.Errorf("im should have 4 dims, got %v dims", im.Shape().Dims())
+	}
+
+	if filter.Shape().Dims() != 4 {
+		return nil, fmt.Errorf("filter should have 4 dims, got %v dims", filter.Shape().Dims())
 	}
 
 	// checks
@@ -265,7 +276,7 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []
 
 	var colIm *Node
 	if colIm, err = Im2Col(im, kernelShape, pad, stride, dilation); err != nil {
-		return
+		return nil, fmt.Errorf("Im2Col to failed: %w", err)
 	}
 	colIm.groups = colIm.groups.Upsert(group)
 
@@ -274,9 +285,13 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []
 	row := filter.Shape()[2]
 	col := filter.Shape()[3]
 
+	if colIm.Shape()[3] != kernel*row*col {
+		return nil, fmt.Errorf("%d (kernel) * %d (width) * %d (height) must be %d, got %d", kernel, row, col, colIm.Shape()[3], kernel*row*col)
+	}
+
 	var flattened *Node
 	if flattened, err = Reshape(filter, tensor.Shape{layer, kernel * row * col}); err != nil {
-		return
+		return nil, fmt.Errorf("reshaping filter from %v to (%v, %v * %v * %v) failed: %w", filter.Shape(), layer, kernel, row, col, err)
 	}
 	flattened.groups = flattened.groups.Upsert(group)
 
@@ -288,7 +303,7 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []
 
 	var patch, colImLayer *Node
 	if patch, err = Reshape(colIm, tensor.Shape{batch * m * n, z}); err != nil {
-		return
+		return nil, fmt.Errorf("reshaping colIm from %v to (%v * %v * %v * %v) failed: %w", colIm.Shape(), batch, m, n, z, err)
 	}
 	patch.groups = patch.groups.Upsert(group)
 
@@ -299,19 +314,23 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []
 	}
 
 	if colImLayer, err = ApplyOp(op, patch, flattened); err != nil {
-		return
+		return nil, fmt.Errorf("failed to apply op: %w", err)
 	}
 	colImLayer.groups = colImLayer.groups.Upsert(group)
 
 	// now reshape and transpose the values back into the original order
 	var res *Node
 	if res, err = Reshape(colImLayer, tensor.Shape{batch, m, n, layer}); err != nil {
-		return
+		return nil, fmt.Errorf("failed to reshape %v to (%v, %v, %v, %v): %w", colImLayer.Shape(), batch, m, n, layer, err)
 	}
 	res.groups = res.groups.Upsert(group)
 	ret, err := Transpose(res, 0, 3, 1, 2)
+	if err != nil {
+		return nil, fmt.Errorf("transpose %v failed: %w", res.Shape(), err)
+	}
+
 	ret.groups = ret.groups.Upsert(group)
-	return ret, err
+	return ret, nil
 }
 
 // Conv1d is a 1D convlution. It relies on Conv2D
