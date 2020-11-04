@@ -7,6 +7,8 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gorgonia.org/tensor"
 	nd "gorgonia.org/tensor"
 )
 
@@ -101,4 +103,40 @@ func TestRandomNodeBackprop(t *testing.T) {
 	vm := NewLispMachine(g, WithLogger(log.New(os.Stderr, "", 0)))
 	vm.RunAll()
 	t.Logf("d.Value %v", d.Value())
+}
+
+func TestLetErrors(t *testing.T) {
+	g := NewGraph()
+
+	testCases := []struct {
+		desc string
+		node *Node
+		val  interface{}
+		err  string
+	}{
+		{
+			desc: "DifferentShapes",
+			node: NewTensor(g, tensor.Float64, 2, WithShape(1, 1), WithInit(GlorotN(1.0)), WithName("x")),
+			val:  tensor.New(tensor.WithShape(1, 1, 1), tensor.WithBacking([]float64{0.5})),
+			err:  "Node's expected shape is (1, 1). Got (1, 1, 1) instead",
+		},
+		{
+			desc: "AssigningConst",
+			node: NewConstant(2, WithName("x")),
+			val:  tensor.New(tensor.WithShape(1, 1), tensor.WithBacking([]float64{0.5})),
+			err:  "Cannot bind a value to a non input node",
+		},
+	}
+
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			err := Let(tC.node, tC.val)
+			if tC.err != "" {
+				require.Error(t, err)
+				assert.Equal(t, tC.err, err.Error())
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

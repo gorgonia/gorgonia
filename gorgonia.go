@@ -266,6 +266,10 @@ func UnsafeLet(n *Node, be interface{}) error {
 		}
 
 	case Value:
+		if !n.Shape().Eq(v.Shape()) {
+			return fmt.Errorf("Node's expected shape is %v. Got %v instead", n.Shape(), v.Shape())
+		}
+
 		if !n.Dtype().Eq(v.Dtype()) {
 			return errors.Errorf("Unable to let %v be %v. Expected Dtype of %v. Got %v instead", n.name, be, n.Dtype(), v.Dtype())
 		}
