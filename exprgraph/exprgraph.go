@@ -1,9 +1,12 @@
 package exprgraph
 
 import (
+	"errors"
+	"fmt"
+
 	"gonum.org/v1/gonum/graph"
-	"gonum.org/v1/gonum/graph/iterator"
 	"gorgonia.org/gorgonia"
+	"gorgonia.org/gorgonia/exprgraph/internal/uid"
 	"gorgonia.org/tensor"
 )
 
@@ -12,194 +15,296 @@ var (
 	_ graph.Directed = &Graph{}
 )
 
-// Graph is a representation of an expression graph
+const (
+	// Self is the weight of a self link in a Graph
+	Self float64 = -10
+	// Absent is the weight of a missing link in a graph
+	Absent float64 = -20
+	// MinNodeID is the minimun ID of the node accepted in the graph
+	MinNodeID = 1
+)
+
+// Graph is a representation of an expression graph.
+// The graph is a directed weighted graph.
+// The lighter the link, the lefter the operand.
+// For example a graph to represent c = a (op) b
+// is represented as:
+//  digraph {
+//      c -> a [weight 0]
+//      c -> b [weight 1]
+//  }
 type Graph struct {
-	// A Graph implements a StandardEngine.
-	tensor.StandardEngine
+	tensor.Engine
+	nodes map[int64]*Node
+	from  map[int64]map[int64]graph.WeightedEdge
+	to    map[int64]map[int64]graph.WeightedEdge
 
-	// adj is an adjacency list
-	adj [][]NodeID
+	self, absent float64
 
-	// nodes is a flat list of nodes
-	nodes []node
-
-	// track derivatives
-
-	// for each node indexed by the id, which other node is a derivative?
-	// e.g if
-	// 	deriv[1] = 3
-	// that means that node ID 1 has node ID 3 as a deriv.
-	deriv []NodeID
-
-	// for each node indexed by the id, of which other nodes is it a derivative of
-	// e.g. if
-	// 	derivOf[3] = []ID{1,2}
-	// that means that node ID 3 is the deriv of nodes with ID 1 and 2.
-	derivOf [][]NodeID
+	nodeIDs uid.Set
 }
 
-type graphSetter interface {
-	SetGraph(g *Graph)
-}
-
-// lifter is usually a *Graph data structure that converts the underlying type of gorgonia.Tensor.
-// this is useful in cases where the data has to be stored as different underlying types (e.g dual values)
-type lifter interface {
-	Lift(oldTensorType gorgonia.Tensor) (newTensorType gorgonia.Tensor)
-}
-
-// New creates a new *Graph.
-func New(eng tensor.StandardEngine) *Graph {
-	g := &Graph{}
-	if gs, ok := eng.(graphSetter); ok {
-		gs.SetGraph(g)
-	}
-	g.StandardEngine = eng
-	g.nodes = make([]node, 0, 1024)
+// Graph returns itself
+func (g *Graph) Graph() *Graph {
 	return g
+}
+
+// NameOf returns the name of the given gorgonia.Tensor.
+// It returns an error if the tensor is not found in the graph
+func (g *Graph) NameOf(t gorgonia.Tensor) (string, error) {
+	// search backwards because it's more probable that you're using newer created nodes
+	for _, n := range g.nodes {
+		// this little trick here (to inspect the internal structure - i.e g.nodes[i].Tensor == t)
+		// is the real reason why you cannot really create Node{Node{Node{...}}}
+		// without doing it explicitly
+		if tt, ok := n.Tensor.(gorgonia.Tensor); ok {
+			if t == tt {
+				return n.name, nil
+			}
+		}
+		if n.beforeLift != nil {
+			if tt, ok := n.beforeLift.(gorgonia.Tensor); ok {
+				if t == tt {
+					return n.name, nil
+				}
+			}
+		}
+		if t == n {
+			return n.name, nil
+		}
+	}
+	return "", fmt.Errorf("%q: %w", t, ErrNotFoundInGraph)
+}
+
+// IDOf returns the ID of the given gorgonia.Tensor.
+// it returns -1 if the node is not found
+func (g *Graph) IDOf(t gorgonia.Tensor) (NodeID, error) {
+	// search backwards because it's more probable that you're using newer created nodes
+	for i, n := range g.nodes {
+		// this little trick here (to inspect the internal structure - i.e g.nodes[i].Tensor == t)
+		// is the real reason why you cannot really create Node{Node{Node{...}}}
+		// without doing it explicitly
+		if tt, ok := n.Tensor.(gorgonia.Tensor); ok {
+			if t == tt {
+				return NodeID(i), nil
+			}
+
+		}
+		if n.beforeLift != nil {
+			if tt, ok := n.beforeLift.(gorgonia.Tensor); ok {
+				if t == tt {
+					return NodeID(i), nil
+				}
+			}
+		}
+		if t == n {
+			return NodeID(i), nil
+		}
+	}
+	return -1, fmt.Errorf("%q: %w", t, ErrNotFoundInGraph)
+}
+
+// NodeOf returns the node of the given gorgonia.Tensor.
+// it returns nil if the node is not found
+func (g *Graph) NodeOf(t gorgonia.Tensor) *Node {
+	// search backwards because it's more probable that you're using newer created nodes
+	for _, n := range g.nodes {
+		// this little trick here (to inspect the internal structure - i.e g.nodes[i].Tensor == t)
+		// is the real reason why you cannot really create Node{Node{Node{...}}}
+		// without doing it explicitly
+		if tt, ok := n.Tensor.(gorgonia.Tensor); ok {
+			if t == tt {
+				return n
+			}
+		}
+		if n.beforeLift != nil {
+			if tt, ok := (n.beforeLift).(gorgonia.Tensor); ok {
+				if t == tt {
+					return n
+				}
+			}
+		}
+		if t == n {
+			return n
+		}
+	}
+	return nil
+}
+
+// NewGraph with default values
+func NewGraph(e tensor.Engine) *Graph {
+	return &Graph{
+		Engine: e,
+		nodes:  make(map[int64]*Node),
+		from:   make(map[int64]map[int64]graph.WeightedEdge),
+		to:     make(map[int64]map[int64]graph.WeightedEdge),
+
+		self:   Self,
+		absent: Absent,
+
+		nodeIDs: uid.NewSet(),
+	}
 }
 
 // Node returns the node with the given ID, if it exists. Nil otherwise.
 func (g *Graph) Node(id int64) graph.Node {
-	if int(id) >= len(g.nodes) || id < 0 {
-		return nil
+	if n, ok := g.nodes[id]; ok {
+		return n
 	}
-	return NodeID(g.nodes[int(id)].id)
+	return nil
 }
 
 // Nodes returns the list of all nodes in the graph.
 func (g *Graph) Nodes() graph.Nodes {
-	var nodes []graph.Node
-	for _, n := range g.nodes {
-		nodes = append(nodes, NodeID(n.id))
+	if len(g.nodes) == 0 {
+		return graph.Empty
 	}
-	return iterator.NewOrderedNodes(nodes)
-}
-
-// AllNodes returns all the nodes
-func (g *Graph) AllNodes() []Node {
-	retVal := make([]Node, len(g.nodes))
-	for i := range g.nodes {
-		retVal[i] = g.nodes[i].Node
-	}
-	return retVal
+	return NewNodes(g.nodes, nil)
 }
 
 // From returns the list of nodes that can be reached directly from the given ID.
-func (g *Graph) From(id int64) graph.Nodes { return nodeIDsToGraphNodes(g.adj[id]) }
+func (g *Graph) From(id int64) graph.Nodes {
+	if len(g.from[id]) == 0 {
+		return graph.Empty
+	}
+	return NewNodes(g.nodes, g.from[id])
+}
 
 // HasEdgeBetween returns whether an edge exists between x and y.
-func (g *Graph) HasEdgeBetween(x, y int64) bool {
-	xchildren := g.adj[x]
-	ychildren := g.adj[y]
-	return nodeIDs(xchildren).Contains(NodeID(y)) || nodeIDs(ychildren).Contains(NodeID(x))
+func (g *Graph) HasEdgeBetween(xid, yid int64) bool {
+	if _, ok := g.from[xid][yid]; ok {
+		return true
+	}
+	_, ok := g.from[yid][xid]
+	return ok
 }
 
 // Edge returns an edge object, if an edge exists. Nil otherwise.
-func (g *Graph) Edge(u, v int64) graph.Edge {
-	uchildren := g.adj[u]
-	if !nodeIDs(uchildren).Contains(NodeID(v)) {
+func (g *Graph) Edge(uid, vid int64) graph.Edge {
+	return g.WeightedEdge(uid, vid)
+}
+
+// WeightedEdge returns the weighted edge from u to v if such an edge exists and nil otherwise.
+// The node v must be directly reachable from u as defined by the From method.
+func (g *Graph) WeightedEdge(uid, vid int64) graph.WeightedEdge {
+	edge, ok := g.from[uid][vid]
+	if !ok {
 		return nil
 	}
-	return edge{from: NodeID(u), to: NodeID(v)}
+	return edge
 }
 
 // HasEdgeFromTo returns whether a directed edge between x and y.
-func (g *Graph) HasEdgeFromTo(u, v int64) bool { return nodeIDs(g.adj[u]).Contains(NodeID(v)) }
+func (g *Graph) HasEdgeFromTo(uid, vid int64) bool {
+	if _, ok := g.from[uid][vid]; !ok {
+		return false
+	}
+	return true
+}
 
 // To returns all the nodes that can reach the given id.
 func (g *Graph) To(id int64) graph.Nodes {
-	var nodes []NodeID
-	for n, adj := range g.adj {
-		if nodeIDs(adj).Contains(NodeID(id)) {
-			nodes = append(nodes, NodeID(n))
+	if len(g.to[id]) == 0 {
+		return graph.Empty
+	}
+	return NewNodes(g.nodes, g.to[id])
+}
+
+// NewNode returns a new Node with a unique
+// arbitrary ID and default values.
+func (g *Graph) NewNode() *Node {
+	if len(g.nodes) == 0 {
+		return &Node{
+			id: MinNodeID,
 		}
 	}
-	return nodeIDsToGraphNodes(nodes)
-}
-
-/* functions dealing with data in the graph */
-
-// Insert inserts a gorgonia.Tensor and returns the Node ID.
-func (g *Graph) Insert(t gorgonia.Tensor) NodeID { return NodeID(g.idOrInsert(t)) }
-
-// NameOf returns the name of a given tensor
-func (g *Graph) NameOf(t gorgonia.Tensor) string { return g.nameOf(t) }
-
-// Name associates a name with a given gorgonia.
-func (g *Graph) Name(t gorgonia.Tensor, s string) { g.name(t, s) }
-
-// NodeOf returns the actual node, given an `n` that knows its own ID.
-func (g *Graph) NodeOf(n graph.Node) Node {
-	id := int(n.ID())
-	if id < 0 || id >= len(g.nodes) {
-		panic("No such ID")
+	if int64(len(g.nodes)) == uid.Max {
+		panic("simple: cannot allocate node: no slot")
 	}
-	return g.nodes[id].Node
+	return &Node{
+		id: g.nodeIDs.NewID(),
+	}
 }
 
-// ID returns the ID of the given gorgonia.Tensor.
-func (g *Graph) ID(t gorgonia.Tensor) NodeID {
-	// search backwards because it's more probable that you're using newer created nodes
-	for i := len(g.nodes) - 1; i >= 0; i-- {
-		// this little trick here (to inspect the internal structure - i.e g.nodes[i].Tensor == t)
-		// is the real reason why you cannot really create Node{Node{Node{...}}}
-		// without doing it explicitly
-		if t == g.nodes[i].Node || t == g.nodes[i].Tensor.(gorgonia.Tensor) {
-			return NodeID(i)
+// AddNode adds a node to the graph. AddNode panics if
+// the added node ID matches an existing node ID.
+func (g *Graph) AddNode(n *Node) error {
+	if n.ID() < MinNodeID {
+		return errors.New("Cannot add a node with an ID less than MinNodeID")
+	}
+	if _, exists := g.nodes[n.ID()]; exists {
+		return fmt.Errorf("simple: node ID collision: %d", n.ID())
+	}
+	if l, ok := n.Tensor.Engine().(Lifter); ok {
+		t := n.Tensor
+		n.beforeLift = t
+		n.Tensor = l.Lift(t)
+	}
+	g.nodes[n.ID()] = n
+	g.nodeIDs.Use(n.ID())
+	return nil
+}
+
+// setWeightedEdge adds a weighted edge from one node to another. If the nodes do not exist, they are added
+// and are set to the nodes of the edge otherwise.
+// It will return an error if the IDs of the e.From and e.To are equal.
+// It will return an  ErrNotFoundInGraph is either from or to node does not exists in the graph
+func (g *Graph) setWeightedEdge(e graph.WeightedEdge) error {
+	var (
+		from = e.From()
+		fid  = from.ID()
+		to   = e.To()
+		tid  = to.ID()
+	)
+
+	if fid == tid {
+		return errors.New("simple: adding self edge")
+	}
+
+	if _, ok := g.nodes[fid]; !ok {
+		return fmt.Errorf("node id %v: %w", fid, ErrNotFoundInGraph)
+	}
+	if _, ok := g.nodes[tid]; !ok {
+		return fmt.Errorf("node id %v: %w", tid, ErrNotFoundInGraph)
+	}
+	g.nodes[fid] = from.(*Node)
+	g.nodes[tid] = to.(*Node)
+
+	if fm, ok := g.from[fid]; ok {
+		fm[tid] = e
+	} else {
+		g.from[fid] = map[int64]graph.WeightedEdge{tid: e}
+	}
+	if tm, ok := g.to[tid]; ok {
+		tm[fid] = e
+	} else {
+		g.to[tid] = map[int64]graph.WeightedEdge{fid: e}
+	}
+	return nil
+}
+
+// AddChildren creates weighted edges betwen n and children.
+// The function returns an error if a child is not present in the graph
+// or if any link betwen n and one of children already exists
+func (g *Graph) AddChildren(n *Node, children ...*Node) error {
+	if _, ok := g.nodes[n.ID()]; !ok {
+		return fmt.Errorf("%q: %w", n, ErrNotFoundInGraph)
+	}
+	for _, n := range children {
+		if _, ok := g.nodes[n.ID()]; !ok {
+			return fmt.Errorf("%v: %w", n, ErrNotFoundInGraph)
 		}
 	}
-	return -1
-}
-
-// AddChildren adds the children to the attached Node.
-func (g *Graph) AddChildren(id NodeID, children []NodeID) {
-	diff := int(id) - len(g.adj)
-	if diff >= 0 {
-		g.adj = append(g.adj, make([][]NodeID, diff+1)...)
+	for i, child := range children {
+		err := g.setWeightedEdge(WeightedEdge{
+			F: n,
+			T: child,
+			W: float64(i),
+		},
+		)
+		if err != nil {
+			return err
+		}
 	}
-	g.adj[id] = append(g.adj[id], children...)
-}
-
-/* Monoidy stuff */
-
-func (g *Graph) Graph() *Graph { return g }
-
-/* unexported methods */
-
-// idOrInsert returns the ID of the given tensor if the tensor is in the expression graph. Otherwise it adds it.
-func (g *Graph) idOrInsert(t gorgonia.Tensor) NodeID {
-	id := g.ID(t)
-	if id < 0 {
-		return g.insert(t)
-	}
-	return id
-}
-
-// insert inserts the tensor into the expression graph, and returns the ID
-func (g *Graph) insert(t gorgonia.Tensor) NodeID {
-	l := len(g.nodes)
-	v := t.(gorgonia.Tensor)
-	if l, ok := t.Engine().(lifter); ok {
-		v = l.Lift(v)
-	}
-	n := tonode(v)
-	g.nodes = append(g.nodes, n)
-	g.nodes[l].id = int64(l)
-	return NodeID(g.nodes[l].id)
-}
-
-// nameOf returns the name of the gorgonia.
-func (g *Graph) nameOf(t gorgonia.Tensor) string {
-	id := g.ID(t)
-	// TODO: if not found?
-	return g.nodes[id].name
-}
-
-// name gives a name to a tensor in the expression graph
-func (g *Graph) name(t gorgonia.Tensor, s string) error {
-	id := g.ID(t)
-	g.nodes[id].name = s
-
-	return nil //TODO: if not found
+	return nil
 }
