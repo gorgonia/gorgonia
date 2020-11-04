@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gorgonia.org/dawson"
 	"gorgonia.org/tensor"
 )
@@ -596,5 +597,74 @@ func TestGlobalAveragePool2D_fwdPass(t *testing.T) {
 			}
 		}
 		assert.InDeltaSlice(expectedOutput.Data(), output.Value().Data(), 1e-6, "the two tensors should be equal.")
+	}
+}
+
+func TestConv2dErrors(t *testing.T) {
+	g := NewGraph()
+
+	testCases := []struct {
+		desc                  string
+		im                    *Node
+		filter                *Node
+		kernelShape           tensor.Shape
+		pad, stride, dilation []int
+		err                   string
+		panics                bool
+	}{
+		{
+			desc:        "Succesful",
+			im:          NewTensor(g, tensor.Float64, 4, WithShape(1, 1, 28, 28)),
+			filter:      NewTensor(g, tensor.Float64, 4, WithShape(32, 1, 3, 3)),
+			kernelShape: tensor.Shape{3, 3},
+			pad:         []int{1, 1},
+			stride:      []int{1, 1},
+			dilation:    []int{1, 1},
+			err:         "",
+		},
+		{
+			desc:        "5dIM",
+			im:          NewTensor(g, tensor.Float64, 5, WithShape(1, 1, 1, 28, 28)),
+			filter:      NewTensor(g, tensor.Float64, 4, WithShape(32, 1, 3, 3)),
+			kernelShape: tensor.Shape{3, 3},
+			pad:         []int{1, 1},
+			stride:      []int{1, 1},
+			dilation:    []int{1, 1},
+			err:         "im should have 4 dims, got 5 dims",
+		},
+		{
+			desc:        "5dFilter",
+			im:          NewTensor(g, tensor.Float64, 4, WithShape(1, 1, 28, 28)),
+			filter:      NewTensor(g, tensor.Float64, 5, WithShape(32, 1, 1, 3, 3)),
+			kernelShape: tensor.Shape{3, 3},
+			pad:         []int{1, 1},
+			stride:      []int{1, 1},
+			dilation:    []int{1, 1},
+			err:         "filter should have 4 dims, got 5 dims",
+		},
+		{
+			desc:        "Shapes",
+			im:          NewTensor(g, tensor.Float64, 4, WithShape(1, 1, 28, 28)),
+			filter:      NewTensor(g, tensor.Float64, 4, WithShape(32, 3, 3, 3)),
+			kernelShape: tensor.Shape{3, 3},
+			pad:         []int{1, 1},
+			stride:      []int{1, 1},
+			dilation:    []int{1, 1},
+			err:         "3 (kernel) * 3 (width) * 3 (height) must be 9, got 27",
+		},
+	}
+
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			c := assert.New(t)
+
+			_, err := Conv2d(tC.im, tC.filter, tC.kernelShape, tC.pad, tC.stride, tC.dilation)
+			if tC.err != "" {
+				require.Error(t, err)
+				c.Equal(tC.err, err.Error())
+			} else {
+				c.NoError(err)
+			}
+		})
 	}
 }
