@@ -113,8 +113,20 @@ func (m *convnet) fwd(x *G.Node) (err error) {
 	if p1, err = G.MaxPool2D(a1, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
 		return errors.Wrap(err, "Layer 1 Maxpooling failed")
 	}
-	if l1, err = G.Dropout(p1, m.d1); err != nil {
-		return errors.Wrap(err, "Unable to apply a dropout to layer 1")
+
+	var r1 *G.Node
+	b, c, h, w := p1.Shape()[0], p1.Shape()[1], p1.Shape()[2], p1.Shape()[3]
+	if r1, err = G.Reshape(p1, tensor.Shape{b, c * h * w}); err != nil {
+		return errors.Wrap(err, "Unable to reshape layer 1")
+	}
+	log.Printf("r1 shape %v", r1.Shape())
+	if l1, err = G.Dropout(r1, m.d1); err != nil {
+		return errors.Wrap(err, "Unable to apply a dropout on layer 1")
+	}
+
+	l1, err = G.Reshape(l1, p1.Shape())
+	if err != nil {
+		return errors.Wrap(err, "reshape failed")
 	}
 
 	// Layer 2
@@ -129,7 +141,7 @@ func (m *convnet) fwd(x *G.Node) (err error) {
 	}
 
 	var r2 *G.Node
-	b, c, h, w := p2.Shape()[0], p2.Shape()[1], p2.Shape()[2], p2.Shape()[3]
+	b, c, h, w = p2.Shape()[0], p2.Shape()[1], p2.Shape()[2], p2.Shape()[3]
 	if r2, err = G.Reshape(p2, tensor.Shape{b, c * h * w}); err != nil {
 		return errors.Wrap(err, "Unable to reshape layer 2")
 	}
