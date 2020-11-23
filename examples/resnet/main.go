@@ -57,11 +57,12 @@ type convnet struct {
 func newConvNet(g *G.ExprGraph) *convnet {
 	w0 := G.NewTensor(g, dt, 4, G.WithShape(32, 1, 3, 3), G.WithName("w0"), G.WithInit(G.GlorotN(1.0)))
 	w1 := G.NewTensor(g, dt, 4, G.WithShape(64, 32, 3, 3), G.WithName("w1"), G.WithInit(G.GlorotN(1.0)))
-	w1r := G.NewMatrix(g, dt, G.WithShape(3136, 3136), G.WithName("w1r"), G.WithInit(G.GlorotN(1.0)))
+	w1r := G.NewMatrix(g, dt, G.WithShape(3136, 12544), G.WithName("w1r"), G.WithInit(G.GlorotN(1.0)))
 	w2 := G.NewTensor(g, dt, 4, G.WithShape(128, 64, 3, 3), G.WithName("w2"), G.WithInit(G.GlorotN(1.0)))
-	w2r := G.NewMatrix(g, dt, G.WithShape(6272, 6272), G.WithName("w2r"), G.WithInit(G.GlorotN(1.0)))
-	w3 := G.NewMatrix(g, dt, G.WithShape(6272, 625), G.WithName("w3"), G.WithInit(G.GlorotN(1.0)))
+	w2r := G.NewMatrix(g, dt, G.WithShape(6272, 25088), G.WithName("w2r"), G.WithInit(G.GlorotN(1.0)))
+	w3 := G.NewMatrix(g, dt, G.WithShape(25088, 625), G.WithName("w3"), G.WithInit(G.GlorotN(1.0)))
 	w4 := G.NewMatrix(g, dt, G.WithShape(625, 10), G.WithName("w4"), G.WithInit(G.GlorotN(1.0)))
+
 	return &convnet{
 		g:   g,
 		w0:  w0,
@@ -183,11 +184,15 @@ func (m *convnet) fwd(x *G.Node) (err error) {
 		return fmt.Errorf("layer 2 Add failed: %w", err)
 	}
 
+	log.Printf("Layer2: Add(%v, %v) -> %v", c2.Shape(), r2.Shape(), s2.Shape())
+
 	if l2, err = G.Dropout(s2, m.d2); err != nil {
 		return errors.Wrap(err, "Unable to apply a dropout on layer 2")
 	}
 
-	if l2, err = G.Reshape(l2, tensor.Shape{b, c * h * w}); err != nil {
+	log.Printf("Layer2: Reshape(%v, %v)", l2.Shape(), tensor.Shape{b, 128 * 14 * 14})
+
+	if l2, err = G.Reshape(l2, tensor.Shape{b, 128 * 14 * 14}); err != nil {
 		return errors.Wrap(err, "Unable to apply a reshape on layer 2")
 	}
 
