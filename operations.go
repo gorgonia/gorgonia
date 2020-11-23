@@ -563,6 +563,11 @@ func Reshape(n *Node, to tensor.Shape) (retVal *Node, err error) {
 		to[infer] = inferred
 	}
 
+	// the Node n might not have shape at this point, in that case we skip the check
+	if n.Shape().Dims() > 0 && n.Shape().TotalSize() != to.TotalSize() {
+		return nil, errors.Errorf("shape size doesn't not match. Expected %v, got %v", n.Shape().TotalSize(), to.TotalSize())
+	}
+
 	op := reshapeOp{
 		from: n.Shape(),
 		to:   to,

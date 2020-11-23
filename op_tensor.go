@@ -1156,7 +1156,7 @@ func (op reshapeOp) Do(vals ...Value) (Value, error) {
 				return nil, errors.Wrapf(err, cloneFail, vals[0])
 			}
 		}
-		if !val.Shape().Eq(op.from) {
+		if val.Shape().TotalSize() != op.from.TotalSize() {
 			return nil, errors.Errorf("Shape mismatch. Input shape is %v. Expected %v", val.Shape(), op.from)
 		}
 
