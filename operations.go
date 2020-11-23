@@ -535,11 +535,6 @@ func Unconcat(a *Node, along int, n int) (Nodes, error) {
 
 // Reshape reshapes a node and returns a new node with the new shape
 func Reshape(n *Node, to tensor.Shape) (retVal *Node, err error) {
-	// the Node n might not have shape at this point, in that case we skip the check
-	if n.Shape().Dims() > 0 && n.Shape().TotalSize() != to.TotalSize() {
-		return nil, errors.Errorf("shape size doesn't not match. Expected %v, got %v", n.Shape().TotalSize(), to.TotalSize())
-	}
-
 	// check shape
 	var negs int
 	var infer int
@@ -566,6 +561,11 @@ func Reshape(n *Node, to tensor.Shape) (retVal *Node, err error) {
 			return nil, errors.Errorf("Cannot reshape %v to %v", n.Shape(), to)
 		}
 		to[infer] = inferred
+	}
+
+	// the Node n might not have shape at this point, in that case we skip the check
+	if n.Shape().Dims() > 0 && n.Shape().TotalSize() != to.TotalSize() {
+		return nil, errors.Errorf("shape size doesn't not match. Expected %v, got %v", n.Shape().TotalSize(), to.TotalSize())
 	}
 
 	op := reshapeOp{
