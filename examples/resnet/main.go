@@ -54,7 +54,7 @@ type convnet struct {
 	out *G.Node
 }
 
-func newConvNet(g *G.ExprGraph) *convnet {
+func newResNet(g *G.ExprGraph) *convnet {
 	w0 := G.NewTensor(g, dt, 4, G.WithShape(32, 1, 3, 3), G.WithName("w0"), G.WithInit(G.GlorotN(1.0)))
 	w1 := G.NewTensor(g, dt, 4, G.WithShape(64, 32, 3, 3), G.WithName("w1"), G.WithInit(G.GlorotN(1.0)))
 	w1r := G.NewMatrix(g, dt, G.WithShape(3136, 12544), G.WithName("w1r"), G.WithInit(G.GlorotN(1.0)))
@@ -73,10 +73,10 @@ func newConvNet(g *G.ExprGraph) *convnet {
 		w3:  w3,
 		w4:  w4,
 
-		d0: 0.2,
-		d1: 0.2,
-		d2: 0.2,
-		d3: 0.55,
+		d0: 0.3,
+		d1: 0.3,
+		d2: 0.3,
+		d3: 0.2,
 	}
 }
 
@@ -260,7 +260,7 @@ func main() {
 	g := G.NewGraph()
 	x := G.NewTensor(g, dt, 4, G.WithShape(bs, 1, 28, 28), G.WithName("x"))
 	y := G.NewMatrix(g, dt, G.WithShape(bs, 10), G.WithName("y"))
-	m := newConvNet(g)
+	m := newResNet(g)
 	if err = m.fwd(x); err != nil {
 		log.Fatalf("%+v", err)
 	}
