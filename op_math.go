@@ -18,6 +18,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash"
+	"log"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -155,6 +156,8 @@ func (op elemBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err err
 					retVal = x
 				case len(y) > 0 && y[0] == 1:
 					retVal = y
+				case x.IsScalar() && y.IsScalar():
+					retVal = scalarShape
 				default:
 					retVal = scalarShape
 				}
@@ -918,6 +921,7 @@ func (op tensordotOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) e
 
 		pattern := make([]int, len(in.shape))
 		counter := len(iAxes)
+		log.Printf("in.shape %v, pattern %v", in.shape, pattern)
 
 		for patternIndex := 0; patternIndex < len(pattern); patternIndex++ {
 			iAxesCoSortedIndex := contains(iAxesCoSorted, patternIndex)
@@ -934,7 +938,7 @@ func (op tensordotOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) e
 		// With the exception of scalars
 		dOtherAxes := make([]int, otherdvv.Dims())
 
-		if !otherdvv.IsScalar() {
+		if !otherdvv.Shape().IsScalarEquiv() {
 			var dOtherAxesIndex int
 
 			for axis := 0; axis < otherdvv.Dims(); axis++ {
@@ -971,9 +975,8 @@ func (op tensordotOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) e
 			var err error
 
 			switch {
-			case odvdDense.IsScalar():
+			case odvdDense.Shape().IsScalarEquiv():
 				tensordot, err = otherdvvDense.MulScalar(odvdDense, true)
-
 			case otherdvvDense.IsVector() && odvdDense.IsVector() && 0 == len(dOtherAxes): // TensorMul does not support creating matrix from two vectors
 				// Reformat vectors, so that MatMul will create a matrix from them
 				var otherdvvDenseShapeOld tensor.Shape
@@ -984,7 +987,6 @@ func (op tensordotOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) e
 					otherdvvDenseShapeOld = otherdvvDense.Shape().Clone()
 
 					otherdvvVecDims, err := (otherdvvDense.AP.Shape()).DimSize(0)
-
 					if err != nil {
 						return err
 					}
@@ -1019,6 +1021,7 @@ func (op tensordotOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) e
 
 			default:
 				tensordot, err = otherdvvDense.TensorMul(odvdDense, dOtherAxes, dOutputAxes)
+
 			}
 
 			if err != nil {
@@ -1026,7 +1029,6 @@ func (op tensordotOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) e
 			}
 
 			tensordotPerm, err := tensor.T(tensordot, pattern...)
-
 			if err != nil {
 				return err
 			}
@@ -1113,7 +1115,7 @@ func (op tensordotOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal No
 		// With the exception of scalars
 		dOtherAxes := make([]int, other.Dims())
 
-		if !other.IsScalar() {
+		if !other.Shape().IsScalarEquiv() {
 			var dOtherAxesIndex int
 
 			for axis := 0; axis < other.Dims(); axis++ {
@@ -1143,7 +1145,7 @@ func (op tensordotOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal No
 		// perform tensordot
 		var tensordot *Node
 		switch {
-		case grad.Shape().IsScalar():
+		case grad.Shape().IsScalarEquiv():
 			if tensordot, err = HadamardProd(other, grad); err != nil {
 				return nil, err
 			}

@@ -476,8 +476,8 @@ func TestTensordotOpDoDiff(t *testing.T) {
 
 	// Scalars
 	g := NewGraph()
-	a := NewTensor(g, Float64, 1, WithName("a"), WithShape(1))
-	b := NewTensor(g, Float64, 1, WithName("b"), WithShape(1))
+	a := NewTensor(g, Float64, 0, WithName("a"), WithShape())
+	b := NewTensor(g, Float64, 0, WithName("b"), WithShape())
 
 	tensordot := tensordotOp{
 		aAxes:   []int{0},
@@ -494,9 +494,9 @@ func TestTensordotOpDoDiff(t *testing.T) {
 		return
 	}
 
-	aT := tensor.New(tensor.WithShape(1), tensor.WithBacking([]float64{2}))
-	bT := tensor.New(tensor.WithShape(1), tensor.WithBacking([]float64{21}))
-	cT := tensor.New(tensor.WithShape(1), tensor.WithBacking([]float64{1})) // Backing doesn't matter as long as it is set
+	aT := tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{2}))
+	bT := tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{21}))
+	cT := tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{1})) // Backing doesn't matter as long as it is set
 
 	aVal, _, _, _ := anyToValue(aT)
 	bVal, _, _, _ := anyToValue(bT)
@@ -507,8 +507,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 	c.bind(dvUnitVar(cVal)) // Will set Output derivative to all ones
 
 	if err := tensordot.DoDiff(ExecutionContext{}, Nodes{a, b}, c); err != nil {
-		log.Fatal("scalars: Cannot DoDiff:", err)
-		return
+		t.Fatalf("scalars: Cannot DoDiff: %v", err)
 	}
 
 	aG, _ := a.Grad()
