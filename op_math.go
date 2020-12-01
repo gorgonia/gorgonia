@@ -148,7 +148,7 @@ func (op elemBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err err
 		switch y := inputs[1].(type) {
 		case tensor.Shape:
 			switch {
-			case x.IsScalar() && y.IsScalar():
+			case x.IsScalarEquiv() && y.IsScalarEquiv():
 				// preserve ambiguous scalar shape
 				switch {
 				case len(x) > 0 && x[0] == 1:
