@@ -39,59 +39,71 @@ var testCasesSparseMaxDo = []struct {
 }
 
 var testCasesSparseMaxDoDiff = []struct {
-	size  int
+	shape tensor.Shape
 	input interface{}
 	grad  interface{}
 
 	expected interface{}
 }{
 	{
-		5,
+		tensor.Shape{5},
 		[]float64{0.0000, 0.0000, 0.0521, 0.2354, 0.7124},
 		[]float64{0.2860, -0.0702, 0.8080, 0.9913, 1.4683},
 		[]float64{0, 0, -0.2811999999999999, -0.09789999999999999, 0.3791},
 	},
 	{
-		5,
+		tensor.Shape{5},
 		[]float64{0.0556, 0.0000, 0.7118, 0.2325, 0.0000},
 		[]float64{0.1109, -1.4741, 0.7671, 0.2878, 0.0334},
 		[]float64{-0.2777, -0.0000, 0.3785, -0.1008, -0.0000},
 	},
 	{
-		5,
+		tensor.Shape{5},
 		[]float64{0.2841, 0.0000, 0.7159, 0.0000, 0.0000},
 		[]float64{0.2094, -1.0000, 0.6411, -0.5032, -0.3909},
 		[]float64{-0.21585000000000001, 0, 0.21585, 0, 0},
 	},
 	{
-		5,
+		tensor.Shape{5},
 		[]float64{0.2592, 0.0000, 0.6909, 0.0498, 0.0000},
 		[]float64{0.2094, -1.0000, 0.6411, 0.0000, -0.3909},
 		[]float64{-0.07410000000000003, 0, 0.3576, -0.28350000000000003, 0},
 	},
 	{
-		5,
+		tensor.Shape{5},
 		[]float32{0.0000, 0.0000, 0.0521, 0.2354, 0.7124},
 		[]float32{0.2860, -0.0702, 0.8080, 0.9913, 1.4683},
 		[]float32{-0, -0, -0.2812, -0.09790003, 0.37909997},
 	},
 	{
-		5,
+		tensor.Shape{5},
 		[]float32{0.0556, 0.0000, 0.7118, 0.2325, 0.0000},
 		[]float32{0.1109, -1.4741, 0.7671, 0.2878, 0.0334},
 		[]float32{-0.2777, -0, 0.37849998, -0.10079998, -0},
 	},
 	{
-		5,
+		tensor.Shape{5},
 		[]float32{0.2841, 0.0000, 0.7159, 0.0000, 0.0000},
 		[]float32{0.2094, -1.0000, 0.6411, -0.5032, -0.3909},
 		[]float32{-0.21585, -0, 0.21585, -0, -0},
 	},
 	{
-		5,
+		tensor.Shape{5},
 		[]float32{0.2592, 0.0000, 0.6909, 0.0498, 0.0000},
 		[]float32{0.2094, -1.0000, 0.6411, 0.0000, -0.3909},
 		[]float32{-0.07409999, -0, 0.3576, -0.2835, -0},
+	},
+	{
+		tensor.Shape{5, 1},
+		[]float32{0.2592, 0.0000, 0.6909, 0.0498, 0.0000},
+		[]float32{0.2094, -1.0000, 0.6411, 0.0000, -0.3909},
+		[]float32{-0.07409999, -0, 0.3576, -0.2835, -0},
+	},
+	{
+		tensor.Shape{2, 5},
+		[]float32{0.2592, 0.0000, 0.6909, 0.0498, 0.0000, 0.2592, 0.0000, 0.6909, 0.0498, 0.0000},
+		[]float32{0.2094, -1.0000, 0.6411, 0.0000, -0.3909, 0.2094, -1.0000, 0.6411, 0.0000, -0.3909},
+		[]float32{-0.07409999, -0, 0.3576, -0.2835, -0, -0.07409999, -0, 0.3576, -0.2835, -0},
 	},
 }
 
@@ -124,14 +136,14 @@ func TestSparsemaxDoDiff(t *testing.T) {
 
 		switch testCase.input.(type) {
 		case []float64:
-			backing = make([]float64, testCase.size)
+			backing = make([]float64, testCase.shape.TotalSize())
 		case []float32:
-			backing = make([]float32, testCase.size)
+			backing = make([]float32, testCase.shape.TotalSize())
 		}
 
-		aT := tensor.New(tensor.WithShape(testCase.size), tensor.WithBacking(testCase.input))
-		bT := tensor.New(tensor.WithShape(testCase.size), tensor.WithBacking(testCase.grad))
-		rT := tensor.New(tensor.WithShape(testCase.size), tensor.WithBacking(backing))
+		aT := tensor.New(tensor.WithShape(testCase.shape...), tensor.WithBacking(testCase.input))
+		bT := tensor.New(tensor.WithShape(testCase.shape...), tensor.WithBacking(testCase.grad))
+		rT := tensor.New(tensor.WithShape(testCase.shape...), tensor.WithBacking(backing))
 
 		aVal, _, _, _ := anyToValue(aT)
 		bVal, _, _, _ := anyToValue(bT)
@@ -156,8 +168,8 @@ func TestSparsemaxDoSymDiff(t *testing.T) {
 		a := NewTensor(g, Float64, 1, WithName("a"), WithShape(1))
 		b := NewTensor(g, Float64, 1, WithName("b"), WithShape(1))
 
-		aT := tensor.New(tensor.WithShape(testCase.size), tensor.WithBacking(testCase.input))
-		bT := tensor.New(tensor.WithShape(testCase.size), tensor.WithBacking(testCase.grad))
+		aT := tensor.New(tensor.WithShape(testCase.shape...), tensor.WithBacking(testCase.input))
+		bT := tensor.New(tensor.WithShape(testCase.shape...), tensor.WithBacking(testCase.grad))
 
 		aVal, _, _, _ := anyToValue(aT)
 		bVal, _, _, _ := anyToValue(bT)

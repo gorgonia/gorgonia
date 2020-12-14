@@ -11,17 +11,25 @@ import (
 )
 
 type sparsemaxOp struct {
+	axis int
 }
 
-func newSparsemaxOp() *sparsemaxOp {
-	sparsemaxop := &sparsemaxOp{}
+func newSparsemaxOp(axes ...int) *sparsemaxOp {
+	axis := -1
+	if len(axes) > 0 {
+		axis = axes[0]
+	}
+
+	sparsemaxop := &sparsemaxOp{
+		axis: axis,
+	}
 
 	return sparsemaxop
 }
 
 // Sparsemax -  implements the sparsemax operation described here: http://proceedings.mlr.press/v48/martins16.pdf
-func Sparsemax(x *Node) (*Node, error) {
-	op := newSparsemaxOp()
+func Sparsemax(x *Node, axes ...int) (*Node, error) {
+	op := newSparsemaxOp(axes...)
 
 	return ApplyOp(op, x)
 }
@@ -51,9 +59,7 @@ func (op *sparsemaxOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
 
 func (op *sparsemaxOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	t := newTensorType(1, a)
-
-	return hm.NewFnType(t, t)
+	return hm.NewFnType(a, a)
 }
 
 func (op *sparsemaxOp) OverwritesInput() int { return -1 }
@@ -70,10 +76,6 @@ func (op *sparsemaxOp) checkInput(inputs ...Value) (tensor.Tensor, error) {
 		return nil, errors.Errorf("Expected input to be a tensor, got %T", inputs[0])
 	}
 
-	if in.Shape().Dims() != 1 {
-		return nil, errors.Errorf("Expected input to have 1 dimensions")
-	}
-
 	return in, nil
 }
 
@@ -81,6 +83,23 @@ func (op *sparsemaxOp) Do(inputs ...Value) (Value, error) {
 	inputTensor, err := op.checkInput(inputs...)
 	if err != nil {
 		return nil, fmt.Errorf("Can't check Sparsemax input: %w", err)
+	}
+
+	if op.axis != -1 {
+		err = inputTensor.T(0, op.axis)
+		if err != nil {
+			return nil, fmt.Errorf("error tranposing the input tensor: %w", err)
+		}
+
+		err = inputTensor.Reshape(inputTensor.Shape()[0], -1)
+		if err != nil {
+			return nil, fmt.Errorf("error reshaping the input tensor: %w", err)
+		}
+
+		err = inputTensor.T(0, 1)
+		if err != nil {
+			return nil, fmt.Errorf("error tranposing the input tensor: %w", err)
+		}
 	}
 
 	var output interface{}
@@ -94,14 +113,15 @@ func (op *sparsemaxOp) Do(inputs ...Value) (Value, error) {
 		return nil, fmt.Errorf("invalid input type for Sparsemax, expected float64 or float32, got: %v", inputTensor.Dtype())
 	}
 
-	return tensor.New(tensor.Of(inputTensor.Dtype()), tensor.WithShape(inputTensor.Size()), tensor.WithEngine(inputTensor.Engine()), tensor.WithBacking(output)), nil
+	return tensor.New(tensor.Of(inputTensor.Dtype()), tensor.WithShape(inputTensor.Shape().Clone()...), tensor.WithEngine(inputTensor.Engine()), tensor.WithBacking(output)), nil
 }
 
 // FIXME: go2 generics
 func (op *sparsemaxOp) float32sparseMax(inputTensor tensor.Tensor) interface{} {
 	sortedData := make([]float32, inputTensor.Size())
+	inputData := inputTensor.Data().([]float32)
 
-	copy(sortedData, inputTensor.Data().([]float32))
+	copy(sortedData, inputData)
 
 	sort.Slice(sortedData, func(i, j int) bool {
 		return sortedData[i] > sortedData[j]
@@ -126,9 +146,8 @@ func (op *sparsemaxOp) float32sparseMax(inputTensor tensor.Tensor) interface{} {
 	threshold := float32(cumArray[maxIndex-1]-1) / float32(maxIndex)
 	output := make([]float32, inputTensor.Size())
 
-	for i := 0; i < inputTensor.Size(); i++ {
-		v, _ := inputTensor.At(i)
-		vF := v.(float32)
+	for i := 0; i < len(inputData); i++ {
+		vF := inputData[i]
 
 		if vF-threshold > 0 {
 			output[i] = vF - threshold
@@ -140,8 +159,9 @@ func (op *sparsemaxOp) float32sparseMax(inputTensor tensor.Tensor) interface{} {
 
 func (op *sparsemaxOp) float64sparseMax(inputTensor tensor.Tensor) interface{} {
 	sortedData := make([]float64, inputTensor.Size())
+	inputData := inputTensor.Data().([]float64)
 
-	copy(sortedData, inputTensor.Data().([]float64))
+	copy(sortedData, inputData)
 
 	sort.Slice(sortedData, func(i, j int) bool {
 		return sortedData[i] > sortedData[j]
@@ -166,9 +186,8 @@ func (op *sparsemaxOp) float64sparseMax(inputTensor tensor.Tensor) interface{} {
 	threshold := float64(cumArray[maxIndex-1]-1) / float64(maxIndex)
 	output := make([]float64, inputTensor.Size())
 
-	for i := 0; i < inputTensor.Size(); i++ {
-		v, _ := inputTensor.At(i)
-		vF := v.(float64)
+	for i := 0; i < len(inputData); i++ {
+		vF := inputData[i]
 
 		if vF-threshold > 0 {
 			output[i] = vF - threshold
@@ -189,6 +208,11 @@ func (op *sparsemaxOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) 
 	diffOp := &sparsemaxDiffOp{}
 
 	result, err := diffOp.Do(inputs[0].boundTo, inputs[1].boundTo)
+	if err != nil {
+		return err
+	}
+
+	err = result.(*tensor.Dense).Reshape(odvd.Shape()...)
 	if err != nil {
 		return err
 	}
@@ -302,10 +326,6 @@ func (op *sparsemaxDiffOp) checkInput(inputs ...Value) (tensor.Tensor, tensor.Te
 		gradient = t
 	default:
 		return nil, nil, errors.Errorf("gradient type is not supported, got %T", inputs[1])
-	}
-
-	if in.Shape().Dims() != 1 || gradient.Shape().Dims() != 1 {
-		return nil, nil, errors.Errorf("Expected input to have 1 dimensions")
 	}
 
 	return in, gradient, nil
