@@ -29,7 +29,6 @@ func newSparsemaxOp(axes ...int) *sparsemaxOp {
 
 // Sparsemax -  implements the sparsemax operation described here: http://proceedings.mlr.press/v48/martins16.pdf
 func Sparsemax(x *Node, axes ...int) (*Node, error) {
-
 	op := newSparsemaxOp(axes...)
 
 	return ApplyOp(op, x)
@@ -60,9 +59,7 @@ func (op *sparsemaxOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
 
 func (op *sparsemaxOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	t := newTensorType(1, a)
-
-	return hm.NewFnType(t, t)
+	return hm.NewFnType(a, a)
 }
 
 func (op *sparsemaxOp) OverwritesInput() int { return -1 }
@@ -122,8 +119,9 @@ func (op *sparsemaxOp) Do(inputs ...Value) (Value, error) {
 // FIXME: go2 generics
 func (op *sparsemaxOp) float32sparseMax(inputTensor tensor.Tensor) interface{} {
 	sortedData := make([]float32, inputTensor.Size())
+	inputData := inputTensor.Data().([]float32)
 
-	copy(sortedData, inputTensor.Data().([]float32))
+	copy(sortedData, inputData)
 
 	sort.Slice(sortedData, func(i, j int) bool {
 		return sortedData[i] > sortedData[j]
@@ -148,9 +146,8 @@ func (op *sparsemaxOp) float32sparseMax(inputTensor tensor.Tensor) interface{} {
 	threshold := float32(cumArray[maxIndex-1]-1) / float32(maxIndex)
 	output := make([]float32, inputTensor.Size())
 
-	for i := 0; i < inputTensor.Size(); i++ {
-		v, _ := inputTensor.At(i)
-		vF := v.(float32)
+	for i := 0; i < len(inputData); i++ {
+		vF := inputData[i]
 
 		if vF-threshold > 0 {
 			output[i] = vF - threshold
@@ -162,8 +159,9 @@ func (op *sparsemaxOp) float32sparseMax(inputTensor tensor.Tensor) interface{} {
 
 func (op *sparsemaxOp) float64sparseMax(inputTensor tensor.Tensor) interface{} {
 	sortedData := make([]float64, inputTensor.Size())
+	inputData := inputTensor.Data().([]float64)
 
-	copy(sortedData, inputTensor.Data().([]float64))
+	copy(sortedData, inputData)
 
 	sort.Slice(sortedData, func(i, j int) bool {
 		return sortedData[i] > sortedData[j]
@@ -188,9 +186,8 @@ func (op *sparsemaxOp) float64sparseMax(inputTensor tensor.Tensor) interface{} {
 	threshold := float64(cumArray[maxIndex-1]-1) / float64(maxIndex)
 	output := make([]float64, inputTensor.Size())
 
-	for i := 0; i < inputTensor.Size(); i++ {
-		v, _ := inputTensor.At(i)
-		vF := v.(float64)
+	for i := 0; i < len(inputData); i++ {
+		vF := inputData[i]
 
 		if vF-threshold > 0 {
 			output[i] = vF - threshold
