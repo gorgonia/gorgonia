@@ -2,7 +2,6 @@ package exprgraph
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 
 	"gorgonia.org/gorgonia"
@@ -11,52 +10,21 @@ import (
 )
 
 // T2T tries to find a `tensor.Tensor` from a gorgonia.Tensor
+// it returns nil if no tensor is found
 func T2T(a gorgonia.Tensor) tensor.Tensor {
 	switch t := a.(type) {
-	case Node:
+	case *Node:
+		if t.Tensor == nil {
+			return nil
+		}
 		return T2T(t.Tensor.(gorgonia.Tensor))
 	case *dual.Dual:
 		return t
 	case tensor.Tensor:
 		return t
 	default:
-		panic("XXX")
+		return nil
 	}
-}
-
-func tonode(t gorgonia.Tensor) node {
-	switch a := t.(type) {
-	case Node:
-		return node{Node: a}
-	case *Symbolic:
-		return node{
-			Node: Node{
-				Tensor: a,
-				id:     -1,
-			},
-		}
-	case *dual.Dual:
-		return node{
-			Node: Node{
-				Tensor: a,
-				id:     -1,
-			},
-		}
-	case tensor.Tensor:
-		return node{
-			Node: Node{
-				Tensor: a,
-				id:     -1,
-			},
-		}
-	case *node:
-		return *a
-	case *Node:
-		return node{Node: *a}
-	default:
-		log.Printf("tonode %T not handled", t)
-	}
-	panic("Unreachable")
 }
 
 func consFmtStr(a fmt.State, c rune) string {

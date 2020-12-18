@@ -2,9 +2,22 @@ package exprgraph
 
 import "gonum.org/v1/gonum/graph"
 
-type edge struct{ from, to NodeID }
+// WeightedEdge is a simple weighted graph edge.
+type WeightedEdge struct {
+	F, T graph.Node
+	W    float64
+}
 
-func (e edge) From() graph.Node         { return e.from }
-func (e edge) To() graph.Node           { return e.to }
-func (e edge) ReversedEdge() graph.Edge { e.from, e.to = e.to, e.from; return e }
-func (e edge) Weight() float64          { return 0 }
+// From returns the from-node of the edge.
+func (e WeightedEdge) From() graph.Node { return e.F }
+
+// To returns the to-node of the edge.
+func (e WeightedEdge) To() graph.Node { return e.T }
+
+// ReversedEdge returns a new Edge with the F and T fields
+// swapped. The weight of the new Edge is the same as
+// the weight of the receiver.
+func (e WeightedEdge) ReversedEdge() graph.Edge { return WeightedEdge{F: e.T, T: e.F, W: e.W} }
+
+// Weight returns the weight of the edge.
+func (e WeightedEdge) Weight() float64 { return e.W }

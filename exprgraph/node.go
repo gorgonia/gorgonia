@@ -1,11 +1,10 @@
 package exprgraph
 
 import (
+	"errors"
 	"fmt"
-	"log"
 
 	"gorgonia.org/gorgonia"
-	"gorgonia.org/gorgonia/execution"
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
@@ -27,42 +26,52 @@ type Node struct {
 	id   int64
 	name string
 	Op   ops.Op
+	// beforeLift tracks the old value of a tensor before it has been lifted
+	beforeLift gorgonia.Tensor
 }
 
-// Make makes a node in a given graph.
-func Make(g *Graph, name string, opts ...tensor.ConsOpt) Node {
-	var eng tensor.Engine = g.StandardEngine
-	if _, ok := g.StandardEngine.(tensor.StdEng); ok {
-		eng = g
+// GetName returns the name of the node
+func (n *Node) GetName() string {
+	return n.name
+}
+
+// NewNode in a given graph.
+func NewNode(g *Graph, name string, opts ...tensor.ConsOpt) *Node {
+	t := tensor.New(append(opts, tensor.WithEngine(g.Engine))...)
+	n, err := Cons(g, name, t)
+	if err != nil {
+		panic(err)
 	}
-	consOpts := append([]tensor.ConsOpt{tensor.WithEngine(eng), inGraph(), WithName(name)}, opts...)
-	t := tensor.New(consOpts...)
-	return Cons(g, name, t)
+	return n
 }
 
 // Cons constructs a Node. It should be used very carefully.
 // If the provided graph is nil, then Cons simply constructs the node by itself. No node will be added to the graph.
-func Cons(g *Graph, name string, t tensor.Tensor) Node {
+func Cons(g *Graph, name string, t tensor.Tensor) (*Node, error) {
 	if g != nil {
-		id := g.idOrInsert(t)
-		g.nodes[id].name = name
-		return g.nodes[id].Node
+		nm := g.NodeOf(t)
+		if nm == nil {
+			nm = g.NewNode()
+			nm.Tensor = t
+			nm.name = name
+			err := g.AddNode(nm)
+			if err != nil {
+				return nil, err
+			}
+			return nm, nil
+		}
+		if nm.name != name {
+			return nil, errors.New("A node holding the tensor exists with a different name")
+		}
+		return nm, nil
 	}
-	return Node{Tensor: t, name: name}
+	return &Node{Tensor: t, name: name, id: 0, Op: nil}, nil
 }
-
-// OK returns true if the Node is good for processing.
-func (n *Node) OK() bool { return n.Tensor != nil }
 
 // ID allows Node  to implement gonum.org/graph.Node
 func (n *Node) ID() int64 { return n.id }
 
-// Node implements gorgonia.Result
-
-func (n *Node) Node() Node   { return *n }
-func (n *Node) Nodes() Nodes { return Nodes{*n} }
-func (n *Node) Err() error   { return nil }
-
+// Format of the node
 func (n Node) Format(f fmt.State, c rune) {
 	switch c {
 	case 's':
@@ -73,29 +82,8 @@ func (n Node) Format(f fmt.State, c rune) {
 			str := consFmtStr(f, c)
 			fmt.Fprintf(f, str, t)
 		default:
-			log.Printf("tensor type %T unsupported for node.Format", n.Tensor)
+			fmt.Fprintf(f, "node(%v,%s,%v)",
+				n.id, n.name, t)
 		}
 	}
-}
-
-// GraphNode is a tuple of a graph object and a node. This allows for querying the payload of the Node.
-//
-// This is the object that should be used for any kind of query (topsort, etc)
-type GraphNode struct {
-	*Graph
-	Node
-}
-
-//go:notinheap
-type gn struct {
-	*Graph
-	Node
-}
-
-// node is a node for internal use. Its graph is defined by the links (i.e. pointers).
-// if the ID is negative, it means that the node is in-progress
-type node struct {
-	Node
-	flag
-	execution.Device
 }
