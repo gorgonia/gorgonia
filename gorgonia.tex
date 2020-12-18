@@ -1,0 +1,112 @@
+\documentclass{article}
+\pdfinfo{
+  /Title (TITLE)
+  /Author (Xuanyi Chew)
+}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=magenta,
+}
+\urlstyle{same}
+\begin{document}
+\title{Gorgonia v0.10.0}
+\author{Xuanyi Chew \\
+  \mbox{}
+  chewxy@gmail.com
+}
+\maketitle
+
+\begin{abstract}
+  Gorgonia is a deep learning toolkit.
+\end{abstract}
+
+\section{Introduction}
+
+\section{Key Concepts}
+
+There are some key concepts to be introduced in this library. We treat a mathematical expression as a function. Functions are made up of operators and operands. An expression is represented by a graph. A graph contains nodes. Nodes may contain values. Evaluation is the process of computing the final value of the expression. Compilation translates a mathematical expression into machine semantics. This leads to more efficient evaluations.
+
+The subsections below introduce the concepts from in an abstract to concrete manner. Subsections \ref{subsection:expr} to \ref{subsection:val} describes the high level objects we wish to manipulate. Subsections \ref{subsection:graph} to \ref{subsection:valrepr} describes how the high level objects are represented in the library. The Subsections including and following \ref{subsection:eval} describe concepts relating to operational matters.
+
+An attempt has been made to carefully delineate the concepts such that each subsection is independent. However, the concepts are very much intertwined in real life.
+
+\subsection{Expression} \label{subsection:expr}
+
+Gorgonia deals with mathematical expressions. A mathematical expression is a sentence in mathematics that may be evaluated. Examples are as follows:
+
+\begin{align*}
+  x + 1 &=\\
+  x \times y &= \\
+  \sigma(w \times x + b) &=\\
+  \frac{\sqrt x}{\|x\|} &=
+\end{align*}
+
+Observe that these are not equations: the right hand sides are missing. The $=$ at the end indicates that the expressions are to be evaluated.
+
+\subsection{Operator}
+
+Operators are what performs an operation. Operators have an arbitrary arity. Some operators have a backwards differentiation operator associated with them. From the examples of the previous section, the following are operators:
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{|c|c|}
+    \hline
+    Operator & Arity\\
+    \hline
+    $+$ & 2 \\
+    $\times$ & 2\\
+    $\sigma$ & 1\\
+    $\sqrt{}$  & 1\\
+    $\|\cdot\|$ & 1\\
+    $\frac{\cdot}{\cdot}$ & 2\\
+    \hline
+  \end{tabular}
+\end{table}
+
+\subsection{Function}
+
+Functions take exactly one input and produces exactly one output. Some functions have a ``backward'' function.
+
+The distinction between operators and functions may seem overly fussy and petty. However this adds to our vocabulary a very powerful term. We can now say that neural networks are functions.
+
+\subsection{Backpropagation}
+
+Backpropagation is basically differentiation with regards to a certain input. Given an equation:
+
+$$
+y = \sigma(Wx + b)
+$$
+
+Backpropagation is simply finding $\frac{\partial y}{\partial W}$, $\frac{\partial y}{\partial x}$, and $\frac{\partial y}{\partial b}$.
+
+\subsection{Variables}
+
+Variables are placeholders in an expression. They may be replaced with values when evaluating an expression.
+
+\subsection{Values} \label{subsection:val}
+
+There are two kinds of Values: tensor and scalar values.
+
+\subsection{Graph} \label{subsection:graph}
+
+A graph is what represents an expression.
+
+\subsection{Node}
+
+All leaves are values after evaluation. All roots are the result of a computation.
+
+\subsection{Values Representation}\label{subsection:valrepr}
+
+\subsection{Evaluation} \label{subsection:eval}
+
+\subsection{Compilation}
+
+\subsection{Virtual Machines}
+
+\subsection{Engines}
+
+
+\end{document}
