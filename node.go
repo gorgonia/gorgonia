@@ -138,7 +138,17 @@ func WithValue(any interface{}) NodeConsOpt {
 		if n.t == nil {
 			n.t = t
 		} else if !n.t.Eq(t) {
-			panic(fmt.Sprintf("TypeError: Want %v, Got %v instead (%T %T)", n.t, t, n.t, t)) // yes this is a runtime error
+			// scalars are exempted
+			// if n.t is a scalar type, and the `anyToValue` returns a vector that is scalar-like,
+			// we'll mark it as a scalar
+			tt, ok1 := t.(TensorType)
+			ndt, ok2 := n.t.(tensor.Dtype)
+
+			if !(ok1 && ok2 && v.Shape().IsScalarEquiv() && tt.Of == ndt) {
+				panic(fmt.Sprintf("TypeError: Want %v, Got %v instead (%T %T)", n.t, t, n.t, t)) // yes this is a runtime error
+			}
+			v.(tensor.Tensor).Reshape() // rehsape to scalar
+
 		}
 
 		n.bind(v)
