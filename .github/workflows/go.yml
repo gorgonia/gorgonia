@@ -20,7 +20,7 @@ jobs:
     - name: Run tests
       run: |
         go test -v -race
-	go test -race -tags=${{ matrix.tags }}
+        go test -race -tags=${{ matrix.tags }}
 
   coverage:
     strategy:
