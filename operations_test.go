@@ -1071,3 +1071,80 @@ func TestRavel(t *testing.T) {
 		c.Equal(rst.output, t2.Shape(), "expected to be flatten in test case: %d", i)
 	}
 }
+
+func TestAuto(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		shapeA        tensor.Shape
+		shapeB        tensor.Shape
+		expectedShape tensor.Shape
+		expectedErr   string
+	}{
+		{
+			desc:        "Example 0",
+			shapeA:      tensor.Shape{12},
+			shapeB:      tensor.Shape{1, 11},
+			expectedErr: "shapes (12) and (1, 11) should have the same dimensions",
+		},
+		{
+			desc:          "Example 1",
+			shapeA:        tensor.Shape{12, 1},
+			shapeB:        tensor.Shape{12, 11},
+			expectedShape: tensor.Shape{12, 11},
+			expectedErr:   "",
+		},
+		{
+			desc:          "Example 2",
+			shapeA:        tensor.Shape{1, 12},
+			shapeB:        tensor.Shape{11, 12},
+			expectedShape: tensor.Shape{11, 12},
+			expectedErr:   "",
+		},
+		{
+			desc:          "Example 3",
+			shapeA:        tensor.Shape{2, 3, 5},
+			shapeB:        tensor.Shape{2, 3, 1},
+			expectedShape: tensor.Shape{2, 3, 5},
+			expectedErr:   "",
+		},
+		{
+			desc:          "Example 4",
+			shapeA:        tensor.Shape{2, 1, 5},
+			shapeB:        tensor.Shape{2, 3, 5},
+			expectedShape: tensor.Shape{2, 3, 5},
+			expectedErr:   "",
+		},
+		{
+			desc:          "Example 5",
+			shapeA:        tensor.Shape{2, 1, 1},
+			shapeB:        tensor.Shape{2, 5, 3},
+			expectedShape: tensor.Shape{2, 5, 3},
+			expectedErr:   "",
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			c := require.New(t)
+
+			g := NewGraph()
+			a := NewTensor(g, Float64, tC.shapeA.Dims(), WithShape(tC.shapeA...), WithInit(RangedFrom(0)))
+			b := NewTensor(g, Float64, tC.shapeB.Dims(), WithShape(tC.shapeB...), WithInit(RangedFrom(0)))
+
+			out, err := Auto(BroadcastHadamardProd, a, b)
+
+			if tC.expectedErr != "" {
+				c.Error(err)
+				c.Equal(tC.expectedErr, err.Error())
+				return
+			} else {
+				c.NoError(err)
+			}
+
+			c.Equal(tC.expectedShape, out.Shape())
+
+			out, err = Auto(BroadcastHadamardProd, b, a)
+			c.NoError(err)
+			c.Equal(tC.expectedShape, out.Shape())
+		})
+	}
+}
