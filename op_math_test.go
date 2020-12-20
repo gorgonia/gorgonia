@@ -474,10 +474,10 @@ func testOneArithTape(t *testing.T, bot binOpTest, i int) error {
 func TestTensordotOpDoDiff(t *testing.T) {
 	assert := assert.New(t)
 
-	// Scalars
+	// Vectors
 	g := NewGraph()
-	a := NewTensor(g, Float64, 0, WithName("a"), WithShape())
-	b := NewTensor(g, Float64, 0, WithName("b"), WithShape())
+	a := NewTensor(g, Float64, 1, WithName("a"), WithShape(1))
+	b := NewTensor(g, Float64, 1, WithName("b"), WithShape(1))
 
 	tensordot := tensordotOp{
 		aAxes:   []int{0},
@@ -490,7 +490,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 	c, err := ApplyOp(tensordot, a, b)
 
 	if err != nil {
-		log.Fatal("scalars: Cannot ApplyOp:", err)
+		log.Fatalf("scalars: Cannot ApplyOp: %+v", err)
 		return
 	}
 
@@ -507,7 +507,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 	c.bind(dvUnitVar(cVal)) // Will set Output derivative to all ones
 
 	if err := tensordot.DoDiff(ExecutionContext{}, Nodes{a, b}, c); err != nil {
-		t.Fatalf("scalars: Cannot DoDiff: %v", err)
+		t.Fatalf("scalars: Cannot DoDiff: %+v", err)
 	}
 
 	aG, _ := a.Grad()

@@ -756,21 +756,31 @@ func TestTensordot(t *testing.T) {
 	// Scalars
 	g := NewGraph()
 
-	a := NewTensor(g, Float64, 1, WithName("a"), WithShape(1), WithInit(RangedFrom(2)))
-	b := NewTensor(g, Float64, 1, WithName("b"), WithShape(1), WithInit(RangedFrom(21)))
-
-	c := NewTensor(g, Float64, 1, WithName("c"), WithShape(1), WithInit(ValuesOf(1.0)))
+	a := NewTensor(g, Float64, 0, WithName("a"), WithShape(1), WithInit(RangedFrom(2)))
+	b := NewTensor(g, Float64, 0, WithName("b"), WithShape(1), WithInit(RangedFrom(21)))
+	c := NewTensor(g, Float64, 0, WithName("c"), WithShape(1), WithInit(ValuesOf(1.0)))
 
 	tensordot, err := Tensordot([]int{0}, []int{0}, a, b)
+	if err == nil {
+		t.Fatal("Expected scalars to fail")
+	}
 
+	// Scalar-like
+	g = NewGraph()
+	a = NewTensor(g, Float64, 1, WithName("a"), WithShape(1), WithInit(RangedFrom(2)))
+	b = NewTensor(g, Float64, 1, WithName("b"), WithShape(1), WithInit(RangedFrom(21)))
+	c = NewTensor(g, Float64, 1, WithName("c"), WithShape(1), WithInit(ValuesOf(1.0)))
+
+	tensordot, err = Tensordot([]int{0}, []int{0}, a, b)
 	if err != nil {
 		t.Fatal(err)
 	}
+	log.Printf("SHAPE a %v b %v c %v tensordot %v", a.Shape(), b.Shape(), c.Shape(), tensordot.Shape())
 
 	dtensordot, err := Backpropagate(Nodes{tensordot}, Nodes{c}, Nodes{a, b})
 
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("%+v", err)
 	}
 
 	m := NewTapeMachine(g)
@@ -779,30 +789,29 @@ func TestTensordot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	correctInt := float64(42)
+	correctScalar := 42.0
 	value := tensordot.Value().Data()
-	assert.Equal(correctInt, value)
+	assert.Equal(correctScalar, value)
 
-	dtensordotCorrectInt0 := float64(21)
-	dtensordotCorrectInt1 := float64(2)
+	dtensordotCorrectScalarlike0 := []float64{21}
+	dtensordotCorrectScalarlike1 := []float64{2}
 
-	assert.Equal(dtensordotCorrectInt0, dtensordot[0].Value().Data())
-	assert.Equal(dtensordotCorrectInt1, dtensordot[1].Value().Data())
+	assert.Equal(dtensordotCorrectScalarlike0, dtensordot[0].Value().Data())
+	assert.Equal(dtensordotCorrectScalarlike1, dtensordot[1].Value().Data())
 
 	// Vectors
 
 	g = NewGraph()
 	a = NewTensor(g, Float64, 1, WithName("a"), WithShape(2), WithInit(RangedFrom(1)))
 	b = NewTensor(g, Float64, 1, WithName("b"), WithShape(2), WithInit(RangedFrom(3)))
-
-	c = NewTensor(g, Float64, 1, WithName("c"), WithShape(1), WithInit(ValuesOf(1.0)))
+	c = NewTensor(g, Float64, 0, WithName("c"), WithShape(), WithInit(ValuesOf(1.0)))
 
 	if tensordot, err = Tensordot([]int{0}, []int{0}, a, b); err != nil {
 		t.Fatal(err)
 	}
 
 	if dtensordot, err = Backpropagate(Nodes{tensordot}, Nodes{c}, Nodes{a, b}); err != nil {
-		t.Fatal(err)
+		t.Fatalf("%+v", err)
 	}
 
 	// Need to multiply dtensordot with identiy matrix, otherwise the transpose action in symdiff is not performed
@@ -817,7 +826,8 @@ func TestTensordot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	correctInt = float64(11)
+	log.Printf("TensorDot %v | %v", tensordot.Value().Shape(), tensordot.Type())
+	correctInt := float64(11)
 	assert.Equal(correctInt, tensordot.Value().Data())
 
 	dcorrect0 := []float64{3, 4}
@@ -910,7 +920,7 @@ func TestTensordot(t *testing.T) {
 	a = NewTensor(g, Float64, 2, WithName("a"), WithShape(2, 2), WithInit(RangedFrom(0)))
 	b = NewTensor(g, Float64, 2, WithName("b"), WithShape(2, 2), WithInit(RangedFrom(0)))
 
-	c = NewTensor(g, Float64, 1, WithName("c"), WithShape(1), WithInit(ValuesOf(1.0)))
+	c = NewTensor(g, Float64, 0, WithName("c"), WithShape(), WithInit(ValuesOf(1.0)))
 
 	if tensordot, err = Tensordot([]int{0, 1}, []int{0, 1}, a, b); err != nil {
 		t.Fatal(err)

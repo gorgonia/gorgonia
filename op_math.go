@@ -18,7 +18,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash"
-	"log"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -793,6 +792,22 @@ type tensordotOp struct {
 	retDims int // Dimension of the tensor resulting from operation
 }
 
+func makeTensordotOp(a, b *Node, aAxes, bAxes []int) tensordotOp {
+	aDims := a.Shape().Dims()
+	bDims := b.Shape().Dims()
+	retDims := a.Shape().Dims() + b.Shape().Dims() - 2*len(aAxes)
+	if retDims < 0 {
+		retDims = 0
+	}
+	return tensordotOp{
+		aAxes:   aAxes,
+		bAxes:   bAxes,
+		aDims:   aDims,
+		bDims:   bDims,
+		retDims: retDims,
+	}
+}
+
 func (op tensordotOp) Arity() int { return 2 }
 
 func (op tensordotOp) Type() hm.Type {
@@ -849,7 +864,7 @@ func (op tensordotOp) Do(vals ...Value) (Value, error) {
 
 	ts, err := valuesToTensors(vals)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "tensordot - valuesToTensors failed")
 	}
 
 	return tensor.Contract(ts[0], ts[1], op.aAxes, op.bAxes)
@@ -918,10 +933,8 @@ func (op tensordotOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) e
 		}
 
 		sortUniqueIntWithImitator(otherAxesSorted, iAxesCoSorted)
-
-		pattern := make([]int, len(in.shape))
+		pattern := make([]int, len(in.Shape()))
 		counter := len(iAxes)
-		log.Printf("in.shape %v, pattern %v", in.shape, pattern)
 
 		for patternIndex := 0; patternIndex < len(pattern); patternIndex++ {
 			iAxesCoSortedIndex := contains(iAxesCoSorted, patternIndex)
@@ -931,6 +944,10 @@ func (op tensordotOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) e
 				pattern[patternIndex] = counter
 				counter++
 			}
+		}
+		// if the shape is scalar equivalent, then we'll not have any transforms
+		if in.Shape().IsScalarEquiv() {
+			pattern = pattern[:0]
 		}
 
 		// Which axes of the other tensor and the output should be contracted?
@@ -1027,7 +1044,6 @@ func (op tensordotOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) e
 			if err != nil {
 				return err
 			}
-
 			tensordotPerm, err := tensor.T(tensordot, pattern...)
 			if err != nil {
 				return err
@@ -1114,7 +1130,6 @@ func (op tensordotOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal No
 		// Other tensor: All axes that weren't contracted (with i ;-) ) in the original tensordot
 		// With the exception of scalars
 		dOtherAxes := make([]int, other.Dims())
-
 		if !other.Shape().IsScalarEquiv() {
 			var dOtherAxesIndex int
 
@@ -1124,7 +1139,6 @@ func (op tensordotOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal No
 					dOtherAxesIndex++
 				}
 			}
-
 			dOtherAxes = dOtherAxes[0:dOtherAxesIndex]
 		}
 
@@ -1147,6 +1161,12 @@ func (op tensordotOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal No
 		switch {
 		case grad.Shape().IsScalarEquiv():
 			if tensordot, err = HadamardProd(other, grad); err != nil {
+				err = SymDiffError{
+					nodes:  inputs,
+					single: other,
+					grad:   grad,
+					err:    errors.Wrap(err, "While performing tensordot of (other × grad) in SymDiff of `tensordotOp`. Nodes() returns the inputs. Node() returns the `other`, Grad() returns grad`"),
+				}
 				return nil, err
 			}
 
@@ -1155,8 +1175,12 @@ func (op tensordotOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal No
 			otherCorrectShape := other
 			if !other.IsColVec() {
 				otherVecDims, err := (other.Shape()).DimSize(0)
-
 				if err != nil {
+					err = SymDiffError{
+						nodes:  inputs,
+						single: other,
+						err:    errors.Wrap(err, "While getting .DimSize(0) of other, while SymDiff-ing. Nodes() returns the inputs, Node() returns `other`. There is no Grad or Grad map."),
+					}
 					return nil, err
 				}
 
