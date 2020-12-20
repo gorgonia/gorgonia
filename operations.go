@@ -118,6 +118,31 @@ func Div(a, b *Node) (retVal *Node, err error) {
 	panic("Unhandled")
 }
 
+// Auto automatically calculates the padding for the given operations, for example:
+// 		gorgonia.Auto(gorgonia.BroadcastHadamardProd, a, b)
+func Auto(op func(a, b *Node, leftPattern, rightPattern []byte) (*Node, error), a, b *Node) (*Node, error) {
+	aShape := a.Shape()
+	bShape := b.Shape()
+
+	if aShape.Dims() != bShape.Dims() {
+		return nil, fmt.Errorf("shapes %v and %v should have the same dimensions", aShape, bShape)
+	}
+
+	var (
+		leftPattern, rightPattern []byte
+	)
+
+	for i := 0; i < aShape.Dims(); i++ {
+		if aShape[i] > bShape[i] {
+			leftPattern = append(leftPattern, byte(i))
+		} else if aShape[i] < bShape[i] {
+			rightPattern = append(rightPattern, byte(i))
+		}
+	}
+
+	return op(a, b, rightPattern, leftPattern)
+}
+
 /* UNARY STUFF */
 
 func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
