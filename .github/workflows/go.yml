@@ -6,20 +6,26 @@ jobs:
   test:
     strategy:
       matrix:
-        go: [1.13, 1.14]
-    runs-on: ubuntu-latest
+        go: [1.13.x, 1.14.x, 1.15.x, 1.16.x, tip]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        tags: [avx, sse]
+    runs-on: ${{ matrix.os }}
     steps:
-
-    - name: Install Go ${{ matrix.go }}
+    - name: Install Go ${{ matrix.go }} on ${{ matrix.os }}
       uses: actions/setup-go@v2
       with:
         go-version: ${{ matrix.go }}
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Run tests
-      run: go test -v
+      run: |
+        go test -v -race
+	go test -race -tags=${{ matrix.tags }}
 
   coverage:
+    strategy:
+      matrix:
+        tags: [avx, sse]
     runs-on: ubuntu-latest
     steps:
     - name: Install Go
@@ -31,7 +37,7 @@ jobs:
     - name: Calc coverage
       run: |
         export PATH=$PATH:$(go env GOPATH)/bin
-        go test -v -covermode=count -coverprofile=coverage.out
+        go test -v -covermode=atomic -coverprofile=coverage.out
     - name: Convert coverage to lcov
       uses: jandelgado/gcov2lcov-action@v1.0.0
       with:
