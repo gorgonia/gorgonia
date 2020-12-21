@@ -6,15 +6,32 @@ jobs:
   test:
     strategy:
       matrix:
-        go: [1.13.x, 1.14.x, 1.15.x, 1.16.x, tip]
+        go: [1.13.x, 1.14.x, 1.15.x]
         os: [ubuntu-latest, macos-latest, windows-latest]
         tags: [avx, sse]
+        allowfail: [false]
+        include:
+          - go: tip
+            os: ubuntu-latest
+            allowfail: true
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.allowfail }}
     steps:
     - name: Install Go ${{ matrix.go }} on ${{ matrix.os }}
+      if: matrix.go != 'tip'
       uses: actions/setup-go@v2
       with:
         go-version: ${{ matrix.go }}
+# tempoary hack:
+# https://github.com/actions/setup-go/issues/21#issuecomment-565704236
+    - name: Install Go ${{ matrix.go }} on ${{ matrix.os }}
+      if: matrix.go == 'tip'
+      run: |
+        git clone --depth=1 https://go.googlesource.com/go $HOME/gotip
+        cd $HOME/gotip/src
+        ./make.bash
+        echo "::set-env name=GOROOT::$HOME/gotip"
+        echo "::add-path::$HOME/gotip/bin"
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Run tests
