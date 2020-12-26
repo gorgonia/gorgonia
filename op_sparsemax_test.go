@@ -8,33 +8,55 @@ import (
 )
 
 var testCasesSparseMaxDo = []struct {
-	size     int
+	size     tensor.Shape
 	input    interface{}
 	expected interface{}
+	axis     int
 }{
 	{
-		4, []float64{0.3, 0.1, 1.2, 2.3}, []float64{1.3, 1.1, 2.2, 3.3},
+		tensor.Shape{4}, []float64{0.3, 0.1, 1.2, 2.3}, []float64{0, 0, 0, 1.0}, -1,
 	},
 	{
-		10, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, []float64{2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+		tensor.Shape{10}, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, []float64{0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, -1,
 	},
 	{
-		3, []float64{0.1, 0.1, 0.1}, []float64{0.3666666666666667, 0.3666666666666667, 0.3666666666666667},
+		tensor.Shape{3}, []float64{0.1, 0.1, 0.1}, []float64{0.3333333333333333, 0.3333333333333333, 0.3333333333333333}, -1,
 	},
 	{
-		4, []float64{-0.1, 0.3, -1.1, 2.7}, []float64{0.9, 1.3, 0, 3.7},
+		tensor.Shape{4}, []float64{-0.1, 0.3, -1.1, 2.7}, []float64{0, 0, 0, 1.0}, -1,
 	},
 	{
-		4, []float32{0.3, 0.1, 1.2, 2.3}, []float32{1.3, 1.1, 2.2, 3.3},
+		tensor.Shape{4}, []float32{0.3, 0.1, 1.2, 2.3}, []float32{0, 0, 0, 1.0}, -1,
 	},
 	{
-		10, []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, []float32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+		tensor.Shape{10}, []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, []float32{0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, -1,
 	},
 	{
-		3, []float32{0.1, 0.1, 0.1}, []float32{0.36666664, 0.36666664, 0.36666664},
+		tensor.Shape{3}, []float32{0.1, 0.1, 0.1}, []float32{0.33333334, 0.33333334, 0.33333334}, -1,
 	},
 	{
-		4, []float32{-0.1, 0.3, -1.1, 2.7}, []float32{0.9, 1.3, 0, 3.7},
+		tensor.Shape{4}, []float32{-0.1, 0.3, -1.1, 2.7}, []float32{0, 0, 0, 1.0}, -1,
+	},
+	{
+		tensor.Shape{4}, []float64{0.9, 0.9, 0.9, 0.5}, []float64{0.3333333333333333, 0.3333333333333333, 0.3333333333333333, 0.0000}, -1,
+	},
+	{
+		tensor.Shape{6, 2},
+		[]float64{-1.0000, -1.0000, 1.0000, 1.0000, -0.9998, -0.9998, 0.9998, 0.9998, 0.9945, 0.9945, -0.9945, -0.9945},
+		[]float64{0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5},
+		-1,
+	},
+	// {
+	// 	tensor.Shape{6, 2},
+	// 	[]float64{-1.0, -1.0, 1.0, 1.0, -0.9998, -0.9998, 0.9998, 0.9998, 0.9945, 0.9945, -0.9945, -0.9945},
+	// 	[]float64{0.0000, 0.0000, 0.3352, 0.3352, 0.0000, 0.0000, 0.3350, 0.3350, 0.3297, 0.3297, 0.0000, 0.0000},
+	// 	0, // TODO
+	// },
+	{
+		tensor.Shape{6, 2},
+		[]float32{-1.0000, -1.0000, 1.0000, 1.0000, -0.9998, -0.9998, 0.9998, 0.9998, 0.9945, 0.9945, -0.9945, -0.9945},
+		[]float32{0.5000, 0.5000, 0.5000, 0.5000, 0.5000, 0.5000, 0.5000, 0.5000, 0.5000, 0.5000, 0.5000, 0.5000},
+		-1,
 	},
 }
 
@@ -111,8 +133,8 @@ func TestSparsemaxDo(t *testing.T) {
 	c := require.New(t)
 
 	for i, testCase := range testCasesSparseMaxDo {
-		tt := tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(testCase.size), tensor.WithBacking(testCase.input))
-		op := newSparsemaxOp()
+		tt := tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(testCase.size...), tensor.WithBacking(testCase.input))
+		op := newSparsemaxOp(testCase.axis)
 
 		out, err := op.Do(tt)
 		c.NoError(err, "failed test case: %d", i)
@@ -202,12 +224,12 @@ func TestSparsemaxFull(t *testing.T) {
 			dtype = tensor.Float32
 		}
 
-		tt := tensor.New(tensor.Of(dtype), tensor.WithShape(testCase.size), tensor.WithBacking(testCase.input))
-		expected := tensor.New(tensor.Of(dtype), tensor.WithShape(testCase.size), tensor.WithBacking(testCase.expected))
+		tt := tensor.New(tensor.Of(dtype), tensor.WithShape(testCase.size...), tensor.WithBacking(testCase.input))
+		expected := tensor.New(tensor.Of(dtype), tensor.WithShape(testCase.size...), tensor.WithBacking(testCase.expected))
 
 		g := NewGraph()
-		inp := NewTensor(g, dtype, 1, WithShape(testCase.size), WithName("inp"))
-		out := Must(Sparsemax(inp))
+		inp := NewTensor(g, dtype, testCase.size.Dims(), WithShape(testCase.size...), WithName("inp"))
+		out := Must(Sparsemax(inp, testCase.axis))
 
 		vm := NewTapeMachine(g)
 		err := Let(inp, tt)

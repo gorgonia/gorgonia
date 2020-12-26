@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
+	"math"
 	"sort"
 
 	"github.com/chewxy/hm"
@@ -85,18 +86,13 @@ func (op *sparsemaxOp) Do(inputs ...Value) (Value, error) {
 		return nil, fmt.Errorf("Can't check Sparsemax input: %w", err)
 	}
 
+	inputShape := inputTensor.Shape()
+
 	if op.axis != -1 {
-		err = inputTensor.T(0, op.axis)
-		if err != nil {
-			return nil, fmt.Errorf("error tranposing the input tensor: %w", err)
-		}
+		axes := make([]int, inputTensor.Dims())
+		axes[op.axis] = 1
 
-		err = inputTensor.Reshape(inputTensor.Shape()[0], -1)
-		if err != nil {
-			return nil, fmt.Errorf("error reshaping the input tensor: %w", err)
-		}
-
-		err = inputTensor.T(0, 1)
+		inputTensor, err = tensor.Transpose(inputTensor, axes...)
 		if err != nil {
 			return nil, fmt.Errorf("error tranposing the input tensor: %w", err)
 		}
@@ -113,44 +109,92 @@ func (op *sparsemaxOp) Do(inputs ...Value) (Value, error) {
 		return nil, fmt.Errorf("invalid input type for Sparsemax, expected float64 or float32, got: %v", inputTensor.Dtype())
 	}
 
-	return tensor.New(tensor.Of(inputTensor.Dtype()), tensor.WithShape(inputTensor.Shape().Clone()...), tensor.WithEngine(inputTensor.Engine()), tensor.WithBacking(output)), nil
+	return tensor.New(tensor.Of(inputTensor.Dtype()), tensor.WithShape(inputShape.Clone()...), tensor.WithEngine(inputTensor.Engine()), tensor.WithBacking(output)), nil
 }
 
 // FIXME: go2 generics
 func (op *sparsemaxOp) float32sparseMax(inputTensor tensor.Tensor) interface{} {
-	sortedData := make([]float32, inputTensor.Size())
 	inputData := inputTensor.Data().([]float32)
+	dims := inputTensor.Dims()
+	it := 0
 
-	copy(sortedData, inputData)
+	to := inputTensor.Shape()[dims-1]
+	from := tensor.Shape(inputTensor.Shape()[0 : dims-1]).TotalSize()
+	if from == 0 {
+		from = 1
+	}
+
+	maxValues := make([]float32, from)
+
+	for i := 0; i < from; i++ {
+		maxValue := float32(-math.MaxFloat32)
+
+		for j := 0; j < to; j++ {
+			if inputData[it] > maxValue {
+				maxValue = inputData[it]
+			}
+
+			it++
+		}
+
+		maxValues[i] = maxValue
+	}
+
+	// this is math trick for numerical stability
+	stableInput := make([]float32, len(inputData))
+	it = 0
+
+	for i := 0; i < from; i++ {
+		for j := 0; j < to; j++ {
+			stableInput[it] = inputData[it] - maxValues[i]
+			it++
+		}
+	}
+
+	sortedData := make([]float32, len(inputData))
+	copy(sortedData, stableInput)
 
 	sort.Slice(sortedData, func(i, j int) bool {
 		return sortedData[i] > sortedData[j]
 	})
 
-	kArray := make([]float32, len(sortedData))
-	cumArray := make([]float32, len(sortedData))
-	cumSum := float32(0.0)
-	maxIndex := 0
+	thresholds := make([]float32, from)
+	it = 0
 
-	for i := 0; i < len(sortedData); i++ {
-		kArray[i] = 1 + float32(i)*sortedData[i]
-		cumSum += sortedData[i]
+	for i := 0; i < from; i++ {
+		cumSum := float32(0.0)
+		prevCum := float32(0.0)
+		maxIndex := 0
 
-		cumArray[i] = cumSum - sortedData[i]
+		for j := 0; j < to; j++ {
+			k := 1 + float32(j+1)*sortedData[it]
 
-		if kArray[i] > cumArray[i] {
-			maxIndex = i + 1
+			prevCum += sortedData[it]
+
+			if k > prevCum {
+				maxIndex = j + 1
+
+				cumSum += sortedData[i]
+			}
+
+			it++
 		}
+
+		thresholds[i] = (cumSum - 1) / float32(maxIndex)
 	}
 
-	threshold := float32(cumArray[maxIndex-1]-1) / float32(maxIndex)
-	output := make([]float32, inputTensor.Size())
+	output := make([]float32, len(stableInput))
+	it = 0
 
-	for i := 0; i < len(inputData); i++ {
-		vF := inputData[i]
+	for i := 0; i < from; i++ {
+		for j := 0; j < to; j++ {
+			vF := stableInput[it]
 
-		if vF-threshold > 0 {
-			output[i] = vF - threshold
+			if vF-thresholds[i] > 0 {
+				output[it] = vF - thresholds[i]
+			}
+
+			it++
 		}
 	}
 
@@ -158,39 +202,87 @@ func (op *sparsemaxOp) float32sparseMax(inputTensor tensor.Tensor) interface{} {
 }
 
 func (op *sparsemaxOp) float64sparseMax(inputTensor tensor.Tensor) interface{} {
-	sortedData := make([]float64, inputTensor.Size())
 	inputData := inputTensor.Data().([]float64)
+	dims := inputTensor.Dims()
+	it := 0
 
-	copy(sortedData, inputData)
+	to := inputTensor.Shape()[dims-1]
+	from := tensor.Shape(inputTensor.Shape()[0 : dims-1]).TotalSize()
+	if from == 0 {
+		from = 1
+	}
+
+	maxValues := make([]float64, from)
+
+	for i := 0; i < from; i++ {
+		maxValue := -math.MaxFloat64
+
+		for j := 0; j < to; j++ {
+			if inputData[it] > maxValue {
+				maxValue = inputData[it]
+			}
+
+			it++
+		}
+
+		maxValues[i] = maxValue
+	}
+
+	// this is math trick for numerical stability
+	stableInput := make([]float64, len(inputData))
+	it = 0
+
+	for i := 0; i < from; i++ {
+		for j := 0; j < to; j++ {
+			stableInput[it] = inputData[it] - maxValues[i]
+			it++
+		}
+	}
+
+	sortedData := make([]float64, len(inputData))
+	copy(sortedData, stableInput)
 
 	sort.Slice(sortedData, func(i, j int) bool {
 		return sortedData[i] > sortedData[j]
 	})
 
-	kArray := make([]float64, len(sortedData))
-	cumArray := make([]float64, len(sortedData))
-	cumSum := 0.0
-	maxIndex := 0
+	thresholds := make([]float64, from)
+	it = 0
 
-	for i := 0; i < len(sortedData); i++ {
-		kArray[i] = 1 + float64(i)*sortedData[i]
-		cumSum += sortedData[i]
+	for i := 0; i < from; i++ {
+		cumSum := 0.0
+		prevCum := 0.0
+		maxIndex := 0
 
-		cumArray[i] = cumSum - sortedData[i]
+		for j := 0; j < to; j++ {
+			k := 1 + float64(j+1)*sortedData[it]
 
-		if kArray[i] > cumArray[i] {
-			maxIndex = i + 1
+			prevCum += sortedData[it]
+
+			if k > prevCum {
+				maxIndex = j + 1
+
+				cumSum += sortedData[i]
+			}
+
+			it++
 		}
+
+		thresholds[i] = (cumSum - 1) / float64(maxIndex)
 	}
 
-	threshold := float64(cumArray[maxIndex-1]-1) / float64(maxIndex)
-	output := make([]float64, inputTensor.Size())
+	output := make([]float64, len(stableInput))
+	it = 0
 
-	for i := 0; i < len(inputData); i++ {
-		vF := inputData[i]
+	for i := 0; i < from; i++ {
+		for j := 0; j < to; j++ {
+			vF := stableInput[it]
 
-		if vF-threshold > 0 {
-			output[i] = vF - threshold
+			if vF-thresholds[i] > 0 {
+				output[it] = vF - thresholds[i]
+			}
+
+			it++
 		}
 	}
 

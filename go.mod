@@ -12,6 +12,7 @@ require (
 	github.com/xtgo/set v1.0.0
 	gonum.org/v1/gonum v0.8.2
 	gonum.org/v1/netlib v0.0.0-20201012070519-2390d26c3658
+	gopkg.in/cheggaaa/pb.v1 v1.0.27
 	gorgonia.org/cu v0.9.3
 	gorgonia.org/dawson v1.2.0
 	gorgonia.org/tensor v0.9.16
