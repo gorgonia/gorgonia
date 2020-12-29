@@ -811,7 +811,12 @@ func makeTensordotOp(a, b *Node, aAxes, bAxes []int) tensordotOp {
 func (op tensordotOp) Arity() int { return 2 }
 
 func (op tensordotOp) Type() hm.Type {
-	tRet := newTensorType(op.retDims, hm.TypeVariable('a'))
+	var tRet hm.Type
+	if op.retDims == 0 {
+		tRet = hm.TypeVariable('a')
+	} else {
+		tRet = newTensorType(op.retDims, hm.TypeVariable('a'))
+	}
 	ta := newTensorType(op.aDims, hm.TypeVariable('a'))
 	tb := newTensorType(op.bDims, hm.TypeVariable('a'))
 

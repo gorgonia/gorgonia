@@ -789,9 +789,9 @@ func TestTensordot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	correctScalar := 42.0
+	correctScalarlike := []float64{42.0}
 	value := tensordot.Value().Data()
-	assert.Equal(correctScalar, value)
+	assert.Equal(correctScalarlike, value)
 
 	dtensordotCorrectScalarlike0 := []float64{21}
 	dtensordotCorrectScalarlike1 := []float64{2}
@@ -827,8 +827,8 @@ func TestTensordot(t *testing.T) {
 	}
 
 	log.Printf("TensorDot %v | %v", tensordot.Value().Shape(), tensordot.Type())
-	correctInt := float64(11)
-	assert.Equal(correctInt, tensordot.Value().Data())
+	correctScalarlike = []float64{11}
+	assert.Equal(correctScalarlike, tensordot.Value().Data())
 
 	dcorrect0 := []float64{3, 4}
 	dcorrect1 := []float64{1, 2}
@@ -946,8 +946,8 @@ func TestTensordot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	correctInt = float64(14)
-	assert.Equal(correctInt, tensordot.Value().Data())
+	correctScalarlike = []float64{14}
+	assert.Equal(correctScalarlike, tensordot.Value().Data())
 
 	dcorrect = []float64{0, 1, 2, 3}
 	assert.Equal(dcorrect, extractF64s(dtensordot0.Value()))
