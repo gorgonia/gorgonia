@@ -10,7 +10,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.6.1
 	github.com/xtgo/set v1.0.0
-	gonum.org/v1/gonum v0.8.3
+	gonum.org/v1/gonum v0.8.2
 	gonum.org/v1/netlib v0.0.0-20201012070519-2390d26c3658
 	gorgonia.org/cu v0.9.3
 	gorgonia.org/dawson v1.2.0
