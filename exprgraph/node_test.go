@@ -176,7 +176,7 @@ func TestNode_Format(t *testing.T) {
 	t.Run("display tensor %v", func(t *testing.T) {
 		n := fmt.Sprintf("%v", &Node{
 			name:   "name",
-			Tensor: tensor.NewDense(tensor.Float32, []int{1}),
+			Tensor: tensor.NewDense(tensor.Float32, tensor.Shape{}),
 		})
 		if n != "0" {
 			t.Fatal(n)
@@ -185,7 +185,7 @@ func TestNode_Format(t *testing.T) {
 	t.Run("display tensor %2.2v", func(t *testing.T) {
 		n := fmt.Sprintf("%2.2v", &Node{
 			name:   "name",
-			Tensor: tensor.NewDense(tensor.Float32, []int{1}, tensor.WithBacking([]float32{42.4242})),
+			Tensor: tensor.NewDense(tensor.Float32, tensor.Shape{}, tensor.WithBacking([]float32{42.4242})),
 		})
 		if n != "42" {
 			t.Fatal(n)
@@ -194,7 +194,7 @@ func TestNode_Format(t *testing.T) {
 	t.Run("display tensor %2.2f", func(t *testing.T) {
 		n := fmt.Sprintf("%2.2f", &Node{
 			name:   "name",
-			Tensor: tensor.NewDense(tensor.Float32, []int{1}, tensor.WithBacking([]float32{42.4242})),
+			Tensor: tensor.NewDense(tensor.Float32, tensor.Shape{}, tensor.WithBacking([]float32{42.4242})),
 		})
 		if n != "42.42" {
 			t.Fatal(n)
@@ -203,7 +203,7 @@ func TestNode_Format(t *testing.T) {
 	t.Run("display tensor %#v", func(t *testing.T) {
 		n := fmt.Sprintf("%#v", &Node{
 			name:   "name",
-			Tensor: tensor.NewDense(tensor.Float32, []int{1}, tensor.WithBacking([]float32{42.4242})),
+			Tensor: tensor.NewDense(tensor.Float32, tensor.Shape{}, tensor.WithBacking([]float32{42.4242})),
 		})
 		if n != "42.4242" {
 			t.Fatal(n)
