@@ -14,7 +14,7 @@ require (
 	gonum.org/v1/netlib v0.0.0-20201012070519-2390d26c3658
 	gorgonia.org/cu v0.9.3
 	gorgonia.org/dawson v1.2.0
-	gorgonia.org/tensor v0.9.15
+	gorgonia.org/tensor v0.9.16
 	gorgonia.org/vecf32 v0.9.0
 	gorgonia.org/vecf64 v0.9.0
 )
