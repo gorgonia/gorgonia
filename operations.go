@@ -649,11 +649,7 @@ func Tensordot(aAxes []int, bAxes []int, a, b *Node) (retVal *Node, err error) {
 	}
 
 	// Otherwise, apply contraction
-	aDims := len(aShape)
-	bDims := len(bShape)
-	retDims := len(aShape) + len(bShape) - 2*len(aAxes)
-
-	op := tensordotOp{aAxes: aAxes, bAxes: bAxes, aDims: aDims, bDims: bDims, retDims: retDims}
+	op := makeTensordotOp(a, b, aAxes, bAxes)
 
 	return ApplyOp(op, a, b)
 }

@@ -17,7 +17,6 @@ type softmaxOp struct {
 	shape tensor.Shape
 	axis  int
 	isLog bool
-	sum   interface{}
 }
 
 func newSoftmaxOp(inputShape tensor.Shape, axes ...int) *softmaxOp {
@@ -210,7 +209,6 @@ func (op *softmaxOp) f64skernel(data, output []float64, inner, ostride, dimSize,
 		} else {
 			sum = 1 / sum
 		}
-		op.sum = sum
 
 		// set output
 		for d := 0; d < dimSize && d*dimStride < len(y); d++ {

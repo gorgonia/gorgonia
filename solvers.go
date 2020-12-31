@@ -1447,7 +1447,7 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 				}
 				defer returnTensor(valGradDiffscalarProd)
 
-				nominator += valGradDiffscalarProd.Data().(float64)
+				nominator += valGradDiffscalarProd.Data().([]float64)[0]
 
 				// ∥(Grad(F)(xᵢ) - Grad(F)(xᵢ₋₁))∥²
 				gradDiffscalarProd, err := tensor.Contract(gradDiff, gradDiff, contractionAxes, contractionAxes)
@@ -1456,7 +1456,7 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 				}
 				defer returnTensor(gradDiffscalarProd)
 
-				denominator += gradDiffscalarProd.Data().(float64)
+				denominator += gradDiffscalarProd.Data().([]float64)[0]
 
 			default:
 				return errors.Errorf(nyiFail, "Barizai-Borwein step", w)

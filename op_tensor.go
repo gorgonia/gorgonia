@@ -368,11 +368,12 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 		s := iv.Data()
 		t = tensor.New(tensor.FromScalar(s))
 	case tensor.Tensor:
-		if iv.Shape().IsScalarEquiv() {
-			t = iv.Clone().(tensor.Tensor)
-			retVal = t
-			return
-		}
+		// if iv.Shape().IsScalarEquiv() {
+		// 	log.Printf("SCALAR EQUIV %v", iv.Data())
+		// 	t = iv.Clone().(tensor.Tensor)
+		// 	retVal = t
+		// 	return
+		// }
 		t = iv
 	default:
 		err = errors.Errorf(nyiTypeFail, "repeatOp.Do()", inputs[0])

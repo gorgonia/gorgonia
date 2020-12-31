@@ -36,8 +36,8 @@ jobs:
       uses: actions/checkout@v2
     - name: Run tests
       run: |
-        go test -v -race
-        go test -race -tags=${{ matrix.tags }}
+        go test -v -race -timeout 20m
+        go test -race -timeout 20m -tags=${{ matrix.tags }}
 
   coverage:
     strategy:

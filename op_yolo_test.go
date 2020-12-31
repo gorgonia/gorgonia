@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"gorgonia.org/tensor"
 )
 
@@ -14,9 +13,8 @@ func TestYolo(t *testing.T) {
 	inputSize := 416
 	numClasses := 80
 	testAnchors := [][]float32{
-
 		[]float32{10, 13, 16, 30, 33, 23},
-		[]float32{30, 51, 62, 45, 59, 119},
+		[]float32{30, 61, 62, 45, 59, 119},
 		[]float32{116, 90, 156, 198, 373, 326},
 	}
 
@@ -77,9 +75,8 @@ func TestYolo(t *testing.T) {
 		vm.RunAll()
 		vm.Close()
 
-		// Check if everything is fine
-		if !assert.Equal(t, outNode.Value().Data(), expected.Data(), "Output is not equal to expected value") {
-			t.Error(fmt.Sprintf("Got: %v\nExpected: %v", outNode.Value(), expected))
+		if !floatsEqual32(outNode.Value().Data().([]float32), expected.Data().([]float32)) {
+			t.Error(fmt.Sprintf("Test Anchor %d: %v\nGot: \n%v\nExpected: \n%v", i, testAnchors[i], outNode.Value(), expected))
 		}
 	}
 }

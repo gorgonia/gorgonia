@@ -71,7 +71,12 @@ func NewMatrix(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 
 // NewTensor creates a Node representing a variable that holds a tensor (any n-dimensional array with dimensions greater than 2)
 func NewTensor(g *ExprGraph, t tensor.Dtype, dims int, opts ...NodeConsOpt) *Node {
-	tt := makeTensorType(dims, t)
+	var tt hm.Type
+	if dims == 0 {
+		tt = t
+	} else {
+		tt = makeTensorType(dims, t)
+	}
 	curOpts := []NodeConsOpt{WithType(tt), In(g)}
 	curOpts = append(curOpts, opts...)
 
