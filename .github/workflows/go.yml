@@ -9,8 +9,43 @@ jobs:
     strategy:
       matrix:
         go: [1.13.x, 1.14.x, 1.15.x]
-        os: [ubuntu-latest, macos-latest, windows-latest, self-hosted, linux, ARM64]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         tags: [avx, sse]
+        allowfail: [false]
+        include:
+          - go: tip
+            os: ubuntu-latest
+            allowfail: true
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.allowfail }}
+    steps:
+    - name: Install Go ${{ matrix.go }} on ${{ matrix.os }}
+      if: matrix.go != 'tip'
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go }}
+# tempoary hack:
+# https://github.com/actions/setup-go/issues/21#issuecomment-565704236
+    - name: Install Go ${{ matrix.go }} on ${{ matrix.os }}
+      if: matrix.go == 'tip'
+      run: |
+        git clone --depth=1 https://go.googlesource.com/go $HOME/gotip
+        cd $HOME/gotip/src
+        ./make.bash
+        echo "::set-env name=GOROOT::$HOME/gotip"
+        echo "::add-path::$HOME/gotip/bin"
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Run tests
+      run: |
+        go test -v -race -timeout 20m
+        go test -race -timeout 20m -tags=${{ matrix.tags }}
+  test_arm:
+    strategy:
+      matrix:
+        go: [1.13.x, 1.14.x, 1.15.x]
+        os: [self-hosted, linux, ARM64]
+        tags: [arm]
         allowfail: [false]
         include:
           - go: tip
@@ -44,7 +79,7 @@ jobs:
     strategy:
       matrix:
         tags: [avx, sse]
-    runs-on: [ubuntu-latest, self-hosted, linux, ARM64]
+    runs-on: [ubuntu-latest]
     steps:
     - name: Install Go
       uses: actions/setup-go@v2
