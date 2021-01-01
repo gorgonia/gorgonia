@@ -9,8 +9,8 @@ jobs:
     strategy:
       matrix:
         go: [1.13.x, 1.14.x, 1.15.x]
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        tags: [avx, sse, self-hosted, linux, ARM64]
+        os: [ubuntu-latest, macos-latest, windows-latest, , self-hosted, linux, ARM64]
+        tags: [avx, sse]
         allowfail: [false]
         include:
           - go: tip
@@ -43,8 +43,8 @@ jobs:
   coverage:
     strategy:
       matrix:
-        tags: [avx, sse, self-hosted, linux, ARM64]
-    runs-on: ubuntu-latest
+        tags: [avx, sse]
+    runs-on: [ubuntu-latest, , self-hosted, linux, ARM64]
     steps:
     - name: Install Go
       uses: actions/setup-go@v2
