@@ -16,8 +16,8 @@ var whichblas BLAS
 type BLAS interface {
 	blas.Float32
 	blas.Float64
-	// blas.Complex64
-	// blas.Complex128
+	blas.Complex64
+	blas.Complex128
 }
 
 // only blase.Implementation() and cubone.Implementation() are batchedBLAS -

@@ -118,6 +118,31 @@ func Div(a, b *Node) (retVal *Node, err error) {
 	panic("Unhandled")
 }
 
+// Auto automatically calculates the padding for the given operations, for example:
+// 		gorgonia.Auto(gorgonia.BroadcastHadamardProd, a, b)
+func Auto(op func(a, b *Node, leftPattern, rightPattern []byte) (*Node, error), a, b *Node) (*Node, error) {
+	aShape := a.Shape()
+	bShape := b.Shape()
+
+	if aShape.Dims() != bShape.Dims() {
+		return nil, fmt.Errorf("shapes %v and %v should have the same dimensions", aShape, bShape)
+	}
+
+	var (
+		leftPattern, rightPattern []byte
+	)
+
+	for i := 0; i < aShape.Dims(); i++ {
+		if aShape[i] > bShape[i] {
+			leftPattern = append(leftPattern, byte(i))
+		} else if aShape[i] < bShape[i] {
+			rightPattern = append(rightPattern, byte(i))
+		}
+	}
+
+	return op(a, b, rightPattern, leftPattern)
+}
+
 /* UNARY STUFF */
 
 func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
@@ -153,73 +178,12 @@ func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
 
 // more complex unaries
 
-// SoftMax performs softmax on the input. Specifically this is used:
-//		e^(a[i]) / sum((e^(a[i])))
-// For a more numerically stable SoftMax, use StableSoftMax.
-// TODO: MULTI RANK SOFTMAX
-func SoftMax(a *Node, axes ...int) (retVal *Node, err error) {
-	aShape := a.Shape()
-	axis := aShape.Dims() - 1 // default: last dim
-	if a.IsColVec() || (a.IsVector() && !a.IsRowVec()) {
-		axis = 0
-	}
+// SoftMax implements the softmax operation. The softmax operation is a stable operation.
+func SoftMax(x *Node, axis ...int) (*Node, error) {
+	xShape := x.Shape()
+	op := newSoftmaxOp(xShape, axis...)
 
-	if len(axes) > 0 {
-		if axes[0] >= axis+1 || axes[0] < 0 {
-			return nil, errors.Errorf("Cannot perform SoftMax on axis %d. Input has shape %v", axes[0], a.Shape())
-		}
-		axis = axes[0]
-	}
-
-	var exp, sum *Node
-	if exp, err = Exp(a); err != nil {
-		return nil, errors.Wrap(err, operationError)
-	}
-	if sum, err = Sum(exp, axis); err != nil {
-		return nil, errors.Wrap(err, operationError)
-	}
-
-	if sum.IsScalar() {
-		return HadamardDiv(exp, sum)
-	}
-
-	// reshape if necessary
-	ss := sum.Shape()
-	diff := exp.Shape().Dims() - ss.Dims()
-
-	// TODO: multirank softmax
-	if diff > 0 {
-		newShape := tensor.Shape(tensor.BorrowInts(ss.Dims() + diff))
-		copy(newShape, ss)
-		copy(newShape[axis+1:], newShape[axis:])
-		newShape[axis] = 1
-
-		if sum, err = Reshape(sum, newShape); err != nil {
-			return nil, errors.Wrap(err, "Failed to reshape")
-		}
-	}
-
-	return BroadcastHadamardDiv(exp, sum, nil, []byte{byte(axis)})
-
-}
-
-// StableSoftMax performs a numerically stable softmax on the input. Specifically this is the formula used:
-//		e^(a - max(a)) / sum(e^(a - max(a)))
-func StableSoftMax(a *Node) (retVal *Node, err error) {
-	var max, exp, sum *Node
-	if max, err = Max(a); err != nil {
-		return nil, errors.Wrap(err, operationError)
-	}
-	if retVal, err = Sub(a, max); err == nil {
-		if exp, err = Exp(retVal); err == nil {
-			if sum, err = Sum(exp, 1); err == nil {
-				return HadamardDiv(exp, sum)
-			}
-			return nil, errors.Wrap(err, operationError)
-		}
-		return nil, errors.Wrap(err, operationError)
-	}
-	return nil, errors.Wrap(err, operationError)
+	return ApplyOp(op, x)
 }
 
 // LogSumExp performs addition in the log domain
@@ -624,11 +588,21 @@ func Reshape(n *Node, to tensor.Shape) (retVal *Node, err error) {
 		to[infer] = inferred
 	}
 
+	// the Node n might not have shape at this point, in that case we skip the check
+	if n.Shape().Dims() > 0 && n.Shape().TotalSize() != to.TotalSize() {
+		return nil, errors.Errorf("shape size doesn't not match. Expected %v, got %v", n.Shape().TotalSize(), to.TotalSize())
+	}
+
 	op := reshapeOp{
 		from: n.Shape(),
 		to:   to,
 	}
 	return ApplyOp(op, n)
+}
+
+// Ravel flattens the given node and returns the new node
+func Ravel(n *Node) (retVal *Node, err error) {
+	return Reshape(n, tensor.Shape{n.shape.TotalSize()})
 }
 
 /* Contraction related operations */
@@ -675,11 +649,7 @@ func Tensordot(aAxes []int, bAxes []int, a, b *Node) (retVal *Node, err error) {
 	}
 
 	// Otherwise, apply contraction
-	aDims := len(aShape)
-	bDims := len(bShape)
-	retDims := len(aShape) + len(bShape) - 2*len(aAxes)
-
-	op := tensordotOp{aAxes: aAxes, bAxes: bAxes, aDims: aDims, bDims: bDims, retDims: retDims}
+	op := makeTensordotOp(a, b, aAxes, bAxes)
 
 	return ApplyOp(op, a, b)
 }

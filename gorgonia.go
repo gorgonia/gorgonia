@@ -71,7 +71,12 @@ func NewMatrix(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 
 // NewTensor creates a Node representing a variable that holds a tensor (any n-dimensional array with dimensions greater than 2)
 func NewTensor(g *ExprGraph, t tensor.Dtype, dims int, opts ...NodeConsOpt) *Node {
-	tt := makeTensorType(dims, t)
+	var tt hm.Type
+	if dims == 0 {
+		tt = t
+	} else {
+		tt = makeTensorType(dims, t)
+	}
 	curOpts := []NodeConsOpt{WithType(tt), In(g)}
 	curOpts = append(curOpts, opts...)
 
@@ -266,6 +271,10 @@ func UnsafeLet(n *Node, be interface{}) error {
 		}
 
 	case Value:
+		if !n.Shape().Eq(v.Shape()) {
+			return fmt.Errorf("Node's expected shape is %v. Got %v instead", n.Shape(), v.Shape())
+		}
+
 		if !n.Dtype().Eq(v.Dtype()) {
 			return errors.Errorf("Unable to let %v be %v. Expected Dtype of %v. Got %v instead", n.name, be, n.Dtype(), v.Dtype())
 		}

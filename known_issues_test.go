@@ -1,10 +1,10 @@
 package gorgonia
 
 import (
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gorgonia.org/tensor"
 )
 
@@ -303,11 +303,12 @@ func TestIssue363(t *testing.T) {
 }
 
 func TestIssue368(t *testing.T) {
+	c := require.New(t)
+
 	g := NewGraph()
 	x := NewTensor(g, Float32, 2, WithShape(2, 5), WithInit(GlorotU(1.0)))
+
 	sm, err := SoftMax(x, 1)
-	if err != nil {
-		log.Fatal(err)
-	}
-	_ = sm
+	c.NoError(err)
+	c.NotNil(sm)
 }

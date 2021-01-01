@@ -368,11 +368,12 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 		s := iv.Data()
 		t = tensor.New(tensor.FromScalar(s))
 	case tensor.Tensor:
-		if iv.Shape().IsScalarEquiv() {
-			t = iv.Clone().(tensor.Tensor)
-			retVal = t
-			return
-		}
+		// if iv.Shape().IsScalarEquiv() {
+		// 	log.Printf("SCALAR EQUIV %v", iv.Data())
+		// 	t = iv.Clone().(tensor.Tensor)
+		// 	retVal = t
+		// 	return
+		// }
 		t = iv
 	default:
 		err = errors.Errorf(nyiTypeFail, "repeatOp.Do()", inputs[0])
@@ -462,6 +463,9 @@ func (op repeatOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value,
 	default:
 		err = errors.Errorf(nyiTypeFail, "repeatOp.Do()", inputs[0])
 		return
+	}
+	if rep == 1 {
+		return Copy(pt, t)
 	}
 
 	return tensor.RepeatReuse(t, pt, op.along, rep)
@@ -1153,7 +1157,7 @@ func (op reshapeOp) Do(vals ...Value) (Value, error) {
 				return nil, errors.Wrapf(err, cloneFail, vals[0])
 			}
 		}
-		if !val.Shape().Eq(op.from) {
+		if val.Shape().TotalSize() != op.from.TotalSize() {
 			return nil, errors.Errorf("Shape mismatch. Input shape is %v. Expected %v", val.Shape(), op.from)
 		}
 
@@ -1237,6 +1241,7 @@ func (op reshapeOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Node
 	if ret, err = Reshape(grad, op.from); err != nil {
 		return
 	}
+	ret.setGroup(gradClust)
 	return Nodes{ret}, nil
 }
 

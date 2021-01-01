@@ -47,36 +47,41 @@ func parseDtype() {
 }
 
 type convnet struct {
-	g                  *G.ExprGraph
-	w0, w1, w2, w3, w4 *G.Node // weights. the number at the back indicates which layer it's used for
-	d0, d1, d2, d3     float64 // dropout probabilities
+	g                            *G.ExprGraph
+	w0, w1, w1r, w2, w2r, w3, w4 *G.Node // weights. the number at the back indicates which layer it's used for
+	d0, d1, d2, d3               float64 // dropout probabilities
 
 	out *G.Node
 }
 
-func newConvNet(g *G.ExprGraph) *convnet {
+func newResNet(g *G.ExprGraph) *convnet {
 	w0 := G.NewTensor(g, dt, 4, G.WithShape(32, 1, 3, 3), G.WithName("w0"), G.WithInit(G.GlorotN(1.0)))
 	w1 := G.NewTensor(g, dt, 4, G.WithShape(64, 32, 3, 3), G.WithName("w1"), G.WithInit(G.GlorotN(1.0)))
+	w1r := G.NewMatrix(g, dt, G.WithShape(3136, 12544), G.WithName("w1r"), G.WithInit(G.GlorotN(1.0)))
 	w2 := G.NewTensor(g, dt, 4, G.WithShape(128, 64, 3, 3), G.WithName("w2"), G.WithInit(G.GlorotN(1.0)))
-	w3 := G.NewMatrix(g, dt, G.WithShape(128*3*3, 625), G.WithName("w3"), G.WithInit(G.GlorotN(1.0)))
+	w2r := G.NewMatrix(g, dt, G.WithShape(6272, 25088), G.WithName("w2r"), G.WithInit(G.GlorotN(1.0)))
+	w3 := G.NewMatrix(g, dt, G.WithShape(25088, 625), G.WithName("w3"), G.WithInit(G.GlorotN(1.0)))
 	w4 := G.NewMatrix(g, dt, G.WithShape(625, 10), G.WithName("w4"), G.WithInit(G.GlorotN(1.0)))
-	return &convnet{
-		g:  g,
-		w0: w0,
-		w1: w1,
-		w2: w2,
-		w3: w3,
-		w4: w4,
 
-		d0: 0.2,
-		d1: 0.2,
-		d2: 0.2,
-		d3: 0.55,
+	return &convnet{
+		g:   g,
+		w0:  w0,
+		w1:  w1,
+		w1r: w1r,
+		w2:  w2,
+		w2r: w2r,
+		w3:  w3,
+		w4:  w4,
+
+		d0: 0.3,
+		d1: 0.3,
+		d2: 0.3,
+		d3: 0.2,
 	}
 }
 
 func (m *convnet) learnables() G.Nodes {
-	return G.Nodes{m.w0, m.w1, m.w2, m.w3, m.w4}
+	return G.Nodes{m.w0, m.w1, m.w1r, m.w2, m.w2r, m.w3, m.w4}
 }
 
 // This function is particularly verbose for educational reasons. In reality, you'd wrap up the layers within a layer struct type and perform per-layer activations
@@ -113,8 +118,36 @@ func (m *convnet) fwd(x *G.Node) (err error) {
 	if p1, err = G.MaxPool2D(a1, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
 		return errors.Wrap(err, "Layer 1 Maxpooling failed")
 	}
-	if l1, err = G.Dropout(p1, m.d1); err != nil {
-		return errors.Wrap(err, "Unable to apply a dropout to layer 1")
+
+	b, c, h, w := p1.Shape()[0], p1.Shape()[1], p1.Shape()[2], p1.Shape()[3]
+
+	log.Printf("Reshaping p1 %v to %v", p1.Shape(), tensor.Shape{b, c * h * w})
+
+	r1, err := G.Reshape(p1, tensor.Shape{b, c * h * w})
+	if err != nil {
+		return fmt.Errorf("layer 1 reshaping failed: %w", err)
+	}
+
+	m1, err := G.Mul(r1, m.w1r)
+	if err != nil {
+		return fmt.Errorf("layer 1 FC failed: %w", err)
+	}
+
+	log.Printf("Layer 1: reshape(%v, %v)", m1.Shape(), c1.Shape())
+
+	r1, err = G.Reshape(m1, c1.Shape())
+	if err != nil {
+		return fmt.Errorf("layer 1 reshaping failed: %w", err)
+	}
+
+	s1, err := G.Add(c1, r1)
+	if err != nil {
+		return fmt.Errorf("layer 1 Add failed: %w", err)
+	}
+
+	l1, err = G.Dropout(s1, m.d1)
+	if err != nil {
+		return fmt.Errorf("layer 1 dropout failed: %w", err)
 	}
 
 	// Layer 2
@@ -129,16 +162,44 @@ func (m *convnet) fwd(x *G.Node) (err error) {
 	}
 
 	var r2 *G.Node
-	b, c, h, w := p2.Shape()[0], p2.Shape()[1], p2.Shape()[2], p2.Shape()[3]
+	b, c, h, w = p2.Shape()[0], p2.Shape()[1], p2.Shape()[2], p2.Shape()[3]
 	if r2, err = G.Reshape(p2, tensor.Shape{b, c * h * w}); err != nil {
 		return errors.Wrap(err, "Unable to reshape layer 2")
 	}
-	log.Printf("r2 shape %v", r2.Shape())
-	if l2, err = G.Dropout(r2, m.d2); err != nil {
+
+	m2, err := G.Mul(r2, m.w2r)
+	if err != nil {
+		return fmt.Errorf("layer 2 FC failed: %w", err)
+	}
+
+	log.Printf("Layer 2: reshape(%v, %v)", m2.Shape(), c2.Shape())
+
+	r2, err = G.Reshape(m2, c2.Shape())
+	if err != nil {
+		return fmt.Errorf("layer 2 reshaping failed: %w", err)
+	}
+
+	s2, err := G.Add(c2, r2)
+	if err != nil {
+		return fmt.Errorf("layer 2 Add failed: %w", err)
+	}
+
+	log.Printf("Layer2: Add(%v, %v) -> %v", c2.Shape(), r2.Shape(), s2.Shape())
+
+	if l2, err = G.Dropout(s2, m.d2); err != nil {
 		return errors.Wrap(err, "Unable to apply a dropout on layer 2")
 	}
 
+	log.Printf("Layer2: Reshape(%v, %v)", l2.Shape(), tensor.Shape{b, 128 * 14 * 14})
+
+	if l2, err = G.Reshape(l2, tensor.Shape{b, 128 * 14 * 14}); err != nil {
+		return errors.Wrap(err, "Unable to apply a reshape on layer 2")
+	}
+
 	// Layer 3
+
+	log.Printf("Layer 3 %v x %v", l2.Shape(), m.w3.Shape())
+
 	if fc, err = G.Mul(l2, m.w3); err != nil {
 		return errors.Wrapf(err, "Unable to multiply l2 and w3")
 	}
@@ -199,7 +260,7 @@ func main() {
 	g := G.NewGraph()
 	x := G.NewTensor(g, dt, 4, G.WithShape(bs, 1, 28, 28), G.WithName("x"))
 	y := G.NewMatrix(g, dt, G.WithShape(bs, 10), G.WithName("y"))
-	m := newConvNet(g)
+	m := newResNet(g)
 	if err = m.fwd(x); err != nil {
 		log.Fatalf("%+v", err)
 	}

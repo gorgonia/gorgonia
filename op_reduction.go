@@ -232,6 +232,7 @@ func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 	if gradNode, err = Reshape(gradNode, newShape); err != nil {
 		return nil, errors.Wrapf(err, "Unable to reshape grad node to %v", newShape)
 	}
+	gradNode.setGroup(gradClust)
 
 	children := make(Nodes, len(op.along)+1)
 	children[0] = gradNode
