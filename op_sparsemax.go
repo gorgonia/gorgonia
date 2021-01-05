@@ -377,33 +377,30 @@ func (op *sparsemaxDiffOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) 
 }
 
 func (op *sparsemaxDiffOp) Type() hm.Type {
-	aType := hm.TypeVariable('a')
-
-	ta := newTensorType(1, aType)
-
-	return hm.NewFnType(ta, ta, ta) // f(float64, float64) float64
+	a := hm.TypeVariable('a')
+	return hm.NewFnType(a, a, a)
 }
 
 func (op *sparsemaxDiffOp) OverwritesInput() int { return -1 }
 
-func (op *sparsemaxDiffOp) checkInput(inputs ...Value) (tensor.Tensor, tensor.Tensor, error) {
+func (op *sparsemaxDiffOp) checkInput(inputs ...Value) (*tensor.Dense, *tensor.Dense, error) {
 	if err := checkArity(op, len(inputs)); err != nil {
 		return nil, nil, err
 	}
 
 	var (
-		in tensor.Tensor
+		in *tensor.Dense
 
-		gradient tensor.Tensor
+		gradient *tensor.Dense
 		ok       bool
 	)
 
 	switch t := inputs[0].(type) {
 	case *dualValue:
-		if in, ok = t.Value.(tensor.Tensor); !ok {
+		if in, ok = t.Value.(*tensor.Dense); !ok {
 			return nil, nil, errors.Errorf("input should be a tensor.Tensor, got %T", inputs[0])
 		}
-	case tensor.Tensor:
+	case *tensor.Dense:
 		in = t
 	default:
 		return nil, nil, errors.Errorf("input type is not supported, got %T", inputs[0])
@@ -411,16 +408,24 @@ func (op *sparsemaxDiffOp) checkInput(inputs ...Value) (tensor.Tensor, tensor.Te
 
 	switch t := inputs[1].(type) {
 	case *dualValue:
-		if gradient, ok = t.Value.(tensor.Tensor); !ok {
+		if gradient, ok = t.Value.(*tensor.Dense); !ok {
 			return nil, nil, errors.Errorf("gradient should be a tensor, got %T", inputs[1])
 		}
-	case tensor.Tensor:
+	case *tensor.Dense:
 		gradient = t
 	default:
 		return nil, nil, errors.Errorf("gradient type is not supported, got %T", inputs[1])
 	}
 
 	return in, gradient, nil
+}
+
+func (op *sparsemaxDiffOp) mul(a tensor.Tensor, b tensor.Tensor) (tensor.Tensor, error) {
+	if a.Dims() != b.Dims() {
+		return tensor.Outer(a, b)
+	}
+
+	return tensor.Mul(a, b)
 }
 
 func (op *sparsemaxDiffOp) Do(inputs ...Value) (Value, error) {
@@ -433,94 +438,62 @@ func (op *sparsemaxDiffOp) Do(inputs ...Value) (Value, error) {
 		return nil, fmt.Errorf("sparsemaxDiffOp.Do inputs sizes should be equal")
 	}
 
-	var diff interface{}
+	var zero interface{}
 
-	switch inputTensor.Dtype() {
-	case tensor.Float64:
-		outputData, ok := gradTensor.Data().([]float64)
-		if !ok {
-			return nil, fmt.Errorf("sparsemaxDiffOp.Do expected input to be []float64, got %T", inputTensor.Data())
+	if inputTensor.Dtype() == tensor.Float32 {
+		zero = float32(0.0)
+	} else {
+		zero = float64(0.0)
+	}
+
+	nonZeros, err := inputTensor.ElNeScalar(zero, false, tensor.AsSameType())
+	if err != nil {
+		return nil, fmt.Errorf("sparsemaxDiffOp.Do failed to get non-zeros: %w", err)
+	}
+
+	mul, err := op.mul(nonZeros, gradTensor)
+	if err != nil {
+		return nil, fmt.Errorf("sparsemaxDiffOp.Do failed to mul grad tensor: %w", err)
+	}
+
+	a, err := tensor.Sum(mul, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := tensor.Sum(nonZeros, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	sum, err := tensor.Div(a, b)
+	if err != nil {
+		return nil, err
+	}
+
+	if sum.Dims() == 1 && gradTensor.Dims() == 2 {
+		err := sum.Reshape(sum.Shape()[0], 1)
+		if err != nil {
+			return nil, err
 		}
 
-		diff = op.float64sparseMaxDiff(inputTensor.Data().([]float64), outputData)
-	case tensor.Float32:
-		outputData, ok := gradTensor.Data().([]float32)
-		if !ok {
-			return nil, fmt.Errorf("sparsemaxDiffOp.Do expected input to be []float32, got %T", inputTensor.Data())
+		sum, err = tensor.Repeat(sum, 1, gradTensor.Shape()[1])
+		if err != nil {
+			panic(err)
 		}
-
-		diff = op.float32sparseMaxDiff(inputTensor.Data().([]float32), outputData)
-	default:
-		return nil, fmt.Errorf("sparsemaxDiffOp.Do expected input to be []float64 or []float32, got %T", inputTensor.Data())
 	}
 
-	val := tensor.New(
-		tensor.Of(inputTensor.Dtype()),
-		tensor.WithShape(inputTensor.Size()),
-		tensor.WithEngine(inputTensor.Engine()),
-		tensor.WithBacking(diff),
-	)
-
-	return val, nil
-}
-
-// FIXME: go2 generics
-func (op *sparsemaxDiffOp) float32sparseMaxDiff(data, outputData []float32) interface{} {
-	nonZeros := float32(0.0)
-	inputSum := float32(0.0)
-	diff := make([]float32, len(data))
-
-	for i, v := range data {
-		if v == 0.0 {
-			continue
-		}
-
-		diff[i] = 1.0
-
-		inputSum += outputData[i]
-		nonZeros++
+	sub, err := tensor.Sub(gradTensor, sum)
+	if err != nil {
+		return nil, err
 	}
 
-	sum := float32(0.0)
-
-	if nonZeros > 0 {
-		sum = inputSum / nonZeros
+	result, err := op.mul(nonZeros, sub)
+	if err != nil {
+		return nil, err
 	}
 
-	for i := range diff {
-		diff[i] *= (outputData[i] - sum)
-	}
-
-	return diff
-}
-
-func (op *sparsemaxDiffOp) float64sparseMaxDiff(data, outputData []float64) interface{} {
-	nonZeros := 0.0
-	inputSum := 0.0
-	diff := make([]float64, len(data))
-
-	for i, v := range data {
-		if v == 0.0 {
-			continue
-		}
-
-		diff[i] = 1.0
-
-		inputSum += outputData[i]
-		nonZeros++
-	}
-
-	sum := 0.0
-
-	if nonZeros > 0 {
-		sum = inputSum / nonZeros
-	}
-
-	for i := range diff {
-		diff[i] *= (outputData[i] - sum)
-	}
-
-	return diff
+	return result, nil
 }
 
 // ensure it complies with the Op interface
