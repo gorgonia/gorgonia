@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
+	"log"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -104,7 +105,7 @@ func (op *byIndicesOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) 
 	odv := output.boundTo.(*dualValue)
 	odvd := odv.Value.(tensor.Tensor)
 
-	diffOp := &ByIndicesOpDiffOp{op}
+	diffOp := &byIndicesOpDiffOp{op}
 
 	result, err := diffOp.Do(inputs[0].boundTo, inputs[1].boundTo)
 	if err != nil {
@@ -136,7 +137,7 @@ func (op *byIndicesOp) SymDiff(inputs Nodes, output, grad *Node) (Nodes, error) 
 	x := inputs[0]
 	indices := inputs[1]
 
-	diffOp := &ByIndicesOpDiffOp{op}
+	diffOp := &byIndicesOpDiffOp{op}
 	nodes := make(Nodes, op.Arity())
 
 	nodes[0], err = ApplyOp(diffOp, x, grad, indices)
@@ -153,42 +154,42 @@ func (op *byIndicesOp) DiffWRT(inputs int) []bool {
 	return []bool{true, false}
 }
 
-type ByIndicesOpDiffOp struct {
+type byIndicesOpDiffOp struct {
 	*byIndicesOp
 }
 
-func (op *ByIndicesOpDiffOp) Arity() int { return 3 }
+func (op *byIndicesOpDiffOp) Arity() int { return 3 }
 
-func (op *ByIndicesOpDiffOp) ReturnsPtr() bool { return false }
+func (op *byIndicesOpDiffOp) ReturnsPtr() bool { return false }
 
-func (op *ByIndicesOpDiffOp) CallsExtern() bool { return false }
+func (op *byIndicesOpDiffOp) CallsExtern() bool { return false }
 
-func (op *ByIndicesOpDiffOp) WriteHash(h hash.Hash) {
+func (op *byIndicesOpDiffOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, op.String())
 }
 
-func (op *ByIndicesOpDiffOp) Hashcode() uint32 { return simpleHash(op) }
+func (op *byIndicesOpDiffOp) Hashcode() uint32 { return simpleHash(op) }
 
-func (op *ByIndicesOpDiffOp) String() string {
+func (op *byIndicesOpDiffOp) String() string {
 	return fmt.Sprintf("ByIndicesOpDiff{}(%d)", op.axis)
 }
 
-func (op *ByIndicesOpDiffOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
+func (op *byIndicesOpDiffOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
 	s := inputs[0].(tensor.Shape).Clone()
 
 	return s, nil
 }
 
-func (op *ByIndicesOpDiffOp) Type() hm.Type {
+func (op *byIndicesOpDiffOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	b := makeTensorType(1, tensor.Int)
 
 	return hm.NewFnType(a, a, b, a)
 }
 
-func (op *ByIndicesOpDiffOp) OverwritesInput() int { return -1 }
+func (op *byIndicesOpDiffOp) OverwritesInput() int { return -1 }
 
-func (op *ByIndicesOpDiffOp) checkInput(inputs ...Value) (in, indices, gradient *tensor.Dense, err error) {
+func (op *byIndicesOpDiffOp) checkInput(inputs ...Value) (in, indices, gradient *tensor.Dense, err error) {
 	if err := checkArity(op, len(inputs)); err != nil {
 		return nil, nil, nil, err
 	}
@@ -229,11 +230,15 @@ func (op *ByIndicesOpDiffOp) checkInput(inputs ...Value) (in, indices, gradient 
 	return in, indices, gradient, nil
 }
 
-func (op *ByIndicesOpDiffOp) Do(inputs ...Value) (Value, error) {
+func (op *byIndicesOpDiffOp) Do(inputs ...Value) (Value, error) {
 	inputTensor, gradTensor, indices, err := op.checkInput(inputs...)
 	if err != nil {
 		return nil, fmt.Errorf("Can't check ByIndicesOpDiff input: %w", err)
 	}
+
+	log.Printf("input: %v\n%v", inputTensor.Shape(), inputTensor)
+	log.Printf("grad: %v\n%v", gradTensor.Shape(), gradTensor)
+	log.Printf("indices: %v\n%v", indices.Shape(), indices)
 
 	output, err := tensor.ByIndicesB(inputTensor, gradTensor, indices, op.axis)
 	if err != nil {
@@ -245,7 +250,7 @@ func (op *ByIndicesOpDiffOp) Do(inputs ...Value) (Value, error) {
 
 // ensure it complies with the Op interface
 var (
-	_ Op = &ByIndicesOpDiffOp{}
+	_ Op = &byIndicesOpDiffOp{}
 
 	_ Op   = &byIndicesOp{}
 	_ SDOp = &byIndicesOp{}
