@@ -54,7 +54,7 @@ func (op readOp) DiffWRT(int) []bool                                            
 func (op readOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (Nodes, error) { return nil, nil }
 func (op readOp) Do(vals ...Value) (Value, error)                                 { return nil, nil }
 func (op readOp) String() string                                                  { return "print" }
-func (op readOp) WriteHash(h hash.Hash)                                           { h.Write([]byte("print")) }
+func (op readOp) WriteHash(h hash.Hash)                                           { fmt.Fprintf(h, "print %p", op.into) }
 func (op readOp) Hashcode() uint32                                                { return simpleHash(op) }
 
 func (op readOp) isStmt() bool { return true }
