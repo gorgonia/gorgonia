@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
-	"log"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -235,10 +234,6 @@ func (op *byIndicesOpDiffOp) Do(inputs ...Value) (Value, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Can't check ByIndicesOpDiff input: %w", err)
 	}
-
-	log.Printf("input: %v\n%v", inputTensor.Shape(), inputTensor)
-	log.Printf("grad: %v\n%v", gradTensor.Shape(), gradTensor)
-	log.Printf("indices: %v\n%v", indices.Shape(), indices)
 
 	output, err := tensor.ByIndicesB(inputTensor, gradTensor, indices, op.axis)
 	if err != nil {
