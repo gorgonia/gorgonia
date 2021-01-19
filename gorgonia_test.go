@@ -140,3 +140,17 @@ func TestLetErrors(t *testing.T) {
 		})
 	}
 }
+
+func TestRead(t *testing.T) {
+	g := NewGraph()
+	xVal := tensor.New(tensor.WithShape(2, 4), tensor.WithBacking(tensor.Range(tensor.Float64, 0, 8)))
+	x := NodeFromAny(g, xVal, WithName("x"))
+
+	var v1, v2 Value
+	r1 := Read(x, &v1)
+	r2 := Read(x, &v2)
+	r3 := Read(x, &v1)
+
+	assert.Equal(t, r1, r3)
+	assert.NotEqual(t, r1, r2)
+}
