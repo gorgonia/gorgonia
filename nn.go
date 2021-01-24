@@ -564,10 +564,11 @@ func BatchNorm1d(x, scale, bias *Node, momentum, epsilon float64) (retVal, Î³, Î
 	if retVal, err = ApplyOp(op, x); err != nil {
 		return nil, nil, nil, nil, err
 	}
-	if retVal, err = HadamardProd(scale, retVal); err != nil {
+
+	if retVal, err = Auto(BroadcastHadamardProd, scale, retVal); err != nil {
 		return nil, nil, nil, nil, err
 	}
-	retVal, err = Add(retVal, bias)
+	retVal, err = Auto(BroadcastAdd, retVal, bias)
 
 	return retVal, scale, bias, op, err
 }

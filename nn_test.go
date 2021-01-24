@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"runtime"
 	"testing"
 
@@ -279,6 +280,121 @@ func TestMaxPool2D(t *testing.T) {
 
 }
 
+func TestBatchNorm1d(t *testing.T) {
+	generator := func(start float64, increment float64) InitWFn {
+		return func(dt tensor.Dtype, s ...int) interface{} {
+			totalSize := tensor.Shape(s).TotalSize()
+
+			if dt == tensor.Float32 {
+				result := make([]float32, totalSize)
+
+				for i := 0; i < totalSize; i++ {
+					result[i] = float32(start)
+					start += increment
+				}
+
+				return result
+			}
+
+			result := make([]float64, totalSize)
+
+			for i := 0; i < totalSize; i++ {
+				result[i] = start
+				start += increment
+			}
+
+			return result
+		}
+	}
+
+	testCases := []struct {
+		desc  string
+		Dtype tensor.Dtype
+
+		XInit  InitWFn
+		XShape tensor.Shape
+
+		ScaleInit  InitWFn
+		ScaleShape tensor.Shape
+
+		BiasInit  InitWFn
+		BiasShape tensor.Shape
+
+		ExpectedResult interface{}
+	}{
+		{
+			desc:           "Example1",
+			Dtype:          tensor.Float64,
+			XInit:          generator(0.5, 0.01),
+			XShape:         tensor.Shape{3, 2},
+			ScaleInit:      Ones(),
+			ScaleShape:     tensor.Shape{3, 1},
+			BiasInit:       Zeroes(),
+			BiasShape:      tensor.Shape{3, 1},
+			ExpectedResult: []float64{-1.2024072240843036, -1.2024072240843036, 0, 0, 1.2024072240843036, 1.2024072240843036},
+		},
+		{
+			desc:           "Example2",
+			Dtype:          tensor.Float64,
+			XInit:          generator(0.5, 0.01),
+			XShape:         tensor.Shape{3, 2},
+			ScaleInit:      Ones(),
+			ScaleShape:     tensor.Shape{3, 2},
+			BiasInit:       Zeroes(),
+			BiasShape:      tensor.Shape{3, 2},
+			ExpectedResult: []float64{-1.2024072240843036, -1.2024072240843036, 0, 0, 1.2024072240843036, 1.2024072240843036},
+		},
+		{
+			desc:           "Example3",
+			Dtype:          tensor.Float32,
+			XInit:          generator(0.1, 0.001),
+			XShape:         tensor.Shape{3, 2},
+			ScaleInit:      Ones(),
+			ScaleShape:     tensor.Shape{3, 2},
+			BiasInit:       Zeroes(),
+			BiasShape:      tensor.Shape{3, 2},
+			ExpectedResult: []float32{-0.5619547, -0.56195074, -4.1868648e-06, 0, 0.5619484, 0.56195074},
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			rand.Seed(0)
+
+			c := require.New(t)
+
+			g := NewGraph()
+
+			x := NewTensor(g, tC.Dtype, tC.XShape.Dims(), WithShape(tC.XShape...), WithInit(tC.XInit), WithName("x"))
+			scale := NewTensor(g, tC.Dtype, tC.ScaleShape.Dims(), WithShape(tC.ScaleShape...), WithInit(tC.ScaleInit), WithName("scale"))
+			bias := NewTensor(g, tC.Dtype, tC.BiasShape.Dims(), WithShape(tC.BiasShape...), WithInit(tC.BiasInit), WithName("bias"))
+
+			y, _, _, op, err := BatchNorm1d(x, scale, bias, 0.9, 1e-5)
+			c.NoError(err)
+
+			op.SetTraining()
+
+			var yVal, scaleVal Value
+			Read(y, &yVal)
+			Read(scale, &scaleVal)
+
+			cost, _ := Mean(y)
+
+			if _, err := Grad(cost, x, scale, bias); err != nil {
+				t.Fatal(err)
+			}
+
+			m := NewTapeMachine(g, BindDualValues(x, scale, bias), TraceExec())
+
+			err = m.RunAll()
+			c.NoError(err)
+
+			c.NoError(m.Close())
+
+			c.Equal(tC.ExpectedResult, yVal.Data())
+		})
+	}
+}
+
 func TestBatchNorm_F64(t *testing.T) {
 	g := NewGraph()
 	x := NewTensor(g, Float64, 4, WithShape(5, 2, 3, 4), WithInit(Gaussian(0, 1)), WithName("x"))
@@ -303,7 +419,6 @@ func TestBatchNorm_F64(t *testing.T) {
 		t.Fatal(err)
 	}
 	m.Close()
-	ioutil.WriteFile("foo.dot", []byte(g.ToDot()), 0644)
 
 	shape := x.Shape()
 	n, c, h, w := shape[0], shape[1], shape[2], shape[3]
