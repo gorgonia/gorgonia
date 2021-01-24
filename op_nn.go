@@ -1121,6 +1121,7 @@ func (op *clampOp) String() string   { return fmt.Sprintf("ConstClamp{%f, %f}()"
 type BatchNormOp struct {
 	momentum float64 // momentum for the moving average
 	epsilon  float64 // small variance to be added to avoid dividing by 0
+	dims     int     // 2 or 4. defaults to 4
 
 	// learnables
 	mean, variance, ma *tensor.Dense
@@ -1138,7 +1139,12 @@ func (op *BatchNormOp) Arity() int { return 1 }
 
 // Type ...
 func (op *BatchNormOp) Type() hm.Type {
-	t := TensorType{Dims: 4, Of: hm.TypeVariable('a')}
+	dims := op.dims
+	if dims == 0 {
+		dims = 4 // default to 4 if not set
+	}
+
+	t := TensorType{Dims: dims, Of: hm.TypeVariable('a')}
 	return hm.NewFnType(t, t)
 }
 
@@ -1428,7 +1434,12 @@ type batchnormDiffOp struct{ *BatchNormOp }
 func (op *batchnormDiffOp) Arity() int { return 2 }
 
 func (op *batchnormDiffOp) Type() hm.Type {
-	t := TensorType{Dims: 4, Of: hm.TypeVariable('a')}
+	dims := op.dims
+	if dims == 0 {
+		dims = 4
+	}
+
+	t := TensorType{Dims: dims, Of: hm.TypeVariable('a')}
 	return hm.NewFnType(t, t, t)
 }
 
@@ -1550,6 +1561,7 @@ func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) (err error
 
 	// dE/dY - mean(dE/dY)-mean(dE/dY ⋅ Y) ⋅ Y
 	beta := (-1.0 / float64(nc))
+
 	vecf64.Scale(ig, beta)
 	vecf64.Add(ig, og)
 
