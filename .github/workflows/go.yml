@@ -32,8 +32,8 @@ jobs:
         git clone --depth=1 https://go.googlesource.com/go $HOME/gotip
         cd $HOME/gotip/src
         ./make.bash
-        echo "::set-env name=GOROOT::$HOME/gotip"
-        echo "::add-path::$HOME/gotip/bin"
+        echo "GOROOT=$HOME/gotip" >> $GITHUB_ENV
+        echo "PATH=$PATH:$HOME/gotip/bin" >> $GITHUB_ENV
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Run tests
@@ -67,8 +67,8 @@ jobs:
         git clone --depth=1 https://go.googlesource.com/go $HOME/gotip
         cd $HOME/gotip/src
         ./make.bash
-        echo "::set-env name=GOROOT::$HOME/gotip"
-        echo "::add-path::$HOME/gotip/bin"
+        echo "GOROOT=$HOME/gotip" >> $GITHUB_ENV
+        echo "PATH=$PATH:$HOME/gotip/bin" >> $GITHUB_ENV
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Run tests
