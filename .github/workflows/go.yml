@@ -8,7 +8,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go: [1.13.x, 1.14.x, 1.15.x]
+        go: [1.14.x, 1.15.x]
         os: [ubuntu-latest, macos-latest, windows-latest]
         tags: [avx, sse]
         allowfail: [false]
@@ -32,8 +32,8 @@ jobs:
         git clone --depth=1 https://go.googlesource.com/go $HOME/gotip
         cd $HOME/gotip/src
         ./make.bash
-        echo "::set-env name=GOROOT::$HOME/gotip"
-        echo "::add-path::$HOME/gotip/bin"
+        echo "GOROOT=$HOME/gotip" >> $GITHUB_ENV
+        echo "PATH=$PATH:$HOME/gotip/bin" >> $GITHUB_ENV
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Run tests
@@ -43,7 +43,7 @@ jobs:
   test_arm:
     strategy:
       matrix:
-        go: [1.13.x, 1.14.x, 1.15.x]
+        go: [1.14.x, 1.15.x]
         os: [self-hosted, linux, ARM64]
         tags: [arm]
         allowfail: [false]
@@ -67,8 +67,8 @@ jobs:
         git clone --depth=1 https://go.googlesource.com/go $HOME/gotip
         cd $HOME/gotip/src
         ./make.bash
-        echo "::set-env name=GOROOT::$HOME/gotip"
-        echo "::add-path::$HOME/gotip/bin"
+        echo "GOROOT=$HOME/gotip" >> $GITHUB_ENV
+        echo "PATH=$PATH:$HOME/gotip/bin" >> $GITHUB_ENV
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Run tests
@@ -105,7 +105,7 @@ jobs:
   build:
     strategy:
       matrix:
-        go: [1.13, 1.14]
+        go: [1.14.x, 1.15.x]
         goos: [linux, darwin]
         goarch: [amd64, arm]
         exclude:
