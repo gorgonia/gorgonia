@@ -268,7 +268,7 @@ func GlorotEtAlN64(gain float64, s ...int) []float64 {
 	fieldSize := 1
 	switch len(s) {
 	case 0:
-		panic("Glorot Uniform only works with Tensors of dimensions >= 1")
+		panic("Glorot Normal only works with Tensors of dimensions >= 1")
 	case 1:
 		// treat it as a col vec
 		n1 = 1
