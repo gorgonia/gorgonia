@@ -15,6 +15,7 @@ Gorgonia consists of a few parts:
 Each of these parts have their own sub-parts. Let's explore.
 
 <a name="expr"/>
+
 ## Mathematical Expressions ##
 
 Instead of tediously explaining what a mathematical expression, we'll use examples and rely on the reader's ability to perform induction.
@@ -72,6 +73,7 @@ We adopt the terms used by any high school calculus textbook: a variable is defi
 Constants are implemented in Gorgonia as an `Op` denoting a value as a constant.
 
 <a name="backprop"/>
+
 ## Backpropagation ##
 
 One of the core abilites of Gorgonia is the ability to do compute partial derivatives. This is done in two ways in Gorgonia:
@@ -110,6 +112,7 @@ To aid in automatic differentiation, a `dualValue` type is also used. A `*dualVa
 An `Op` that supports automatic differentiation must implement `ADOp`.
 
 <a name="eval"/>
+
 ## Evaluation of Mathematical Expressions ##
 
 A mathematical expression is useless by itself. Here the word "useless" is meant literally. By itself, a mathematical expression does nothing. However, the expression may be evaluated to get values out of the expression.
@@ -129,18 +132,23 @@ The names of the `VM`s are suggestive of their operational semantics. `*tapeMach
 In order to evaluate using a `*tapeMachine`, the mathematical expression needs to be first compiled into a program that runs on the `*tapeMachine`. `*goMachine` and `*lispMachine` runs off the graph directly, and both these machines support automatic differentiation.
 
 ### `*tapeMachine` ###
+TODO
 
 ### `*lispMachine` ###
+TODO
 
 ### `*goMachine` ###
+TODO
 
 <a name="solver" />
+
 ## Gradient Descent ##
 
 Gorgonia comes equipped with gradient descent functionalities. The main abstract data type that defines a gradient descent algorithm is the `Solver`. There are multiple `Solver`s implemented in Gorgonia.
 All `Solver`s rely on a `ValueGrad`. A `ValueGrad` is anything that can provide a value and a gradient (also itself a value).
 
 <a name="utils" />
+
 ## Other Subsystems ##
 
 ### Type System ###
