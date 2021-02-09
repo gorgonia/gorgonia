@@ -64,7 +64,7 @@ From this point, "`Op`" may be interchangably used with "function".
 
 ### Variables, Weights and Constants ###
 
-In most deep learning frameworks, there is a separation of notions between weights and variables. Often, variables are what the user/programmer may set. So in the example above, only ![\mathbf{x}](https://render.githubusercontent.com/render/math?math=%5Clarge+%5Ctextstyle+%5Cmathbf%7Bx%7D) is a variable, while ![\mathbf{W}](https://render.githubusercontent.com/render/math?math=%5Clarge+%5Cdisplaystyle+%5Cmathbf%7BW%7D) is a generic tensor/node.
+In most deep learning frameworks, there is a separation of notions between weights and variables. Often, variables are what the user/programmer may set. So in the example above, only ![\mathbf{x}](https://render.githubusercontent.com/render/math?math=%5Clarge+%5Ctextstyle+%5Cmathbf%7Bx%7D) is a variable, while ![\mathbf{W}](https://render.githubusercontent.com/render/math?math=%5Clarge+%5Cdisplaystyle+%5Cmathbf%7BW%7D) is a generic tensor/node/weights.
 
 In Gorgonia, there is no such separation. Mathematically speaking, ![\mathbf{W}](https://render.githubusercontent.com/render/math?math=%5Clarge+%5Cdisplaystyle+%5Cmathbf%7BW%7D) and ![\mathbf{x}](https://render.githubusercontent.com/render/math?math=%5Clarge+%5Ctextstyle+%5Cmathbf%7Bx%7D) are both variables in that they both do not have any values assigned to them (at least until the user assigns a value).
 
@@ -84,7 +84,7 @@ One of the core abilites of Gorgonia is the ability to do compute partial deriva
 
 Some functions are differentiable, and some functions are not. Gorgonia handles both kinds.
 
-### Symbollic Differentiation ###
+### Symbolic Differentiation ###
 
 Symbolic differentiation is done by manipulating the graph. Consider the following expression:
 
@@ -180,7 +180,7 @@ The difference between `a → a → a` and `(a, a) → a` is subtle. Let us  tra
 
 | Gorgonia Type Signature | Go Type Signature | Notes |
 |---|---|---|
-| `a → a → a` | `func add(a interface{}) func(a interface{}) interface{}` | Also known as "curried" function |
+| `a → a → a` | `func add(a interface{}) func(a interface{}) interface{}` | Also known as "Curried" function |
 | `(a, a) → a` | `func add(a, b interface{}) interface{}` | |
 
 While it's natural to gravitate towards `(a, a) → a`, Gorgonia strongly prefers `a → a → a`. Why? Because when an `Op` is defined with only one input and one output, it makes it easier to optimize the graph.
@@ -221,9 +221,9 @@ Now, let's consider another `Op`: a scaling function. For simplicity's sake, let
 The type system powers the creation of new `*Node`. `ApplyOp` is the function that takes an `Op`, and the children `*Node` and returns a new `*Node` representing the `Op`.
 
 
-<summary>
+<details>
 
-<details> Quick Recipes </details>
+<summary> Quick Recipes </summary>
 
 ### Create a type constant ###
 
@@ -264,7 +264,7 @@ b := hm.TypeVariable('b')
 T := hm.NewFnType(a, b)
 ```
 
-</summary>
+</details>
 
 # File-Based View #
 
