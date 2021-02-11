@@ -38,8 +38,6 @@ jobs:
         key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-mod- 
-    - name: Install Go ${{ matrix.go }}
-      uses: actions/setup-go@v2
     - name: Install Dependencies
       if: steps.build-mod-cache.outputs.cache-hit != 'true'
       run: |
