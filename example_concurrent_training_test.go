@@ -80,7 +80,7 @@ func (t *concurrentTrainer) train(x, y Value, costChan chan cost, wg *sync.WaitG
 func trainEpoch(bs []batch, ts []*concurrentTrainer, threads int) {
 	// costs := make([]float64, 0, len(bs))
 	chunks := len(bs) / len(ts)
-	for chunk := 0; chunk < chunks; chunk++ {
+	for chunk := 0; chunk <= chunks; chunk++ {
 		costChan := make(chan cost, len(bs))
 
 		var wg sync.WaitGroup
@@ -149,7 +149,7 @@ func prep() (x, y Value, bs []batch) {
 }
 
 func concurrentTraining(xV, yV Value, bs []batch, es int) {
-	threads := runtime.GOMAXPROCS(-1) // reserve one thread for the CPU locked thread
+	threads := runtime.NumCPU()
 
 	ts := make([]*concurrentTrainer, threads)
 	for chunk := 0; chunk < threads; chunk++ {
