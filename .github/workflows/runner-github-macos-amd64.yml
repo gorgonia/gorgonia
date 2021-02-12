@@ -1,9 +1,9 @@
 on: [pull_request]
-name: CI on MacOS/amd64 
+name: Build and Tests on MacOS/amd64 
 env:
   GOPROXY: "https://proxy.golang.org"
 jobs:
-  build-and-test-latest-go:
+  stable-go:
     name: Build and test on latest stable Go release
     env:
       GOVERSION: '1.15.x'
@@ -67,7 +67,7 @@ jobs:
       if: matrix.tags != 'none'
       run: |
         go test -race -timeout 20m -tags=${{ matrix.tags }}
-  build-and-test-previous-go:
+  previous-go:
     name: Build and test on previous stable Go release
     env:
       GOVERSION: '1.14.x'

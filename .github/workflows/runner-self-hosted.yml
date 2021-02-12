@@ -1,16 +1,23 @@
 on: [pull_request]
-name: CI on Self-Hosted (arm)
+name: Build and Tests on Self-Hosted (arm)
 env:
   GOPROXY: "https://proxy.golang.org"
 jobs:
-  build-and-test-latest-go:
+  stable-go:
     name: Build and test on latest stable Go release
     env:
       GOVERSION: '1.15.x'
     strategy:
       matrix:
-        tags: [none, avx, sse]
+        experimental: [false]
+        tags: [none]
+        include:
+          - tags: avx
+            experimental: true
+          - tags: sse
+            experimental: true
     runs-on: "self-hosted"
+    continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Install Go 
       uses: actions/setup-go@v2
@@ -67,14 +74,21 @@ jobs:
       if: matrix.tags != 'none'
       run: |
         go test -race -timeout 20m -tags=${{ matrix.tags }}
-  build-and-test-previous-go:
+  previous-go:
     name: Build and test on previous stable Go release
     env:
       GOVERSION: '1.14.x'
     strategy:
       matrix:
-        tags: [none, avx, sse]
+        experimental: [false]
+        tags: [none]
+        include:
+          - tags: avx
+            experimental: true
+          - tags: sse
+            experimental: true
     runs-on: "self-hosted"
+    continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Install Go 
       uses: actions/setup-go@v2
