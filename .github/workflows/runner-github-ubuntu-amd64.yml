@@ -7,7 +7,7 @@ jobs:
   build-and-test:
     strategy:
       matrix:
-        buildtag: [none, avx, sse]
+        tags: [none, avx, sse]
     runs-on: "ubuntu-latest"
     steps:
     - name: Install Go 
@@ -45,7 +45,7 @@ jobs:
         GOARCH=arm GOOS=linux go get -t .
         GOARCH=amd64 GOOS=linux go get -t .
         GOARCH=amd64 GOOS=darwin go get -t .
-    - name: Build without tags
+    - name: Build without tags (all plateforms)
       if: ${{ matrix.tags }} == 'none'
       run: |
         GOARCH=arm GOOS=linux go build . 
@@ -58,7 +58,7 @@ jobs:
     - name: Build with tag
       if: ${{ matrix.tags }} != 'none'
       run: |
-        build -tags=${{ matrix.tags }}
+        go build -tags=${{ matrix.tags }}
     - name: Test with tag
       if: ${{ matrix.tags }} != 'none'
       run: |
