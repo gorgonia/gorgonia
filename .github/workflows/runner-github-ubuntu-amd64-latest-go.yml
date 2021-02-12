@@ -46,20 +46,20 @@ jobs:
         GOARCH=amd64 GOOS=linux go get -t .
         GOARCH=amd64 GOOS=darwin go get -t .
     - name: Build without tags (all plateforms)
-      if: ${{ matrix.tags }} == 'none'
+      if: matrix.tags == 'none'
       run: |
         GOARCH=arm GOOS=linux go build . 
         GOARCH=amd64 GOOS=linux go build .
         GOARCH=amd64 GOOS=darwin go build .
     - name: Test without tags
-      if: ${{ matrix.tags }} == 'none'
+      if: matrix.tags == 'none'
       run: |
-        go test -v -race -timeout 20m
-    - name: Build with tag
-      if: ${{ matrix.tags }} != 'none'
+        go test -race -timeout 20m
+    - name: Build with tag 
+      if: matrix.tags != 'none'
       run: |
         go build -tags=${{ matrix.tags }}
     - name: Test with tag
-      if: ${{ matrix.tags }} != 'none'
+      if: matrix.tags != 'none'
       run: |
-        go test -v -race -timeout 20m -tags=${{ matrix.tags }}
+        go test -race -timeout 20m -tags=${{ matrix.tags }}
