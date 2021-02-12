@@ -1,5 +1,5 @@
 on: [pull_request]
-name: CI on Self-Hosted (arm)
+name: CI on Linux/amd64 
 env:
   GOPROXY: "https://proxy.golang.org"
 jobs:
@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         tags: [none, avx, sse]
-    runs-on: "self-hosted"
+    runs-on: "ubuntu-latest"
     steps:
     - name: Install Go 
       uses: actions/setup-go@v2
@@ -74,7 +74,7 @@ jobs:
     strategy:
       matrix:
         tags: [none, avx, sse]
-    runs-on: "self-hosted"
+    runs-on: "ubuntu-latest"
     steps:
     - name: Install Go 
       uses: actions/setup-go@v2
