@@ -64,7 +64,7 @@ jobs:
     - name: Test without tags
       if: matrix.tags == 'none'
       run: |
-        go test -timeout 20m
+        go test  -timeout 20m
     - name: Build with tag 
       if: matrix.tags != 'none'
       run: |
@@ -133,7 +133,7 @@ jobs:
     - name: Test without tags
       if: matrix.tags == 'none'
       run: |
-        go test -timeout 20m
+        go test  -timeout 20m
     - name: Build with tag 
       if: matrix.tags != 'none'
       run: |

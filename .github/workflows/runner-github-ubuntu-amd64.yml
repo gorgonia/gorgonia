@@ -64,7 +64,7 @@ jobs:
     - name: Test without tags
       if: matrix.tags == 'none'
       run: |
-        go test -race-timeout 20m
+        go test -race -timeout 20m
     - name: Build with tag 
       if: matrix.tags != 'none'
       run: |
@@ -80,7 +80,7 @@ jobs:
     strategy:
       matrix:
         experimental: [false]
-        tags: [sse,none,avx]
+        tags: [avx,sse,none]
         include:  
           - tags: avx
             experimental: true
@@ -133,7 +133,7 @@ jobs:
     - name: Test without tags
       if: matrix.tags == 'none'
       run: |
-        go test -race-timeout 20m
+        go test -race -timeout 20m
     - name: Build with tag 
       if: matrix.tags != 'none'
       run: |
