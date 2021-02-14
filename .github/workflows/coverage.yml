@@ -1,8 +1,4 @@
-on:
-  workflow_run:
-    workflows: ["Build on all plateforms"]
-    types: 
-      - completed
+on: [pull_request]
 name: Code Coverage
 jobs:
   coverage:
@@ -11,20 +7,18 @@ jobs:
     - name: Install Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.14.x
+        go-version: 1.15.x
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Calc coverage
       run: |
         export PATH=$PATH:$(go env GOPATH)/bin
-        go test -v -covermode=atomic -coverprofile=coverage.out
-    - name: Convert coverage to lcov
-      uses: jandelgado/gcov2lcov-action@v1.0.0
+        go test -v -covermode=atomic -coverprofile=coverage.out ./...
+    - uses: codecov/codecov-action@v1
       with:
-          infile: coverage.out
-          outfile: coverage.lcov
-    - name: Coveralls
-      uses: coverallsapp/github-action@v1.0.1
-      with:
-          github-token: ${{ secrets.github_token }}
-          path-to-lcov: coverage.lcov
+        token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+        files: coverage.out
+        flags: unittests # optional
+        name: codecov-gorgonia # optional
+        fail_ci_if_error: true # optional (default = false)
+        verbose: true # optional (default = false)
