@@ -13,7 +13,7 @@ jobs:
     - name: Calc coverage
       run: |
         export PATH=$PATH:$(go env GOPATH)/bin
-        go test -v -covermode=atomic -coverprofile=coverage.out ./...
+        go test -v -covermode=atomic -coverprofile=coverage.out 
     - uses: codecov/codecov-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
