@@ -58,7 +58,7 @@ jobs:
     - name: Test without tags
       if: matrix.tags == 'none'
       run: |
-        go test -race -timeout 20m
+        go test -timeout 20m
     - name: Build with tag 
       if: matrix.tags != 'none'
       run: |
@@ -66,7 +66,7 @@ jobs:
     - name: Test with tag
       if: matrix.tags != 'none'
       run: |
-        go test -race -timeout 20m -tags=${{ matrix.tags }}
+        go test -timeout 20m -tags=${{ matrix.tags }}
   previous-go:
     name: Build and test on previous stable Go release
     env:
@@ -122,7 +122,7 @@ jobs:
     - name: Test without tags
       if: matrix.tags == 'none'
       run: |
-        go test -race -timeout 20m
+        go test -timeout 20m
     - name: Build with tag 
       if: matrix.tags != 'none'
       run: |
@@ -130,4 +130,4 @@ jobs:
     - name: Test with tag
       if: matrix.tags != 'none'
       run: |
-        go test -race -timeout 20m -tags=${{ matrix.tags }}
+        go test -timeout 20m -tags=${{ matrix.tags }}
