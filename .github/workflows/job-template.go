@@ -21,7 +21,8 @@ type job struct {
 	WithRace  bool            // false
 }
 
-const workflowTmpl = `on: [pull_request]
+const workflowTmpl = `## DO NOT EDIT - This file is generated
+on: [pull_request]
 name: {{ .WorkflowName }}
 env:
   GOPROXY: "https://proxy.golang.org"
