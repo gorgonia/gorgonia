@@ -1,20 +1,19 @@
+## DO NOT EDIT - This file is generated
 on: [pull_request]
 name: Build and Tests on Self-Hosted (arm)
 env:
   GOPROXY: "https://proxy.golang.org"
 jobs:
   stable-go:
-    name: Build and test on latest stable Go release
+    name: Build and test on latest stable Go release 
     env:
       GOVERSION: '1.15.x'
     strategy:
       matrix:
         experimental: [false]
         tags: [none]
-        include:
-          - tags: avx
-            experimental: true
-          - tags: sse
+        include:  
+          - tags: none
             experimental: true
     runs-on: "self-hosted"
     continue-on-error: ${{ matrix.experimental }}
@@ -73,19 +72,17 @@ jobs:
     - name: Test with tag
       if: matrix.tags != 'none'
       run: |
-        go test -timeout 20m -tags=${{ matrix.tags }}
+        go test  -timeout 20m -tags=${{ matrix.tags }}
   previous-go:
-    name: Build and test on previous stable Go release
+    name: Build and test on previous stable Go release 
     env:
       GOVERSION: '1.14.x'
     strategy:
       matrix:
         experimental: [false]
         tags: [none]
-        include:
-          - tags: avx
-            experimental: true
-          - tags: sse
+        include:  
+          - tags: none
             experimental: true
     runs-on: "self-hosted"
     continue-on-error: ${{ matrix.experimental }}
@@ -144,4 +141,4 @@ jobs:
     - name: Test with tag
       if: matrix.tags != 'none'
       run: |
-        go test -timeout 20m -tags=${{ matrix.tags }}
+        go test  -timeout 20m -tags=${{ matrix.tags }}

@@ -1,16 +1,22 @@
+## DO NOT EDIT - This file is generated
 on: [pull_request]
-name: Build and Tests on Linux/amd64 
+name: Build and Tests on Linux/amd64
 env:
   GOPROXY: "https://proxy.golang.org"
 jobs:
-  latest-go:
-    name: Build and test on latest stable Go release
+  stable-go:
+    name: Build and test on latest stable Go release 
     env:
       GOVERSION: '1.15.x'
     strategy:
       matrix:
-        tags: [none, avx, sse]
+        experimental: [false]
+        tags: [none,avx,sse]
+        include:  
+          - tags: avx
+            experimental: true
     runs-on: "ubuntu-latest"
+    continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Install Go 
       uses: actions/setup-go@v2
@@ -58,7 +64,7 @@ jobs:
     - name: Test without tags
       if: matrix.tags == 'none'
       run: |
-        go test -race -timeout 20m
+        go test -race-timeout 20m
     - name: Build with tag 
       if: matrix.tags != 'none'
       run: |
@@ -68,13 +74,18 @@ jobs:
       run: |
         go test -race -timeout 20m -tags=${{ matrix.tags }}
   previous-go:
-    name: Build and test on previous stable Go release
+    name: Build and test on previous stable Go release 
     env:
       GOVERSION: '1.14.x'
     strategy:
       matrix:
-        tags: [none, avx, sse]
+        experimental: [false]
+        tags: [sse,none,avx]
+        include:  
+          - tags: avx
+            experimental: true
     runs-on: "ubuntu-latest"
+    continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Install Go 
       uses: actions/setup-go@v2
@@ -122,7 +133,7 @@ jobs:
     - name: Test without tags
       if: matrix.tags == 'none'
       run: |
-        go test -race -timeout 20m
+        go test -race-timeout 20m
     - name: Build with tag 
       if: matrix.tags != 'none'
       run: |
