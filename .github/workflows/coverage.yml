@@ -1,4 +1,12 @@
-on: [pull_request]
+on: 
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
 name: Code Coverage
 jobs:
   coverage:
