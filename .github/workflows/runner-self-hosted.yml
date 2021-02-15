@@ -5,15 +5,17 @@ env:
   GOPROXY: "https://proxy.golang.org"
 jobs:
   stable-go:
-    name: Build and test on latest stable Go release 
+    name: Build and test on latest stable Go release - Self-Hosted 
     env:
       GOVERSION: '1.15.x'
     strategy:
       matrix:
         experimental: [false]
-        tags: [none]
+        tags: [none,avx,sse]
         include:  
-          - tags: none
+          - tags: avx
+            experimental: true  
+          - tags: sse
             experimental: true
     runs-on: "self-hosted"
     continue-on-error: ${{ matrix.experimental }}
@@ -74,15 +76,17 @@ jobs:
       run: |
         go test  -timeout 20m -tags=${{ matrix.tags }}
   previous-go:
-    name: Build and test on previous stable Go release 
+    name: Build and test on previous stable Go release - Self-Hosted 
     env:
       GOVERSION: '1.14.x'
     strategy:
       matrix:
         experimental: [false]
-        tags: [none]
+        tags: [none,avx,sse]
         include:  
-          - tags: none
+          - tags: avx
+            experimental: true  
+          - tags: sse
             experimental: true
     runs-on: "self-hosted"
     continue-on-error: ${{ matrix.experimental }}
