@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         experimental: [false]
-        tags: [avx,sse,none]
+        tags: [sse,none,avx]
     runs-on: "ubuntu-latest"
     continue-on-error: ${{ matrix.experimental }}
     steps:

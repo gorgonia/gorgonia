@@ -11,12 +11,7 @@ jobs:
     strategy:
       matrix:
         experimental: [false]
-        tags: [none,avx,sse]
-        include:  
-          - tags: avx
-            experimental: true  
-          - tags: sse
-            experimental: true
+        tags: [none]
     runs-on: "self-hosted"
     continue-on-error: ${{ matrix.experimental }}
     steps:
@@ -82,12 +77,7 @@ jobs:
     strategy:
       matrix:
         experimental: [false]
-        tags: [none,avx,sse]
-        include:  
-          - tags: avx
-            experimental: true  
-          - tags: sse
-            experimental: true
+        tags: [none]
     runs-on: "self-hosted"
     continue-on-error: ${{ matrix.experimental }}
     steps:
