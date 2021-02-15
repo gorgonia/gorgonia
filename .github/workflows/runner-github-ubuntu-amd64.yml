@@ -5,16 +5,13 @@ env:
   GOPROXY: "https://proxy.golang.org"
 jobs:
   stable-go:
-    name: Build and test on latest stable Go release 
+    name: Build and test on latest stable Go release - Linux/amd64 
     env:
       GOVERSION: '1.15.x'
     strategy:
       matrix:
         experimental: [false]
-        tags: [none,avx,sse]
-        include:  
-          - tags: avx
-            experimental: true
+        tags: [avx,sse,none]
     runs-on: "ubuntu-latest"
     continue-on-error: ${{ matrix.experimental }}
     steps:
@@ -74,16 +71,13 @@ jobs:
       run: |
         go test -race -timeout 20m -tags=${{ matrix.tags }}
   previous-go:
-    name: Build and test on previous stable Go release 
+    name: Build and test on previous stable Go release - Linux/amd64 
     env:
       GOVERSION: '1.14.x'
     strategy:
       matrix:
         experimental: [false]
-        tags: [avx,sse,none]
-        include:  
-          - tags: avx
-            experimental: true
+        tags: [none,avx,sse]
     runs-on: "ubuntu-latest"
     continue-on-error: ${{ matrix.experimental }}
     steps:

@@ -29,15 +29,23 @@ func main() {
 	}
 	defer workflowSelf.Close()
 
-	err = generateWorkflow(workflowLinux, "Build and Tests on Linux/amd64", "ubuntu-latest", map[string]bool{
+	err = generateWorkflow(workflowLinux, "Build and Tests on Linux/amd64", "Linux/amd64", "ubuntu-latest", map[string]bool{
 		"none": false,
-		"avx":  true,
+		"avx":  false,
 		"sse":  false,
 	}, true)
 	if err != nil {
 		panic(err)
 	}
-	err = generateWorkflow(workflowMac, "Build and Tests on MacOS/amd64", "macos-latest", map[string]bool{
+	err = generateWorkflow(workflowMac, "Build and Tests on MacOS/amd64", "MacOS/amd64", "macos-latest", map[string]bool{
+		"none": false,
+		"avx":  false,
+		"sse":  false,
+	}, false)
+	if err != nil {
+		panic(err)
+	}
+	err = generateWorkflow(workflowSelf, "Build and Tests on Self-Hosted (arm)", "Self-Hosted", "self-hosted", map[string]bool{
 		"none": false,
 		"avx":  true,
 		"sse":  true,
@@ -45,17 +53,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = generateWorkflow(workflowSelf, "Build and Tests on Self-Hosted (arm)", "self-hosted", map[string]bool{
-		"none": true,
-	}, false)
-	if err != nil {
-		panic(err)
-	}
 
 }
 
-func generateWorkflow(w io.Writer, workflowName, runsOn string, tags map[string]bool, withRace bool) error {
-	tmpl, err := template.New("workflow").Funcs(template.FuncMap{"mapToList": mapToList}).Parse(workflowTmpl)
+func generateWorkflow(w io.Writer, workflowName, runnerName, runsOn string, tags map[string]bool, withRace bool) error {
+	tmpl, err := template.New("workflow").Funcs(template.FuncMap{
+		"mapToList":       mapToList,
+		"hasExperimental": hasExperimental,
+	}).Parse(workflowTmpl)
 	if err != nil {
 		panic(err)
 	}
@@ -65,7 +70,7 @@ func generateWorkflow(w io.Writer, workflowName, runsOn string, tags map[string]
 		Jobs: []job{
 			{
 				JobID:     "stable-go",
-				JobName:   "Build and test on latest stable Go release",
+				JobName:   "Build and test on latest stable Go release - " + runnerName,
 				RunsOn:    runsOn,
 				GoVersion: latestGo,
 				Tags:      tags,
@@ -73,7 +78,7 @@ func generateWorkflow(w io.Writer, workflowName, runsOn string, tags map[string]
 			},
 			{
 				JobID:     "previous-go",
-				JobName:   "Build and test on previous stable Go release",
+				JobName:   "Build and test on previous stable Go release - " + runnerName,
 				RunsOn:    runsOn,
 				GoVersion: previousGo,
 				Tags:      tags,
@@ -93,4 +98,13 @@ func mapToList(m map[string]bool) string {
 	s = s[:b.Len()-1] // no copying (removes trailing ", ")
 	return s
 
+}
+
+func hasExperimental(m map[string]bool) bool {
+	for _, ok := range m {
+		if ok {
+			return true
+		}
+	}
+	return false
 }
