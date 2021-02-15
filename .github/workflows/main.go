@@ -47,8 +47,6 @@ func main() {
 	}
 	err = generateWorkflow(workflowSelf, "Build and Tests on Self-Hosted (arm)", "Self-Hosted", "self-hosted", map[string]bool{
 		"none": false,
-		"avx":  true,
-		"sse":  true,
 	}, false)
 	if err != nil {
 		panic(err)
