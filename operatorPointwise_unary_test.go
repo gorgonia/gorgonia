@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"math"
+	"math/big"
 	"math/rand"
 	"testing"
 
@@ -430,12 +431,18 @@ func TestTanhDiff(t *testing.T) {
 		t.Error(err)
 	}
 
-	correct := 1.0 - (math.Tanh(v) * math.Tanh(v)) // I'm surprised Golang doesn't have a secant function!
-	assert.Equal(correct, x.boundTo.(*dualValue).d.Data())
+	//	correct := 1.0 - (math.Tanh(v) * math.Tanh(v)) // I'm surprised Golang doesn't have a secant function!
+	correct := new(big.Float)
+	z := new(big.Float)
+	tanhF := big.NewFloat(math.Tanh(v))
+	z.Mul(tanhF, tanhF)
+	correct.Sub(big.NewFloat(1.0), z)
+	correctFloat64, _ := correct.Float64()
+	assert.Equal(correctFloat64, x.boundTo.(*dualValue).d.Data())
 
 	// Tensor edition
 	xdvd := xT.boundTo.(*dualValue).d.(*tensor.Dense)
-	assert.Equal([]float64{correct, correct}, xdvd.Data())
+	assert.Equal([]float64{correctFloat64, correctFloat64}, xdvd.Data())
 }
 
 func TestSigmoidDiff(t *testing.T) {
