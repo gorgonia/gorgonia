@@ -5,10 +5,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"gorgonia.org/tensor"
 )
 
 func TestYolo(t *testing.T) {
+	assert := assert.New(t)
 
 	inputSize := 416
 	numClasses := 80
@@ -75,7 +77,7 @@ func TestYolo(t *testing.T) {
 		vm.RunAll()
 		vm.Close()
 
-		if !floatsEqual32(outNode.Value().Data().([]float32), expected.Data().([]float32)) {
+		if !assert.InEpsilonSlice(outNode.Value().Data().([]float32), expected.Data().([]float32), 1e-5) {
 			t.Error(fmt.Sprintf("Test Anchor %d: %v\nGot: \n%v\nExpected: \n%v", i, testAnchors[i], outNode.Value(), expected))
 		}
 	}
