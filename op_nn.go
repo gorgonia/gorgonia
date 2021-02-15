@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
+	"math/big"
 	"time"
 
 	"github.com/chewxy/hm"
@@ -1367,8 +1368,14 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 	nbc := op.numByChans.Float32s()
 	bsm := op.batchSumMultiplier.Float32s()
 
-	momentum := float32(op.momentum)
-	eps := float32(op.epsilon)
+	eps := big.NewFloat(op.epsilon)
+	epsFloat32, _ := eps.Float32()
+	// DEBUG
+	epsFloat32 = float32(1e-5)
+
+	momentum := big.NewFloat(op.momentum)
+	momentumFloat32, _ := momentum.Float32()
+	momentumFloat32 = float32(0.9)
 
 	if !op.training {
 		// use stored mean/variance estimates
@@ -1382,7 +1389,15 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 		whichblas.Sscal(len(varianceTmp), scaleFactor, varianceTmp, 1)
 	} else {
 		// compute mean
-		alpha := 1.0 / float32(n*spatialDim)
+		bigN := new(big.Float)
+		bigN.SetInt(big.NewInt(int64(n)))
+		bigSpatialDim := big.NewFloat(float64(spatialDim))
+		z := new(big.Float)
+		z.Mul(bigN, bigSpatialDim)
+		bigAlpha := new(big.Float)
+		bigAlpha.Quo(big.NewFloat(1.0), z)
+		alpha, _ := bigAlpha.Float32()
+		//alpha := 1.0 / float32(n*spatialDim)
 		whichblas.Sgemv(blas.NoTrans, nc, spatialDim, alpha, inputF32s, spatialDim, ssm, 1, 0, nbc, 1)
 		whichblas.Sgemv(blas.Trans, n, channels, 1, nbc, channels, bsm, 1, 0, meanTmp, 1)
 	}
@@ -1400,24 +1415,40 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 		whichblas.Sgemv(blas.Trans, n, channels, 1.0, nbc, channels, bsm, 1, 0, varianceTmp, 1) // E((X_EX)²)
 
 		// compute and save moving average
-		op.ma.Float32s()[0] *= momentum
-		op.ma.Float32s()[0]++
+		one := new(big.Float)
+		one.SetInt64(1)
+		opMa := big.NewFloat(float64(op.ma.Float32s()[0]))
+		opMa.Mul(opMa, momentum)
+		opMa.Add(opMa, one)
+		op.ma.Float32s()[0], _ = opMa.Float32()
+
+		//op.ma.Float32s()[0] *= momentumFloat32
+		//op.ma.Float32s()[0]++
 
 		// TODO: write axpby for gonum
-		whichblas.Sscal(len(mean), momentum, mean, 1)
+		whichblas.Sscal(len(mean), momentumFloat32, mean, 1)
 		whichblas.Saxpy(len(meanTmp), 1.0, meanTmp, 1, mean, 1)
 
-		m := len(inputF32s) / channels
-		correctionFactor := float32(1)
-		if m > 1 {
-			correctionFactor = float32(m) / (float32(m - 1))
+		m := big.NewRat(int64(len(inputF32s)), int64(channels))
+		//m := len(inputF32s) / channels
+		//correctionFactor := float32(1)
+		correctionFactor := new(big.Float).SetInt64(1)
+		oneRat := new(big.Rat)
+		oneRat.SetInt64(1)
+		if m.Cmp(oneRat) > 1 {
+			correctionFactor.SetRat(m.Quo(m, m.Sub(m, oneRat)))
 		}
-		whichblas.Sscal(len(variance), momentum, variance, 1)
-		whichblas.Saxpy(len(varianceTmp), correctionFactor, varianceTmp, 1, variance, 1)
+		//if m > 1 {
+		//	correctionFactor = float32(m) / (float32(m - 1))
+		//}
+		correctionFactorFloat32, _ := correctionFactor.Float32()
+		whichblas.Sscal(len(variance), momentumFloat32, variance, 1)
+		whichblas.Saxpy(len(varianceTmp), correctionFactorFloat32, varianceTmp, 1, variance, 1)
 	}
 
 	// normalize variance
-	vecf32.Trans(varianceTmp, eps)
+
+	vecf32.Trans(varianceTmp, epsFloat32)
 	vecf32.Sqrt(varianceTmp)
 
 	// replicate variance to inputsize

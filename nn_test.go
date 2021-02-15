@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"math/rand"
 	"runtime"
 	"testing"
@@ -552,7 +553,9 @@ func TestBatchNorm_F32(t *testing.T) {
 	m.Close()
 	yVT = yVal.(*tensor.Dense)
 	for j := 0; j < c; j++ {
-		var sum, variance float32
+		sum := new(big.Float)
+		variance := new(big.Float)
+		//var variance float32
 		for i := 0; i < n; i++ {
 			for k := 0; k < h; k++ {
 				for l := 0; l < w; l++ {
@@ -560,20 +563,30 @@ func TestBatchNorm_F32(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					atf := at.(float32)
-					sum += atf
-					variance += atf * atf
+					atf := big.NewFloat(float64(at.(float32)))
+					sum.Add(sum, atf)
+					//atf := at.(float32)
+					//sum += atf
+					variance.Add(variance, atf.Mul(atf, atf))
+					//variance += atf * atf
 				}
 			}
 		}
-		sum /= float32(h * w * n)
-		variance /= float32(h * w * n)
+		bigH := big.NewInt(int64(h))
+		bigW := big.NewInt(int64(w))
+		bigN := big.NewInt(int64(n))
+		bigHNW := new(big.Int).Mul(bigH, bigW)
+		bigHNW.Mul(bigHNW, bigN)
+		sum.Quo(sum, new(big.Float).SetInt(bigHNW))
+		sumFloat32, _ := sum.Float32()
+		variance.Quo(variance, new(big.Float).SetInt(bigHNW))
+		varianceFloat32, _ := variance.Float32()
 
-		if !dawson.ToleranceF32(sum, 0, 0.001) {
+		if !dawson.ToleranceF32(sumFloat32, 0, 0.001) {
 			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
 		}
 
-		if !dawson.ToleranceF32(variance, 0.9833, 0.001) {
+		if !dawson.ToleranceF32(varianceFloat32, 1, 0.001) {
 			t.Errorf("channel %d: Expected variance to be near 0.98. Got %v", j, variance)
 		}
 	}
