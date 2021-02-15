@@ -38,11 +38,13 @@ jobs:
       matrix:
         experimental: [false]
         tags: [{{ mapToList .Tags }}]
+{{- if hasExperimental .Tags }}
         include:
 {{- range $tag,$experimental := .Tags}}
 {{- if $experimental }}  
           - tags: {{ $tag }}
             experimental: true
+{{- end}}
 {{- end}}
 {{- end}}
     runs-on: "{{ .RunsOn }}"
