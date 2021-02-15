@@ -1,6 +1,9 @@
 ![Logo](https://raw.githubusercontent.com/gorgonia/gorgonia/master/media/Logo_horizontal_small.png)
 
-[![GoDoc](https://godoc.org/gorgonia.org/gorgonia?status.svg)](https://godoc.org/gorgonia.org/gorgonia) [![GitHub version](https://badge.fury.io/gh/gorgonia%2Fgorgonia.svg)](https://badge.fury.io/gh/gorgonia%2Fgorgonia) ![test and build](https://github.com/gorgonia/gorgonia/workflows/test%20and%20build/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/gorgonia/gorgonia/badge.svg?branch=master)](https://coveralls.io/github/gorgonia/gorgonia?branch=master) [![Go Report Card](https://goreportcard.com/badge/gorgonia.org/gorgonia)](https://goreportcard.com/report/gorgonia.org/gorgonia) [![unstable](http://badges.github.io/stability-badges/dist/unstable.svg)](http://github.com/badges/stability-badges)
+[![GoDoc](https://godoc.org/gorgonia.org/gorgonia?status.svg)](https://godoc.org/gorgonia.org/gorgonia) [![GitHub version](https://badge.fury.io/gh/gorgonia%2Fgorgonia.svg)](https://badge.fury.io/gh/gorgonia%2Fgorgonia) 
+![Build and Tests](https://github.com/gorgonia/gorgonia/workflows/Build%20and%20Tests%20on%20Linux/amd64/badge.svg)
+[![codecov](https://codecov.io/gh/gorgonia/gorgonia/branch/master/graph/badge.svg)](https://codecov.io/gh/gorgonia/gorgonia)
+[![Go Report Card](https://goreportcard.com/badge/gorgonia.org/gorgonia)](https://goreportcard.com/report/gorgonia.org/gorgonia) [![unstable](http://badges.github.io/stability-badges/dist/unstable.svg)](http://github.com/badges/stability-badges)
 
 #
 
