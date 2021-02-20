@@ -7,7 +7,7 @@ jobs:
   stable-go:
     name: Build and test on latest stable Go release - Self-Hosted 
     env:
-      GOVERSION: '1.15.x'
+      GOVERSION: '1.16.x'
     strategy:
       matrix:
         experimental: [false]
@@ -73,7 +73,7 @@ jobs:
   previous-go:
     name: Build and test on previous stable Go release - Self-Hosted 
     env:
-      GOVERSION: '1.14.x'
+      GOVERSION: '1.15.x'
     strategy:
       matrix:
         experimental: [false]
