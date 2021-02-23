@@ -362,7 +362,7 @@ func TestBarzilaiBorweinSolver(t *testing.T) {
 
 	solver := NewBarzilaiBorweinSolver(WithLearnRate(0.0001))
 
-	maxIterations := 200
+	maxIterations := 250
 
 	costFloat := 42.0
 	for 0 != maxIterations {
@@ -373,6 +373,7 @@ func TestBarzilaiBorweinSolver(t *testing.T) {
 		}
 
 		costFloat = cost.Value().Data().(float64)
+
 		if costThreshold > math.Abs(costFloat) {
 			break
 		}
