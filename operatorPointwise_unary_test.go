@@ -430,7 +430,7 @@ func TestTanhDiff(t *testing.T) {
 		t.Error(err)
 	}
 
-	correct := 1.0 - (math.Tanh(v) * math.Tanh(v)) // I'm surprised Golang doesn't have a secant function!
+	correct := 1.0 - (float64(math.Tanh(v)) * float64(math.Tanh(v))) // I'm surprised Golang doesn't have a secant function!
 	assert.Equal(correct, x.boundTo.(*dualValue).d.Data())
 
 	// Tensor edition
