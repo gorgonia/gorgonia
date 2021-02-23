@@ -431,11 +431,11 @@ func TestTanhDiff(t *testing.T) {
 	}
 
 	correct := 1.0 - (float64(math.Tanh(v)) * float64(math.Tanh(v))) // I'm surprised Golang doesn't have a secant function!
-	assert.Equal(correct, x.boundTo.(*dualValue).d.Data())
+	assert.InDeltaf(correct, x.boundTo.(*dualValue).d.Data(), 1e-14, "")
 
 	// Tensor edition
 	xdvd := xT.boundTo.(*dualValue).d.(*tensor.Dense)
-	assert.Equal([]float64{correct, correct}, xdvd.Data())
+	assert.InDeltaSlicef([]float64{correct, correct}, xdvd.Data(), 1e-14, "")
 }
 
 func TestSigmoidDiff(t *testing.T) {
