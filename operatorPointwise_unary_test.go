@@ -430,6 +430,9 @@ func TestTanhDiff(t *testing.T) {
 		t.Error(err)
 	}
 
+	// NOTE: there are not guarantees of identical behaviours across architectures,
+	// in this case arm64 gives different results than amd64 for Tanh.
+	// See https://github.com/golang/go/issues/18354#issuecomment-267705645
 	correct := 1.0 - (float64(math.Tanh(v)) * float64(math.Tanh(v))) // I'm surprised Golang doesn't have a secant function!
 	assert.InDeltaf(correct, x.boundTo.(*dualValue).d.Data(), 1e-14, "")
 
