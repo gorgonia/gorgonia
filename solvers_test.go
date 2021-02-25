@@ -1,7 +1,9 @@
 package gorgonia
 
 import (
+	"log"
 	"math"
+	"runtime"
 	"testing"
 
 	"github.com/chewxy/math32"
@@ -361,11 +363,16 @@ func TestBarzilaiBorweinSolver(t *testing.T) {
 	}
 
 	solver := NewBarzilaiBorweinSolver(WithLearnRate(0.0001))
-
-	maxIterations := 200
-
+	iterations := 0
 	costFloat := 42.0
-	for 0 != maxIterations {
+
+	// NOTE: due to precision issues with floating-point arithmetic,
+	// amd64 reaches the minimum expected cost at iteration #198
+	// arm64 reaches the minimum expected cost at iteration #210
+	// In some other cases arm converges faster than amd
+	// See https://github.com/golang/go/issues/18354#issuecomment-267705645
+
+	for iterations < 250 {
 		m.Reset()
 		err = m.RunAll()
 		if nil != err {
@@ -382,8 +389,10 @@ func TestBarzilaiBorweinSolver(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		maxIterations--
+		iterations++
 	}
+
+	log.Printf("Found minimum cost at iteration %d. arch=%s", iterations, runtime.GOARCH)
 
 	assert.InDelta(0, costFloat, costThreshold)
 }

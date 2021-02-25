@@ -430,12 +430,15 @@ func TestTanhDiff(t *testing.T) {
 		t.Error(err)
 	}
 
-	correct := 1.0 - (math.Tanh(v) * math.Tanh(v)) // I'm surprised Golang doesn't have a secant function!
-	assert.Equal(correct, x.boundTo.(*dualValue).d.Data())
+	// NOTE: there are not guarantees of identical behaviours across architectures,
+	// in this case arm64 gives different results than amd64 for Tanh.
+	// See https://github.com/golang/go/issues/18354#issuecomment-267705645
+	correct := 1.0 - (float64(math.Tanh(v)) * float64(math.Tanh(v))) // I'm surprised Golang doesn't have a secant function!
+	assert.InDeltaf(correct, x.boundTo.(*dualValue).d.Data(), 1e-14, "")
 
 	// Tensor edition
 	xdvd := xT.boundTo.(*dualValue).d.(*tensor.Dense)
-	assert.Equal([]float64{correct, correct}, xdvd.Data())
+	assert.InDeltaSlicef([]float64{correct, correct}, xdvd.Data(), 1e-14, "")
 }
 
 func TestSigmoidDiff(t *testing.T) {
