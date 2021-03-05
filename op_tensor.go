@@ -115,7 +115,7 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 
 		// bools are special
 		if _, ok := t.(*B); ok {
-			retVal = newI(1)
+			retVal = NewI(1)
 		}
 	case tensor.Tensor:
 		sh := t.Shape()
@@ -127,11 +127,11 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 		// cast as ... types
 		switch t.Dtype() {
 		case tensor.Float64:
-			retVal = newF64(float64(size))
+			retVal = NewF64(float64(size))
 		case tensor.Float32:
-			retVal = newF32(float32(size))
+			retVal = NewF32(float32(size))
 		case tensor.Int:
-			retVal = newI(size)
+			retVal = NewI(size)
 		default:
 			return nil, errors.Errorf(nyiFail, "sizeOf.Do()", t.Dtype())
 		}

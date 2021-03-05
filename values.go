@@ -101,19 +101,19 @@ func makeValue(t hm.Type, s tensor.Shape) (retVal Value, err error) {
 	if s.IsScalar() {
 		switch dt {
 		case tensor.Float64:
-			return newF64(0), nil
+			return NewF64(0), nil
 		case tensor.Float32:
-			return newF32(0), nil
+			return NewF32(0), nil
 		case tensor.Int:
-			return newI(0), nil
+			return NewI(0), nil
 		case tensor.Int64:
-			return newI64(0), nil
+			return NewI64(0), nil
 		case tensor.Int32:
-			return newI32(0), nil
+			return NewI32(0), nil
 		case tensor.Byte:
-			return newU8(0), nil
+			return NewU8(0), nil
 		case tensor.Bool:
-			return newB(false), nil
+			return NewB(false), nil
 		}
 	}
 

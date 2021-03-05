@@ -9,7 +9,7 @@ func TestStupid(t *testing.T) {
 
 	t.Logf("%v %d %s", op, op.unaryOpType(), op.ʘUnaryOperator)
 
-	v := newF64(3.1415)
+	v := NewF64(3.1415)
 	rv, err := op.Do(v)
 	t.Logf("%v, %v", rv, err)
 }

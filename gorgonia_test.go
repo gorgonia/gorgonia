@@ -53,7 +53,7 @@ var anyNodeTest = []struct {
 	{"bool", true, Bool, scalarShape},
 	{"nd.Tensor", nd.New(nd.Of(nd.Float64), nd.WithShape(2, 3, 4)), &TensorType{Dims: 3, Of: Float64}, nd.Shape{2, 3, 4}},
 	{"nd.Tensor", nd.New(nd.Of(nd.Float32), nd.WithShape(2, 3, 4)), &TensorType{Dims: 3, Of: Float32}, nd.Shape{2, 3, 4}},
-	{"ScalarValue", newF64(3.14), Float64, scalarShape},
+	{"ScalarValue", NewF64(3.14), Float64, scalarShape},
 	{"TensorValue", nd.New(nd.Of(nd.Float64), nd.WithShape(2, 3)), &TensorType{Dims: 2, Of: Float64}, nd.Shape{2, 3}},
 }
 

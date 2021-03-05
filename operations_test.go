@@ -163,21 +163,21 @@ var gtTests = []struct {
 	err      bool
 }{
 	// s-s
-	{newF64(float64(1)), newF64(float64(0)), true, newF64(1.0), false},
-	{newF64(float64(0)), newF64(float64(1)), true, newF64(0.0), false},
-	{newF64(float64(1)), newF64(float64(0)), false, newB(true), false},
-	{newF32(float32(0)), newF32(float32(1)), false, newB(false), false},
+	{NewF64(float64(1)), NewF64(float64(0)), true, NewF64(1.0), false},
+	{NewF64(float64(0)), NewF64(float64(1)), true, NewF64(0.0), false},
+	{NewF64(float64(1)), NewF64(float64(0)), false, NewB(true), false},
+	{NewF32(float32(0)), NewF32(float32(1)), false, NewB(false), false},
 
 	// s-t
 	{
-		newF64(float64(1)), tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})),
+		NewF64(float64(1)), tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})),
 		true,
 		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{1, 0})),
 		false,
 	},
 
 	{
-		newF32(float32(1)), tensor.New(tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})),
+		NewF32(float32(1)), tensor.New(tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})),
 		false,
 		tensor.New(tensor.WithShape(2), tensor.WithBacking([]bool{true, false})),
 		false,
@@ -185,14 +185,14 @@ var gtTests = []struct {
 
 	// t-s
 	{
-		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})), newF64(float64(1)),
+		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})), NewF64(float64(1)),
 		true,
 		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 1})),
 		false,
 	},
 
 	{
-		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})), newF32(float32(1)),
+		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})), NewF32(float32(1)),
 		false,
 		tensor.New(tensor.WithShape(2), tensor.WithBacking([]bool{false, true})),
 		false,
@@ -605,9 +605,9 @@ var sumTests = []struct {
 	expectedGrad  Value
 	err           bool
 }{
-	{"Sum(vec)", tensor.Shape{2}, nil, scalarShape, newF64(1.0), newF64(1.0), false},
-	{"Sum(vec, 0)", tensor.Shape{2}, []int{0}, scalarShape, newF64(1), newF64(1.0), false},
-	{"Sum(Mat)", tensor.Shape{2, 3}, nil, scalarShape, newF64(15.0), tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 1, 1, 1, 1, 1})), false},
+	{"Sum(vec)", tensor.Shape{2}, nil, scalarShape, NewF64(1.0), NewF64(1.0), false},
+	{"Sum(vec, 0)", tensor.Shape{2}, []int{0}, scalarShape, NewF64(1), NewF64(1.0), false},
+	{"Sum(Mat)", tensor.Shape{2, 3}, nil, scalarShape, NewF64(15.0), tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 1, 1, 1, 1, 1})), false},
 	{"Sum(Mat, 0)", tensor.Shape{2, 3}, []int{0}, tensor.Shape{3},
 		tensor.New(tensor.WithShape(3), tensor.WithBacking([]float64{3, 5, 7})),
 		tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 1, 1, 1, 1, 1})), false,

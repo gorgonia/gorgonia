@@ -77,7 +77,7 @@ var repeatOpTests = []struct {
 
 	{
 		"repeat scalar", 2, 0,
-		newF64(3.14), tensor.New(tensor.WithBacking([]float64{3.14, 3.14}), tensor.WithShape(2)),
+		NewF64(3.14), tensor.New(tensor.WithBacking([]float64{3.14, 3.14}), tensor.WithShape(2)),
 		tensor.Shape{2}, false,
 	},
 }
@@ -94,7 +94,7 @@ func TestRepeatOp(t *testing.T) {
 		var err error
 		var repeat *repeatOp
 
-		rep := newI(rots.rep)
+		rep := NewI(rots.rep)
 		n := NodeFromAny(g, rots.val)
 
 		repeat = newRepeatOp(rots.axes, n)
