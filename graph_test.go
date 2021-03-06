@@ -235,7 +235,7 @@ func TestGraph_ExactSubgraphRoots(t *testing.T) {
 func TestGraph_Constant(t *testing.T) {
 	g := NewGraph()
 
-	v1 := newF64(1.0)
+	v1 := NewF64(1.0)
 	c0 := g.Constant(v1)
 	c1 := g.Constant(v1)
 
@@ -257,7 +257,7 @@ func TestGraph_Clone(t *testing.T) {
 	col.name = "COLIN THE COLLISION"
 	col.hash = 0xdeadbeef
 	col.hashed = true
-	col.boundTo = newF64(0)
+	col.boundTo = NewF64(0)
 	col.t = z2t
 	g.AddNode(col)
 
@@ -266,7 +266,7 @@ func TestGraph_Clone(t *testing.T) {
 	colleen.name = "COLLEEN THE COLLISION"
 	colleen.hash = 0xdeadbeef
 	colleen.hashed = true
-	colleen.boundTo = newF64(0)
+	colleen.boundTo = NewF64(0)
 	colleen.t = z2t
 	g.AddNode(colleen)
 

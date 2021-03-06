@@ -8,13 +8,13 @@ import (
 
 var cloneValTests = []Value{
 	// prims
-	newF64(10.0),
-	newF32(10.0),
-	newI(10),
-	newI64(10),
-	newI32(10),
-	newU8(10),
-	newB(true),
+	NewF64(10.0),
+	NewF32(10.0),
+	NewI(10),
+	NewI64(10),
+	NewI32(10),
+	NewU8(10),
+	NewB(true),
 
 	tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(2, 4, 6)),
 	tensor.New(tensor.Of(tensor.Float32), tensor.WithShape(2, 4, 6)),

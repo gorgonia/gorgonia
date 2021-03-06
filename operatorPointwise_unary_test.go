@@ -168,10 +168,10 @@ func TestAbs(t *testing.T) {
 	}
 
 	correctF64 := math.Abs(v.Data().(float64))
-	assert.True(ValueClose(newF64(correctF64), yV))
-	assert.True(ValueClose(newF64(correctF64), bV))
-	assert.True(ValueClose(newF64(1.0), xG))
-	assert.True(ValueClose(newF64(1.0), aG))
+	assert.True(ValueClose(NewF64(correctF64), yV))
+	assert.True(ValueClose(NewF64(correctF64), bV))
+	assert.True(ValueClose(NewF64(1.0), xG))
+	assert.True(ValueClose(NewF64(1.0), aG))
 
 	/* FLOAT 32 Scalar */
 
@@ -192,10 +192,10 @@ func TestAbs(t *testing.T) {
 	}
 
 	correctF32 := math32.Abs(v.Data().(float32))
-	assert.True(ValueClose(newF32(correctF32), yV))
-	assert.True(ValueClose(newF32(correctF32), bV))
-	assert.True(ValueClose(newF32(1.0), xG))
-	assert.True(ValueClose(newF32(1.0), aG))
+	assert.True(ValueClose(NewF32(correctF32), yV))
+	assert.True(ValueClose(NewF32(correctF32), bV))
+	assert.True(ValueClose(NewF32(1.0), xG))
+	assert.True(ValueClose(NewF32(1.0), aG))
 
 	/* FLOAT64 Vector */
 
@@ -519,10 +519,10 @@ func TestSoftplus(t *testing.T) {
 
 	correctVF64 := softplusf64(v.Data().(float64))
 	correctDF64 := sigmoidf64(xV.Data().(float64))
-	assert.True(ValueClose(newF64(correctVF64), yV))
-	assert.True(ValueClose(newF64(correctVF64), bV))
-	assert.True(ValueClose(newF64(correctDF64), xG))
-	assert.True(ValueClose(newF64(correctDF64), aG))
+	assert.True(ValueClose(NewF64(correctVF64), yV))
+	assert.True(ValueClose(NewF64(correctVF64), bV))
+	assert.True(ValueClose(NewF64(correctDF64), xG))
+	assert.True(ValueClose(NewF64(correctDF64), aG))
 
 	/* FLOAT32 SCALAR */
 
@@ -544,10 +544,10 @@ func TestSoftplus(t *testing.T) {
 
 	correctVF32 := softplusf32(v.Data().(float32))
 	correctDF32 := sigmoidf32(xV.Data().(float32))
-	assert.True(ValueClose(newF32(correctVF32), yV))
-	assert.True(ValueClose(newF32(correctVF32), bV))
-	assert.True(ValueClose(newF32(correctDF32), xG))
-	assert.True(ValueClose(newF32(correctDF32), aG))
+	assert.True(ValueClose(NewF32(correctVF32), yV))
+	assert.True(ValueClose(NewF32(correctVF32), bV))
+	assert.True(ValueClose(NewF32(correctDF32), xG))
+	assert.True(ValueClose(NewF32(correctDF32), aG))
 
 	/* FLOAT64 Vector */
 

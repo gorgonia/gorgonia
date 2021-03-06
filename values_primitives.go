@@ -39,13 +39,13 @@ type U8 byte
 // B represents a bool value.
 type B bool
 
-func newF64(v float64) *F64 { r := F64(v); return &r }
-func newF32(v float32) *F32 { r := F32(v); return &r }
-func newI(v int) *I         { r := I(v); return &r }
-func newI64(v int64) *I64   { r := I64(v); return &r }
-func newI32(v int32) *I32   { r := I32(v); return &r }
-func newU8(v byte) *U8      { r := U8(v); return &r }
-func newB(v bool) *B        { r := B(v); return &r }
+func NewF64(v float64) *F64 { r := F64(v); return &r }
+func NewF32(v float32) *F32 { r := F32(v); return &r }
+func NewI(v int) *I         { r := I(v); return &r }
+func NewI64(v int64) *I64   { r := I64(v); return &r }
+func NewI32(v int32) *I32   { r := I32(v); return &r }
+func NewU8(v byte) *U8      { r := U8(v); return &r }
+func NewB(v bool) *B        { r := B(v); return &r }
 
 /* Shape() */
 
@@ -297,19 +297,19 @@ func anyToScalar(any interface{}) (Scalar, tensor.Dtype) {
 	case Scalar:
 		return at, at.Dtype()
 	case float64:
-		return newF64(at), Float64
+		return NewF64(at), Float64
 	case float32:
-		return newF32(at), Float32
+		return NewF32(at), Float32
 	case int:
-		return newI(at), Int
+		return NewI(at), Int
 	case int32:
-		return newI32(at), Int32
+		return NewI32(at), Int32
 	case int64:
-		return newI64(at), Int64
+		return NewI64(at), Int64
 	case byte:
-		return newU8(at), Byte
+		return NewU8(at), Byte
 	case bool:
-		return newB(at), Bool
+		return NewB(at), Bool
 	default:
 		panic(fmt.Sprintf("%v(%T) not scalar/not handled", any, any))
 	}
@@ -327,19 +327,19 @@ func anyToValue(any interface{}) (val Value, t hm.Type, dt tensor.Dtype, err err
 		t = dt
 		return
 	case F64:
-		return newF64(float64(a)), tensor.Float64, tensor.Float64, nil
+		return NewF64(float64(a)), tensor.Float64, tensor.Float64, nil
 	case F32:
-		return newF32(float32(a)), tensor.Float32, tensor.Float32, nil
+		return NewF32(float32(a)), tensor.Float32, tensor.Float32, nil
 	case I:
-		return newI(int(a)), tensor.Int, tensor.Int, nil
+		return NewI(int(a)), tensor.Int, tensor.Int, nil
 	case I64:
-		return newI64(int64(a)), tensor.Int64, tensor.Int64, nil
+		return NewI64(int64(a)), tensor.Int64, tensor.Int64, nil
 	case I32:
-		return newI32(int32(a)), tensor.Int32, tensor.Int32, nil
+		return NewI32(int32(a)), tensor.Int32, tensor.Int32, nil
 	case U8:
-		return newU8(byte(a)), tensor.Uint8, tensor.Uint8, nil
+		return NewU8(byte(a)), tensor.Uint8, tensor.Uint8, nil
 	case B:
-		return newB(bool(a)), tensor.Bool, tensor.Bool, nil
+		return NewB(bool(a)), tensor.Bool, tensor.Bool, nil
 	case tensor.Tensor:
 		val = a
 		t = TypeOf(a)
@@ -354,19 +354,19 @@ func anyToValue(any interface{}) (val Value, t hm.Type, dt tensor.Dtype, err err
 func one(dt tensor.Dtype) Scalar {
 	switch dt {
 	case tensor.Float64:
-		return newF64(float64(1))
+		return NewF64(float64(1))
 	case tensor.Float32:
-		return newF32(float32(1))
+		return NewF32(float32(1))
 	case tensor.Int:
-		return newI(1)
+		return NewI(1)
 	case tensor.Int32:
-		return newI32(int32(1))
+		return NewI32(int32(1))
 	case tensor.Int64:
-		return newI64(int64(1))
+		return NewI64(int64(1))
 	case tensor.Byte:
-		return newU8(byte(1))
+		return NewU8(byte(1))
 	case tensor.Bool:
-		return newB(true)
+		return NewB(true)
 	default:
 		panic("Unhandled dtype")
 	}
@@ -375,19 +375,19 @@ func one(dt tensor.Dtype) Scalar {
 func zero(dt tensor.Dtype) Scalar {
 	switch dt {
 	case tensor.Float64:
-		return newF64(float64(0))
+		return NewF64(float64(0))
 	case tensor.Float32:
-		return newF32(float32(0))
+		return NewF32(float32(0))
 	case tensor.Int:
-		return newI(0)
+		return NewI(0)
 	case tensor.Int32:
-		return newI32(int32(0))
+		return NewI32(int32(0))
 	case tensor.Int64:
-		return newI64(int64(0))
+		return NewI64(int64(0))
 	case tensor.Byte:
-		return newU8(byte(0))
+		return NewU8(byte(0))
 	case tensor.Bool:
-		return newB(false)
+		return NewB(false)
 	default:
 		panic("Unhandled dtype")
 	}
