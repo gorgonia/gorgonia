@@ -368,7 +368,7 @@ func TestBatchNorm1d(t *testing.T) {
 			scale := NewTensor(g, tC.Dtype, tC.ScaleShape.Dims(), WithShape(tC.ScaleShape...), WithInit(tC.ScaleInit), WithName("scale"))
 			bias := NewTensor(g, tC.Dtype, tC.BiasShape.Dims(), WithShape(tC.BiasShape...), WithInit(tC.BiasInit), WithName("bias"))
 
-			y, _, _, op, err := BatchNorm1d(x, scale, bias, 0.9, 1e-5)
+			y, _, _, op, err := BatchNorm(x, scale, bias, 0.9, 1e-5)
 			c.NoError(err)
 
 			op.SetTraining()

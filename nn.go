@@ -410,6 +410,7 @@ func MaxPool1D(x *Node, kernel, pad, stride int) (*Node, error) {
 // BatchNorm applies a batchnormalization. This operator can be used in forward pass or for training.
 // In an evaluation only, the "op" output can be discared.
 // In training phase, γ, β can be discarded and the op should be used.
+// Input must be a matrix with shape (B, N) or a 4d tensor with shape (B, C, W, H)
 func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β *Node, op *BatchNormOp, err error) {
 	dt, err := dtypeOf(x.Type())
 	if err != nil {
@@ -463,7 +464,7 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 		spatialSumMultiplier: spatialSumMultiplier,
 
 		training: true,
-		dims:     4,
+		dims:     x.Dims(),
 	}
 	g := x.Graph()
 	dims := x.Shape().Dims()
@@ -478,93 +479,6 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 	if retVal, err = ApplyOp(op, x); err != nil {
 		return nil, nil, nil, nil, err
 	}
-	if retVal, err = HadamardProd(scale, retVal); err != nil {
-		return nil, nil, nil, nil, err
-	}
-	retVal, err = Add(retVal, bias)
-
-	return retVal, scale, bias, op, err
-}
-
-// BatchNorm1d applies a batchnormalization to a matrix. This operator can be used in forward pass or for training.
-// In an evaluation only, the "op" output can be discared.
-// In training phase, γ, β can be discarded and the op should be used.
-func BatchNorm1d(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β *Node, op *BatchNormOp, err error) {
-	xShape := x.Shape()
-	if xShape.Dims() != 2 {
-		return nil, nil, nil, nil, fmt.Errorf("input must be a matrix (batchSize, features)")
-	}
-
-	// NOTE: should we support vectors? and reshape to (1, v) ?
-
-	dt, err := dtypeOf(x.Type())
-	if err != nil {
-		return nil, nil, nil, nil, err
-	}
-
-	batches, features := xShape[0], xShape[1]
-	spatialDim := x.Shape().TotalSize()
-
-	mean := tensor.New(tensor.Of(dt), tensor.WithShape(features))
-	variance := tensor.New(tensor.Of(dt), tensor.WithShape(features))
-	ma := tensor.New(tensor.Of(dt), tensor.WithShape(1))
-
-	meanTmp := tensor.New(tensor.Of(dt), tensor.WithShape(features))
-	varianceTmp := tensor.New(tensor.Of(dt), tensor.WithShape(features))
-	tmp := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
-	xNorm := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
-	batchSumMultiplier := tensor.New(tensor.Of(dt), tensor.WithShape(batches))
-
-	var uno interface{}
-	switch dt {
-	case Float64:
-		uno = float64(1)
-	case Float32:
-		uno = float32(1)
-	}
-	spatialSumMultiplier := tensor.New(tensor.Of(dt), tensor.WithShape(spatialDim))
-	if err = spatialSumMultiplier.Memset(uno); err != nil {
-		return nil, nil, nil, nil, err
-	}
-
-	numByChans := tensor.New(tensor.Of(dt), tensor.WithShape(spatialDim))
-	if err = batchSumMultiplier.Memset(uno); err != nil {
-		return nil, nil, nil, nil, err
-	}
-
-	op = &BatchNormOp{
-		momentum: momentum,
-		epsilon:  epsilon,
-
-		mean:     mean,
-		variance: variance,
-		ma:       ma,
-
-		meanTmp:              meanTmp,
-		varianceTmp:          varianceTmp,
-		tmpSpace:             tmp,
-		xNorm:                xNorm,
-		batchSumMultiplier:   batchSumMultiplier,
-		numByChans:           numByChans,
-		spatialSumMultiplier: spatialSumMultiplier,
-
-		training: true,
-		dims:     2,
-	}
-	g := x.Graph()
-	dims := x.Shape().Dims()
-
-	if scale == nil {
-		scale = NewTensor(g, dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_γ"), WithInit(GlorotN(1.0)))
-	}
-	if bias == nil {
-		bias = NewTensor(g, dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_β"), WithInit(GlorotN(1.0)))
-	}
-
-	if retVal, err = ApplyOp(op, x); err != nil {
-		return nil, nil, nil, nil, err
-	}
-
 	if retVal, err = Auto(BroadcastHadamardProd, scale, retVal); err != nil {
 		return nil, nil, nil, nil, err
 	}
