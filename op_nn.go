@@ -3,14 +3,15 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
+	"log"
+	"math"
 	"time"
 
 	"github.com/chewxy/hm"
 	rng "github.com/leesper/go_rng"
 	"github.com/pkg/errors"
-	"gonum.org/v1/gonum/blas"
 	"gorgonia.org/tensor"
-	"gorgonia.org/vecf32"
+	"gorgonia.org/tensor/native"
 	"gorgonia.org/vecf64"
 )
 
@@ -1127,7 +1128,8 @@ type BatchNormOp struct {
 	mean, variance, ma *tensor.Dense
 
 	// scratch space
-	meanTmp, varianceTmp, tmpSpace, xNorm                *tensor.Dense
+	meanTmp, varianceTmp                                 *tensor.Dense // these are used as running mean and running variance in the new algorithm
+	tmpSpace, xNorm                                      *tensor.Dense
 	batchSumMultiplier, numByChans, spatialSumMultiplier *tensor.Dense
 
 	// training? if training then update movingMean and movingVar
@@ -1220,11 +1222,20 @@ func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal N
 // UsePreallocDo ...
 func (op *BatchNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
 	v := inputs[0]
+	in := v.(*tensor.Dense)
+	out := prealloc.(*tensor.Dense)
 	switch v.Dtype() {
 	case Float64:
-		err = op.f64s(v.(*tensor.Dense), prealloc.(*tensor.Dense))
+		op.updateStatsF64(in)
+		if op.training {
+
+			op.trainF64s(in, out)
+		} else {
+			op.inferF64s(in, out)
+		}
+
 	case Float32:
-		err = op.f32s(v.(*tensor.Dense), prealloc.(*tensor.Dense))
+		op.f32s(in, out)
 	default:
 		return nil, nyi("BatchNorm Do", v.Dtype())
 	}
@@ -1267,167 +1278,163 @@ func (op *BatchNormOp) Reset() error {
 	return nil
 }
 
-func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
-	n := input.Shape()[0]
-	channels := input.Shape()[1]
-	nc := channels * n
-	spatialDim := input.Shape().TotalSize() / (nc)
+// collectF64s is collects the constant terms for inference purposes
+func (op *BatchNormOp) collectF64s() {
+	// μ and σ has size (c,) - given a shape of (b, c, h, w) from the inputs
+	μ := op.mean.Float64s()
+	σ := op.variance.Float64s()
+	α := op.meanTmp.Float64s()
+	β := op.varianceTmp.Float64s()
+	for i, m := range μ {
+		inv := 1.0 / math.Sqrt(σ[i]+op.epsilon)
+		// no weight or biases
+		// weight = 1.0
+		// bias = 0.0
+		α[i] = inv * 1.0
+		β[i] = 0.0 - m*α[i]
+	}
+}
 
-	inputF64s := input.Float64s()
-	outputF64s := output.Float64s()
-	copy(outputF64s, inputF64s)
+// updateStats computes the running mean and variances
+func (op *BatchNormOp) updateStatsF64(input *tensor.Dense) {
+	s := input.Shape()
+	batches := s[0]
+	chans := s[1]
+	N := s.TotalSize() / chans
 
-	meanTmp := op.meanTmp.Float64s()
+	in, err := native.SelectF64(input, 1)
+	if err != nil {
+		panic(err)
+	}
 	mean := op.mean.Float64s()
-	varianceTmp := op.varianceTmp.Float64s()
 	variance := op.variance.Float64s()
-	tmp := op.tmpSpace.Float64s()
-	ssm := op.spatialSumMultiplier.Float64s()
-	nbc := op.numByChans.Float64s()
-	bsm := op.batchSumMultiplier.Float64s()
+	ma := op.meanTmp.Float64s()
+	mv := op.varianceTmp.Float64s()
 
-	momentum := op.momentum
-	eps := op.epsilon
-
-	if !op.training {
-		// use stored mean/variance estimates
-		scaleFactor := float64(1)
-		if fst := op.ma.Float64s()[0]; fst != 1 {
-			scaleFactor = fst
+	for c := 0; c < chans; c++ {
+		var μ float64
+		for b := 0; b < batches; b++ {
+			offset := b*chans + c
+			for i := 0; i < len(in[offset]); i++ {
+				μ += in[offset][i]
+			}
 		}
-		copy(meanTmp, mean)
-		whichblas.Dscal(len(meanTmp), scaleFactor, meanTmp, 1)
-		copy(varianceTmp, variance)
-		whichblas.Dscal(len(varianceTmp), scaleFactor, varianceTmp, 1)
-	} else {
-		// compute mean
-		alpha := 1.0 / float64(n*spatialDim)
-		whichblas.Dgemv(blas.NoTrans, nc, spatialDim, alpha, inputF64s, spatialDim, ssm, 1, 0, nbc, 1)
-		whichblas.Dgemv(blas.Trans, n, channels, 1, nbc, channels, bsm, 1, 0, meanTmp, 1)
-	}
+		μ /= float64(N)
+		mean[c] = μ
 
-	// subtract mean
-	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, meanTmp, channels, 0, nbc, channels)
-	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, -1, nbc, 1, ssm, spatialDim, 1, outputF64s, spatialDim)
-
-	if op.training {
-		// compute variance using var(X) = E(X-EX)²)
-		copy(tmp, outputF64s)
-		vecf64.Mul(tmp, tmp) // (X-EX) ^ 2
-
-		whichblas.Dgemv(blas.NoTrans, nc, spatialDim, 1.0/(float64(n*spatialDim)), tmp, spatialDim, ssm, 1, 0, nbc, 1)
-		whichblas.Dgemv(blas.Trans, n, channels, 1.0, nbc, channels, bsm, 1, 0, varianceTmp, 1) // E((X_EX)²)
-
-		// compute and save moving average
-		op.ma.Float64s()[0] *= momentum
-		op.ma.Float64s()[0]++
-
-		// TODO: write axpby for gonum
-		whichblas.Dscal(len(mean), momentum, mean, 1)
-		whichblas.Daxpy(len(meanTmp), 1.0, meanTmp, 1, mean, 1)
-
-		m := len(inputF64s) / channels
-		correctionFactor := float64(1)
-		if m > 1 {
-			correctionFactor = float64(m) / (float64(m - 1))
+		var σ float64
+		for b := 0; b < batches; b++ {
+			offset := b*chans + c
+			for i := 0; i < len(in[offset]); i++ {
+				x := in[offset][i]
+				σ += (x - μ) * (x - μ)
+			}
 		}
-		whichblas.Dscal(len(variance), momentum, variance, 1)
-		whichblas.Daxpy(len(varianceTmp), correctionFactor, varianceTmp, 1, variance, 1)
+		// unbiased variance
+		σub := σ / (float64(N) - 1)
+
+		σ /= float64(N)
+		σ += op.epsilon
+		variance[c] = 1.0 / math.Sqrt(σ)
+
+		ma[c] = op.momentum*μ + (1-op.momentum)*ma[c]
+		mv[c] = op.momentum*σub + (1-op.momentum)*mv[c]
 	}
-
-	// normalize variance
-	vecf64.Trans(varianceTmp, eps)
-	vecf64.Sqrt(varianceTmp)
-
-	// replicate variance to inputsize
-	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, varianceTmp, channels, 0, nbc, channels)
-	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, 1, nbc, 1, ssm, spatialDim, 0, tmp, spatialDim)
-	vecf64.Div(outputF64s, tmp)
-	copy(op.xNorm.Float64s(), outputF64s) // caching
-
-	return nil
 }
 
-func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
-	n := input.Shape()[0]
-	channels := input.Shape()[1]
-	nc := channels * n
-	spatialDim := input.Shape().TotalSize() / (nc)
+func (op *BatchNormOp) trainF64s(input, output *tensor.Dense) {
+	s := input.Shape()
+	batches := s[0]
+	chans := s[1]
+	//chans := s[0] * s[1]
 
-	inputF32s := input.Float32s()
-	outputF32s := output.Float32s()
-	copy(outputF32s, inputF32s)
-
-	meanTmp := op.meanTmp.Float32s()
-	mean := op.mean.Float32s()
-	varianceTmp := op.varianceTmp.Float32s()
-	variance := op.variance.Float32s()
-	tmp := op.tmpSpace.Float32s()
-	ssm := op.spatialSumMultiplier.Float32s()
-	nbc := op.numByChans.Float32s()
-	bsm := op.batchSumMultiplier.Float32s()
-
-	momentum := float32(op.momentum)
-	eps := float32(op.epsilon)
-
-	if !op.training {
-		// use stored mean/variance estimates
-		scaleFactor := float32(1)
-		if fst := op.ma.Float32s()[0]; fst != 1 {
-			scaleFactor = fst
-		}
-		copy(meanTmp, mean)
-		whichblas.Sscal(len(meanTmp), scaleFactor, meanTmp, 1)
-		copy(varianceTmp, variance)
-		whichblas.Sscal(len(varianceTmp), scaleFactor, varianceTmp, 1)
-	} else {
-		// compute mean
-		alpha := 1.0 / float32(n*spatialDim)
-		whichblas.Sgemv(blas.NoTrans, nc, spatialDim, alpha, inputF32s, spatialDim, ssm, 1, 0, nbc, 1)
-		whichblas.Sgemv(blas.Trans, n, channels, 1, nbc, channels, bsm, 1, 0, meanTmp, 1)
+	in, err := native.SelectF64(input, 1)
+	if err != nil {
+		panic(err)
+	}
+	out, err := native.SelectF64(output, 1)
+	if err != nil {
+		panic(err)
 	}
 
-	// subtract mean
-	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, meanTmp, channels, 0, nbc, channels)
-	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, -1, nbc, 1, ssm, spatialDim, 1, outputF32s, spatialDim)
+	mean := op.mean.Float64s()
+	variance := op.variance.Float64s()
 
-	if op.training {
-		// compute variance using var(X) = E(X-EX)²)
-		copy(tmp, outputF32s)
-		vecf32.Mul(tmp, tmp) // (X-EX) ^ 2
+	// TODO: speed this up
+	for c := 0; c < chans; c++ {
+		μ := mean[c]
+		σ := variance[c]
 
-		whichblas.Sgemv(blas.NoTrans, nc, spatialDim, 1.0/(float32(n*spatialDim)), tmp, spatialDim, ssm, 1, 0, nbc, 1)
-		whichblas.Sgemv(blas.Trans, n, channels, 1.0, nbc, channels, bsm, 1, 0, varianceTmp, 1) // E((X_EX)²)
-
-		// compute and save moving average
-		op.ma.Float32s()[0] *= momentum
-		op.ma.Float32s()[0]++
-
-		// TODO: write axpby for gonum
-		whichblas.Sscal(len(mean), momentum, mean, 1)
-		whichblas.Saxpy(len(meanTmp), 1.0, meanTmp, 1, mean, 1)
-
-		m := len(inputF32s) / channels
-		correctionFactor := float32(1)
-		if m > 1 {
-			correctionFactor = float32(m) / (float32(m - 1))
+		for b := 0; b < batches; b++ {
+			offset := b*chans + c
+			x := in[offset]
+			for i := range x {
+				out[offset][i] = (x[i] - μ) * σ
+			}
 		}
-		whichblas.Sscal(len(variance), momentum, variance, 1)
-		whichblas.Saxpy(len(varianceTmp), correctionFactor, varianceTmp, 1, variance, 1)
 	}
-
-	// normalize variance
-	vecf32.Trans(varianceTmp, eps)
-	vecf32.Sqrt(varianceTmp)
-
-	// replicate variance to inputsize
-	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, varianceTmp, channels, 0, nbc, channels)
-	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, 1, nbc, 1, ssm, spatialDim, 0, tmp, spatialDim)
-	vecf32.Div(outputF32s, tmp)
-	copy(op.xNorm.Float32s(), outputF32s) // caching
-
-	return nil
 }
+
+func (op *BatchNormOp) inferF64s(input, output *tensor.Dense) {
+	s := input.Shape()
+	b, chans := s[0], s[1]
+	sz := s.TotalSize() / (b * chans)
+
+	I := input.Float64s()
+	O := output.Float64s()
+
+	batchOffset := chans * sz
+	loopBatch := sz - (sz % 4) // vectorized operation at 8 at a time
+
+	op.collectF64s()
+
+	alpha := op.meanTmp.Float64s()
+	beta := op.varianceTmp.Float64s()
+
+	if sz == 1 {
+		// special loop for image size == 1
+		for n := 0; n < b; n++ {
+			for c := 0; c < chans; c++ {
+				offset := n*chans + c
+				O[offset] = I[offset]*alpha[c] + beta[c]
+			}
+		}
+		return
+
+	}
+
+	for n := 0; n < b; n++ {
+		for c := 0; c < chans; c++ {
+			// broadcast meanTmp and varianceTmp into vectors
+			var α, β [4]float64
+			for i := range α {
+				α[i] = alpha[c]
+			}
+			for i := range β {
+				β[i] = beta[c]
+			}
+
+			offset := n*batchOffset + c*sz
+			var d int
+			for ; d < loopBatch; d += 4 {
+				var data [4]float64
+				copy(data[:], I[offset+d:])
+				vecf64.Mul(data[:], α[:])
+				vecf64.Add(data[:], β[:])
+				copy(O[offset+d:], data[:])
+			}
+			if sz-d > 0 {
+				var data [4]float64
+				copy(data[:], I[offset+d:])
+				vecf64.Mul(data[:], α[:])
+				vecf64.Add(data[:], β[:])
+				copy(O[offset+d:], data[:])
+			}
+		}
+	}
+}
+
+func (op *BatchNormOp) f32s(input, output *tensor.Dense) {}
 
 type batchnormDiffOp struct{ *BatchNormOp }
 
@@ -1494,151 +1501,18 @@ func (op *batchnormDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVa
 
 	switch input.Dtype() {
 	case Float64:
-		err = op.f64s(input, inGrad, outGrad)
+		op.f64s(input, inGrad, outGrad)
 	case Float32:
-		err = op.f32s(input, inGrad, outGrad)
+		op.f32s(input, inGrad, outGrad)
 	default:
 		return nil, nyi("batchnormDiffOp", "Do")
 	}
 	return prealloc, err
 }
 
-func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) (err error) {
-	in := input.Float64s()
-	ig := inGrad.Float64s()
-	og := outGrad.Float64s()
-	tmp := op.tmpSpace.Float64s()
-	out := op.xNorm.Float64s()
-	ssm := op.spatialSumMultiplier.Float64s()
-	nbc := op.numByChans.Float64s()
-	bsm := op.batchSumMultiplier.Float64s()
-	meanTmp := op.meanTmp.Float64s()
+func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) {}
 
-	if !op.training {
-		copy(ig, og)
-		vecf64.Div(og, tmp)
-		return nil
-	}
-
-	n := input.Shape()[0]
-	channels := input.Shape()[1]
-	nc := n * channels
-	spatialDim := len(in) / nc
-
-	// if Y = (X-mean(X))/(sqrt(var(X)+eps)), then
-	//
-	// dE(Y)/dX =
-	//   (dE/dY - mean(dE/dY) - mean(dE/dY ⋅ Y) ⋅ Y)
-	//     ./ sqrt(var(X) + eps)
-	//
-	// where ⋅ and ./ are hadamard product and elementwise division,
-	// respectively, dE/dY is the top diff, and mean/var/sum are all computed
-	// along all dimensions except the channels dimension.  In the above
-	// equation, the operations allow for expansion (i.e. broadcast) along all
-	// dimensions except the channels dimension where required.
-
-	// sum(dE/dY ⋅ Y)
-	copy(ig, out)
-	vecf64.Mul(ig, og)
-	whichblas.Dgemv(blas.NoTrans, nc, spatialDim, 1, ig, spatialDim, ssm, 1, 0, nbc, 1)
-	whichblas.Dgemv(blas.Trans, n, channels, 1, nbc, channels, bsm, 1, 0, meanTmp, 1)
-
-	// reshape (broadcast) the above
-	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, meanTmp, channels, 0, nbc, channels)
-	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, 1, nbc, 1, ssm, spatialDim, 0, ig, spatialDim)
-
-	// sum(dE/dY ⋅ Y) ⋅ Y
-	vecf64.Mul(ig, out)
-
-	// sum(dE/dY)-sum(dE/dY ⋅ Y) ⋅ Y
-	whichblas.Dgemv(blas.NoTrans, nc, spatialDim, 1, og, spatialDim, ssm, 1, 0, nbc, 1)
-	whichblas.Dgemv(blas.Trans, n, channels, 1, nbc, channels, bsm, 1, 0, meanTmp, 1)
-
-	// reshape (broadcast) the above to make
-	// sum(dE/dY)-sum(dE/dY ⋅ Y) ⋅ Y
-	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, meanTmp, channels, 0, nbc, channels)
-	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, 1, nbc, 1, ssm, spatialDim, 1, ig, spatialDim)
-
-	// dE/dY - mean(dE/dY)-mean(dE/dY ⋅ Y) ⋅ Y
-	beta := (-1.0 / float64(nc))
-
-	vecf64.Scale(ig, beta)
-	vecf64.Add(ig, og)
-
-	// note: temp_ still contains sqrt(var(X)+eps), computed during the forward
-	// pass.
-	vecf64.Div(ig, tmp)
-	return nil
-
-}
-
-func (op *batchnormDiffOp) f32s(input, inGrad, outGrad *tensor.Dense) (err error) {
-	in := input.Float32s()
-	ig := inGrad.Float32s()
-	og := outGrad.Float32s()
-	tmp := op.tmpSpace.Float32s()
-	out := op.xNorm.Float32s()
-	ssm := op.spatialSumMultiplier.Float32s()
-	nbc := op.numByChans.Float32s()
-	bsm := op.batchSumMultiplier.Float32s()
-	meanTmp := op.meanTmp.Float32s()
-
-	if !op.training {
-		copy(ig, og)
-		vecf32.Div(og, tmp)
-		return nil
-	}
-
-	n := input.Shape()[0]
-	channels := input.Shape()[1]
-	nc := n * channels
-	spatialDim := len(in) / nc
-
-	// if Y = (X-mean(X))/(sqrt(var(X)+eps)), then
-	//
-	// dE(Y)/dX =
-	//   (dE/dY - mean(dE/dY) - mean(dE/dY ⋅ Y) ⋅ Y)
-	//     ./ sqrt(var(X) + eps)
-	//
-	// where ⋅ and ./ are hadamard product and elementwise division,
-	// respectively, dE/dY is the top diff, and mean/var/sum are all computed
-	// along all dimensions except the channels dimension.  In the above
-	// equation, the operations allow for expansion (i.e. broadcast) along all
-	// dimensions except the channels dimension where required.
-
-	// sum(dE/dY ⋅ Y)
-	copy(ig, out)
-	vecf32.Mul(ig, og)
-	whichblas.Sgemv(blas.NoTrans, nc, spatialDim, 1, ig, spatialDim, ssm, 1, 0, nbc, 1)
-	whichblas.Sgemv(blas.Trans, n, channels, 1, nbc, channels, bsm, 1, 0, meanTmp, 1)
-
-	// reshape (broadcast) the above
-	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, meanTmp, channels, 0, nbc, channels)
-	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, 1, nbc, 1, ssm, spatialDim, 0, ig, spatialDim)
-
-	// sum(dE/dY ⋅ Y) ⋅ Y
-	vecf32.Mul(ig, out)
-
-	// sum(dE/dY)-sum(dE/dY ⋅ Y) ⋅ Y
-	whichblas.Sgemv(blas.NoTrans, nc, spatialDim, 1, og, spatialDim, ssm, 1, 0, nbc, 1)
-	whichblas.Sgemv(blas.Trans, n, channels, 1, nbc, channels, bsm, 1, 0, meanTmp, 1)
-
-	// reshape (broadcast) the above to make
-	// sum(dE/dY)-sum(dE/dY ⋅ Y) ⋅ Y
-	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, meanTmp, channels, 0, nbc, channels)
-	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, 1, nbc, 1, ssm, spatialDim, 1, ig, spatialDim)
-
-	// dE/dY - mean(dE/dY)-mean(dE/dY ⋅ Y) ⋅ Y
-	beta := (-1.0 / float32(n*spatialDim))
-	vecf32.Scale(ig, beta)
-	vecf32.Add(ig, og)
-
-	// note: temp_ still contains sqrt(var(X)+eps), computed during the forward
-	// pass.
-	vecf32.Div(ig, tmp)
-	return nil
-
-}
+func (op *batchnormDiffOp) f32s(input, inGrad, outGrad *tensor.Dense) {}
 
 type globalAveragePoolOp struct{}
 
