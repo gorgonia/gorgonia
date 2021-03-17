@@ -1228,7 +1228,6 @@ func (op *BatchNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Va
 	case Float64:
 		op.updateStatsF64(in)
 		if op.training {
-
 			op.trainF64s(in, out)
 		} else {
 			op.inferF64s(in, out)
@@ -1510,7 +1509,16 @@ func (op *batchnormDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVa
 	return prealloc, err
 }
 
-func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) {}
+func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) {
+	in, err := native.SelectF64(input, 1)
+	if err != nil {
+		panic(err)
+	}
+	og, err := native.SelectF64(outGrad, 1)
+	if err != nil {
+		panic(err)
+	}
+}
 
 func (op *batchnormDiffOp) f32s(input, inGrad, outGrad *tensor.Dense) {}
 
