@@ -1432,8 +1432,6 @@ func (op *BatchNormOp) inferF64s(input, output *tensor.Dense) {
 	}
 }
 
-func (op *BatchNormOp) f32s(input, output *tensor.Dense) {}
-
 type batchnormDiffOp struct{ *BatchNormOp }
 
 func (op *batchnormDiffOp) Arity() int { return 2 }
@@ -1583,7 +1581,80 @@ func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) {
 	}
 }
 
-func (op *batchnormDiffOp) f32s(input, inGrad, outGrad *tensor.Dense) {}
+func (op *batchnormDiffOp) f32s(input, inGrad, outGrad *tensor.Dense) {
+	s := input.Shape()
+	batches, chans := s[0], s[1]
+	N := s.TotalSize() / (batches * chans)
+
+	in, err := native.SelectF32(input, 1)
+	if err != nil {
+		panic(err)
+	}
+	og, err := native.SelectF32(outGrad, 1)
+	if err != nil {
+		panic(err)
+	}
+	ig, err := native.SelectF32(inGrad, 1)
+	if err != nil {
+		panic(err)
+	}
+
+	var mean, invstdev []float32
+	if op.training {
+		mean = op.mean.Float32s()
+		invstdev = op.variance.Float32s()
+	} else {
+		mean = op.meanTmp.Float32s()
+		invstdev = op.varianceTmp.Float32s()
+	}
+
+	if op.training {
+		// Y = (X - E[X]) / σ
+
+		// TODO: speed this up
+		for c := 0; c < chans; c++ {
+			μ := mean[c]
+			σ := invstdev[c]
+
+			for b := 0; b < batches; b++ {
+				offset := b*chans + c
+
+				// sum of the output gradients of the given channel:
+				var sum float32
+				for _, v := range og[offset] {
+					sum += v
+				}
+				gradMean := sum / float32(N)
+
+				// dot product of (X - E[x]) and output gradient
+				var dotp float32
+				for i, v := range in[offset] {
+					dotp += (v - μ) * og[offset][i]
+				}
+				k := dotp * σ * σ / float32(N)
+
+				x := in[offset]
+				for i := range x {
+					g := (x[i] - μ) * k // gradient of x
+					o := og[offset][i]
+					ig[offset][i] = (o - gradMean - g) * σ
+				}
+			}
+		}
+	} else {
+		// not training
+		for c := 0; c < chans; c++ {
+			σ := invstdev[c]
+			for b := 0; b < batches; b++ {
+				offset := b*chans + c
+				x := og[offset]
+				for i := range x {
+					ig[offset][i] = x[i] * σ
+				}
+			}
+		}
+	}
+}
 
 type globalAveragePoolOp struct{}
 
