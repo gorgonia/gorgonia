@@ -1535,42 +1535,31 @@ func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) {
 		invstdev = op.varianceTmp.Float64s()
 	}
 
-	// sum over gradients
-	sums := make([]float64, chans)
-	for c := 0; c < chans; c++ {
-		for b := 0; b < batches; b++ {
-			offset := b*chans + c
-			x := og[offset]
-			for i := range x {
-				sums[c] += x[i]
-			}
-		}
-	}
-
-	// dot product of Y and gradOutput
-	dotps := make([]float64, chans)
-	for c := 0; c < chans; c++ {
-		μ := mean[c]
-		var dotp float64
-		for b := 0; b < batches; b++ {
-			offset := b*chans + c
-			x := in[offset]
-			for i := range x {
-				dotp += (x[i] - μ) * og[offset][i]
-			}
-		}
-		dotps[c] = dotp
-	}
-
 	if op.training {
 		// Y = (X - E[X]) / σ
+
+		// TODO: speed this up
 		for c := 0; c < chans; c++ {
-			gradMean := sums[c] / float64(N)
 			μ := mean[c]
 			σ := invstdev[c]
-			k := dotps[c] * σ * σ / float64(N)
+
 			for b := 0; b < batches; b++ {
 				offset := b*chans + c
+
+				// sum of the output gradients of the given channel:
+				var sum float64
+				for _, v := range og[offset] {
+					sum += v
+				}
+				gradMean := sum / float64(N)
+
+				// dot product of (X - E[x]) and output gradient
+				var dotp float64
+				for i, v := range in[offset] {
+					dotp += (v - μ) * og[offset][i]
+				}
+				k := dotp * σ * σ / float64(N)
+
 				x := in[offset]
 				for i := range x {
 					g := (x[i] - μ) * k // gradient of x
@@ -1580,6 +1569,7 @@ func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) {
 			}
 		}
 	} else {
+		// not training
 		for c := 0; c < chans; c++ {
 			σ := invstdev[c]
 			for b := 0; b < batches; b++ {
