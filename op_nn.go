@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
-	"log"
 	"math"
 	"time"
 
@@ -1510,6 +1509,10 @@ func (op *batchnormDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVa
 }
 
 func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) {
+	s := input.Shape()
+	batches, chans := s[0], s[1]
+	N := s.TotalSize() / (batches * chans)
+
 	in, err := native.SelectF64(input, 1)
 	if err != nil {
 		panic(err)
@@ -1517,6 +1520,76 @@ func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) {
 	og, err := native.SelectF64(outGrad, 1)
 	if err != nil {
 		panic(err)
+	}
+	ig, err := native.SelectF64(inGrad, 1)
+	if err != nil {
+		panic(err)
+	}
+
+	var mean, invstdev []float64
+	if op.training {
+		mean = op.mean.Float64s()
+		invstdev = op.variance.Float64s()
+	} else {
+		mean = op.meanTmp.Float64s()
+		invstdev = op.varianceTmp.Float64s()
+	}
+
+	// sum over gradients
+	sums := make([]float64, chans)
+	for c := 0; c < chans; c++ {
+		for b := 0; b < batches; b++ {
+			offset := b*chans + c
+			x := og[offset]
+			for i := range x {
+				sums[c] += x[i]
+			}
+		}
+	}
+
+	// dot product of Y and gradOutput
+	dotps := make([]float64, chans)
+	for c := 0; c < chans; c++ {
+		μ := mean[c]
+		var dotp float64
+		for b := 0; b < batches; b++ {
+			offset := b*chans + c
+			x := in[offset]
+			for i := range x {
+				dotp += (x[i] - μ) * og[offset][i]
+			}
+		}
+		dotps[c] = dotp
+	}
+
+	if op.training {
+		// Y = (X - E[X]) / σ
+		for c := 0; c < chans; c++ {
+			gradMean := sums[c] / float64(N)
+			μ := mean[c]
+			σ := invstdev[c]
+			k := dotps[c] * σ * σ / float64(N)
+			for b := 0; b < batches; b++ {
+				offset := b*chans + c
+				x := in[offset]
+				for i := range x {
+					g := (x[i] - μ) * k // gradient of x
+					o := og[offset][i]
+					ig[offset][i] = (o - gradMean - g) * σ
+				}
+			}
+		}
+	} else {
+		for c := 0; c < chans; c++ {
+			σ := invstdev[c]
+			for b := 0; b < batches; b++ {
+				offset := b*chans + c
+				x := og[offset]
+				for i := range x {
+					ig[offset][i] = x[i] * σ
+				}
+			}
+		}
 	}
 }
 
