@@ -289,6 +289,7 @@ func TestMaxPool(t *testing.T) {
 		stride         []int
 		expectedOutput []float64
 		expectedShape  tensor.Shape
+		expectedCost   float64
 		PoolFunc       func(*Node, tensor.Shape, []int, []int) (*Node, error)
 	}{
 		{
@@ -301,6 +302,7 @@ func TestMaxPool(t *testing.T) {
 			pad:            []int{0, 0},
 			stride:         []int{1, 1},
 			expectedOutput: []float64{15},
+			expectedCost:   14,
 			expectedShape:  tensor.Shape{1, 1, 1, 1},
 			PoolFunc:       MaxPool2D,
 		},
@@ -346,7 +348,7 @@ func TestMaxPool(t *testing.T) {
 
 			c.Equal(tcase.expectedOutput, output.Value().Data())
 			c.Equal(tcase.expectedShape, output.Shape())
-			c.Equal(0.0, cost.Value().Data().(float64))
+			c.Equal(tcase.expectedCost, cost.Value().Data().(float64))
 		})
 	}
 }
