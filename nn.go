@@ -351,8 +351,6 @@ func Conv1d(in, filter *Node, kernel, pad, stride, dilation int) (*Node, error) 
 func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 	group := encoding.NewGroup("Maxpool")
 	xShape := x.Shape()
-	h, w := xShape[2], xShape[3]
-	kh, kw := kernel[0], kernel[1]
 
 	// check shape
 	if xShape.Dims() != 4 {
@@ -374,6 +372,9 @@ func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 			return nil, errors.Errorf("Cannot use padding of less than 0: %v", pad)
 		}
 	}
+
+	h, w := xShape[2], xShape[3]
+	kh, kw := kernel[0], kernel[1]
 
 	padNorth := pad[0]
 	padWest := pad[1]

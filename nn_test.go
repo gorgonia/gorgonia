@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"runtime"
 	"testing"
@@ -277,7 +278,79 @@ func TestMaxPool2D(t *testing.T) {
 		m.Close()
 		m2.Close()
 	}
+}
 
+func TestMaxPool(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		input          tensor.Tensor
+		kernelSize     tensor.Shape
+		pad            []int
+		stride         []int
+		expectedOutput []float64
+		expectedShape  tensor.Shape
+		expectedCost   float64
+		PoolFunc       func(*Node, tensor.Shape, []int, []int) (*Node, error)
+	}{
+		{
+			desc: "Example 1",
+			input: tensor.New(
+				tensor.WithShape(1, 1, 4, 4),
+				tensor.WithBacking(tensor.Range(tensor.Float64, 0, 16)),
+			),
+			kernelSize:     []int{4, 4},
+			pad:            []int{0, 0},
+			stride:         []int{1, 1},
+			expectedOutput: []float64{15},
+			expectedCost:   14,
+			expectedShape:  tensor.Shape{1, 1, 1, 1},
+			PoolFunc:       MaxPool2D,
+		},
+	}
+
+	for _, tcase := range testCases {
+		t.Run(tcase.desc, func(t *testing.T) {
+			c := require.New(t)
+
+			g := NewGraph()
+
+			input := NewTensor(g, tensor.Float64, tcase.input.Shape().Dims(), WithName("input"), WithShape(tcase.input.Shape()...), WithValue(tcase.input))
+
+			output, err := tcase.PoolFunc(input, tcase.kernelSize, tcase.pad, tcase.stride)
+			c.NoError(err)
+
+			log.Printf("output shape: %v", output.Shape())
+			log.Printf("input shape: %v", input.Shape())
+
+			y := NewTensor(g, output.Dtype(), output.Dims(), WithShape(output.Shape()...), WithInit(Ones()))
+
+			cost := Must(Mean(Must((Sub(output, y))))) // MSE
+
+			_, err = Grad(cost, input)
+			c.NoError(err)
+
+			// logger := log.New(os.Stdout, "", 0)
+
+			vm := NewTapeMachine(
+				g,
+				//WithLogger(logger),
+				WithWatchlist(),
+				BindDualValues(output),
+				TraceExec(),
+			)
+
+			c.NoError(vm.RunAll())
+			c.NoError(vm.Close())
+
+			log.Printf("input %v", input.Value())
+			log.Printf("result: %v", output.Value())
+			log.Printf("cost: %v", cost.Value())
+
+			c.Equal(tcase.expectedOutput, output.Value().Data())
+			c.Equal(tcase.expectedShape, output.Shape())
+			c.Equal(tcase.expectedCost, cost.Value().Data().(float64))
+		})
+	}
 }
 
 func TestBatchNorm1d(t *testing.T) {
