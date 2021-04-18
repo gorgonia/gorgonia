@@ -2,16 +2,17 @@ package gorgonia
 
 import (
 	"fmt"
-	"hash"
-	"math"
-	"time"
-
 	"github.com/chewxy/hm"
+	"github.com/chewxy/math32"
 	rng "github.com/leesper/go_rng"
 	"github.com/pkg/errors"
 	"gorgonia.org/tensor"
 	"gorgonia.org/tensor/native"
+	"gorgonia.org/vecf32"
 	"gorgonia.org/vecf64"
+	"hash"
+	"math"
+	"time"
 )
 
 // Sanity checks
@@ -1244,7 +1245,12 @@ func (op *BatchNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Va
 		}
 
 	case Float32:
-		op.f32s(in, out)
+		op.updateStatsF32(in)
+		if op.training {
+			op.trainF32s(in, out)
+		} else {
+			op.inferF32s(in, out)
+		}
 	default:
 		return nil, nyi("BatchNorm Do", v.Dtype())
 	}
@@ -1437,6 +1443,163 @@ func (op *BatchNormOp) inferF64s(input, output *tensor.Dense) {
 				copy(data[:], I[offset+d:])
 				vecf64.Mul(data[:], α[:])
 				vecf64.Add(data[:], β[:])
+				copy(O[offset+d:], data[:])
+			}
+		}
+	}
+}
+
+// collectF32s is collects the constant terms for inference purposes
+func (op *BatchNormOp) collectF32s() {
+	// μ and σ has size (c,) - given a shape of (b, c, h, w) from the inputs
+	μ := op.mean.Float32s()
+	σ := op.variance.Float32s()
+	α := op.meanTmp.Float32s()
+	β := op.varianceTmp.Float32s()
+	for i, m := range μ {
+		inv := 1.0 / math32.Sqrt(σ[i]+float32(op.epsilon))
+		// no weight or biases
+		// weight = 1.0
+		// bias = 0.0
+		α[i] = inv * float32(1.0)
+		β[i] = 0.0 - m*α[i]
+	}
+}
+
+// updateStats computes the running mean and variances
+func (op *BatchNormOp) updateStatsF32(input *tensor.Dense) {
+	s := input.Shape()
+	batches := s[0]
+	chans := s[1]
+	N := s.TotalSize() / chans
+
+	in, err := native.SelectF32(input, 1)
+	if err != nil {
+		panic(err)
+	}
+	mean := op.mean.Float32s()
+	variance := op.variance.Float32s()
+	ma := op.meanTmp.Float32s()
+	mv := op.varianceTmp.Float32s()
+
+	for c := 0; c < chans; c++ {
+		var μ float32
+		for b := 0; b < batches; b++ {
+			offset := b*chans + c
+			for i := 0; i < len(in[offset]); i++ {
+				μ += in[offset][i]
+			}
+		}
+		μ /= float32(N)
+		mean[c] = μ
+
+		var σ float32
+		for b := 0; b < batches; b++ {
+			offset := b*chans + c
+			for i := 0; i < len(in[offset]); i++ {
+				x := in[offset][i]
+				σ += (x - μ) * (x - μ)
+			}
+		}
+		// unbiased variance
+		σub := σ / (float32(N) - 1)
+
+		σ /= float32(N)
+		σ += float32(op.epsilon)
+		variance[c] = 1.0 / math32.Sqrt(σ)
+		momentum := float32(op.momentum)
+
+		ma[c] = momentum*μ + (1-momentum)*ma[c]
+		mv[c] = momentum*σub + (1-momentum)*mv[c]
+	}
+}
+
+func (op *BatchNormOp) trainF32s(input, output *tensor.Dense) {
+	s := input.Shape()
+	batches := s[0]
+	chans := s[1]
+	//chans := s[0] * s[1]
+
+	in, err := native.SelectF32(input, 1)
+	if err != nil {
+		panic(err)
+	}
+	out, err := native.SelectF32(output, 1)
+	if err != nil {
+		panic(err)
+	}
+
+	mean := op.mean.Float32s()
+	variance := op.variance.Float32s()
+
+	// TODO: speed this up
+	for c := 0; c < chans; c++ {
+		μ := mean[c]
+		σ := variance[c]
+
+		for b := 0; b < batches; b++ {
+			offset := b*chans + c
+			x := in[offset]
+			for i := range x {
+				out[offset][i] = (x[i] - μ) * σ
+			}
+		}
+	}
+}
+
+func (op *BatchNormOp) inferF32s(input, output *tensor.Dense) {
+	s := input.Shape()
+	b, chans := s[0], s[1]
+	sz := s.TotalSize() / (b * chans)
+
+	I := input.Float32s()
+	O := output.Float32s()
+
+	batchOffset := chans * sz
+	loopBatch := sz - (sz % 4) // vectorized operation at 8 at a time
+
+	op.collectF32s()
+
+	alpha := op.meanTmp.Float32s()
+	beta := op.varianceTmp.Float32s()
+
+	if sz == 1 {
+		// special loop for image size == 1
+		for n := 0; n < b; n++ {
+			for c := 0; c < chans; c++ {
+				offset := n*chans + c
+				O[offset] = I[offset]*alpha[c] + beta[c]
+			}
+		}
+		return
+
+	}
+
+	for n := 0; n < b; n++ {
+		for c := 0; c < chans; c++ {
+			// broadcast meanTmp and varianceTmp into vectors
+			var α, β [4]float32
+			for i := range α {
+				α[i] = alpha[c]
+			}
+			for i := range β {
+				β[i] = beta[c]
+			}
+
+			offset := n*batchOffset + c*sz
+			var d int
+			for ; d < loopBatch; d += 4 {
+				var data [4]float32
+				copy(data[:], I[offset+d:])
+				vecf32.Mul(data[:], α[:])
+				vecf32.Add(data[:], β[:])
+				copy(O[offset+d:], data[:])
+			}
+			if sz-d > 0 {
+				var data [4]float32
+				copy(data[:], I[offset+d:])
+				vecf32.Mul(data[:], α[:])
+				vecf32.Add(data[:], β[:])
 				copy(O[offset+d:], data[:])
 			}
 		}
