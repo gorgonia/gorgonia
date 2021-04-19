@@ -302,3 +302,49 @@ func SliceDetails(s Slice, size int) (start, end, step int, err error) {
 	}
 	return
 }
+
+// ShapeOf returns the shape of a given datum.
+func ShapeOf(a interface{}) Expr {
+	switch at := a.(type) {
+	case Shaper:
+		return at.Shape()
+	case Exprer:
+		return at.Shape()
+	}
+
+	t := reflect.TypeOf(a)
+	switch t.Kind() {
+	case reflect.Func:
+		in := t.NumIn()
+		out := t.NumOut()
+		if out != 1 {
+			panic("Cannot handle functions with multiple outputs. Please feel free to file a Pull Request")
+		}
+		outExpr := ShapeOf(t.Out(0))
+		inExpr := make([]Expr, 0, in)
+		for i := 0; i < in; i++ {
+			it := t.In(i)
+			inExpr = append(inExpr, ShapeOf(it))
+		}
+
+		B := Arrow{A: inExpr[len(inExpr)-1], B: outExpr}
+		for i := in - 2; i >= 0; i-- {
+			A := inExpr[i]
+			B = Arrow{A: A, B: B}
+		}
+		return B
+
+	case reflect.Array:
+		return Shape{t.Len()}
+	case reflect.Slice, reflect.Chan:
+		v := reflect.ValueOf(a)
+		return Shape{v.Len()}
+	case reflect.Interface:
+		panic("Cannot turn Interface type into shape. Please feel free to file a Pull Request")
+	case reflect.Map:
+		panic("Cannot turn Map type into shape.")
+	default:
+		return Shape{}
+	}
+	panic("Unreachable")
+}

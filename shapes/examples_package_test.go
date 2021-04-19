@@ -79,7 +79,7 @@ func (d *Dense) Add(other *Dense) (*Dense, error) {
 
 func (d *Dense) Apply(fn func(float64) float64) (*Dense, error) {
 	expr := applyFn((*Dense).Apply).Shape()
-	fnShape := shapes.Arrow{shapes.Shape{}, shapes.Shape{}}
+	fnShape := shapes.ShapeOf(fn)
 	sh, err := infer(expr, d.Shape(), fnShape)
 	if err != nil {
 		return nil, err
@@ -100,47 +100,78 @@ func infer(fn shapes.Expr, others ...shapes.Expr) (shapes.Shape, error) {
 }
 
 func Example_package() {
-	a := &Dense{
+	A := &Dense{
 		data:  []float64{1, 2, 3, 4, 5, 6},
 		shape: shapes.Shape{2, 3},
 	}
-	b := &Dense{
+	B := &Dense{
 		data:  []float64{10, 20, 30, 40, 50, 60},
 		shape: shapes.Shape{3, 2},
 	}
-	c, err := a.MatMul(b)
+	var fn shapes.Exprer = matmulFn((*Dense).MatMul)
+	C, err := A.MatMul(B)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Printf("c: %v\n", c.Shape())
+	fmt.Printf("×: %v\n", fn.Shape())
+	fmt.Printf("\t   A   ×    B   =    C\n\t%v × %v = %v\n", A.Shape(), B.Shape(), C.Shape())
+	fmt.Println("---")
 
-	d := &Dense{
+	fn = elemwiseFn((*Dense).Add)
+	D := &Dense{
 		data:  []float64{0, 0, 0, 0},
 		shape: shapes.Shape{2, 2},
 	}
-	e, err := c.Add(d)
+	E, err := C.Add(D)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Printf("e: %v\n", e.Shape())
+	fmt.Printf("+: %v\n", fn.Shape())
+	fmt.Printf("\t   C   +    D   =    E\n")
+	fmt.Printf("\t%v + %v = %v\n", C.Shape(), D.Shape(), E.Shape())
+	fmt.Println("---")
 
-	f, err := e.Apply(func(a float64) float64 { return a * a })
+	square := func(a float64) float64 { return a * a }
+	squareShape := shapes.ShapeOf(square)
+	fn = applyFn((*Dense).Apply)
+	F, err := E.Apply(square)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Printf("f: %v\n", f.Shape())
+	fmt.Printf("@: %v\n", fn.Shape())
+	fmt.Printf("square: %v\n", squareShape)
+	fmt.Printf("\t   E   @  square =    F\n")
+	fmt.Printf("\t%v @ (%v) = %v\n", E.Shape(), squareShape, F.Shape())
+	fmt.Println("---")
 
-	// trying to add to a bad shape will yield an error
-	_, err = e.Add(a)
+	// trying to do a bad add (e.g. adding two matrices with different shapes) will yield an error
+	fn = elemwiseFn((*Dense).Add)
+	_, err = E.Add(A)
+	fmt.Printf("+: %v\n", fn.Shape())
+	fmt.Printf("\t   E   +   A    =\n")
+	fmt.Printf("\t%v + %v = ", E.Shape(), A.Shape())
 	fmt.Println(err)
 
 	// Output:
-	// c: (2, 2)
-	// e: (2, 2)
-	// f: (2, 2)
-	// Failed to solve [{(2, 2) → (2, 2) = (2, 3) → a}] | a: Unification Fail. 2 ~ 3 cannot proceed
+	// ×: (a, b) → (b, c) → (a, c)
+	//	   A   ×    B   =    C
+	//	(2, 3) × (3, 2) = (2, 2)
+	// ---
+	// +: a → a → a
+	//	   C   +    D   =    E
+	//	(2, 2) + (2, 2) = (2, 2)
+	// ---
+	// @: a → (b → b) → a
+	// square: () → ()
+	//	   E   @  square =    F
+	//	(2, 2) @ (() → ()) = (2, 2)
+	// ---
+	// +: a → a → a
+	//	   E   +   A    =
+	//	(2, 2) + (2, 3) = Failed to solve [{(2, 2) → (2, 2) = (2, 3) → a}] | a: Unification Fail. 2 ~ 3 cannot proceed
+	//
 
 }

@@ -22,6 +22,10 @@ type Shaper interface {
 	Shape() Shape
 }
 
+type Exprer interface {
+	Shape() Expr
+}
+
 var (
 	_ Sizelike = Size(0)
 	_ Sizelike = Var('a')

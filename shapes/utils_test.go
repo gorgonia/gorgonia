@@ -74,8 +74,8 @@ func Example_unsafePermute() {
 	// x1: [2 3]
 	// x2: [4 3]
 	//
-	// Invalid axis in pattern [2 1]: Invalid axis 2 for ndarray with 2 dimensions
-	// Repeated axes in pattern [1 1]: repeated axis 1 in permutation pattern
+	// Invalid axis in pattern [2 1]: Invalid axis 2 for ndarray with 2 dimensions.
+	// Repeated axes in pattern [1 1]: repeated axis 1 in permutation pattern.
 	// Pattern [1] has a smaller dimension than xs: Dimension mismatch. Expected 2. Got  1 instead.
 
 }
