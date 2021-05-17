@@ -38,6 +38,8 @@ func (s Shape) Clone() interface{} {
 	return retVal
 }
 
+func (s Shape) AsInts() []int { return []int(s) }
+
 // Eq indicates if a shape is equal with another. There is a soft concept of equality when it comes to vectors.
 //
 // If s is a column vector and other is a vanilla vector, they're considered equal if the size of the column dimension is the same as the vector size;

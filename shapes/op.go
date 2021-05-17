@@ -16,6 +16,7 @@ const (
 	Dims
 	Prod
 	Sum
+	ForAll // special use
 
 	// Binary: a → a → a
 
@@ -50,6 +51,8 @@ func (o OpType) String() string {
 		return "Π"
 	case Sum:
 		return "Σ"
+	case ForAll:
+		return "∀"
 	case Add:
 		return "+"
 	case Sub:
@@ -70,6 +73,10 @@ func (o OpType) String() string {
 		return "≤"
 	case Gte:
 		return "≥"
+	case And:
+		return "∧"
+	case Or:
+		return "∨"
 	default:
 		return fmt.Sprintf("UNFORMATTED OPTYPE %d", byte(o))
 	}
@@ -118,10 +125,56 @@ func (op BinOp) resolveBool() (bool, error) {
 	if err := op.nofreeevars(); err != nil {
 		return false, errors.Wrapf(err, "Cannot resolve BinOp %v to bool.", op)
 	}
+
 	A, B, err := op.resolveAB()
 	if err != nil {
+		// check to see if A and B are ForAlls
+		var auo, buo UnaryOp
+		var A, B intslike
+		var al, bl []int
+		var ok bool
+
+		if auo, ok = op.A.(UnaryOp); !ok || auo.Op != ForAll {
+			goto fail
+		}
+
+		if buo, ok = op.B.(UnaryOp); !ok || buo.Op != ForAll {
+			goto fail
+		}
+
+		if A, ok = auo.A.(intslike); !ok {
+			goto fail
+		}
+		if B, ok = buo.A.(intslike); !ok {
+			goto fail
+		}
+
+		al, bl = A.AsInts(), B.AsInts()
+		if len(al) != len(bl) {
+			return false, nil // will always be false because you cannot compare slices of unequal length. Does this mean it should have an error message? Unsure
+		}
+		bl = bl[:len(al)]
+		for i, a := range al {
+			b := bl[i]
+			ok, err := op.do(Size(a), Size(b))
+			if err != nil {
+				return false, errors.Wrapf(err, "Cannot resolve %v %v %v (%dth index in %v)", a, op.Op, b, i, op)
+			}
+			if !ok {
+				return false, nil
+			}
+		}
+
+		return true, nil
+
+	fail:
 		return false, errors.Wrapf(err, "Cannot resolve BinOp %v to bool.", op)
 	}
+	return op.do(A, B)
+
+}
+
+func (op BinOp) do(A, B Size) (bool, error) {
 	switch op.Op {
 	case Eq:
 		return A == B, nil
@@ -155,7 +208,7 @@ func (op BinOp) resolveAB() (A, B Size, err error) {
 	switch a := op.A.(type) {
 	case Size:
 		A = a
-	case Operation:
+	case sizeOp:
 		var err error
 		if A, err = a.resolveSize(); err != nil {
 			return A, B, errors.Wrapf(err, "BinOp %v - A (%v) does not resolve to a Size", op, op.A)
@@ -167,7 +220,7 @@ func (op BinOp) resolveAB() (A, B Size, err error) {
 	switch b := op.B.(type) {
 	case Size:
 		B = b
-	case Operation:
+	case sizeOp:
 		var err error
 		if B, err = b.resolveSize(); err != nil {
 			return A, B, errors.Wrapf(err, "BinOp %v - B (%v) does not resolve to a Size", op, op.B)
@@ -232,7 +285,7 @@ func (op UnaryOp) resolveSize() (Size, error) {
 				switch a := av.(type) {
 				case Size:
 					retVal *= int(a)
-				case Operation:
+				case sizeOp:
 					v, err := a.resolveSize()
 					if err != nil {
 						return 0, errors.Wrapf(err, "Unable to resolve %v.", op)
@@ -249,7 +302,7 @@ func (op UnaryOp) resolveSize() (Size, error) {
 				switch a := av.(type) {
 				case Size:
 					retVal += int(a)
-				case Operation:
+				case sizeOp:
 					v, err := a.resolveSize()
 					if err != nil {
 						return 0, errors.Wrapf(err, "Unable to resolve %v.", op)
@@ -283,6 +336,12 @@ func (op UnaryOp) resolveSize() (Size, error) {
 			panic("unreachable")
 		}
 	case Axes:
+		// only D is allowed. Error otherwise
+		if op.Op != Dims {
+			return 0, errors.Errorf(unaryOpResolveErr, op)
+		}
+		return Size(len(A)), nil
+	case Sizes:
 		// only D is allowed. Error otherwise
 		if op.Op != Dims {
 			return 0, errors.Errorf(unaryOpResolveErr, op)

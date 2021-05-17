@@ -32,8 +32,23 @@ func axesToInts(a Axes) []int {
 	return *(*[]int)(unsafe.Pointer(&a))
 }
 
+func sizesToInts(a Sizes) []int {
+	return *(*[]int)(unsafe.Pointer(&a))
+}
+
 func arrowToTup(a *Arrow) *exprtup {
 	return (*exprtup)(unsafe.Pointer(a))
+}
+
+func sizelikeToSize(a Sizelike) (Size, error) {
+	switch at := a.(type) {
+	case sizeOp:
+		return at.resolveSize()
+	case Size:
+		return at, nil
+	default:
+		return 0, errors.Errorf("Cannot resolve size of %v of %T", a, a)
+	}
 }
 
 // IsMonotonicInts returns true if the slice of ints is monotonically increasing. It also returns true for incr1 if every succession is a succession of 1

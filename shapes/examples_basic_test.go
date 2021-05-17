@@ -179,6 +179,59 @@ func Example_transpose() {
 
 }
 
+func ExampleIndex() {
+	sizes := Sizes{0, 0, 1, 0}
+	simple := Arrow{
+		Var('a'),
+		Arrow{
+			Var('b'),
+			Abstract{},
+		},
+	}
+	fmt.Printf("Unconstrained Indexing: %v\n", simple)
+
+	st := SubjectTo{
+		And,
+		SubjectTo{
+			Eq,
+			UnaryOp{Dims, Var('a')},
+			UnaryOp{Dims, Var('b')},
+		},
+		SubjectTo{
+			Lt,
+			UnaryOp{ForAll, Var('b')},
+			UnaryOp{ForAll, Var('a')},
+		},
+	}
+	index := Compound{Expr: simple, SubjectTo: st}
+	fmt.Printf("Indexing: %v\n", index)
+
+	fst := Shape{1, 2, 3, 4}
+	retExpr, err := InferApp(index, fst)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+	fmt.Printf("Applying %v to %v:\n", fst, index)
+	fmt.Printf("\t%v @ %v ↠ %v\n", index, fst, retExpr)
+
+	snd := sizes
+	retExpr2, err := InferApp(retExpr, snd)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+	fmt.Printf("Applying %v to %v:\n", snd, retExpr)
+	fmt.Printf("\t%v @ %v ↠ %v\n", retExpr, snd, retExpr2)
+
+	// Output:
+	// Unconstrained Indexing: a → b → ()
+	// Indexing: a → b → () s.t. ((D a = D b) ∧ (∀ b < ∀ a))
+	// Applying (1, 2, 3, 4) to a → b → () s.t. ((D a = D b) ∧ (∀ b < ∀ a)):
+	// 	a → b → () s.t. ((D a = D b) ∧ (∀ b < ∀ a)) @ (1, 2, 3, 4) ↠ b → () s.t. ((D (1, 2, 3, 4) = D b) ∧ (∀ b < ∀ (1, 2, 3, 4)))
+	// Applying Sz[0 0 1 0] to b → () s.t. ((D (1, 2, 3, 4) = D b) ∧ (∀ b < ∀ (1, 2, 3, 4))):
+	// 	b → () s.t. ((D (1, 2, 3, 4) = D b) ∧ (∀ b < ∀ (1, 2, 3, 4))) @ Sz[0 0 1 0] ↠ ()
+
+}
+
 func ExampleSlice() {
 	sli := Sli{0, 2, 1}
 	simple := Arrow{
@@ -276,4 +329,15 @@ func ExampleColwiseSumMatrix() {
 	// Output:
 	// a → b s.t. (D b = D a - 1)
 	// (a, b) → (a)
+}
+
+func ExampleTrace() {
+	expr := Arrow{
+		Abstract{Var('a'), Var('a')},
+		Var('a'),
+	}
+	fmt.Printf("Trace: %v\n", expr)
+
+	// Output:
+	//
 }

@@ -17,6 +17,10 @@ type Shapelike interface {
 	Concat(axis Axis, others ...Shapelike) (newShape Shapelike, err error)
 }
 
+type intslike interface {
+	AsInts() []int
+}
+
 // Shaper is anything that can return a Shape.
 type Shaper interface {
 	Shape() Shape
@@ -77,8 +81,17 @@ type substitutableExpr interface {
 // Operation represents an operation (BinOp or UnaryOp)
 type Operation interface {
 	isValid() bool
-	resolveSize() (Size, error)
 	substitutableExpr
+}
+
+type boolOp interface {
+	Operation
+	resolveBool() (bool, error)
+}
+
+type sizeOp interface {
+	Operation
+	resolveSize() (Size, error)
 }
 
 //  resolver is anything that can resolve an expression

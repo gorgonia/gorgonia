@@ -48,7 +48,7 @@ func (i IndexOf) resolveSize() (Size, error) {
 		switch s := sz.(type) {
 		case Size:
 			return s, nil
-		case Operation:
+		case sizeOp:
 			return s.resolveSize()
 		default:
 			return 0, errors.Errorf("Sizelike of %v (Index %d of %v)is unresolvable ", sz, i.I, i.A)

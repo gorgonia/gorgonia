@@ -61,6 +61,8 @@ func (a Axes) Format(s fmt.State, r rune)           { fmt.Fprintf(s, "X%v", axes
 func (a Axes) apply(ss substitutions) substitutable { return a }
 func (a Axes) freevars() varset                     { return nil }
 func (a Axes) subExprs() []substitutableExpr        { return nil }
+func (a Axes) Dims() int                            { return len(a) }
+func (a Axes) AsInts() []int                        { return axesToInts(a) }
 
 // Size represents a size of a dimension/axis
 type Size int
@@ -75,6 +77,16 @@ func (s Size) subExprs() []substitutableExpr        { return nil }
 
 func (s Size) isValid() bool              { return true }
 func (s Size) resolveSize() (Size, error) { return s, nil }
+
+// Sizes are a list of sizes.
+type Sizes []Size
+
+func (s Sizes) isExpr()                              {}
+func (s Sizes) Format(f fmt.State, r rune)           { fmt.Fprintf(f, "Sz%v", sizesToInts(s)) }
+func (s Sizes) apply(ss substitutions) substitutable { return s }
+func (s Sizes) freevars() varset                     { return nil }
+func (s Sizes) subExprs() []substitutableExpr        { return nil }
+func (s Sizes) AsInts() []int                        { return sizesToInts(s) }
 
 // complex expressions
 

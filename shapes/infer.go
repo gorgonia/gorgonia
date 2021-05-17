@@ -150,7 +150,7 @@ func alpha(set varset, a Expr) Expr {
 
 func recursiveResolve(a Expr) (Expr, error) {
 	switch at := a.(type) {
-	case Operation:
+	case sizeOp:
 		if !at.isValid() {
 			return nil, errors.Errorf("Expression %v is not a valid Operation", at)
 		}

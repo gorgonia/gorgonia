@@ -2,6 +2,7 @@ package shapes
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/pkg/errors"
 )
@@ -41,16 +42,30 @@ func (s SubjectTo) resolveSize() (Size, error) {
 }
 
 func (s SubjectTo) resolveBool() (bool, error) {
-	A, err := s.A.resolveSize()
-	if err != nil {
-		return false, errors.Wrapf(err, "Failed to resolve SubjectTo %v into a bool. Operand A errored.", s)
+	switch s.OpType {
+	case And, Or:
+		log.Printf("AND/OR")
+		A, err := s.A.(boolOp).resolveBool()
+		if err != nil {
+			log.Printf("ER 1")
+			return false, errors.Wrapf(err, "Failed to resolve operand A of SubjectTo %v into a bool", s)
+		}
+		B, err := s.B.(boolOp).resolveBool()
+		if err != nil {
+			return false, errors.Wrapf(err, "Failed to resolve operand A of SubjectTo %v into a bool", s)
+		}
+		switch s.OpType {
+		case And:
+			return A && B, nil
+		case Or:
+			return A || B, nil
+		}
+		panic("Unreachable")
+	default:
+		op := BinOp{s.OpType, s.A.(Expr), s.B.(Expr)}
+		return op.resolveBool()
 	}
-	B, err := s.B.resolveSize()
-	if err != nil {
-		return false, errors.Wrapf(err, "Failed to resolve SubjectTo %v into a bool. Operand B errored.", s)
-	}
-	op := BinOp{s.OpType, A, B}
-	return op.resolveBool()
+
 }
 
 type Compound struct {
