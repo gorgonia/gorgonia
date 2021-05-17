@@ -44,9 +44,8 @@ func ExampleVerify() {
 	if err == nil {
 		fmt.Printf("a2 is an incorrect value. Errors expected but none was returned\n")
 	}
-	fmt.Printf("Cannot Verify a2: %v\n", err)
 
 	// Output:
-	// Cannot Verify a2: Unification Fail. (4, 2) ~ (10, 10, 10, 10) cannot proceed as they do not contain the same amount of sub-expressions. (4, 2) has 2 subexpressions while (10, 10, 10, 10) has 4 subexpressions
+	//
 
 }

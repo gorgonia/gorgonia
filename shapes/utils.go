@@ -51,6 +51,13 @@ func sizelikeToSize(a Sizelike) (Size, error) {
 	}
 }
 
+func extractForAll(a Expr) (UnaryOp, bool) {
+	if uo, ok := a.(UnaryOp); ok && uo.Op == ForAll {
+		return uo, true
+	}
+	return UnaryOp{}, false
+}
+
 // IsMonotonicInts returns true if the slice of ints is monotonically increasing. It also returns true for incr1 if every succession is a succession of 1
 func IsMonotonicInts(a []int) (monotonic bool, incr1 bool) {
 	var prev int

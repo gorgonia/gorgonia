@@ -2,7 +2,6 @@ package shapes
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/pkg/errors"
 )
@@ -44,10 +43,8 @@ func (s SubjectTo) resolveSize() (Size, error) {
 func (s SubjectTo) resolveBool() (bool, error) {
 	switch s.OpType {
 	case And, Or:
-		log.Printf("AND/OR")
 		A, err := s.A.(boolOp).resolveBool()
 		if err != nil {
-			log.Printf("ER 1")
 			return false, errors.Wrapf(err, "Failed to resolve operand A of SubjectTo %v into a bool", s)
 		}
 		B, err := s.B.(boolOp).resolveBool()
