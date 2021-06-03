@@ -3,10 +3,13 @@ package gorgonia
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
+	"math/rand"
 	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gorgonia.org/dawson"
 	"gorgonia.org/tensor"
 )
@@ -275,7 +278,194 @@ func TestMaxPool2D(t *testing.T) {
 		m.Close()
 		m2.Close()
 	}
+}
 
+func TestMaxPool(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		input          tensor.Tensor
+		kernelSize     tensor.Shape
+		pad            []int
+		stride         []int
+		expectedOutput []float64
+		expectedShape  tensor.Shape
+		expectedCost   float64
+		PoolFunc       func(*Node, tensor.Shape, []int, []int) (*Node, error)
+	}{
+		{
+			desc: "Example 1",
+			input: tensor.New(
+				tensor.WithShape(1, 1, 4, 4),
+				tensor.WithBacking(tensor.Range(tensor.Float64, 0, 16)),
+			),
+			kernelSize:     []int{4, 4},
+			pad:            []int{0, 0},
+			stride:         []int{1, 1},
+			expectedOutput: []float64{15},
+			expectedCost:   14,
+			expectedShape:  tensor.Shape{1, 1, 1, 1},
+			PoolFunc:       MaxPool2D,
+		},
+	}
+
+	for _, tcase := range testCases {
+		t.Run(tcase.desc, func(t *testing.T) {
+			c := require.New(t)
+
+			g := NewGraph()
+
+			input := NewTensor(g, tensor.Float64, tcase.input.Shape().Dims(), WithName("input"), WithShape(tcase.input.Shape()...), WithValue(tcase.input))
+
+			output, err := tcase.PoolFunc(input, tcase.kernelSize, tcase.pad, tcase.stride)
+			c.NoError(err)
+
+			log.Printf("output shape: %v", output.Shape())
+			log.Printf("input shape: %v", input.Shape())
+
+			y := NewTensor(g, output.Dtype(), output.Dims(), WithShape(output.Shape()...), WithInit(Ones()))
+
+			cost := Must(Mean(Must((Sub(output, y))))) // MSE
+
+			_, err = Grad(cost, input)
+			c.NoError(err)
+
+			// logger := log.New(os.Stdout, "", 0)
+
+			vm := NewTapeMachine(
+				g,
+				//WithLogger(logger),
+				WithWatchlist(),
+				BindDualValues(output),
+				TraceExec(),
+			)
+
+			c.NoError(vm.RunAll())
+			c.NoError(vm.Close())
+
+			log.Printf("input %v", input.Value())
+			log.Printf("result: %v", output.Value())
+			log.Printf("cost: %v", cost.Value())
+
+			c.Equal(tcase.expectedOutput, output.Value().Data())
+			c.Equal(tcase.expectedShape, output.Shape())
+			c.Equal(tcase.expectedCost, cost.Value().Data().(float64))
+		})
+	}
+}
+
+func TestBatchNorm1d(t *testing.T) {
+	generator := func(start float64, increment float64) InitWFn {
+		return func(dt tensor.Dtype, s ...int) interface{} {
+			totalSize := tensor.Shape(s).TotalSize()
+
+			if dt == tensor.Float32 {
+				result := make([]float32, totalSize)
+
+				for i := 0; i < totalSize; i++ {
+					result[i] = float32(start)
+					start += increment
+				}
+
+				return result
+			}
+
+			result := make([]float64, totalSize)
+
+			for i := 0; i < totalSize; i++ {
+				result[i] = start
+				start += increment
+			}
+
+			return result
+		}
+	}
+
+	testCases := []struct {
+		desc  string
+		Dtype tensor.Dtype
+
+		XInit  InitWFn
+		XShape tensor.Shape
+
+		ScaleInit  InitWFn
+		ScaleShape tensor.Shape
+
+		BiasInit  InitWFn
+		BiasShape tensor.Shape
+
+		ExpectedResult interface{}
+	}{
+		{
+			desc:           "Example1",
+			Dtype:          tensor.Float64,
+			XInit:          generator(0.5, 0.01),
+			XShape:         tensor.Shape{3, 2},
+			ScaleInit:      Ones(),
+			ScaleShape:     tensor.Shape{3, 1},
+			BiasInit:       Zeroes(),
+			BiasShape:      tensor.Shape{3, 1},
+			ExpectedResult: []float64{-1.2024072240843036, -1.2024072240843036, 0, 0, 1.2024072240843036, 1.2024072240843036},
+		},
+		{
+			desc:           "Example2",
+			Dtype:          tensor.Float64,
+			XInit:          generator(0.5, 0.01),
+			XShape:         tensor.Shape{3, 2},
+			ScaleInit:      Ones(),
+			ScaleShape:     tensor.Shape{3, 2},
+			BiasInit:       Zeroes(),
+			BiasShape:      tensor.Shape{3, 2},
+			ExpectedResult: []float64{-1.2024072240843036, -1.2024072240843036, 0, 0, 1.2024072240843036, 1.2024072240843036},
+		},
+		{
+			desc:           "Example3",
+			Dtype:          tensor.Float32,
+			XInit:          generator(0.1, 0.001),
+			XShape:         tensor.Shape{3, 2},
+			ScaleInit:      Ones(),
+			ScaleShape:     tensor.Shape{3, 2},
+			BiasInit:       Zeroes(),
+			BiasShape:      tensor.Shape{3, 2},
+			ExpectedResult: []float32{-0.5619547, -0.56195074, -4.1868648e-06, 0, 0.5619484, 0.56195074},
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			rand.Seed(0)
+
+			c := require.New(t)
+
+			g := NewGraph()
+
+			x := NewTensor(g, tC.Dtype, tC.XShape.Dims(), WithShape(tC.XShape...), WithInit(tC.XInit), WithName("x"))
+			scale := NewTensor(g, tC.Dtype, tC.ScaleShape.Dims(), WithShape(tC.ScaleShape...), WithInit(tC.ScaleInit), WithName("scale"))
+			bias := NewTensor(g, tC.Dtype, tC.BiasShape.Dims(), WithShape(tC.BiasShape...), WithInit(tC.BiasInit), WithName("bias"))
+
+			y, _, _, op, err := BatchNorm(x, scale, bias, 0.9, 1e-5)
+			c.NoError(err)
+
+			op.SetTraining()
+
+			var yVal, scaleVal Value
+			Read(y, &yVal)
+			Read(scale, &scaleVal)
+
+			cost, _ := Mean(y)
+
+			if _, err := Grad(cost, x, scale, bias); err != nil {
+				t.Fatal(err)
+			}
+
+			m := NewTapeMachine(g, BindDualValues(x, scale, bias), TraceExec())
+
+			err = m.RunAll()
+			c.NoError(err)
+
+			c.NoError(m.Close())
+
+			c.Equal(tC.ExpectedResult, yVal.Data())
+		})
+	}
 }
 
 func TestBatchNorm_F64(t *testing.T) {
@@ -302,7 +492,6 @@ func TestBatchNorm_F64(t *testing.T) {
 		t.Fatal(err)
 	}
 	m.Close()
-	ioutil.WriteFile("foo.dot", []byte(g.ToDot()), 0644)
 
 	shape := x.Shape()
 	n, c, h, w := shape[0], shape[1], shape[2], shape[3]
@@ -596,5 +785,74 @@ func TestGlobalAveragePool2D_fwdPass(t *testing.T) {
 			}
 		}
 		assert.InDeltaSlice(expectedOutput.Data(), output.Value().Data(), 1e-6, "the two tensors should be equal.")
+	}
+}
+
+func TestConv2dErrors(t *testing.T) {
+	g := NewGraph()
+
+	testCases := []struct {
+		desc                  string
+		im                    *Node
+		filter                *Node
+		kernelShape           tensor.Shape
+		pad, stride, dilation []int
+		err                   string
+		panics                bool
+	}{
+		{
+			desc:        "Succesful",
+			im:          NewTensor(g, tensor.Float64, 4, WithShape(1, 1, 28, 28)),
+			filter:      NewTensor(g, tensor.Float64, 4, WithShape(32, 1, 3, 3)),
+			kernelShape: tensor.Shape{3, 3},
+			pad:         []int{1, 1},
+			stride:      []int{1, 1},
+			dilation:    []int{1, 1},
+			err:         "",
+		},
+		{
+			desc:        "5dIM",
+			im:          NewTensor(g, tensor.Float64, 5, WithShape(1, 1, 1, 28, 28)),
+			filter:      NewTensor(g, tensor.Float64, 4, WithShape(32, 1, 3, 3)),
+			kernelShape: tensor.Shape{3, 3},
+			pad:         []int{1, 1},
+			stride:      []int{1, 1},
+			dilation:    []int{1, 1},
+			err:         "im should have 4 dims, got 5 dims",
+		},
+		{
+			desc:        "5dFilter",
+			im:          NewTensor(g, tensor.Float64, 4, WithShape(1, 1, 28, 28)),
+			filter:      NewTensor(g, tensor.Float64, 5, WithShape(32, 1, 1, 3, 3)),
+			kernelShape: tensor.Shape{3, 3},
+			pad:         []int{1, 1},
+			stride:      []int{1, 1},
+			dilation:    []int{1, 1},
+			err:         "filter should have 4 dims, got 5 dims",
+		},
+		{
+			desc:        "Shapes",
+			im:          NewTensor(g, tensor.Float64, 4, WithShape(1, 1, 28, 28)),
+			filter:      NewTensor(g, tensor.Float64, 4, WithShape(32, 3, 3, 3)),
+			kernelShape: tensor.Shape{3, 3},
+			pad:         []int{1, 1},
+			stride:      []int{1, 1},
+			dilation:    []int{1, 1},
+			err:         "3 (kernel) * 3 (width) * 3 (height) must be 9, got 27",
+		},
+	}
+
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			c := assert.New(t)
+
+			_, err := Conv2d(tC.im, tC.filter, tC.kernelShape, tC.pad, tC.stride, tC.dilation)
+			if tC.err != "" {
+				require.Error(t, err)
+				c.Equal(tC.err, err.Error())
+			} else {
+				c.NoError(err)
+			}
+		})
 	}
 }

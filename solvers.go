@@ -490,13 +490,13 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 				l1reg = float32(s.l1reg)
 				l2reg = float32(s.l2reg)
 				clip = float32(s.clip)
-				negClip = float32(s.clip)
+				negClip = -float32(s.clip)
 				beta1 = float32(s.beta1)
 				beta2 = float32(s.beta2)
 				omβ1 = float32(1) - float32(s.beta1)
 				omβ2 = float32(1) - float32(s.beta2)
 				eps = float32(s.eps)
-				eta = float32(-s.eta)
+				eta = -float32(s.eta)
 				onePerBatch = float32(1) / float32(s.batch)
 				correctionV1 = float32(1) / float32(correction1)
 				correctionV2 = float32(1) / float32(correction2)
@@ -1447,7 +1447,7 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 				}
 				defer returnTensor(valGradDiffscalarProd)
 
-				nominator += valGradDiffscalarProd.Data().(float64)
+				nominator += valGradDiffscalarProd.Data().([]float64)[0]
 
 				// ∥(Grad(F)(xᵢ) - Grad(F)(xᵢ₋₁))∥²
 				gradDiffscalarProd, err := tensor.Contract(gradDiff, gradDiff, contractionAxes, contractionAxes)
@@ -1456,7 +1456,7 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 				}
 				defer returnTensor(gradDiffscalarProd)
 
-				denominator += gradDiffscalarProd.Data().(float64)
+				denominator += gradDiffscalarProd.Data().([]float64)[0]
 
 			default:
 				return errors.Errorf(nyiFail, "Barizai-Borwein step", w)

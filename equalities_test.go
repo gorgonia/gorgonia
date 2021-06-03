@@ -6,33 +6,33 @@ var scalarEqualities = []struct {
 	a, b Scalar
 	eq   bool
 }{
-	{newF64(1), newF64(1), true},
-	{newF64(1), newF64(0), false},
-	{newF64(1), newF32(1), false},
+	{NewF64(1), NewF64(1), true},
+	{NewF64(1), NewF64(0), false},
+	{NewF64(1), NewF32(1), false},
 
-	{newF32(1), newF32(1), true},
-	{newF32(1), newF32(0), false},
-	{newF32(1), newI(1), false},
+	{NewF32(1), NewF32(1), true},
+	{NewF32(1), NewF32(0), false},
+	{NewF32(1), NewI(1), false},
 
-	{newI(1), newI(1), true},
-	{newI(1), newI(0), false},
-	{newI(1), newI64(1), false},
+	{NewI(1), NewI(1), true},
+	{NewI(1), NewI(0), false},
+	{NewI(1), NewI64(1), false},
 
-	{newI64(1), newI64(1), true},
-	{newI64(1), newI64(0), false},
-	{newI64(1), newI32(1), false},
+	{NewI64(1), NewI64(1), true},
+	{NewI64(1), NewI64(0), false},
+	{NewI64(1), NewI32(1), false},
 
-	{newI32(1), newI32(1), true},
-	{newI32(1), newI32(0), false},
-	{newI32(1), newU8(1), false},
+	{NewI32(1), NewI32(1), true},
+	{NewI32(1), NewI32(0), false},
+	{NewI32(1), NewU8(1), false},
 
-	{newU8(1), newU8(1), true},
-	{newU8(1), newU8(0), false},
-	{newU8(1), newB(true), false},
+	{NewU8(1), NewU8(1), true},
+	{NewU8(1), NewU8(0), false},
+	{NewU8(1), NewB(true), false},
 
-	{newB(true), newB(true), true},
-	{newB(true), newB(false), false},
-	{newB(true), newF64(1), false},
+	{NewB(true), NewB(true), true},
+	{NewB(true), NewB(false), false},
+	{NewB(true), NewF64(1), false},
 }
 
 func TestScalarEq(t *testing.T) {

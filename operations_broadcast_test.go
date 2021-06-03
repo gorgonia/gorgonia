@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -287,4 +288,19 @@ func TestBroadcastHadamardProd(t *testing.T) {
 		assert.Equal(bat.ab.Data(), c.Value().Data(), "Test %v(%v)", bat.name, i)
 		machine.Close()
 	}
+}
+
+// Broadcasts with nils in both left and right patterns will yield the original inputs.
+func ExampleBroadcast_nils() {
+	g := NewGraph()
+	x := NewMatrix(g, Float64, WithShape(2, 3), WithName("x"))
+	y := NewMatrix(g, Float64, WithShape(2, 3), WithName("y"))
+	a, b, err := Broadcast(x, y, NewBroadcastPattern(nil, nil))
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return
+	}
+	fmt.Printf("a == x %t; b == y %t", a == x, b == y)
+	//  Output:
+	// a == x true; b == y true
 }

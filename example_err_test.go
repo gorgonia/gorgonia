@@ -48,6 +48,7 @@ func Example_errorHandling() {
 			)),
 		)),
 	))
+
 	fmt.Printf("nn2: %v\n", nn2)
 
 	defer func() {
@@ -55,13 +56,14 @@ func Example_errorHandling() {
 			fmt.Printf("An error occurs (caught by recover()): %v\n", r)
 		}
 	}()
+
 	nn2PlusWrong := Must(Add(nn2, wrong2))
 	_ = nn2PlusWrong
 
 	// Output:
-	// nn: ÷ false(%a, %f) :: Matrix float32
+	// nn: Softmax{-1, false}()(%9) :: Matrix float32
 	// An error occurs: Type inference error. Op: + false. Children: [Matrix float32, Matrix float64], OpType:Matrix a → Matrix a → Matrix a: Unable to unify while inferring type of + false: Unification Fail: float64 ~ float32 cannot be unified
-	// nn2: ÷ false(%a, %f) :: Matrix float32
+	// nn2: Softmax{-1, false}()(%9) :: Matrix float32
 	// An error occurs (caught by recover()): Type inference error. Op: + false. Children: [Matrix float32, Matrix float64], OpType:Matrix a → Matrix a → Matrix a: Unable to unify while inferring type of + false: Unification Fail: float64 ~ float32 cannot be unified
 
 }

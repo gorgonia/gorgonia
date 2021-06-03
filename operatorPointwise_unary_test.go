@@ -168,10 +168,10 @@ func TestAbs(t *testing.T) {
 	}
 
 	correctF64 := math.Abs(v.Data().(float64))
-	assert.True(ValueClose(newF64(correctF64), yV))
-	assert.True(ValueClose(newF64(correctF64), bV))
-	assert.True(ValueClose(newF64(1.0), xG))
-	assert.True(ValueClose(newF64(1.0), aG))
+	assert.True(ValueClose(NewF64(correctF64), yV))
+	assert.True(ValueClose(NewF64(correctF64), bV))
+	assert.True(ValueClose(NewF64(1.0), xG))
+	assert.True(ValueClose(NewF64(1.0), aG))
 
 	/* FLOAT 32 Scalar */
 
@@ -192,10 +192,10 @@ func TestAbs(t *testing.T) {
 	}
 
 	correctF32 := math32.Abs(v.Data().(float32))
-	assert.True(ValueClose(newF32(correctF32), yV))
-	assert.True(ValueClose(newF32(correctF32), bV))
-	assert.True(ValueClose(newF32(1.0), xG))
-	assert.True(ValueClose(newF32(1.0), aG))
+	assert.True(ValueClose(NewF32(correctF32), yV))
+	assert.True(ValueClose(NewF32(correctF32), bV))
+	assert.True(ValueClose(NewF32(1.0), xG))
+	assert.True(ValueClose(NewF32(1.0), aG))
 
 	/* FLOAT64 Vector */
 
@@ -430,12 +430,15 @@ func TestTanhDiff(t *testing.T) {
 		t.Error(err)
 	}
 
-	correct := 1.0 - (math.Tanh(v) * math.Tanh(v)) // I'm surprised Golang doesn't have a secant function!
-	assert.Equal(correct, x.boundTo.(*dualValue).d.Data())
+	// NOTE: there are not guarantees of identical behaviours across architectures,
+	// in this case arm64 gives different results than amd64 for Tanh.
+	// See https://github.com/golang/go/issues/18354#issuecomment-267705645
+	correct := 1.0 - (float64(math.Tanh(v)) * float64(math.Tanh(v))) // I'm surprised Golang doesn't have a secant function!
+	assert.InDeltaf(correct, x.boundTo.(*dualValue).d.Data(), 1e-14, "")
 
 	// Tensor edition
 	xdvd := xT.boundTo.(*dualValue).d.(*tensor.Dense)
-	assert.Equal([]float64{correct, correct}, xdvd.Data())
+	assert.InDeltaSlicef([]float64{correct, correct}, xdvd.Data(), 1e-14, "")
 }
 
 func TestSigmoidDiff(t *testing.T) {
@@ -516,10 +519,10 @@ func TestSoftplus(t *testing.T) {
 
 	correctVF64 := softplusf64(v.Data().(float64))
 	correctDF64 := sigmoidf64(xV.Data().(float64))
-	assert.True(ValueClose(newF64(correctVF64), yV))
-	assert.True(ValueClose(newF64(correctVF64), bV))
-	assert.True(ValueClose(newF64(correctDF64), xG))
-	assert.True(ValueClose(newF64(correctDF64), aG))
+	assert.True(ValueClose(NewF64(correctVF64), yV))
+	assert.True(ValueClose(NewF64(correctVF64), bV))
+	assert.True(ValueClose(NewF64(correctDF64), xG))
+	assert.True(ValueClose(NewF64(correctDF64), aG))
 
 	/* FLOAT32 SCALAR */
 
@@ -541,10 +544,10 @@ func TestSoftplus(t *testing.T) {
 
 	correctVF32 := softplusf32(v.Data().(float32))
 	correctDF32 := sigmoidf32(xV.Data().(float32))
-	assert.True(ValueClose(newF32(correctVF32), yV))
-	assert.True(ValueClose(newF32(correctVF32), bV))
-	assert.True(ValueClose(newF32(correctDF32), xG))
-	assert.True(ValueClose(newF32(correctDF32), aG))
+	assert.True(ValueClose(NewF32(correctVF32), yV))
+	assert.True(ValueClose(NewF32(correctVF32), bV))
+	assert.True(ValueClose(NewF32(correctDF32), xG))
+	assert.True(ValueClose(NewF32(correctDF32), aG))
 
 	/* FLOAT64 Vector */
 

@@ -6,13 +6,26 @@ var unaryOpStabilizationFns = make(map[ʘUnaryOperatorType][]func(*Node) (*Node,
 var binOpStabilizationFns = make(map[ʘBinaryOperatorType][]func(*Node, *Node) (*Node, error))
 
 func init() {
-	unaryOpStabilizationFns[lnOpType] = []func(*Node) (*Node, error){logSigmoidStabilization, logStabilization}
-	binOpStabilizationFns[subOpType] = []func(*Node, *Node) (*Node, error){expStabilization}
-	unaryOpStabilizationFns[log1pOpType] = []func(*Node) (*Node, error){log1pExpStabilization, log1pNegSigmoidStabilization}
+	unaryOpStabilizationFns[lnOpType] = []func(*Node) (*Node, error){
+		logSigmoidStabilization,
+		logStabilization,
+		logSoftmaxStabilization,
+	}
+	binOpStabilizationFns[subOpType] = []func(*Node, *Node) (*Node, error){
+		exp1mStabilization,
+		oneMinusSigmoidStabilization,
+	}
+	unaryOpStabilizationFns[log1pOpType] = []func(*Node) (*Node, error){
+		log1pExpStabilization,
+		log1pNegSigmoidStabilization,
+	}
+	unaryOpStabilizationFns[negOpType] = []func(*Node) (*Node, error){negNegOptimization}
 }
 
-// logStabilization converts log(1+a) and log(a+1) to log1p(a) and log(1-a) to log1p(-a)
-// place before log; a should be +
+// logStabilization converts
+// 	log(1+a) or log(a+1) to log1p(a)
+//	log(1-a) to log1p(-a)
+// place before log; a should be positive.
 func logStabilization(a *Node) (retVal *Node, err error) {
 	stabLogf("Stabilizing log(1+a) of %v", a)
 	enterLogScope()
@@ -73,7 +86,7 @@ func logStabilization(a *Node) (retVal *Node, err error) {
 
 // expStabilization converts exp(x)-1 to expm1(x)
 // place before sub; i0 should be exp(x); i1 should be 1
-func expStabilization(a, b *Node) (retVal *Node, err error) {
+func exp1mStabilization(a, b *Node) (retVal *Node, err error) {
 	stabLogf("Stabilizing exp(x)-1 to expm1(x) of %v and %v", a, b)
 	enterLogScope()
 	defer leaveLogScope()
@@ -185,11 +198,76 @@ func log1pNegSigmoidStabilization(a *Node) (retVal *Node, err error) {
 	return nil, errors.Wrap(err, softplusFail)
 }
 
+// logSoftmaxStabilization converts
+// 	log(softmax(a)) to softmax{isLog: true}(a)
+//	log(a * softmax(b)) to log(a) + softmax{isLog: true}(b)
+func logSoftmaxStabilization(a *Node) (retVal *Node, err error) {
+	stabLogf("Stabilizing log(softmax) of %v", a)
+	enterLogScope()
+	defer leaveLogScope()
+
+	switch op := a.op.(type) {
+	case *softmaxOp:
+		op.isLog = true
+		return a, nil
+	case elemBinOp:
+		if op.ʘBinaryOperator.binOpType() == mulOpType {
+			fst := a.children[0]
+			snd := a.children[1]
+
+			var hasSm bool
+			var smop1, smop2 *softmaxOp
+			if smop, ok := fst.op.(*softmaxOp); ok {
+				hasSm = true
+				smop1 = smop
+			}
+			if smop, ok := snd.op.(*softmaxOp); ok {
+				hasSm = true
+				smop2 = smop
+			}
+
+			if hasSm {
+				var newFst, newSnd *Node
+				switch {
+				case smop1 != nil && smop2 == nil:
+					smop1.isLog = true
+					newFst = fst
+					if newSnd, err = Log(snd); err != nil {
+						return nil, err
+					}
+				case smop1 == nil && smop2 != nil:
+					smop2.isLog = true
+					newSnd = snd
+					if newFst, err = Log(fst); err != nil {
+						return nil, err
+					}
+				case smop1 != nil && smop2 != nil:
+					smop1.isLog = true
+					smop2.isLog = true
+					newFst = fst
+					newSnd = snd
+				default:
+					return a, noStabilizationErr{}
+				}
+
+				// g := a.g
+				// g.removeAllEdgesFrom(a) // remove all references
+				// g.RemoveNode(a)
+				// returnNode(a) // send it back to the pool, since it is literally useless now
+				return Add(newFst, newSnd)
+			}
+
+		}
+	}
+	return a, noStabilizationErr{}
+
+}
+
 /* Graph Optimizations */
 
-// NegNegOptimization optimizes away -(-x) to just return x
+// negNegOptimization optimizes away -(-x) to just return x
 // place before neg
-func NegNegOptimization(a *Node) (retVal *Node, err error) {
+func negNegOptimization(a *Node) (retVal *Node, err error) {
 	stabLogf("Optimizing -(-x)")
 	enterLogScope()
 	defer leaveLogScope()

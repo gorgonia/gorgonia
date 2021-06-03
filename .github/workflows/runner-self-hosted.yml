@@ -1,0 +1,138 @@
+## DO NOT EDIT - This file is generated
+on: [pull_request]
+name: Build and Tests on Self-Hosted (arm)
+env:
+  GOPROXY: "https://proxy.golang.org"
+jobs:
+  stable-go:
+    name: Build and test on latest stable Go release - Self-Hosted 
+    env:
+      GOVERSION: '1.16.x'
+    strategy:
+      matrix:
+        experimental: [false]
+        tags: [none]
+    runs-on: "self-hosted"
+    continue-on-error: ${{ matrix.experimental }}
+    steps:
+    - name: Install Go 
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ env.GOVERSION }}
+    # Get values for cache paths to be used in later steps
+    - id: go-cache-paths
+      run: |
+        echo "::set-output name=go-build::$(go env GOCACHE)"
+        echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+    - name: Checkout
+      uses: actions/checkout@v2
+    # Cache go build cache, used to speedup go test
+    - name: Go Build Cache
+      if: steps.go-cache-paths.outputs.go-build != ''
+      id: build-cache
+      uses: actions/cache@v2
+      with:
+        path: ${{ steps.go-cache-paths.outputs.go-build }}
+        key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-build- 
+    # Cache go mod cache, used to speedup builds
+    - name: Go Mod Cache
+      if: steps.go-cache-paths.outputs.go-mod != ''
+      id: build-mod-cache
+      uses: actions/cache@v2
+      with:
+        path: ${{ steps.go-cache-paths.outputs.go-mod }}
+        key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-mod- 
+    - name: Install Dependencies
+      if: steps.build-mod-cache.outputs.cache-hit != 'true'
+      run: |
+        GOARCH=arm GOOS=linux go get -t .
+        GOARCH=amd64 GOOS=linux go get -t .
+        GOARCH=amd64 GOOS=darwin go get -t .
+    - name: Build without tags (all plateforms)
+      if: matrix.tags == 'none'
+      run: |
+        GOARCH=arm GOOS=linux go build . 
+        GOARCH=amd64 GOOS=linux go build .
+        GOARCH=amd64 GOOS=darwin go build .
+    - name: Test without tags
+      if: matrix.tags == 'none'
+      run: |
+        go test  -timeout 20m
+    - name: Build with tag 
+      if: matrix.tags != 'none'
+      run: |
+        go build -tags=${{ matrix.tags }}
+    - name: Test with tag
+      if: matrix.tags != 'none'
+      run: |
+        go test  -timeout 20m -tags=${{ matrix.tags }}
+  previous-go:
+    name: Build and test on previous stable Go release - Self-Hosted 
+    env:
+      GOVERSION: '1.15.x'
+    strategy:
+      matrix:
+        experimental: [false]
+        tags: [none]
+    runs-on: "self-hosted"
+    continue-on-error: ${{ matrix.experimental }}
+    steps:
+    - name: Install Go 
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ env.GOVERSION }}
+    # Get values for cache paths to be used in later steps
+    - id: go-cache-paths
+      run: |
+        echo "::set-output name=go-build::$(go env GOCACHE)"
+        echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+    - name: Checkout
+      uses: actions/checkout@v2
+    # Cache go build cache, used to speedup go test
+    - name: Go Build Cache
+      if: steps.go-cache-paths.outputs.go-build != ''
+      id: build-cache
+      uses: actions/cache@v2
+      with:
+        path: ${{ steps.go-cache-paths.outputs.go-build }}
+        key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-build- 
+    # Cache go mod cache, used to speedup builds
+    - name: Go Mod Cache
+      if: steps.go-cache-paths.outputs.go-mod != ''
+      id: build-mod-cache
+      uses: actions/cache@v2
+      with:
+        path: ${{ steps.go-cache-paths.outputs.go-mod }}
+        key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-mod- 
+    - name: Install Dependencies
+      if: steps.build-mod-cache.outputs.cache-hit != 'true'
+      run: |
+        GOARCH=arm GOOS=linux go get -t .
+        GOARCH=amd64 GOOS=linux go get -t .
+        GOARCH=amd64 GOOS=darwin go get -t .
+    - name: Build without tags (all plateforms)
+      if: matrix.tags == 'none'
+      run: |
+        GOARCH=arm GOOS=linux go build . 
+        GOARCH=amd64 GOOS=linux go build .
+        GOARCH=amd64 GOOS=darwin go build .
+    - name: Test without tags
+      if: matrix.tags == 'none'
+      run: |
+        go test  -timeout 20m
+    - name: Build with tag 
+      if: matrix.tags != 'none'
+      run: |
+        go build -tags=${{ matrix.tags }}
+    - name: Test with tag
+      if: matrix.tags != 'none'
+      run: |
+        go test  -timeout 20m -tags=${{ matrix.tags }}

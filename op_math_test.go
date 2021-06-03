@@ -34,31 +34,31 @@ var binOpTests = []binOpTest{
 
 	{Add,
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
-		newF64(1.0),
+		NewF64(1.0),
 
 		tensor.New(tensor.WithBacking([]float64{2, 3, 4, 5})),
 		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
-		newF64(4.0),
+		NewF64(4.0),
 		tensor.Shape{4},
 	},
 
 	{Add,
-		newF64(1.0),
+		NewF64(1.0),
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
 
 		tensor.New(tensor.WithBacking([]float64{2, 3, 4, 5})),
-		newF64(4.0),
+		NewF64(4.0),
 		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
 		tensor.Shape{4},
 	},
 
 	{Add,
-		newF64(1.0),
-		newF64(1.0),
+		NewF64(1.0),
+		NewF64(1.0),
 
-		newF64(2.0),
-		newF64(1.0),
-		newF64(1.0),
+		NewF64(2.0),
+		NewF64(1.0),
+		NewF64(1.0),
 		scalarShape,
 	},
 
@@ -74,31 +74,31 @@ var binOpTests = []binOpTest{
 
 	{Sub,
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
-		newF64(1.0),
+		NewF64(1.0),
 
 		tensor.New(tensor.WithBacking([]float64{0, 1, 2, 3})),
 		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
-		newF64(-4.0),
+		NewF64(-4.0),
 		tensor.Shape{4},
 	},
 
 	{Sub,
-		newF64(1.0),
+		NewF64(1.0),
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
 
 		tensor.New(tensor.WithBacking([]float64{0, -1, -2, -3})),
-		newF64(4.0),
+		NewF64(4.0),
 		tensor.New(tensor.WithBacking([]float64{-1, -1, -1, -1})),
 		tensor.Shape{4},
 	},
 
 	{Sub,
-		newF64(1.0),
-		newF64(1.0),
+		NewF64(1.0),
+		NewF64(1.0),
 
-		newF64(0.0),
-		newF64(1.0),
-		newF64(-1.0),
+		NewF64(0.0),
+		NewF64(1.0),
+		NewF64(-1.0),
 		scalarShape,
 	},
 
@@ -114,31 +114,31 @@ var binOpTests = []binOpTest{
 
 	{Mul,
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
-		newF64(1.0),
+		NewF64(1.0),
 
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
 		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
-		newF64(10),
+		NewF64(10),
 		tensor.Shape{4},
 	},
 
 	{Mul,
-		newF64(1.0),
+		NewF64(1.0),
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
 
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
-		newF64(10),
+		NewF64(10),
 		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
 		tensor.Shape{4},
 	},
 
 	{Mul,
-		newF64(1.0),
-		newF64(1.0),
+		NewF64(1.0),
+		NewF64(1.0),
 
-		newF64(1.0),
-		newF64(1.0),
-		newF64(1.0),
+		NewF64(1.0),
+		NewF64(1.0),
+		NewF64(1.0),
 		scalarShape,
 	},
 
@@ -154,31 +154,31 @@ var binOpTests = []binOpTest{
 
 	{Div,
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
-		newF64(1.0),
+		NewF64(1.0),
 
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
 		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
-		newF64(-10),
+		NewF64(-10),
 		tensor.Shape{4},
 	},
 
 	{Div,
-		newF64(1),
+		NewF64(1),
 		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
 
 		tensor.New(tensor.WithBacking([]float64{1, 1, 1, 1})),
-		newF64(4),
+		NewF64(4),
 		tensor.New(tensor.WithBacking([]float64{-1, -1, -1, -1})),
 		tensor.Shape{4},
 	},
 
 	{Div,
-		newF64(1.0),
-		newF64(1.0),
+		NewF64(1.0),
+		NewF64(1.0),
 
-		newF64(1.0),
-		newF64(1.0),
-		newF64(-1.0),
+		NewF64(1.0),
+		NewF64(1.0),
+		NewF64(-1.0),
 		scalarShape,
 	},
 
@@ -196,31 +196,31 @@ var binOpTests = []binOpTest{
 
 	{Add,
 		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
-		newF32(1.0),
+		NewF32(1.0),
 
 		tensor.New(tensor.WithBacking([]float32{2, 3, 4, 5})),
 		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
-		newF32(4.0),
+		NewF32(4.0),
 		tensor.Shape{4},
 	},
 
 	{Add,
-		newF32(1.0),
+		NewF32(1.0),
 		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
 
 		tensor.New(tensor.WithBacking([]float32{2, 3, 4, 5})),
-		newF32(4.0),
+		NewF32(4.0),
 		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
 		tensor.Shape{4},
 	},
 
 	{Add,
-		newF32(1.0),
-		newF32(1.0),
+		NewF32(1.0),
+		NewF32(1.0),
 
-		newF32(2.0),
-		newF32(1.0),
-		newF32(1.0),
+		NewF32(2.0),
+		NewF32(1.0),
+		NewF32(1.0),
 		scalarShape,
 	},
 
@@ -236,31 +236,31 @@ var binOpTests = []binOpTest{
 
 	{Sub,
 		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
-		newF32(1.0),
+		NewF32(1.0),
 
 		tensor.New(tensor.WithBacking([]float32{0, 1, 2, 3})),
 		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
-		newF32(-4.0),
+		NewF32(-4.0),
 		tensor.Shape{4},
 	},
 
 	{Sub,
-		newF32(1.0),
+		NewF32(1.0),
 		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
 
 		tensor.New(tensor.WithBacking([]float32{0, -1, -2, -3})),
-		newF32(4.0),
+		NewF32(4.0),
 		tensor.New(tensor.WithBacking([]float32{-1, -1, -1, -1})),
 		tensor.Shape{4},
 	},
 
 	{Sub,
-		newF32(1.0),
-		newF32(1.0),
+		NewF32(1.0),
+		NewF32(1.0),
 
-		newF32(0.0),
-		newF32(1.0),
-		newF32(-1.0),
+		NewF32(0.0),
+		NewF32(1.0),
+		NewF32(-1.0),
 		scalarShape,
 	},
 
@@ -276,31 +276,31 @@ var binOpTests = []binOpTest{
 
 	{Mul,
 		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
-		newF32(1.0),
+		NewF32(1.0),
 
 		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
 		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
-		newF32(10),
+		NewF32(10),
 		tensor.Shape{4},
 	},
 
 	{Mul,
-		newF32(1.0),
+		NewF32(1.0),
 		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
 
 		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
-		newF32(10),
+		NewF32(10),
 		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
 		tensor.Shape{4},
 	},
 
 	{Mul,
-		newF32(1.0),
-		newF32(1.0),
+		NewF32(1.0),
+		NewF32(1.0),
 
-		newF32(1.0),
-		newF32(1.0),
-		newF32(1.0),
+		NewF32(1.0),
+		NewF32(1.0),
+		NewF32(1.0),
 		scalarShape,
 	},
 
@@ -316,31 +316,31 @@ var binOpTests = []binOpTest{
 
 	{Div,
 		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
-		newF32(1.0),
+		NewF32(1.0),
 
 		tensor.New(tensor.WithBacking([]float32{1, 2, 3, 4})),
 		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
-		newF32(-10),
+		NewF32(-10),
 		tensor.Shape{4},
 	},
 
 	{Div,
-		newF32(1),
+		NewF32(1),
 		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
 
 		tensor.New(tensor.WithBacking([]float32{1, 1, 1, 1})),
-		newF32(4),
+		NewF32(4),
 		tensor.New(tensor.WithBacking([]float32{-1, -1, -1, -1})),
 		tensor.Shape{4},
 	},
 
 	{Div,
-		newF32(1.0),
-		newF32(1.0),
+		NewF32(1.0),
+		NewF32(1.0),
 
-		newF32(1.0),
-		newF32(1.0),
-		newF32(-1.0),
+		NewF32(1.0),
+		NewF32(1.0),
+		NewF32(-1.0),
 		scalarShape,
 	},
 
@@ -474,7 +474,7 @@ func testOneArithTape(t *testing.T, bot binOpTest, i int) error {
 func TestTensordotOpDoDiff(t *testing.T) {
 	assert := assert.New(t)
 
-	// Scalars
+	// Vectors
 	g := NewGraph()
 	a := NewTensor(g, Float64, 1, WithName("a"), WithShape(1))
 	b := NewTensor(g, Float64, 1, WithName("b"), WithShape(1))
@@ -490,13 +490,13 @@ func TestTensordotOpDoDiff(t *testing.T) {
 	c, err := ApplyOp(tensordot, a, b)
 
 	if err != nil {
-		log.Fatal("scalars: Cannot ApplyOp:", err)
+		log.Fatalf("scalars: Cannot ApplyOp: %+v", err)
 		return
 	}
 
-	aT := tensor.New(tensor.WithShape(1), tensor.WithBacking([]float64{2}))
-	bT := tensor.New(tensor.WithShape(1), tensor.WithBacking([]float64{21}))
-	cT := tensor.New(tensor.WithShape(1), tensor.WithBacking([]float64{1})) // Backing doesn't matter as long as it is set
+	aT := tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{2}))
+	bT := tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{21}))
+	cT := tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{1})) // Backing doesn't matter as long as it is set
 
 	aVal, _, _, _ := anyToValue(aT)
 	bVal, _, _, _ := anyToValue(bT)
@@ -507,8 +507,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 	c.bind(dvUnitVar(cVal)) // Will set Output derivative to all ones
 
 	if err := tensordot.DoDiff(ExecutionContext{}, Nodes{a, b}, c); err != nil {
-		log.Fatal("scalars: Cannot DoDiff:", err)
-		return
+		t.Fatalf("scalars: Cannot DoDiff: %+v", err)
 	}
 
 	aG, _ := a.Grad()

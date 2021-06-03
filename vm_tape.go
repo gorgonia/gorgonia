@@ -108,6 +108,7 @@ func (m *tapeMachine) doBindDV()    { m.runFlags |= byte(1) << spare3 }
 func (m *tapeMachine) dontBindDV()  { m.runFlags &= (^(byte(1) << spare3)) }
 
 // Reset resets the run state of the machine by changing the instruction pointer back to 0
+// and reseting the registry
 func (m *tapeMachine) Reset() {
 	m.pc = 0
 	m.ExternMetadata.Reset()
@@ -115,6 +116,9 @@ func (m *tapeMachine) Reset() {
 	for i := range m.gpumem {
 		returnValue(m.gpumem[i])
 		m.gpumem[i] = nil //
+	}
+	for i := range m.cpumem {
+		m.cpumem[i] = nil
 	}
 }
 

@@ -691,6 +691,7 @@ func (op *maxPoolOp) Do(inputs ...Value) (retVal Value, err error) {
 	}
 	inShp := in.Shape()
 	out = tensor.New(tensor.Of(in.Dtype()), tensor.WithShape(op.calcShape(inShp)...), tensor.WithEngine(in.Engine()))
+
 	op.do(out, in)
 	return out, nil
 }
@@ -788,14 +789,24 @@ func (op *maxPoolOp) calcShape(s tensor.Shape) tensor.Shape {
 	return tensor.Shape{b, c, pooledH, pooledW}
 }
 
+func (op *maxPoolOp) strideValue(strides []int) int {
+	if len(strides) < 2 {
+		return 0
+	}
+
+	return strides[1]
+}
+
 // do prepares the data, and then dispatches it to the correct (computation) kernel.
 // out is the preallocated tensor
 func (op *maxPoolOp) do(out, in tensor.Tensor) {
 	outShape := out.Shape()
-	outStride := out.Strides()[1]
+	outStride := op.strideValue(out.Strides())
+
 	inShape := in.Shape()
-	inStride := in.Strides()[1]
-	maskStride := op.mask.Strides()[1]
+	inStride := op.strideValue(in.Strides())
+
+	maskStride := op.strideValue(op.mask.Strides())
 
 	b, c, h, w := outShape[0], outShape[1], outShape[2], outShape[3]
 	inH, inW := inShape[2], inShape[3]
@@ -1004,9 +1015,9 @@ func (op *maxPoolDiffOp) checkInput(inputs ...Value) (in, pooled, pooledGrad ten
 
 func (op *maxPoolDiffOp) do(inGrad, in, pooled, pooledGrad tensor.Tensor) {
 	pooledShape := pooled.Shape()
-	pooledStride := pooled.Strides()[1]
+	pooledStride := op.strideValue(pooled.Strides())
 	inStride := in.Strides()[1]
-	maskStride := op.mask.Strides()[1]
+	maskStride := op.strideValue(op.mask.Strides())
 	maskData := op.mask.Data().([]int)
 
 	b, c, h, w := pooledShape[0], pooledShape[1], pooledShape[2], pooledShape[3]
@@ -1121,6 +1132,7 @@ func (op *clampOp) String() string   { return fmt.Sprintf("ConstClamp{%f, %f}()"
 type BatchNormOp struct {
 	momentum float64 // momentum for the moving average
 	epsilon  float64 // small variance to be added to avoid dividing by 0
+	dims     int     // 2 or 4. defaults to 4
 
 	// learnables
 	mean, variance, ma *tensor.Dense
@@ -1138,7 +1150,12 @@ func (op *BatchNormOp) Arity() int { return 1 }
 
 // Type ...
 func (op *BatchNormOp) Type() hm.Type {
-	t := TensorType{Dims: 4, Of: hm.TypeVariable('a')}
+	dims := op.dims
+	if dims == 0 {
+		dims = 4 // default to 4 if not set
+	}
+
+	t := TensorType{Dims: dims, Of: hm.TypeVariable('a')}
 	return hm.NewFnType(t, t)
 }
 
@@ -1428,7 +1445,12 @@ type batchnormDiffOp struct{ *BatchNormOp }
 func (op *batchnormDiffOp) Arity() int { return 2 }
 
 func (op *batchnormDiffOp) Type() hm.Type {
-	t := TensorType{Dims: 4, Of: hm.TypeVariable('a')}
+	dims := op.dims
+	if dims == 0 {
+		dims = 4
+	}
+
+	t := TensorType{Dims: dims, Of: hm.TypeVariable('a')}
 	return hm.NewFnType(t, t, t)
 }
 
@@ -1550,6 +1572,7 @@ func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) (err error
 
 	// dE/dY - mean(dE/dY)-mean(dE/dY ⋅ Y) ⋅ Y
 	beta := (-1.0 / float64(nc))
+
 	vecf64.Scale(ig, beta)
 	vecf64.Add(ig, og)
 

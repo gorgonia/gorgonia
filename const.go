@@ -77,6 +77,8 @@ const (
 	gradOnDeviceFail    = "Cannot get gradient of %v on %v"
 	makeValueFail       = "Unable to make value of %v with shape %v"
 	allocFail           = "Unable to allocate %v bytes on %v"
+
+	shapeMismatchErr = "Shape Mismatch. Expected %v. Got %v instead."
 )
 
 var empty struct{}

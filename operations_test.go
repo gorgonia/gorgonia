@@ -2,10 +2,12 @@ package gorgonia
 
 import (
 	"io/ioutil"
+	"log"
 	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gorgonia.org/tensor"
 )
 
@@ -161,21 +163,21 @@ var gtTests = []struct {
 	err      bool
 }{
 	// s-s
-	{newF64(float64(1)), newF64(float64(0)), true, newF64(1.0), false},
-	{newF64(float64(0)), newF64(float64(1)), true, newF64(0.0), false},
-	{newF64(float64(1)), newF64(float64(0)), false, newB(true), false},
-	{newF32(float32(0)), newF32(float32(1)), false, newB(false), false},
+	{NewF64(float64(1)), NewF64(float64(0)), true, NewF64(1.0), false},
+	{NewF64(float64(0)), NewF64(float64(1)), true, NewF64(0.0), false},
+	{NewF64(float64(1)), NewF64(float64(0)), false, NewB(true), false},
+	{NewF32(float32(0)), NewF32(float32(1)), false, NewB(false), false},
 
 	// s-t
 	{
-		newF64(float64(1)), tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})),
+		NewF64(float64(1)), tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})),
 		true,
 		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{1, 0})),
 		false,
 	},
 
 	{
-		newF32(float32(1)), tensor.New(tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})),
+		NewF32(float32(1)), tensor.New(tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})),
 		false,
 		tensor.New(tensor.WithShape(2), tensor.WithBacking([]bool{true, false})),
 		false,
@@ -183,14 +185,14 @@ var gtTests = []struct {
 
 	// t-s
 	{
-		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})), newF64(float64(1)),
+		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})), NewF64(float64(1)),
 		true,
 		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 1})),
 		false,
 	},
 
 	{
-		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})), newF32(float32(1)),
+		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})), NewF32(float32(1)),
 		false,
 		tensor.New(tensor.WithShape(2), tensor.WithBacking([]bool{false, true})),
 		false,
@@ -398,7 +400,6 @@ func TestMisha(t *testing.T) {
 
 func TestSoftMax(t *testing.T) {
 	defer runtime.GC()
-	assert := assert.New(t)
 	g := NewGraph()
 	xT := tensor.New(tensor.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
 	x := NewVector(g, Float64, WithShape(5), WithValue(xT))
@@ -410,48 +411,52 @@ func TestSoftMax(t *testing.T) {
 		t.Error(err)
 	}
 
-	m := NewTapeMachine(g)
+	m := NewTapeMachine(g, TraceExec())
 	defer m.Close()
 	if err := m.RunAll(); err != nil {
 		t.Error(err)
 	}
-
-	var smg, xG Value
+	ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
+	var xG Value
 	var err error
-	if smg, err = sm.Grad(); err != nil {
-		t.Error(err)
-	}
-
 	if xG, err = x.Grad(); err != nil {
 		t.Error(err)
 	}
 
 	// machine 2, graph 2
-
-	g2 := NewGraph()
+	h := NewGraph()
 	xT2 := tensor.New(tensor.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
-	x2 := NewVector(g, Float64, WithShape(5), WithValue(xT2))
+	x2 := NewVector(h, Float64, WithShape(5), WithValue(xT2))
 	sm2 := Must(SoftMax(x2))
 	logsm2 := Must(Neg(Must(Log(sm2))))
 	Must(Slice(logsm2, S(2)))
 
-	m2 := NewLispMachine(g2)
+	m2 := NewLispMachine(h)
 	defer m2.Close()
 	if err = m2.RunAll(); err != nil {
+		log.Printf("ERR %v", err)
 		t.Error(err)
 	}
 
-	var sm2g, x2G Value
-	if sm2g, err = sm2.Grad(); err != nil {
-		t.Error(err)
-	}
-
+	var x2G Value
 	if x2G, err = x2.Grad(); err != nil {
 		t.Error(err)
 	}
 
-	assert.Equal(smg, sm2g)
-	assert.Equal(xG, x2G)
+	if !floatsEqual64(xG.Data().([]float64), x2G.Data().([]float64)) {
+		t.Errorf("Expected both gradients of X to be the same.")
+	}
+	t.Logf("\n%v\n%v\n%v", sm.Value(), logsm.Value(), cost.Value())
+	correctXGrad := []float64{
+		0.178025447751409, 0.1967485475322529, -0.8806659736677602, 0.24030921861990098, 0.2655827597641975,
+	}
+
+	if !floatsEqual64(correctXGrad, x2G.Data().([]float64)) {
+		t.Errorf("Expected results to be %v. Got %v.", correctXGrad, x2G.Data())
+	}
+	if !floatsEqual64(correctXGrad, xG.Data().([]float64)) {
+		t.Errorf("Expected results to be %v. Got %v.", correctXGrad, xG.Data())
+	}
 }
 
 var sliceTests = []struct {
@@ -600,9 +605,9 @@ var sumTests = []struct {
 	expectedGrad  Value
 	err           bool
 }{
-	{"Sum(vec)", tensor.Shape{2}, nil, scalarShape, newF64(1.0), newF64(1.0), false},
-	{"Sum(vec, 0)", tensor.Shape{2}, []int{0}, scalarShape, newF64(1), newF64(1.0), false},
-	{"Sum(Mat)", tensor.Shape{2, 3}, nil, scalarShape, newF64(15.0), tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 1, 1, 1, 1, 1})), false},
+	{"Sum(vec)", tensor.Shape{2}, nil, scalarShape, NewF64(1.0), NewF64(1.0), false},
+	{"Sum(vec, 0)", tensor.Shape{2}, []int{0}, scalarShape, NewF64(1), NewF64(1.0), false},
+	{"Sum(Mat)", tensor.Shape{2, 3}, nil, scalarShape, NewF64(15.0), tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 1, 1, 1, 1, 1})), false},
 	{"Sum(Mat, 0)", tensor.Shape{2, 3}, []int{0}, tensor.Shape{3},
 		tensor.New(tensor.WithShape(3), tensor.WithBacking([]float64{3, 5, 7})),
 		tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 1, 1, 1, 1, 1})), false,
@@ -751,21 +756,31 @@ func TestTensordot(t *testing.T) {
 	// Scalars
 	g := NewGraph()
 
-	a := NewTensor(g, Float64, 1, WithName("a"), WithShape(1), WithInit(RangedFrom(2)))
-	b := NewTensor(g, Float64, 1, WithName("b"), WithShape(1), WithInit(RangedFrom(21)))
-
-	c := NewTensor(g, Float64, 1, WithName("c"), WithShape(1), WithInit(ValuesOf(1.0)))
+	a := NewTensor(g, Float64, 0, WithName("a"), WithShape(1), WithInit(RangedFrom(2)))
+	b := NewTensor(g, Float64, 0, WithName("b"), WithShape(1), WithInit(RangedFrom(21)))
+	c := NewTensor(g, Float64, 0, WithName("c"), WithShape(1), WithInit(ValuesOf(1.0)))
 
 	tensordot, err := Tensordot([]int{0}, []int{0}, a, b)
+	if err == nil {
+		t.Fatal("Expected scalars to fail")
+	}
 
+	// Scalar-like
+	g = NewGraph()
+	a = NewTensor(g, Float64, 1, WithName("a"), WithShape(1), WithInit(RangedFrom(2)))
+	b = NewTensor(g, Float64, 1, WithName("b"), WithShape(1), WithInit(RangedFrom(21)))
+	c = NewTensor(g, Float64, 1, WithName("c"), WithShape(1), WithInit(ValuesOf(1.0)))
+
+	tensordot, err = Tensordot([]int{0}, []int{0}, a, b)
 	if err != nil {
 		t.Fatal(err)
 	}
+	log.Printf("SHAPE a %v b %v c %v tensordot %v", a.Shape(), b.Shape(), c.Shape(), tensordot.Shape())
 
 	dtensordot, err := Backpropagate(Nodes{tensordot}, Nodes{c}, Nodes{a, b})
 
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("%+v", err)
 	}
 
 	m := NewTapeMachine(g)
@@ -774,30 +789,29 @@ func TestTensordot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	correctInt := float64(42)
+	correctScalarlike := []float64{42.0}
 	value := tensordot.Value().Data()
-	assert.Equal(correctInt, value)
+	assert.Equal(correctScalarlike, value)
 
-	dtensordotCorrectInt0 := float64(21)
-	dtensordotCorrectInt1 := float64(2)
+	dtensordotCorrectScalarlike0 := []float64{21}
+	dtensordotCorrectScalarlike1 := []float64{2}
 
-	assert.Equal(dtensordotCorrectInt0, dtensordot[0].Value().Data())
-	assert.Equal(dtensordotCorrectInt1, dtensordot[1].Value().Data())
+	assert.Equal(dtensordotCorrectScalarlike0, dtensordot[0].Value().Data())
+	assert.Equal(dtensordotCorrectScalarlike1, dtensordot[1].Value().Data())
 
 	// Vectors
 
 	g = NewGraph()
 	a = NewTensor(g, Float64, 1, WithName("a"), WithShape(2), WithInit(RangedFrom(1)))
 	b = NewTensor(g, Float64, 1, WithName("b"), WithShape(2), WithInit(RangedFrom(3)))
-
-	c = NewTensor(g, Float64, 1, WithName("c"), WithShape(1), WithInit(ValuesOf(1.0)))
+	c = NewTensor(g, Float64, 0, WithName("c"), WithShape(), WithInit(ValuesOf(1.0)))
 
 	if tensordot, err = Tensordot([]int{0}, []int{0}, a, b); err != nil {
 		t.Fatal(err)
 	}
 
 	if dtensordot, err = Backpropagate(Nodes{tensordot}, Nodes{c}, Nodes{a, b}); err != nil {
-		t.Fatal(err)
+		t.Fatalf("%+v", err)
 	}
 
 	// Need to multiply dtensordot with identiy matrix, otherwise the transpose action in symdiff is not performed
@@ -812,8 +826,9 @@ func TestTensordot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	correctInt = float64(11)
-	assert.Equal(correctInt, tensordot.Value().Data())
+	log.Printf("TensorDot %v | %v", tensordot.Value().Shape(), tensordot.Type())
+	correctScalarlike = []float64{11}
+	assert.Equal(correctScalarlike, tensordot.Value().Data())
 
 	dcorrect0 := []float64{3, 4}
 	dcorrect1 := []float64{1, 2}
@@ -905,7 +920,7 @@ func TestTensordot(t *testing.T) {
 	a = NewTensor(g, Float64, 2, WithName("a"), WithShape(2, 2), WithInit(RangedFrom(0)))
 	b = NewTensor(g, Float64, 2, WithName("b"), WithShape(2, 2), WithInit(RangedFrom(0)))
 
-	c = NewTensor(g, Float64, 1, WithName("c"), WithShape(1), WithInit(ValuesOf(1.0)))
+	c = NewTensor(g, Float64, 0, WithName("c"), WithShape(), WithInit(ValuesOf(1.0)))
 
 	if tensordot, err = Tensordot([]int{0, 1}, []int{0, 1}, a, b); err != nil {
 		t.Fatal(err)
@@ -931,8 +946,8 @@ func TestTensordot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	correctInt = float64(14)
-	assert.Equal(correctInt, tensordot.Value().Data())
+	correctScalarlike = []float64{14}
+	assert.Equal(correctScalarlike, tensordot.Value().Data())
 
 	dcorrect = []float64{0, 1, 2, 3}
 	assert.Equal(dcorrect, extractF64s(dtensordot0.Value()))
@@ -1019,5 +1034,117 @@ func TestReshapeRuntime(t *testing.T) {
 
 	if !x.Value().Shape().Eq(tensor.Shape{28, 28}) {
 		t.Errorf("A mutation of shape has occurred")
+	}
+}
+
+var ravelTests = []struct {
+	input  tensor.Shape
+	output tensor.Shape
+}{
+	{
+		tensor.Shape{3, 3},
+		tensor.Shape{9},
+	},
+	{
+		tensor.Shape{2, 3},
+		tensor.Shape{6},
+	},
+	{
+		tensor.Shape{2, 1, 3},
+		tensor.Shape{6},
+	},
+	{
+		tensor.Shape{1, 1, 1},
+		tensor.Shape{1},
+	},
+}
+
+func TestRavel(t *testing.T) {
+	c := require.New(t)
+
+	for i, rst := range ravelTests {
+		g := NewGraph()
+		t := NewTensor(g, Float64, len(rst.input), WithShape(rst.input...))
+		t2, err := Ravel(t)
+
+		c.NoError(err)
+		c.Equal(rst.output, t2.Shape(), "expected to be flatten in test case: %d", i)
+	}
+}
+
+func TestAuto(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		shapeA        tensor.Shape
+		shapeB        tensor.Shape
+		expectedShape tensor.Shape
+		expectedErr   string
+	}{
+		{
+			desc:        "Example 0",
+			shapeA:      tensor.Shape{12},
+			shapeB:      tensor.Shape{1, 11},
+			expectedErr: "shapes (12) and (1, 11) should have the same dimensions",
+		},
+		{
+			desc:          "Example 1",
+			shapeA:        tensor.Shape{12, 1},
+			shapeB:        tensor.Shape{12, 11},
+			expectedShape: tensor.Shape{12, 11},
+			expectedErr:   "",
+		},
+		{
+			desc:          "Example 2",
+			shapeA:        tensor.Shape{1, 12},
+			shapeB:        tensor.Shape{11, 12},
+			expectedShape: tensor.Shape{11, 12},
+			expectedErr:   "",
+		},
+		{
+			desc:          "Example 3",
+			shapeA:        tensor.Shape{2, 3, 5},
+			shapeB:        tensor.Shape{2, 3, 1},
+			expectedShape: tensor.Shape{2, 3, 5},
+			expectedErr:   "",
+		},
+		{
+			desc:          "Example 4",
+			shapeA:        tensor.Shape{2, 1, 5},
+			shapeB:        tensor.Shape{2, 3, 5},
+			expectedShape: tensor.Shape{2, 3, 5},
+			expectedErr:   "",
+		},
+		{
+			desc:          "Example 5",
+			shapeA:        tensor.Shape{2, 1, 1},
+			shapeB:        tensor.Shape{2, 5, 3},
+			expectedShape: tensor.Shape{2, 5, 3},
+			expectedErr:   "",
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			c := require.New(t)
+
+			g := NewGraph()
+			a := NewTensor(g, Float64, tC.shapeA.Dims(), WithShape(tC.shapeA...), WithInit(RangedFrom(0)))
+			b := NewTensor(g, Float64, tC.shapeB.Dims(), WithShape(tC.shapeB...), WithInit(RangedFrom(0)))
+
+			out, err := Auto(BroadcastHadamardProd, a, b)
+
+			if tC.expectedErr != "" {
+				c.Error(err)
+				c.Equal(tC.expectedErr, err.Error())
+				return
+			} else {
+				c.NoError(err)
+			}
+
+			c.Equal(tC.expectedShape, out.Shape())
+
+			out, err = Auto(BroadcastHadamardProd, b, a)
+			c.NoError(err)
+			c.Equal(tC.expectedShape, out.Shape())
+		})
 	}
 }

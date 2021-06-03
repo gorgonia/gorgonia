@@ -14,8 +14,8 @@ const (
 	// cols      = 53
 
 	// We'll use a nice even sized batch size, instead of weird prime numbers
-	rows      = 700000
-	cols      = 50
+	rows      = 30000
+	cols      = 5
 	batchSize = 100
 	epochs    = 10
 )
@@ -80,7 +80,7 @@ func (t *concurrentTrainer) train(x, y Value, costChan chan cost, wg *sync.WaitG
 func trainEpoch(bs []batch, ts []*concurrentTrainer, threads int) {
 	// costs := make([]float64, 0, len(bs))
 	chunks := len(bs) / len(ts)
-	for chunk := 0; chunk < chunks; chunk++ {
+	for chunk := 0; chunk <= chunks; chunk++ {
 		costChan := make(chan cost, len(bs))
 
 		var wg sync.WaitGroup
@@ -97,7 +97,7 @@ func trainEpoch(bs []batch, ts []*concurrentTrainer, threads int) {
 		wg.Wait()
 		close(costChan)
 
-		solver := NewVanillaSolver(WithLearnRate(1), WithBatchSize(batchSize))
+		solver := NewVanillaSolver(WithLearnRate(0.01), WithBatchSize(batchSize))
 		for cost := range costChan {
 			// y := cost.Nodes[1].Value()
 			// yG, _ := cost.Nodes[1].Grad()
@@ -123,6 +123,21 @@ func prep() (x, y Value, bs []batch) {
 	xV := tensor.New(tensor.WithShape(rows, cols), tensor.WithBacking(tensor.Range(Float64, 0, cols*rows)))
 	yV := tensor.New(tensor.WithShape(rows), tensor.WithBacking(tensor.Range(Float64, 0, rows)))
 
+	// prep the data: y = ΣnX, where n = col ID, x ∈ X = colID / 100
+	xData := xV.Data().([]float64)
+	yData := yV.Data().([]float64)
+	for r := 0; r < rows; r++ {
+		var sum float64
+		for c := 0; c < cols; c++ {
+			idx := r*cols + c
+			fc := float64(c)
+			v := fc * fc / 100
+			xData[idx] = v
+			sum += v
+		}
+		yData[r] = sum
+	}
+
 	// batch the examples up into their respective batchSize
 	for i := 0; i < rows; i += batchSize {
 		xVS, _ := xV.Slice(S(i, i+batchSize))
@@ -134,7 +149,7 @@ func prep() (x, y Value, bs []batch) {
 }
 
 func concurrentTraining(xV, yV Value, bs []batch, es int) {
-	threads := runtime.GOMAXPROCS(-1) - 1 // reserve one thread for the CPU locked thread
+	threads := runtime.NumCPU()
 
 	ts := make([]*concurrentTrainer, threads)
 	for chunk := 0; chunk < threads; chunk++ {
@@ -160,11 +175,12 @@ func nonConcurrentTraining(xV, yV Value, es int) {
 
 	Let(x, xV)
 	Let(y, yV)
-	solver := NewVanillaSolver(WithLearnRate(1), WithBatchSize(batchSize))
+	solver := NewVanillaSolver(WithLearnRate(0.01), WithBatchSize(batchSize))
 	for i := 0; i < es; i++ {
 		vm.RunAll()
 		solver.Step([]ValueGrad{x, y})
 		vm.Reset()
+		runtime.GC()
 	}
 }
 
@@ -175,21 +191,22 @@ func Example_concurrentTraining() {
 	fmt.Printf("x:\n%1.1v", xV)
 	fmt.Printf("y:\n%1.1v", yV)
 
-	// Outputx:
+	// Output:
 	// x:
-	// ⎡    6      7      8      9  ... 5e+01  5e+01  5e+01  5e+01⎤
-	// ⎢7e+01  7e+01  7e+01  7e+01  ... 1e+02  1e+02  1e+02  1e+02⎥
-	// ⎢1e+02  1e+02  1e+02  1e+02  ... 2e+02  2e+02  2e+02  2e+02⎥
-	// ⎢2e+02  2e+02  2e+02  2e+02  ... 2e+02  2e+02  2e+02  2e+02⎥
+	// ⎡-0.0003     0.01     0.04     0.09      0.2⎤
+	// ⎢-0.0003     0.01     0.04     0.09      0.2⎥
+	// ⎢-0.0003     0.01     0.04     0.09      0.2⎥
+	// ⎢-0.0003     0.01     0.04     0.09      0.2⎥
 	// .
 	// .
 	// .
-	// ⎢4e+07  4e+07  4e+07  4e+07  ... 4e+07  4e+07  4e+07  4e+07⎥
-	// ⎢4e+07  4e+07  4e+07  4e+07  ... 4e+07  4e+07  4e+07  4e+07⎥
-	// ⎢4e+07  4e+07  4e+07  4e+07  ... 4e+07  4e+07  4e+07  4e+07⎥
-	// ⎣4e+07  4e+07  4e+07  4e+07  ... 4e+07  4e+07  4e+07  4e+07⎦
+	// ⎢-0.0003     0.01     0.04     0.09      0.2⎥
+	// ⎢-0.0003     0.01     0.04     0.09      0.2⎥
+	// ⎢-0.0003     0.01     0.04     0.09      0.2⎥
+	// ⎣-0.0003     0.01     0.04     0.09      0.2⎦
 	// y:
-	// [-1e+02  -4e+02  -7e+02  -9e+02  ... -2e+08  -2e+08  -2e+08  -2e+08]
+	// [0.3  0.3  0.3  0.3  ... 0.3  0.3  0.3  0.3]
+
 }
 
 func Example_nonConcurrentTraining() {
@@ -201,17 +218,18 @@ func Example_nonConcurrentTraining() {
 
 	//Output:
 	// x:
-	// ⎡    6      7      8      9  ... 5e+01  5e+01  5e+01  5e+01⎤
-	// ⎢7e+01  7e+01  7e+01  7e+01  ... 1e+02  1e+02  1e+02  1e+02⎥
-	// ⎢1e+02  1e+02  1e+02  1e+02  ... 2e+02  2e+02  2e+02  2e+02⎥
-	// ⎢2e+02  2e+02  2e+02  2e+02  ... 2e+02  2e+02  2e+02  2e+02⎥
+	// ⎡-0.0003     0.01     0.04     0.09      0.2⎤
+	// ⎢-0.0003     0.01     0.04     0.09      0.2⎥
+	// ⎢-0.0003     0.01     0.04     0.09      0.2⎥
+	// ⎢-0.0003     0.01     0.04     0.09      0.2⎥
 	// .
 	// .
 	// .
-	// ⎢4e+07  4e+07  4e+07  4e+07  ... 4e+07  4e+07  4e+07  4e+07⎥
-	// ⎢4e+07  4e+07  4e+07  4e+07  ... 4e+07  4e+07  4e+07  4e+07⎥
-	// ⎢4e+07  4e+07  4e+07  4e+07  ... 4e+07  4e+07  4e+07  4e+07⎥
-	// ⎣4e+07  4e+07  4e+07  4e+07  ... 4e+07  4e+07  4e+07  4e+07⎦
+	// ⎢-0.0003     0.01     0.04     0.09      0.2⎥
+	// ⎢-0.0003     0.01     0.04     0.09      0.2⎥
+	// ⎢-0.0003     0.01     0.04     0.09      0.2⎥
+	// ⎣-0.0003     0.01     0.04     0.09      0.2⎦
 	// y:
-	// [-1e+02  -4e+02  -7e+02  -9e+02  ... -2e+08  -2e+08  -2e+08  -2e+08]
+	// [0.3  0.3  0.3  0.3  ... 0.3  0.3  0.3  0.3]
+
 }

@@ -1,0 +1,31 @@
+on: 
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+name: Code Coverage
+jobs:
+  coverage:
+    runs-on: "ubuntu-latest"
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.15.x
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Calc coverage
+      run: |
+        go test -v -covermode=atomic -coverprofile=coverage.out 
+    - uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+        files: coverage.out
+        flags: unittests # optional
+        name: codecov-gorgonia # optional
+        fail_ci_if_error: true # optional (default = false)
+        verbose: true # optional (default = false)

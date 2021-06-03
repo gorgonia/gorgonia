@@ -2,7 +2,6 @@ package gorgonia
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"gorgonia.org/tensor"
@@ -29,12 +28,16 @@ func ExampleSoftMax() {
 	sm := Must(SoftMax(c))
 	m := NewTapeMachine(g)
 	if err := m.RunAll(); err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
+
 	fmt.Printf("a:\n%v\nsoftmax(a) - along last axis (default behaviour):\n%1.2f", a.Value(), sm1.Value())
 	fmt.Printf("b:\n%v\nsoftmax(b) - along axis 0:\n%1.2f", b.Value(), sm0.Value())
+
 	tmp := fmt.Sprintf("c %v:\n%v\nsoftmax(c) - along last axis (default behaviour) %v:\n%1.2f", c.Value().Shape(), c.Value(), sm.Value().Shape(), sm.Value())
+
 	fmt.Println(strings.Replace(tmp, "\n\n\n", "\n\n", -1))
+
 	// the requirement to use tmp and strings.Replace is because when Go runs example tests, it strips excess newlines.
 
 	// Output:
@@ -76,12 +79,12 @@ func ExampleConcat() {
 
 	z, err := Concat(2, x, y)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	m := NewTapeMachine(g)
 	if err := m.RunAll(); err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	tmp := fmt.Sprintf("z %v\n%v", z.Value().Shape(), z.Value())
 	fmt.Println(strings.Replace(tmp, "\n\n", "\n", -1)) // this is because
@@ -155,18 +158,18 @@ func ExampleUnconcat() {
 
 	z, err := Concat(2, x, y)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	unconcats, err := Unconcat(z, 2, 2)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	a, b := unconcats[0], unconcats[1]
 
 	m := NewTapeMachine(g)
 	if err := m.RunAll(); err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	tmp := fmt.Sprintf("a %v\n%v\nb %v\n%v", a.Value().Shape(), a.Value(), b.Value().Shape(), b.Value())
 	fmt.Println(strings.Replace(tmp, "\n\n", "\n", -1))
