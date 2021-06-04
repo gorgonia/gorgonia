@@ -493,9 +493,9 @@ func (op *softmaxDiffOp) f64Kernel(input, output, yGrad, xGrad []float64, inner,
 			continue
 		}
 
-		y := output
-		dy := yGrad
-		dydx := xGrad
+		y := output[idx:]
+		dy := yGrad[idx:]
+		dydx := xGrad[idx:]
 
 		// calculate sum
 		var sum float64
