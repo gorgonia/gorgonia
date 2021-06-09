@@ -28,6 +28,16 @@ func prodInts(a []int) int {
 	return retVal
 }
 
+func substToInt(a substitutable) (int, bool) {
+	switch at := a.(type) {
+	case Size:
+		return int(at), true
+	case Axis:
+		return int(at), true
+	}
+	return -1, false
+}
+
 func axesToInts(a Axes) []int {
 	return *(*[]int)(unsafe.Pointer(&a))
 }

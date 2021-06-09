@@ -7,9 +7,23 @@ import (
 )
 
 func Fuzz(data []byte) int {
-	if len(data) == 0 {
+	if len(data) < 5 {
 		return -1
 	}
+	t := true
+	for _, v := range data {
+		if v != 0 {
+			t = false
+			break
+		}
+	}
+	if t {
+		return -1
+	}
+
+	var expr Expr
+	fuzz.New().Fuzz(&expr)
+
 	// fuzz ops
 	var bo BinOp
 	fuzz.NewFromGoFuzz(data).Fuzz(&bo)
@@ -17,12 +31,18 @@ func Fuzz(data []byte) int {
 		return 1
 	}
 
-	sz, err := bo.resolveSize()
+	_, err := bo.resolveSize()
 	if err == nil {
 		return 1
 	}
-	if sz == 0 {
-		panic("XXX")
+	_, err = bo.resolveBool()
+	if err == nil {
+		return 1
 	}
+	_, _, err = bo.resolveAB()
+	if err == nil {
+		return 1
+	}
+
 	return 0
 }

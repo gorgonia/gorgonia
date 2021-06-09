@@ -71,7 +71,7 @@ type Compound struct {
 }
 
 func (c Compound) Format(s fmt.State, r rune) {
-	fmt.Fprintf(s, "%v s.t. %v", c.Expr, c.SubjectTo)
+	fmt.Fprintf(s, "{ %v | %v }", c.Expr, c.SubjectTo)
 }
 func (c Compound) apply(ss substitutions) substitutable {
 	return Compound{

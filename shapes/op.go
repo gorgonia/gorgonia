@@ -93,7 +93,7 @@ type BinOp struct {
 
 func (op BinOp) isSizelike() {}
 
-func (op BinOp) isValid() bool { return op.Op >= Add && op.Op < Eq }
+func (op BinOp) isValid() bool { return op.Op >= Add && op.Op <= Or }
 
 func (op BinOp) resolveSize() (Size, error) {
 	if err := op.nofreeevars(); err != nil {

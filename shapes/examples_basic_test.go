@@ -168,9 +168,9 @@ func Example_transpose() {
 
 	// Output:
 	// Unconstrained Transpose: a → X[0 1 3 2] → Tr X[0 1 3 2] a
-	// Transpose: a → X[0 1 3 2] → Tr X[0 1 3 2] a s.t. (D X[0 1 3 2] = D a)
-	// Applying (1, 2, 3, 4) to a → X[0 1 3 2] → Tr X[0 1 3 2] a s.t. (D X[0 1 3 2] = D a):
-	// 	a → X[0 1 3 2] → Tr X[0 1 3 2] a s.t. (D X[0 1 3 2] = D a) @ (1, 2, 3, 4) ↠ X[0 1 3 2] → Tr X[0 1 3 2] (1, 2, 3, 4)
+	// Transpose: { a → X[0 1 3 2] → Tr X[0 1 3 2] a | (D X[0 1 3 2] = D a) }
+	// Applying (1, 2, 3, 4) to { a → X[0 1 3 2] → Tr X[0 1 3 2] a | (D X[0 1 3 2] = D a) }:
+	// 	{ a → X[0 1 3 2] → Tr X[0 1 3 2] a | (D X[0 1 3 2] = D a) } @ (1, 2, 3, 4) ↠ X[0 1 3 2] → Tr X[0 1 3 2] (1, 2, 3, 4)
 	// Applying X[0 1 3 2] to X[0 1 3 2] → Tr X[0 1 3 2] (1, 2, 3, 4):
 	// 	X[0 1 3 2] → Tr X[0 1 3 2] (1, 2, 3, 4) @ X[0 1 3 2] ↠ (1, 2, 4, 3)
 	// Bad Axes causes error: Failed to solve [{X[0 1 3 2] → Tr X[0 1 3 2] (1, 2, 3, 4) = X[0 2 1 3] → a}] | a: Unification Fail. X[0 1 3 2] ~ X[0 2 1 3] cannot proceed
@@ -224,12 +224,11 @@ func Example_index() {
 
 	// Output:
 	// Unconstrained Indexing: a → b → ()
-	// Indexing: a → b → () s.t. ((D a = D b) ∧ (∀ b < ∀ a))
-	// Applying (1, 2, 3, 4) to a → b → () s.t. ((D a = D b) ∧ (∀ b < ∀ a)):
-	// 	a → b → () s.t. ((D a = D b) ∧ (∀ b < ∀ a)) @ (1, 2, 3, 4) ↠ b → () s.t. ((D (1, 2, 3, 4) = D b) ∧ (∀ b < ∀ (1, 2, 3, 4)))
-	// Applying Sz[0 0 1 0] to b → () s.t. ((D (1, 2, 3, 4) = D b) ∧ (∀ b < ∀ (1, 2, 3, 4))):
-	// 	b → () s.t. ((D (1, 2, 3, 4) = D b) ∧ (∀ b < ∀ (1, 2, 3, 4))) @ Sz[0 0 1 0] ↠ ()
-
+	// Indexing: { a → b → () | ((D a = D b) ∧ (∀ b < ∀ a)) }
+	// Applying (1, 2, 3, 4) to { a → b → () | ((D a = D b) ∧ (∀ b < ∀ a)) }:
+	// 	{ a → b → () | ((D a = D b) ∧ (∀ b < ∀ a)) } @ (1, 2, 3, 4) ↠ { b → () | ((D (1, 2, 3, 4) = D b) ∧ (∀ b < ∀ (1, 2, 3, 4))) }
+	// Applying Sz[0 0 1 0] to { b → () | ((D (1, 2, 3, 4) = D b) ∧ (∀ b < ∀ (1, 2, 3, 4))) }:
+	// 	{ b → () | ((D (1, 2, 3, 4) = D b) ∧ (∀ b < ∀ (1, 2, 3, 4))) } @ Sz[0 0 1 0] ↠ ()
 }
 
 func Example_index_unidimensional() {
@@ -277,11 +276,11 @@ func Example_index_unidimensional() {
 
 	// Output:
 	// Unconstrained Indexing: a → b → ()
-	// Indexing: a → b → () s.t. ((D a = D b) ∧ (∀ b < ∀ a))
-	// Applying (5) to a → b → () s.t. ((D a = D b) ∧ (∀ b < ∀ a)):
-	// 	a → b → () s.t. ((D a = D b) ∧ (∀ b < ∀ a)) @ (5) ↠ b → () s.t. ((D (5) = D b) ∧ (∀ b < ∀ (5)))
-	// Applying Sz[0] to b → () s.t. ((D (5) = D b) ∧ (∀ b < ∀ (5))):
-	// 	b → () s.t. ((D (5) = D b) ∧ (∀ b < ∀ (5))) @ Sz[0] ↠ ()
+	// Indexing: { a → b → () | ((D a = D b) ∧ (∀ b < ∀ a)) }
+	// Applying (5) to { a → b → () | ((D a = D b) ∧ (∀ b < ∀ a)) }:
+	// 	{ a → b → () | ((D a = D b) ∧ (∀ b < ∀ a)) } @ (5) ↠ { b → () | ((D (5) = D b) ∧ (∀ b < ∀ (5))) }
+	// Applying Sz[0] to { b → () | ((D (5) = D b) ∧ (∀ b < ∀ (5))) }:
+	// 	{ b → () | ((D (5) = D b) ∧ (∀ b < ∀ (5))) } @ Sz[0] ↠ ()
 
 }
 
@@ -330,11 +329,11 @@ func Example_index_scalar() {
 
 	// Output:
 	// Unconstrained Indexing: a → b → ()
-	// Indexing: a → b → () s.t. ((D a = D b) ∧ (∀ b < ∀ a))
-	// Applying () to a → b → () s.t. ((D a = D b) ∧ (∀ b < ∀ a)):
-	// 	a → b → () s.t. ((D a = D b) ∧ (∀ b < ∀ a)) @ () ↠ b → () s.t. ((D () = D b) ∧ (∀ b < ∀ ()))
-	// Applying Sz[] to b → () s.t. ((D () = D b) ∧ (∀ b < ∀ ())):
-	// 	b → () s.t. ((D () = D b) ∧ (∀ b < ∀ ())) @ Sz[] ↠ ()
+	// Indexing: { a → b → () | ((D a = D b) ∧ (∀ b < ∀ a)) }
+	// Applying () to { a → b → () | ((D a = D b) ∧ (∀ b < ∀ a)) }:
+	// 	{ a → b → () | ((D a = D b) ∧ (∀ b < ∀ a)) } @ () ↠ { b → () | ((D () = D b) ∧ (∀ b < ∀ ())) }
+	// Applying Sz[] to { b → () | ((D () = D b) ∧ (∀ b < ∀ ())) }:
+	// 	{ b → () | ((D () = D b) ∧ (∀ b < ∀ ())) } @ Sz[] ↠ ()
 
 }
 
@@ -378,9 +377,9 @@ func Example_slice() {
 	fmt.Printf("\t%v @ %v ↠ %v\n", retExpr, snd, retExpr2)
 
 	// Output:
-	// slice: a → [0:2] → a[0:2] s.t. (a[0] ≥ 2)
-	// Applying (2, 3, 4) to a → [0:2] → a[0:2] s.t. (a[0] ≥ 2):
-	// 	a → [0:2] → a[0:2] s.t. (a[0] ≥ 2) @ (2, 3, 4) ↠ [0:2] → (2, 3, 4)[0:2]
+	// slice: { a → [0:2] → a[0:2] | (a[0] ≥ 2) }
+	// Applying (2, 3, 4) to { a → [0:2] → a[0:2] | (a[0] ≥ 2) }:
+	// 	{ a → [0:2] → a[0:2] | (a[0] ≥ 2) } @ (2, 3, 4) ↠ [0:2] → (2, 3, 4)[0:2]
 	// Applying [0:2] to [0:2] → (2, 3, 4)[0:2]:
 	// 	[0:2] → (2, 3, 4)[0:2] @ [0:2] ↠ (2, 3, 4)[0:2]
 
@@ -405,7 +404,7 @@ func Example_reshape() {
 	fmt.Printf("%v", expr)
 
 	// Output:
-	// a → b → b s.t. (Π a = Π b)
+	// { a → b → b | (Π a = Π b) }
 }
 
 func Example_colwiseSumMatrix() {
@@ -433,7 +432,7 @@ func Example_colwiseSumMatrix() {
 	fmt.Printf("%v", expr2)
 
 	// Output:
-	// a → b s.t. (D b = D a - 1)
+	// { a → b | (D b = D a - 1) }
 	// (a, b) → (a)
 }
 
