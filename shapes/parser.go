@@ -1,7 +1,10 @@
 package shapes
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"log"
 	"strconv"
 	"strings"
 	"unicode"
@@ -9,9 +12,24 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Parse parses a string and returns a shape expression.
+func Parse(a string) (retVal Expr, err error) {
+	q, err := lex(a)
+	if err != nil {
+		return nil, err
+	}
+
+	p := new(parser)
+	err = p.parse(q)
+	retVal = p.stack[0].(Expr)
+	log.Printf("%v", p.stack)
+	return
+}
+
 type parser struct {
-	stack []substitutable
-	buf   strings.Builder
+	stack      []substitutable
+	infixStack []int // quick hack to allow for parsing of infix operators. The integers point to the existing infix structures in stack
+	buf        strings.Builder
 }
 
 func (p *parser) pop() substitutable {
@@ -28,12 +46,36 @@ func (p *parser) push(a substitutable) {
 	p.stack = append(p.stack, a)
 }
 
+func (p *parser) popExpr() (Expr, error) {
+	s := p.pop()
+	e, ok := s.(Expr)
+	if !ok {
+		return nil, errors.Errorf("Expected an Expr. Got %v of %v instead", s, s)
+	}
+	return e, nil
+}
+func (p *parser) logstack(buf io.Writer) {
+	var uselog bool
+	if buf == nil {
+		buf = new(bytes.Buffer)
+		uselog = true
+	}
+	for i, item := range p.stack {
+		fmt.Fprintf(buf, "%d: %v\n", i, item)
+	}
+	if uselog {
+		log.Println(buf.(*bytes.Buffer).String())
+	}
+}
+
 func (p *parser) parse(q []tok) (err error) {
 	for i := 0; i < len(q); i++ {
 		t := q[i]
 		switch t.t {
 		case parenL:
+			p.push(Abstract{})
 		case parenR:
+			p.resolveA()
 		case brackL:
 			p.push(Sli{})
 		case brackR:
@@ -47,23 +89,120 @@ func (p *parser) parse(q []tok) (err error) {
 				return errors.Wrapf(err, "Parse Error: Unable to parse %c (Location %d).", t.v, t.l)
 			}
 			p.push(SubjectTo{})
+		case digit:
+			p.push(Size(int(t.v))) // we'll treat all intlike things to be Size in the context of the parser.
+
+			log.Printf("digit %v infix stack %v", t.v, p.infixStack)
+			p.logstack(nil)
+			if len(p.infixStack) > 0 && len(p.stack)-2 == p.infixStack[len(p.infixStack)-1] {
+				if err := p.resolveTop(); err != nil {
+					return errors.Wrapf(err, "Failed to parse %v after parsing %d", p.stack[p.infixStack[len(p.infixStack)-1]], t)
+				}
+				p.infixStack = p.infixStack[:len(p.infixStack)-1]
+			}
+		case letter:
+			p.push(Var(t.v))
+
+			log.Printf("leter %c infix stack %v | %d", t.v, p.infixStack, len(p.stack))
+			p.logstack(nil)
+			if len(p.infixStack) > 0 && len(p.stack)-2 == p.infixStack[len(p.infixStack)-1] {
+				if err := p.resolveTop(); err != nil {
+					return errors.Wrapf(err, "Failed to parse %v after parsing %d", p.stack[p.infixStack[len(p.infixStack)-1]], t)
+				}
+				p.infixStack = p.infixStack[:len(p.infixStack)-1]
+			}
+		case arrow:
+			e, err := p.popExpr()
+			if err != nil {
+				return errors.Wrap(err, "Failed to parse Arrow. Left expression error:")
+			}
+			p.push(Arrow{A: e})
+			p.infixStack = append(p.infixStack, len(p.stack)-1)
+		case unop:
+			e, err := p.popExpr()
+			if err != nil {
+				return errors.Wrapf(err, "Failed to parse Unary Operation %c. Left expression error:", t.v)
+			}
+			o, err := parseOpType(t.v)
+			if err != nil {
+				return errors.Wrapf(err, "Failed to parse Unary Operator %c.", t.v)
+			}
+			p.push(UnaryOp{Op: o, A: e})
+			p.infixStack = append(p.infixStack, len(p.stack)-1)
+		case binop:
+			e, err := p.popExpr()
+			if err != nil {
+				return errors.Wrapf(err, "Failed to parse Binary Operation %c. Left expression error:", t.v)
+			}
+			o, err := parseOpType(t.v)
+			if err != nil {
+				return errors.Wrapf(err, "Failed to parse Binary Operator %c.", t.v)
+			}
+			p.push(BinOp{Op: o, A: e})
+			p.infixStack = append(p.infixStack, len(p.stack)-1)
+		case logop:
+			e, err := p.popExpr()
+			if err != nil {
+				return errors.Wrapf(err, "Failed to parse Logical Operation %c. Left expression error:", t.v)
+			}
+			o, err := parseOpType(t.v)
+			if err != nil {
+				return errors.Wrapf(err, "Failed to parse Logical Operator %c.", t.v)
+			}
+			p.push(BinOp{Op: o, A: e})
+			p.infixStack = append(p.infixStack, len(p.stack)-1)
+
 		}
 	}
+	for i := len(p.infixStack) - 1; i >= 0; i-- {
+		if err := p.resolveTop(); err != nil {
+			return errors.Wrap(err, "Unable to resolve top")
+		}
+	}
+
 	return nil
 }
 
-// Parse parses a string and returns a shape expression.
-func Parse(a string) (retVal Expr, err error) {
-	panic("NYI")
-	q, err := lex(a)
-	if err != nil {
-		return nil, err
+func (p *parser) resolveA() error {
+	var fw Abstract
+	var bw []substitutable
+	var ok bool
+	// repeatedly pop stuff off the stack
+	for i := len(p.stack) - 1; i >= 0; i-- {
+		s := p.pop()
+		if fw, ok = s.(Abstract); ok {
+			break
+		}
+		bw = append(bw, s)
+	}
+	if fw == nil {
+		return errors.Errorf("Popped every item of the stack, found no Abstract")
 	}
 
-	p := new(parser)
-	err = p.parse(q)
-	retVal = p.stack[0].(Expr)
-	return
+	for i := len(bw) - 1; i >= 0; i-- {
+		s := bw[i]
+		switch st := s.(type) {
+		case Size:
+			fw = append(fw, st)
+		case Var:
+			fw = append(fw, st)
+		case UnaryOp:
+			fw = append(fw, st)
+		case BinOp:
+			fw = append(fw, st)
+		default:
+			return errors.Errorf("Unable to parse %v of %T as a Sizelike", s, s)
+		}
+	}
+
+	shp, ok := fw.ToShape()
+	if ok {
+		p.push(shp)
+		return nil
+	}
+	p.push(fw)
+	return nil
+
 }
 
 // resolveCompound expects the stack to look like this:
@@ -174,9 +313,31 @@ func (p *parser) resolveTop() (err error) {
 		}
 		p.push(s)
 		return nil
+	case UnaryOp:
+		if s.A, ok = top.(Expr); !ok {
+			return errors.Errorf("Expected top of the stack to be an expression. Got %v of %T instead", top, top)
+		}
+		p.push(s)
+		return nil
+	case BinOp:
+		if s.B, ok = top.(Expr); !ok {
+			return errors.Errorf("Expected top of the stack to be an expression. Got %v of %T instead", top, top)
+		}
+		p.push(s)
+		return nil
+	case Arrow:
+		if s.B, ok = top.(Expr); !ok {
+			return errors.Errorf("Expected top of the stack to be an expression. Got %v of %T instead", top, top)
+		}
+		p.push(s)
+		return nil
+	default:
+		p.push(snd)
+		p.push(top)
+		log.Printf("top: %v of %v | snd %v of %T | stack %v", top, top, snd, snd, p.stack)
+		return nil
 
 	}
-	panic("NYI")
 }
 
 type tokentype int
@@ -241,8 +402,15 @@ func lex(a string) (retVal []tok, err error) {
 				continue
 			}
 			retVal = append(retVal, tok{binop, r, i})
-		case r == '+', r == '*', r == '×', r == '/', r == '÷':
-			retVal = append(retVal, tok{binop, r, i})
+		case r == '+', r == '*', r == '×', r == '/', r == '∕', r == '÷':
+			rr := r
+			if r == '*' {
+				rr = '×'
+			}
+			if r == '/' || r == '∕' {
+				rr = '÷'
+			}
+			retVal = append(retVal, tok{binop, rr, i})
 		case r == '=', r == '≠', r == '≥', r == '≤', r == '≥', r == '≤': // single symbol cmp op (note there are TWO acceptable unicode symbols for gte and lte)
 			retVal = append(retVal, tok{cmpop, r, i})
 		case r == '!':
@@ -321,6 +489,13 @@ func lex(a string) (retVal []tok, err error) {
 			retVal = append(retVal, tok{digit, rune(int32(num)), i})
 		case unicode.IsLetter(r):
 			retVal = append(retVal, tok{letter, r, i})
+			// check if next is a letter. if it is  then error out
+			if i+1 >= len(rs) {
+				return retVal, nil
+			}
+			if unicode.IsLetter(rs[i+1]) {
+				return nil, errors.Errorf("Only single letters are allowed as variables.")
+			}
 
 		}
 

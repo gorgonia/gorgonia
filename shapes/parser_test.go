@@ -62,3 +62,63 @@ func TestLex(t *testing.T) {
 		assert.Equal(t, v, toks)
 	}
 }
+
+var parseCases = map[string]Expr{
+
+	"()":           Shape{},
+	"(1,)":         Shape{1},
+	"(1,2,3,2325)": Shape{1, 2, 3, 2325},
+	"(1, a, 2)":    Abstract{Size(1), Var('a'), Size(2)},
+	"(a,b,c) → (a*b, b*c)": Arrow{
+		Abstract{Var('a'), Var('b'), Var('c')},
+		Abstract{
+			BinOp{Mul, Var('a'), Var('b')},
+			BinOp{Mul, Var('b'), Var('c')},
+		},
+	},
+
+	"{ a → b → () | ((D a = D b) ∧ (∀ b < ∀ a)) }": Compound{
+		Expr: Arrow{
+			Var('a'),
+			Arrow{
+				Var('b'),
+				Abstract{},
+			},
+		},
+		SubjectTo: SubjectTo{
+			And,
+			SubjectTo{
+				Eq,
+				UnaryOp{Dims, Var('a')},
+				UnaryOp{Dims, Var('b')},
+			},
+			SubjectTo{
+				Lt,
+				UnaryOp{ForAll, Var('b')},
+				UnaryOp{ForAll, Var('a')},
+			},
+		},
+	},
+}
+
+/*
+var knownFail = map[string]Expr{
+	"(a,b,c) → (a*b+c, a*b+c)": Arrow{
+		Abstract{Var('a'), Var('b'), Var('c')},
+		Abstract{
+			BinOp{Add, BinOp{Mul, Var('a'), Var('b')}, Var('c')},
+			BinOp{Add, BinOp{Mul, Var('a'), Var('b')}, Var('c')},
+		},
+	},
+}
+*/
+
+func TestParse(t *testing.T) {
+	for k, v := range parseCases {
+		expr, err := Parse(k)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, v, expr, "Failed to parse %q", k)
+	}
+}

@@ -11,75 +11,82 @@ type OpType byte
 
 const (
 	// Unary: a → b
-
 	Const OpType = iota // K
 	Dims
 	Prod
 	Sum
 	ForAll // special use
-
 	// Binary: a → a → a
-
 	Add
 	Sub
 	Mul
 	Div
-
 	// Cmp: a → a → Bool
-
 	Eq
 	Ne
 	Lt
 	Gt
 	Lte
 	Gte
-
 	// Logic: bool → bool → bool
-
 	And
 	Or
 )
 
+var optypeStr = map[OpType]string{
+	Const:  "K",
+	Dims:   "D",
+	Prod:   "Π",
+	Sum:    "Σ",
+	ForAll: "∀",
+	Add:    "+",
+	Sub:    "-",
+	Mul:    "×",
+	Div:    "÷",
+	Eq:     "=",
+	Ne:     "≠",
+	Lt:     "<",
+	Gt:     ">",
+	Lte:    "≤",
+	Gte:    "≥",
+	And:    "∧",
+	Or:     "∨",
+}
+var optypeRune = map[rune]OpType{
+	'K': Const,
+	'D': Dims,
+	'Π': Prod,
+	'Σ': Sum,
+	'∀': ForAll,
+	'+': Add,
+	'-': Sub,
+	'×': Mul,
+	'÷': Div,
+	'=': Eq,
+	'≠': Ne,
+	'<': Lt,
+	'>': Gt,
+	'≤': Lte,
+	'≥': Gte,
+	'∧': And,
+	'∨': Or,
+}
+
 // String returns the string representation
 func (o OpType) String() string {
-	switch o {
-	case Const:
-		return "K"
-	case Dims:
-		return "D"
-	case Prod:
-		return "Π"
-	case Sum:
-		return "Σ"
-	case ForAll:
-		return "∀"
-	case Add:
-		return "+"
-	case Sub:
-		return "-"
-	case Mul:
-		return "×"
-	case Div:
-		return "÷"
-	case Eq:
-		return "="
-	case Ne:
-		return "≠"
-	case Lt:
-		return "<"
-	case Gt:
-		return ">"
-	case Lte:
-		return "≤"
-	case Gte:
-		return "≥"
-	case And:
-		return "∧"
-	case Or:
-		return "∨"
-	default:
-		return fmt.Sprintf("UNFORMATTED OPTYPE %d", byte(o))
+	retVal, ok := optypeStr[o]
+	if !ok {
+		retVal = fmt.Sprintf("UNFORMATTED OPTYPE %d", o)
 	}
+	return retVal
+}
+
+func parseOpType(a rune) (OpType, error) {
+	retVal, ok := optypeRune[a]
+	if !ok {
+		return Const, errors.Errorf("Unknown OpType for rune %c", a)
+	}
+	return retVal, nil
 }
 
 // BinOp represents a binary operation.
@@ -91,10 +98,8 @@ type BinOp struct {
 	B  Expr
 }
 
-func (op BinOp) isSizelike() {}
-
+func (op BinOp) isSizelike()   {}
 func (op BinOp) isValid() bool { return op.Op >= Add && op.Op <= Or }
-
 func (op BinOp) resolveSize() (Size, error) {
 	if err := op.nofreeevars(); err != nil {
 		return 0, errors.Wrapf(err, "Cannot resolve BinOp %v to Size.", op)
@@ -103,7 +108,6 @@ func (op BinOp) resolveSize() (Size, error) {
 	if err != nil {
 		return 0, errors.Wrapf(err, "Cannot resolve BinOp %v to Size.", op)
 	}
-
 	switch op.Op {
 	case Add:
 		return A + B, nil
@@ -117,7 +121,6 @@ func (op BinOp) resolveSize() (Size, error) {
 		return 0, errors.Errorf("Unable to resolve op %v into a Size", op)
 	}
 	panic("unreachable")
-
 }
 
 // resolveBool is only ever used by SubjectTo's resolveBool.
@@ -125,15 +128,11 @@ func (op BinOp) resolveBool() (bool, error) {
 	if err := op.nofreeevars(); err != nil {
 		return false, errors.Wrapf(err, "Cannot resolve BinOp %v to bool.", op)
 	}
-
 	A, B, err := op.resolveAB()
 	if err != nil {
-
 		auo, aok := extractForAll(op.A)
 		buo, bok := extractForAll(op.B)
-
 		var ok bool
-
 		switch {
 		case aok && bok:
 			var A, B intslike
@@ -143,7 +142,6 @@ func (op BinOp) resolveBool() (bool, error) {
 			if B, ok = buo.A.(intslike); !ok {
 				return false, errors.Errorf("Unable to reolve %v to bool. Operand B's expression of %T is not intslike.", op, buo.A)
 			}
-
 			al, bl := A.AsInts(), B.AsInts()
 			if len(al) != len(bl) {
 				return false, nil // will always be false because you cannot compare slices of unequal length. Does this mean it should have an error message? Unsure
@@ -172,7 +170,6 @@ func (op BinOp) resolveBool() (bool, error) {
 			if err != nil {
 				return false, errors.Wrapf(err, "Unable to resolve %v to bool. Operand A %v was unable to be resolved into a Size", op, op.A)
 			}
-
 			bl := B.AsInts()
 			for i, b := range bl {
 				ok, err := op.do(a, Size(b))
@@ -183,7 +180,6 @@ func (op BinOp) resolveBool() (bool, error) {
 					return false, nil
 				}
 			}
-
 		case aok && !bok:
 			A, ok := auo.A.(intslike)
 			if !ok {
@@ -193,12 +189,10 @@ func (op BinOp) resolveBool() (bool, error) {
 			if !ok {
 				return false, errors.Errorf("Unable to resolve %v to bool. Operand B's expression of %T is not a sizeOp", op, op.B)
 			}
-
 			b, err := B.resolveSize()
 			if err != nil {
 				return false, errors.Wrapf(err, "Unable to resolve %v to bool. Operand B %v was unable to be resolved into a Size", op, op.B)
 			}
-
 			al := A.AsInts()
 			for i, a := range al {
 				ok, err := op.do(Size(a), b)
@@ -213,12 +207,9 @@ func (op BinOp) resolveBool() (bool, error) {
 			return false, errors.Errorf("Unable to resolve %v to a bool", op)
 		}
 		return true, nil
-
 	}
 	return op.do(A, B)
-
 }
-
 func (op BinOp) do(A, B Size) (bool, error) {
 	switch op.Op {
 	case Eq:
@@ -235,10 +226,8 @@ func (op BinOp) do(A, B Size) (bool, error) {
 		return A >= B, nil
 	default:
 		return false, errors.Errorf("Cannot resolve BinOp %v to bool.", op)
-
 	}
 }
-
 func (op BinOp) nofreeevars() error {
 	if len(op.A.freevars()) > 0 {
 		return errors.Errorf("Cannot resolve BinOp %v - free vars found in A", op)
@@ -248,7 +237,6 @@ func (op BinOp) nofreeevars() error {
 	}
 	return nil
 }
-
 func (op BinOp) resolveAB() (A, B Size, err error) {
 	switch a := op.A.(type) {
 	case Size:
@@ -261,7 +249,6 @@ func (op BinOp) resolveAB() (A, B Size, err error) {
 	default:
 		return 0, 0, errors.Errorf("Cannot resolve BinOp %v - A (%v) is not resolved to a Size", op, op.A)
 	}
-
 	switch b := op.B.(type) {
 	case Size:
 		B = b
@@ -277,7 +264,6 @@ func (op BinOp) resolveAB() (A, B Size, err error) {
 }
 
 // BinOp implements substitutable
-
 func (op BinOp) apply(ss substitutions) substitutable {
 	return BinOp{
 		Op: op.Op,
@@ -285,13 +271,11 @@ func (op BinOp) apply(ss substitutions) substitutable {
 		B:  op.B.apply(ss).(Expr),
 	}
 }
-
 func (op BinOp) freevars() varset {
 	retVal := op.A.freevars()
 	retVal = append(retVal, op.B.freevars()...)
 	return unique(retVal)
 }
-
 func (op BinOp) subExprs() []substitutableExpr {
 	return []substitutableExpr{op.A.(substitutableExpr), op.B.(substitutableExpr)}
 }
@@ -306,10 +290,8 @@ type UnaryOp struct {
 	A  Expr
 }
 
-func (op UnaryOp) isSizelike() {}
-
+func (op UnaryOp) isSizelike()   {}
 func (op UnaryOp) isValid() bool { return op.Op < Add }
-
 func (op UnaryOp) resolveSize() (Size, error) {
 	if !op.isValid() {
 		return 0, errors.Errorf("Invalid UnaryOp %v", op)
@@ -403,7 +385,6 @@ func (op UnaryOp) resolveSize() (Size, error) {
 		case Sum:
 			return A, nil
 		}
-
 	case Axis:
 		switch op.Op {
 		case Const:
@@ -422,14 +403,12 @@ func (op UnaryOp) resolveSize() (Size, error) {
 }
 
 // UnaryOp implements substitutable
-
 func (op UnaryOp) apply(ss substitutions) substitutable {
 	return UnaryOp{
 		Op: op.Op,
 		A:  op.A.apply(ss).(Expr),
 	}
 }
-
 func (op UnaryOp) freevars() varset { return op.A.freevars() }
 
 // UnaryOp is an Expr
