@@ -77,12 +77,38 @@ var parseCases = map[string]Expr{
 		},
 	},
 
+	// Transpose:
+	"{ a → X[0 1 3 2] → Tr X[0 1 3 2] a | (D X[0 1 3 2] = D a) }": Compound{
+		Expr: Arrow{
+			Var('a'),
+			Arrow{
+				Axes{0, 1, 3, 2},
+				TransposeOf{
+					Axes{0, 1, 3, 2},
+					Var('a'),
+				},
+			},
+		},
+		SubjectTo: SubjectTo{
+			Eq,
+			UnaryOp{Dims, Axes{0, 1, 3, 2}},
+			UnaryOp{Dims, Var('a')},
+		},
+	},
+
+	// Indexing
+	"a → b -> ()": Arrow{
+		Var('a'),
+		Arrow{Var('b'), Shape{}},
+	},
+
+	// Indexing (constrained)
 	"{ a → b → () | ((D a = D b) ∧ (∀ b < ∀ a)) }": Compound{
 		Expr: Arrow{
 			Var('a'),
 			Arrow{
 				Var('b'),
-				Abstract{},
+				Shape{},
 			},
 		},
 		SubjectTo: SubjectTo{
@@ -96,6 +122,58 @@ var parseCases = map[string]Expr{
 				Lt,
 				UnaryOp{ForAll, Var('b')},
 				UnaryOp{ForAll, Var('a')},
+			},
+		},
+	},
+
+	// Slicing
+	"{ a → [0:2] → a[0:2] | (a[0] ≥ 2) }": Compound{
+		Expr: Arrow{
+			Var('a'),
+			Arrow{
+				Sli{0, 2, 1},
+				SliceOf{
+					Sli{0, 2, 1},
+					Var('a'),
+				},
+			},
+		},
+		SubjectTo: SubjectTo{
+			OpType: Gte,
+			A:      IndexOf{I: 0, A: Var('a')},
+			B:      Size(2),
+		},
+	},
+
+	// Reshaping
+	"{ a → b → b | (Π a = Π b) }": Compound{
+		Arrow{
+			Var('a'),
+			Arrow{
+				Var('b'),
+				Var('b'),
+			},
+		},
+		SubjectTo{
+			Eq,
+			UnaryOp{Prod, Var('a')},
+			UnaryOp{Prod, Var('b')},
+		},
+	},
+
+	// Columnwise Sum Matrix
+	"{ a → b | (D b = D a - 1) }": Compound{
+		Arrow{
+			Var('a'),
+			Var('b'),
+		},
+		SubjectTo{
+			Eq,
+			UnaryOp{Dims, Var('b')},
+			BinOp{
+				Sub,
+				UnaryOp{Dims, Var('a')},
+				Size(1),
 			},
 		},
 	},
