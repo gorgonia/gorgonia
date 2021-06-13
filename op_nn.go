@@ -2,6 +2,10 @@ package gorgonia
 
 import (
 	"fmt"
+	"hash"
+	"math"
+	"time"
+
 	"github.com/chewxy/hm"
 	"github.com/chewxy/math32"
 	rng "github.com/leesper/go_rng"
@@ -10,9 +14,6 @@ import (
 	"gorgonia.org/tensor/native"
 	"gorgonia.org/vecf32"
 	"gorgonia.org/vecf64"
-	"hash"
-	"math"
-	"time"
 )
 
 // Sanity checks
@@ -1677,6 +1678,7 @@ func (op *batchnormDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVa
 	default:
 		return nil, nyi("batchnormDiffOp", "Do")
 	}
+
 	return prealloc, err
 }
 
