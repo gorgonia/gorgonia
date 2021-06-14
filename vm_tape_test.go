@@ -3,6 +3,8 @@ package gorgonia
 import (
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func Test_tapeMachine_Reset(t *testing.T) {
@@ -49,4 +51,38 @@ func Test_tapeMachine_Reset(t *testing.T) {
 	if !reflect.DeepEqual(m1.pc, m2.pc) {
 		t.Fatalf("expected pc\n\n%#v, got\n\n%#v", m1, m2)
 	}
+}
+
+func Test_tapeMachineEvalMode(t *testing.T) {
+	c := require.New(t)
+
+	g := NewGraph()
+
+	x := NewTensor(g, Float32, 2, WithShape(3, 2), WithInit(GlorotN(1)), WithName("x"))
+	scale := NewTensor(g, Float32, 2, WithShape(1, 2), WithInit(GlorotN(1)), WithName("scale"))
+	bias := NewTensor(g, Float32, 2, WithShape(1, 2), WithInit(GlorotN(1)), WithName("bias"))
+
+	y, _, _, op, err := BatchNorm(x, scale, bias, 0.9, 1e-5)
+	c.NoError(err)
+
+	op.SetTraining()
+
+	var yVal, scaleVal Value
+	Read(y, &yVal)
+	Read(scale, &scaleVal)
+
+	cost, _ := Mean(y)
+
+	if _, err := Grad(cost, x, scale, bias); err != nil {
+		t.Fatal(err)
+	}
+
+	trainVM := NewTapeMachine(g, BindDualValues(x, scale, bias), TraceExec())
+
+	err = trainVM.RunAll()
+	c.NoError(err)
+
+	evalVM := NewTapeMachine(g, EvalMode())
+	err = evalVM.RunAll()
+	c.NoError(err)
 }

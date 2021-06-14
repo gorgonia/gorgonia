@@ -1178,6 +1178,7 @@ func (op *BatchNormOp) Do(values ...Value) (retVal Value, err error) {
 	if out, err = CloneValue(v); err != nil {
 		return nil, err
 	}
+
 	return op.UsePreallocDo(out, v)
 }
 
