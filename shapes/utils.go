@@ -380,3 +380,7 @@ func ShapeOf(a interface{}) Expr {
 	}
 	panic("Unreachable")
 }
+
+type noop struct{}
+
+func (noop) Error() string { return "NoOp" }

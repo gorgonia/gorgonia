@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
+	lg "log"
 	"strconv"
 	"strings"
 	"unicode"
 
+	log "github.com/chewxy/InkHuffer"
 	"github.com/pkg/errors"
 )
 
@@ -22,14 +23,14 @@ func Parse(a string) (retVal Expr, err error) {
 	p := new(parser)
 	err = p.parse(q)
 	retVal = p.stack[0].(Expr)
-	log.Printf("%v", p.stack)
 	return
 }
 
 type parser struct {
 	stack      []substitutable
-	infixStack []int // quick hack to allow for parsing of infix operators. The integers point to the existing infix structures in stack
-	buf        strings.Builder
+	infixStack []tok
+
+	buf strings.Builder
 }
 
 func (p *parser) pop() substitutable {
@@ -42,10 +43,6 @@ func (p *parser) pop() substitutable {
 	return retVal
 }
 
-func (p *parser) push(a substitutable) {
-	p.stack = append(p.stack, a)
-}
-
 func (p *parser) popExpr() (Expr, error) {
 	s := p.pop()
 	e, ok := s.(Expr)
@@ -54,6 +51,24 @@ func (p *parser) popExpr() (Expr, error) {
 	}
 	return e, nil
 }
+
+func (p *parser) push(a substitutable) {
+	p.stack = append(p.stack, a)
+}
+
+func (p *parser) pushInfix(t tok) {
+	p.infixStack = append(p.infixStack, t)
+}
+
+func (p *parser) popInfix() tok {
+	if len(p.infixStack) == 0 {
+		panic("Cannot pop infix stack")
+	}
+	retVal := p.infixStack[len(p.infixStack)-1]
+	p.infixStack = p.infixStack[:len(p.infixStack)-1]
+	return retVal
+}
+
 func (p *parser) logstack(buf io.Writer) {
 	var uselog bool
 	if buf == nil {
@@ -64,7 +79,21 @@ func (p *parser) logstack(buf io.Writer) {
 		fmt.Fprintf(buf, "%d: %v\n", i, item)
 	}
 	if uselog {
-		log.Println(buf.(*bytes.Buffer).String())
+		lg.Printf("%v", buf.(*bytes.Buffer).String())
+	}
+}
+
+func (p *parser) loginfixStack(buf io.Writer) {
+	var uselog bool
+	if buf == nil {
+		buf = new(bytes.Buffer)
+		uselog = true
+	}
+	for i, item := range p.infixStack {
+		fmt.Fprintf(buf, "%d: {%v %c %d}\n", i, item.t, item.v, item.l)
+	}
+	if uselog {
+		lg.Printf("%v", buf.(*bytes.Buffer).String())
 	}
 }
 
@@ -73,90 +102,223 @@ func (p *parser) parse(q []tok) (err error) {
 		t := q[i]
 		switch t.t {
 		case parenL:
+			log.Logf("ParenL\nStack\n")
+			p.logstack(nil)
+			log.Logf("InfixStack\n")
+			p.loginfixStack(nil)
+
+			// special case to handle ()
+			t2 := q[i+1]
+			if t2.t == parenR {
+				p.push(Shape{})
+				i++
+				continue
+			}
 			p.push(Abstract{})
+
 		case parenR:
-			p.resolveA()
+			log.Logf("parenR")
+			// before we close any ')', we need to resolve the last infix if there are any.
+			// Now, because of this, the special case of () has to be handled elsewhere
+			p.logstack(nil)
+			p.loginfixStack(nil)
+			for len(p.infixStack) > 0 {
+				if err = p.condResolveInfix(t); err != nil {
+					_, ok := err.(noop)
+					if ok {
+						break
+					}
+					return errors.Wrapf(err, "Unable to resolve the last infix before resolving a Shape at %d", t.l)
+				}
+			}
+			if err = p.resolveA(); err != nil {
+				return errors.Wrapf(err, "Unable to resolve an abstract shape at %d", t.l)
+			}
 		case brackL:
 			p.push(Sli{})
 		case brackR:
-			p.resolveSlice()
+			// before we close any ']', we need to resolve the last infix if there are any.
+			if err = p.maybeResolveInfix(); err != nil {
+				return errors.Wrapf(err, "Unable to resolve the last infix before resolving a slice at %d", t.l)
+			}
+			if err = p.resolveSlice(); err != nil {
+				return errors.Wrapf(err, "Unable to resolve slice at %d", t.l)
+			}
 		case braceL:
 			p.push(Compound{})
 		case braceR:
-			p.resolveCompound()
+			// before we clsoe any '}', we need to resolve the last infix if there are any.
+			if err = p.maybeResolveInfix(); err != nil {
+				return errors.Wrapf(err, "Unable to resolve the last infix before resolving a Compound at %d", t.l)
+			}
+			if err = p.resolveCompound(); err != nil {
+				return errors.Wrapf(err, "Unable to resolve Compound at %d", t.l)
+			}
 		case pipe:
-			if err := p.resolveTop(); err != nil {
-				return errors.Wrapf(err, "Parse Error: Unable to parse %c (Location %d).", t.v, t.l)
+			log.Logf("Pipe:")
+			p.logstack(nil)
+			p.loginfixStack(nil)
+			// before we close any expression with a '|' to go into the clauses, we need to resolve all the infixes.
+			for len(p.infixStack) > 0 {
+				if err = p.resolveInfix(); err != nil {
+					return errors.Wrapf(err, "Unable to resolve the last infix before resolving a slice at %d", t.l)
+				}
 			}
-			p.push(SubjectTo{})
 		case digit:
+			p.logstack(nil)
 			p.push(Size(int(t.v))) // we'll treat all intlike things to be Size in the context of the parser.
-
-			log.Printf("digit %v infix stack %v", t.v, p.infixStack)
 			p.logstack(nil)
-			if len(p.infixStack) > 0 && len(p.stack)-2 == p.infixStack[len(p.infixStack)-1] {
-				if err := p.resolveTop(); err != nil {
-					return errors.Wrapf(err, "Failed to parse %v after parsing %d", p.stack[p.infixStack[len(p.infixStack)-1]], t)
-				}
-				p.infixStack = p.infixStack[:len(p.infixStack)-1]
-			}
 		case letter:
-			p.push(Var(t.v))
-
-			log.Printf("leter %c infix stack %v | %d", t.v, p.infixStack, len(p.stack))
 			p.logstack(nil)
-			if len(p.infixStack) > 0 && len(p.stack)-2 == p.infixStack[len(p.infixStack)-1] {
-				if err := p.resolveTop(); err != nil {
-					return errors.Wrapf(err, "Failed to parse %v after parsing %d", p.stack[p.infixStack[len(p.infixStack)-1]], t)
-				}
-				p.infixStack = p.infixStack[:len(p.infixStack)-1]
+			p.push(Var(t.v))
+			p.logstack(nil)
+		case comma:
+			p.logstack(nil)
+			p.loginfixStack(nil)
+			if err := p.maybeResolveInfix(); err != nil {
+				return errors.Wrapf(err, "Cannot resolve all the infixes in a shape at %d", t.l)
 			}
 		case arrow:
-			e, err := p.popExpr()
-			if err != nil {
-				return errors.Wrap(err, "Failed to parse Arrow. Left expression error:")
-			}
-			p.push(Arrow{A: e})
-			p.infixStack = append(p.infixStack, len(p.stack)-1)
+			p.logstack(nil)
+			p.condResolveInfix(t)
+			p.pushInfix(t)
 		case unop:
-			e, err := p.popExpr()
-			if err != nil {
-				return errors.Wrapf(err, "Failed to parse Unary Operation %c. Left expression error:", t.v)
-			}
-			o, err := parseOpType(t.v)
-			if err != nil {
-				return errors.Wrapf(err, "Failed to parse Unary Operator %c.", t.v)
-			}
-			p.push(UnaryOp{Op: o, A: e})
-			p.infixStack = append(p.infixStack, len(p.stack)-1)
+			log.Logf("Unop %c", t.v)
+			p.logstack(nil)
+			p.condResolveInfix(t)
+			p.pushInfix(t)
+			p.logstack(nil)
+			p.loginfixStack(nil)
+			log.Logf("----")
 		case binop:
-			e, err := p.popExpr()
-			if err != nil {
-				return errors.Wrapf(err, "Failed to parse Binary Operation %c. Left expression error:", t.v)
-			}
-			o, err := parseOpType(t.v)
-			if err != nil {
-				return errors.Wrapf(err, "Failed to parse Binary Operator %c.", t.v)
-			}
-			p.push(BinOp{Op: o, A: e})
-			p.infixStack = append(p.infixStack, len(p.stack)-1)
+			p.condResolveInfix(t)
+			p.pushInfix(t)
+		case cmpop:
+			p.condResolveInfix(t)
+			p.pushInfix(t)
 		case logop:
-			e, err := p.popExpr()
-			if err != nil {
-				return errors.Wrapf(err, "Failed to parse Logical Operation %c. Left expression error:", t.v)
-			}
-			o, err := parseOpType(t.v)
-			if err != nil {
-				return errors.Wrapf(err, "Failed to parse Logical Operator %c.", t.v)
-			}
-			p.push(BinOp{Op: o, A: e})
-			p.infixStack = append(p.infixStack, len(p.stack)-1)
+			p.condResolveInfix(t)
+			p.pushInfix(t)
+		default:
+			panic(fmt.Sprintf("%v with type %v unhandled", t, t.t))
 
 		}
 	}
-	for i := len(p.infixStack) - 1; i >= 0; i-- {
-		if err := p.resolveTop(); err != nil {
-			return errors.Wrap(err, "Unable to resolve top")
+	log.Logf("AT THE END")
+	for len(p.infixStack) > 0 {
+		if err := p.resolveInfix(); err != nil {
+			return errors.Wrap(err, "Unable to resolve final infixes")
+		}
+	}
+	return nil
+}
+
+func (p *parser) maybeResolveInfix() error {
+	log.Logf("Maybe Resolve Infix")
+	log.EnterScope()
+	defer log.LeaveScope()
+	if len(p.infixStack) > 0 {
+		return p.resolveInfix()
+	}
+	return nil
+}
+
+// condResolveInfix conditionally resolves previous infixes given a "current" token. This uses operator precedence (which is not coded)
+func (p *parser) condResolveInfix(cur tok) error {
+	if len(p.infixStack) == 0 {
+		return nil
+	}
+	last := p.infixStack[len(p.infixStack)-1] // peek
+	switch cur.t {
+	case arrow:
+		// if the current token is an arrow, check previous infixes. Only fix them if they are not arrow, because arrow has the lowest operator precedence.
+
+		switch last.t {
+		case arrow:
+			// do nothing
+			return nil
+		default:
+			return p.resolveInfix()
+		}
+
+	case binop:
+		switch last.t {
+		case unop:
+			return p.resolveInfix()
+		case binop:
+			// check for the operator precedence of other binop TODO
+			panic("NYI")
+		default:
+			return noop{}
+		}
+
+	case unop:
+		switch last.t {
+		case unop:
+			return p.resolveInfix()
+		default:
+			return noop{}
+		}
+	case cmpop:
+		switch last.t {
+		case unop:
+			return p.resolveInfix()
+		case cmpop:
+			return p.resolveInfix()
+		default:
+			return noop{}
+		}
+	case logop:
+		switch last.t {
+		case unop:
+			return p.resolveInfix()
+		case binop:
+			return p.resolveInfix()
+		case cmpop:
+			return p.resolveInfix()
+		case logop:
+			return p.resolveInfix()
+		default:
+			return noop{}
+		}
+	default:
+		switch last.t {
+		case arrow:
+			return noop{}
+		}
+
+	}
+	return noop{}
+}
+
+func (p *parser) resolveInfix() error {
+	log.Logf("Resolve Infix")
+	log.EnterScope()
+	defer log.LeaveScope()
+
+	last := p.popInfix()
+	var err error
+	switch last.t {
+	case unop:
+		if err = p.resolveUnOp(last); err != nil {
+			return errors.Wrapf(err, "Unable to resolve unop %v.", last)
+		}
+	case binop:
+		if err = p.resolveBinOp(last); err != nil {
+			return errors.Wrapf(err, "Unable to resolve binop %v.", last)
+		}
+	case cmpop:
+		if err = p.resolveCmpOp(last); err != nil {
+			return errors.Wrapf(err, "Unable to resolve cmpop %v.", last)
+		}
+	case logop:
+		if err = p.resolveLogOp(last); err != nil {
+			return errors.Wrapf(err, "Unable to resolve logop %v.", last)
+		}
+
+	case arrow:
+		if err := p.resolveArrow(last); err != nil {
+			return errors.Wrapf(err, "Cannot resolve arrow %v.", last)
 		}
 	}
 
@@ -164,45 +326,144 @@ func (p *parser) parse(q []tok) (err error) {
 }
 
 func (p *parser) resolveA() error {
-	var fw Abstract
-	var bw []substitutable
+	log.Logf("ResolveA")
+	log.EnterScope()
+	p.logstack(nil)
+	defer log.LeaveScope()
+
+	var abs Abstract
 	var ok bool
+	var bw []substitutable
+
 	// repeatedly pop stuff off the stack
 	for i := len(p.stack) - 1; i >= 0; i-- {
 		s := p.pop()
-		if fw, ok = s.(Abstract); ok {
+		if abs, ok = s.(Abstract); ok && len(abs) == 0 {
 			break
 		}
 		bw = append(bw, s)
 	}
-	if fw == nil {
+	if abs == nil {
 		return errors.Errorf("Popped every item of the stack, found no Abstract")
 	}
-
-	for i := len(bw) - 1; i >= 0; i-- {
-		s := bw[i]
-		switch st := s.(type) {
-		case Size:
-			fw = append(fw, st)
-		case Var:
-			fw = append(fw, st)
-		case UnaryOp:
-			fw = append(fw, st)
-		case BinOp:
-			fw = append(fw, st)
-		default:
-			return errors.Errorf("Unable to parse %v of %T as a Sizelike", s, s)
+	var allSizelike bool = true
+	for _, v := range bw {
+		if _, ok = v.(Sizelike); !ok {
+			allSizelike = false
 		}
 	}
-
-	shp, ok := fw.ToShape()
-	if ok {
-		p.push(shp)
+	log.Logf("all sizelike %v", allSizelike)
+	log.Logf("bw %v", bw)
+	if allSizelike {
+		for i := len(bw) - 1; i >= 0; i-- {
+			s := bw[i].(Sizelike)
+			abs = append(abs, s)
+		}
+		shp, ok := abs.ToShape()
+		if ok {
+			p.push(shp)
+			return nil
+		}
+		p.push(abs)
 		return nil
 	}
-	p.push(fw)
+	p.push(bw[0])
+	log.Logf("...")
+	p.logstack(nil)
+	return nil
+}
+
+func (p *parser) resolveArrow(t tok) error {
+	snd, err := p.popExpr()
+	if err != nil {
+		return errors.Wrapf(err, "Cannot resolve snd of arrow at %d as Expr.", t.l)
+	}
+	fst, err := p.popExpr()
+	if err != nil {
+		return errors.Wrapf(err, "Cannot resolve fst of arrow at %d as Expr.", t.l)
+	}
+	arr := Arrow{
+		A: fst,
+		B: snd,
+	}
+	p.push(arr)
+	return nil
+}
+
+func (p *parser) resolveUnOp(t tok) error {
+	log.Logf("Resolve UnaryOp")
+	log.EnterScope()
+	defer log.LeaveScope()
+	expr, err := p.popExpr()
+	if err != nil {
+		return errors.Wrapf(err, "Cannot resolve expr of unop %c at %d.", t.v, t.l)
+	}
+	op, err := parseOpType(t.v)
+	if err != nil {
+		return errors.Wrapf(err, "Unable to parse UnOp OpType %v", t)
+	}
+	o := UnaryOp{
+		Op: op,
+		A:  expr,
+	}
+	log.Logf("UnaryOP to be pushed %v", o)
+	p.push(o)
+	return nil
+}
+
+func (p *parser) resolveBinOp(t tok) error {
+	snd, err := p.popExpr()
+	if err != nil {
+		return errors.Wrapf(err, "Unable to resolve snd of BinOp at %d as Expr.", t.l)
+	}
+	fst, err := p.popExpr()
+	if err != nil {
+		return errors.Wrapf(err, "Unable to resolve fst of BinOp at %d as Expr.", t.l)
+	}
+
+	op, err := parseOpType(t.v)
+	if err != nil {
+		return errors.Wrapf(err, "Unable to parse BinOp OpType %v", t)
+	}
+
+	o := BinOp{
+		Op: op,
+		A:  fst,
+		B:  snd,
+	}
+	p.push(o)
+	return nil
+}
+
+func (p *parser) resolveCmpOp(t tok) error {
+	snd := p.pop()
+	sndOp, ok := snd.(Operation)
+	if !ok {
+		return errors.Errorf("Cannot resolve snd of CmpOp %c at %d as Operation. Got %T instead ", t.v, t.l, snd)
+	}
+	fst := p.pop()
+	fstOp, ok := fst.(Operation)
+	if !ok {
+		return errors.Errorf("Cannot resolve fst of CmpOp %c at %d as Operation.", t.v, t.l)
+	}
+
+	op, err := parseOpType(t.v)
+	if err != nil {
+		return errors.Wrapf(err, "Unable to parse CmpOp OpType %v", t)
+	}
+
+	o := SubjectTo{
+		OpType: op,
+		A:      fstOp,
+		B:      sndOp,
+	}
+	p.push(o)
 	return nil
 
+}
+
+func (p *parser) resolveLogOp(t tok) error {
+	panic("NYI")
 }
 
 // resolveCompound expects the stack to look like this:
@@ -308,10 +569,6 @@ func (p *parser) resolveTop() (err error) {
 			p.push(s)
 			return nil
 		}
-		if s.SubjectTo, ok = top.(SubjectTo); !ok {
-			return errors.Errorf("Expected top of the stack to be a SubjectTo. Got %v of %T instead", top, top)
-		}
-		p.push(s)
 		return nil
 	case UnaryOp:
 		if s.A, ok = top.(Expr); !ok {
@@ -334,7 +591,6 @@ func (p *parser) resolveTop() (err error) {
 	default:
 		p.push(snd)
 		p.push(top)
-		log.Printf("top: %v of %v | snd %v of %T | stack %v", top, top, snd, snd, p.stack)
 		return nil
 
 	}
@@ -468,7 +724,9 @@ func lex(a string) (retVal []tok, err error) {
 				rr = 'Σ'
 			}
 			retVal = append(retVal, tok{unop, rr, i})
-		case r == ':', r == ',', unicode.IsSpace(r):
+		case r == ',':
+			retVal = append(retVal, tok{comma, r, i})
+		case r == ':', unicode.IsSpace(r):
 			continue // we ignore spaces and delimiters
 		case unicode.IsDigit(r):
 			var rs2 = []rune{r}
