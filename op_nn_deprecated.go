@@ -17,9 +17,9 @@ func (op *BatchNormOp) f64sOld(input, output *tensor.Dense) (err error) {
 	outputF64s := output.Float64s()
 	copy(outputF64s, inputF64s)
 
-	meanTmp := op.meanTmp.Float64s()
+	meanTmp := op.runningMean.Float64s()
 	mean := op.mean.Float64s()
-	varianceTmp := op.varianceTmp.Float64s()
+	varianceTmp := op.runningVariance.Float64s()
 	variance := op.variance.Float64s()
 	tmp := op.tmpSpace.Float64s()
 	ssm := op.spatialSumMultiplier.Float64s()
@@ -98,9 +98,9 @@ func (op *BatchNormOp) f32sOld(input, output *tensor.Dense) (err error) {
 	outputF32s := output.Float32s()
 	copy(outputF32s, inputF32s)
 
-	meanTmp := op.meanTmp.Float32s()
+	meanTmp := op.runningMean.Float32s()
 	mean := op.mean.Float32s()
-	varianceTmp := op.varianceTmp.Float32s()
+	varianceTmp := op.runningVariance.Float32s()
 	variance := op.variance.Float32s()
 	tmp := op.tmpSpace.Float32s()
 	ssm := op.spatialSumMultiplier.Float32s()
@@ -178,7 +178,7 @@ func (op *batchnormDiffOp) f64sOld(input, inGrad, outGrad *tensor.Dense) (err er
 	ssm := op.spatialSumMultiplier.Float64s()
 	nbc := op.numByChans.Float64s()
 	bsm := op.batchSumMultiplier.Float64s()
-	meanTmp := op.meanTmp.Float64s()
+	meanTmp := op.runningMean.Float64s()
 
 	if !op.training {
 		copy(ig, og)
@@ -247,7 +247,7 @@ func (op *batchnormDiffOp) f32sOld(input, inGrad, outGrad *tensor.Dense) (err er
 	ssm := op.spatialSumMultiplier.Float32s()
 	nbc := op.numByChans.Float32s()
 	bsm := op.batchSumMultiplier.Float32s()
-	meanTmp := op.meanTmp.Float32s()
+	meanTmp := op.runningMean.Float32s()
 
 	if !op.training {
 		copy(ig, og)

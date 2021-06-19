@@ -495,8 +495,8 @@ func TestBatchNormAll(t *testing.T) {
 
 			log.Printf("running mean: %v", op.mean)
 			log.Printf("running var: %v", op.variance)
-			log.Printf("running meanTmp: %v", op.meanTmp)
-			log.Printf("running varTmp: %v", op.varianceTmp)
+			log.Printf("running meanTmp: %v", op.runningMean)
+			log.Printf("running varTmp: %v", op.runningVariance)
 
 			log.Printf("output grad: %v", y.Deriv().Value())
 			log.Printf("scale grad: %v", scale.Deriv().Value())
@@ -506,8 +506,8 @@ func TestBatchNormAll(t *testing.T) {
 			c.True(dawson.AllClose(tC.ExpectedBiasGrad, bias.Deriv().Value().Data()), "Bias Grad doesn't match:\ngot=%v expected=%v", bias.Deriv().Value().Data(), tC.ExpectedBiasGrad)
 			c.True(dawson.AllClose(tC.ExpectedScaleGrad, scale.Deriv().Value().Data()), "Scale Grad doens't match:\ngot=%v expected=%v", scale.Deriv().Value().Data(), tC.ExpectedScaleGrad)
 
-			c.True(dawson.AllClose(tC.ExpectedMean, op.meanTmp.Data()), "Mean doesn't match:\ngot=%v expected=%v", op.meanTmp.Data(), tC.ExpectedMean)
-			c.True(dawson.AllClose(tC.ExpectedVariance, op.varianceTmp.Data()), "Variance doesn't match\ngot=%v expected=%v", op.varianceTmp.Data(), tC.ExpectedVariance)
+			c.True(dawson.AllClose(tC.ExpectedMean, op.runningMean.Data()), "Mean doesn't match:\ngot=%v expected=%v", op.runningMean.Data(), tC.ExpectedMean)
+			c.True(dawson.AllClose(tC.ExpectedVariance, op.runningVariance.Data()), "Variance doesn't match\ngot=%v expected=%v", op.runningVariance.Data(), tC.ExpectedVariance)
 		})
 	}
 }

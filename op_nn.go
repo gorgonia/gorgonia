@@ -1140,7 +1140,7 @@ type BatchNormOp struct {
 	mean, variance, ma *tensor.Dense
 
 	// scratch space
-	meanTmp, varianceTmp                                 *tensor.Dense // these are used as running mean and running variance in the new algorithm
+	runningMean, runningVariance                         *tensor.Dense // these are used as running mean and running variance in the new algorithm
 	tmpSpace, xNorm                                      *tensor.Dense
 	batchSumMultiplier, numByChans, spatialSumMultiplier *tensor.Dense
 
@@ -1284,14 +1284,14 @@ func (op *BatchNormOp) Reset() error {
 		return err
 	}
 
-	if err := op.varianceTmp.Memset(uno); err != nil {
+	if err := op.runningVariance.Memset(uno); err != nil {
 		return err
 	}
 
 	op.mean.Zero()
 	op.variance.Zero()
 	op.ma.Zero()
-	op.meanTmp.Zero()
+	op.runningMean.Zero()
 	op.tmpSpace.Zero()
 	op.numByChans.Zero()
 
@@ -1303,8 +1303,8 @@ func (op *BatchNormOp) collectF64s() {
 	// μ and σ has size (c,) - given a shape of (b, c, h, w) from the inputs
 	μ := op.mean.Float64s()
 	σ := op.variance.Float64s()
-	α := op.meanTmp.Float64s()
-	β := op.varianceTmp.Float64s()
+	α := op.runningMean.Float64s()
+	β := op.runningVariance.Float64s()
 	for i, m := range μ {
 		inv := 1.0 / math.Sqrt(σ[i]+op.epsilon)
 		// no weight or biases
@@ -1328,8 +1328,8 @@ func (op *BatchNormOp) updateStatsF64(input *tensor.Dense) {
 	}
 	mean := op.mean.Float64s()
 	variance := op.variance.Float64s()
-	ma := op.meanTmp.Float64s()
-	mv := op.varianceTmp.Float64s()
+	ma := op.runningMean.Float64s()
+	mv := op.runningVariance.Float64s()
 
 	for c := 0; c < chans; c++ {
 		var μ float64
@@ -1408,8 +1408,8 @@ func (op *BatchNormOp) inferF64s(input, output *tensor.Dense) {
 
 	op.collectF64s()
 
-	alpha := op.meanTmp.Float64s()
-	beta := op.varianceTmp.Float64s()
+	alpha := op.runningMean.Float64s()
+	beta := op.runningVariance.Float64s()
 
 	if sz == 1 {
 		// special loop for image size == 1
@@ -1459,8 +1459,8 @@ func (op *BatchNormOp) collectF32s() {
 	// μ and σ has size (c,) - given a shape of (b, c, h, w) from the inputs
 	μ := op.mean.Float32s()
 	σ := op.variance.Float32s()
-	α := op.meanTmp.Float32s()
-	β := op.varianceTmp.Float32s()
+	α := op.runningMean.Float32s()
+	β := op.runningVariance.Float32s()
 	for i, m := range μ {
 		inv := 1.0 / math32.Sqrt(σ[i]+float32(op.epsilon))
 		// no weight or biases
@@ -1484,8 +1484,8 @@ func (op *BatchNormOp) updateStatsF32(input *tensor.Dense) {
 	}
 	mean := op.mean.Float32s()
 	variance := op.variance.Float32s()
-	ma := op.meanTmp.Float32s()
-	mv := op.varianceTmp.Float32s()
+	ma := op.runningMean.Float32s()
+	mv := op.runningVariance.Float32s()
 
 	for c := 0; c < chans; c++ {
 		var μ float32
@@ -1565,8 +1565,8 @@ func (op *BatchNormOp) inferF32s(input, output *tensor.Dense) {
 
 	op.collectF32s()
 
-	alpha := op.meanTmp.Float32s()
-	beta := op.varianceTmp.Float32s()
+	alpha := op.runningMean.Float32s()
+	beta := op.runningVariance.Float32s()
 
 	if sz == 1 {
 		// special loop for image size == 1
@@ -1709,8 +1709,8 @@ func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) {
 		mean = op.mean.Float64s()
 		invstdev = op.variance.Float64s()
 	} else {
-		mean = op.meanTmp.Float64s()
-		invstdev = op.varianceTmp.Float64s()
+		mean = op.runningMean.Float64s()
+		invstdev = op.runningVariance.Float64s()
 	}
 
 	if op.training {
@@ -1784,8 +1784,8 @@ func (op *batchnormDiffOp) f32s(input, inGrad, outGrad *tensor.Dense) {
 		mean = op.mean.Float32s()
 		invstdev = op.variance.Float32s()
 	} else {
-		mean = op.meanTmp.Float32s()
-		invstdev = op.varianceTmp.Float32s()
+		mean = op.runningMean.Float32s()
+		invstdev = op.runningVariance.Float32s()
 	}
 
 	if op.training {
