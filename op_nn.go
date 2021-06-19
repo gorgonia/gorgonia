@@ -1284,13 +1284,17 @@ func (op *BatchNormOp) Reset() error {
 		return err
 	}
 
+	if err := op.varianceTmp.Memset(uno); err != nil {
+		return err
+	}
+
 	op.mean.Zero()
 	op.variance.Zero()
 	op.ma.Zero()
 	op.meanTmp.Zero()
-	op.varianceTmp.Zero()
 	op.tmpSpace.Zero()
 	op.numByChans.Zero()
+
 	return nil
 }
 
