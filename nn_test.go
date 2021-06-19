@@ -346,7 +346,7 @@ func TestMaxPool(t *testing.T) {
 	}
 }
 
-func TestBatchNorm1d(t *testing.T) {
+func TestBatchNormAll(t *testing.T) {
 	generator := func(start float64, increment float64) InitWFn {
 		return func(dt tensor.Dtype, s ...int) interface{} {
 			totalSize := tensor.Shape(s).TotalSize()
@@ -374,7 +374,8 @@ func TestBatchNorm1d(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc  string
+		desc string
+
 		Dtype tensor.Dtype
 
 		XInit  InitWFn
@@ -389,7 +390,7 @@ func TestBatchNorm1d(t *testing.T) {
 		ExpectedResult, ExpectedOutputGrad, ExpectedBiasGrad, ExpectedScaleGrad, ExpectedMean, ExpectedVariance interface{}
 	}{
 		{
-			desc:               "Example1",
+			desc:               "Example1 (1d)",
 			Dtype:              tensor.Float32,
 			XInit:              generator(0.5, 0.01),
 			XShape:             tensor.Shape{3, 2},
@@ -405,7 +406,7 @@ func TestBatchNorm1d(t *testing.T) {
 			ExpectedScaleGrad:  []float32{5.9604645e-07, 5.9604645e-07},
 		},
 		{
-			desc:               "Example2",
+			desc:               "Example2 (1d)",
 			Dtype:              tensor.Float64,
 			XInit:              generator(0.5, 0.01),
 			XShape:             tensor.Shape{3, 2},
@@ -421,7 +422,7 @@ func TestBatchNorm1d(t *testing.T) {
 			ExpectedScaleGrad:  []float64{0, 0},
 		},
 		{
-			desc:               "Example3",
+			desc:               "Example3 (1d)",
 			Dtype:              tensor.Float32,
 			XInit:              generator(0.1, 0.001),
 			XShape:             tensor.Shape{3, 2},
@@ -436,6 +437,22 @@ func TestBatchNorm1d(t *testing.T) {
 			ExpectedBiasGrad:   []float32{0.5, 0.5},
 			ExpectedScaleGrad:  []float32{3.501773e-07, 1.0579824e-06},
 		},
+		{
+			desc:               "Example4 (2d)",
+			Dtype:              tensor.Float32,
+			XInit:              generator(0.1, 0.001),
+			XShape:             tensor.Shape{2, 2, 2, 2},
+			ScaleInit:          Ones(),
+			ScaleShape:         tensor.Shape{1, 2, 1, 1},
+			BiasInit:           Zeroes(),
+			BiasShape:          tensor.Shape{1, 2, 1, 1},
+			ExpectedResult:     []float32{-1.0536097, -0.8620441, -0.67047983, -0.47891417, -1.0536081, -0.86204386, -0.6704782, -0.47891262, 0.47891274, 0.670477, 0.86204267, 1.0536083, 0.47891405, 0.6704782, 0.86204386, 1.0536095},
+			ExpectedMean:       []float32{0.105500005, 0.1095},
+			ExpectedVariance:   []float32{0.9, 0.9},
+			ExpectedOutputGrad: []float32{0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625},
+			ExpectedBiasGrad:   []float32{0.5, 0.5},
+			ExpectedScaleGrad:  []float32{-4.4703484e-07, 1.7881393e-07},
+		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
@@ -447,7 +464,7 @@ func TestBatchNorm1d(t *testing.T) {
 
 			x := NewTensor(g, tC.Dtype, tC.XShape.Dims(), WithShape(tC.XShape...), WithInit(tC.XInit), WithName("x"))
 
-			log.Printf("%v", x.Value())
+			log.Printf("input: %v", x.Value())
 
 			scale := NewTensor(g, tC.Dtype, tC.ScaleShape.Dims(), WithShape(tC.ScaleShape...), WithInit(tC.ScaleInit), WithName("scale"))
 			bias := NewTensor(g, tC.Dtype, tC.BiasShape.Dims(), WithShape(tC.BiasShape...), WithInit(tC.BiasInit), WithName("bias"))
@@ -489,8 +506,8 @@ func TestBatchNorm1d(t *testing.T) {
 			c.True(dawson.AllClose(tC.ExpectedBiasGrad, bias.Deriv().Value().Data()), "Bias Grad doesn't match:\ngot=%v expected=%v", bias.Deriv().Value().Data(), tC.ExpectedBiasGrad)
 			c.True(dawson.AllClose(tC.ExpectedScaleGrad, scale.Deriv().Value().Data()), "Scale Grad doens't match:\ngot=%v expected=%v", scale.Deriv().Value().Data(), tC.ExpectedScaleGrad)
 
-			c.True(dawson.AllClose(tC.ExpectedMean, op.mean.Data()), "Mean doesn't match:\ngot=%v expected=%v", op.mean.Data(), tC.ExpectedMean)
-			c.True(dawson.AllClose(tC.ExpectedVariance, op.variance.Data()), "Variance doesn't match\ngot=%v expected=%v", op.variance.Data(), tC.ExpectedVariance)
+			c.True(dawson.AllClose(tC.ExpectedMean, op.meanTmp.Data()), "Mean doesn't match:\ngot=%v expected=%v", op.meanTmp.Data(), tC.ExpectedMean)
+			c.True(dawson.AllClose(tC.ExpectedVariance, op.varianceTmp.Data()), "Variance doesn't match\ngot=%v expected=%v", op.varianceTmp.Data(), tC.ExpectedVariance)
 		})
 	}
 }
