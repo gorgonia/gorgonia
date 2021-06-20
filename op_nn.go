@@ -1238,16 +1238,16 @@ func (op *BatchNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Va
 	out := prealloc.(*tensor.Dense)
 	switch v.Dtype() {
 	case Float64:
-		op.updateStatsF64(in)
 		if op.training {
+			op.updateStatsF64(in)
 			op.trainF64s(in, out)
 		} else {
 			op.inferF64s(in, out)
 		}
 
 	case Float32:
-		op.updateStatsF32(in)
 		if op.training {
+			op.updateStatsF32(in)
 			op.trainF32s(in, out)
 		} else {
 			op.inferF32s(in, out)
@@ -1296,23 +1296,6 @@ func (op *BatchNormOp) Reset() error {
 	op.numByChans.Zero()
 
 	return nil
-}
-
-// collectF64s is collects the constant terms for inference purposes
-func (op *BatchNormOp) collectF64s() {
-	// μ and σ has size (c,) - given a shape of (b, c, h, w) from the inputs
-	μ := op.mean.Float64s()
-	σ := op.variance.Float64s()
-	α := op.runningMean.Float64s()
-	β := op.runningVariance.Float64s()
-	for i, m := range μ {
-		inv := 1.0 / math.Sqrt(σ[i]+op.epsilon)
-		// no weight or biases
-		// weight = 1.0
-		// bias = 0.0
-		α[i] = inv * 1.0
-		β[i] = 0.0 - m*α[i]
-	}
 }
 
 // updateStats computes the running mean and variances
@@ -1406,32 +1389,21 @@ func (op *BatchNormOp) inferF64s(input, output *tensor.Dense) {
 	batchOffset := chans * sz
 	loopBatch := sz - (sz % 4) // vectorized operation at 8 at a time
 
-	op.collectF64s()
+	runningMean := op.runningMean.Float64s()
+	runningVariance := op.runningVariance.Float64s()
+	oneNeg := []float64{-1, -1, -1, -1}
+	epsilon := []float64{op.epsilon, op.epsilon, op.epsilon, op.epsilon}
 
-	alpha := op.runningMean.Float64s()
-	beta := op.runningVariance.Float64s()
-
-	if sz == 1 {
-		// special loop for image size == 1
-		for n := 0; n < b; n++ {
-			for c := 0; c < chans; c++ {
-				offset := n*chans + c
-				O[offset] = I[offset]*alpha[c] + beta[c]
-			}
-		}
-		return
-
-	}
-
+	// (input - mean) / sqrt(var + epsilon)
 	for n := 0; n < b; n++ {
 		for c := 0; c < chans; c++ {
 			// broadcast meanTmp and varianceTmp into vectors
-			var α, β [4]float64
-			for i := range α {
-				α[i] = alpha[c]
+			var mean, variance [4]float64
+			for i := range mean {
+				mean[i] = runningMean[c]
 			}
-			for i := range β {
-				β[i] = beta[c]
+			for i := range variance {
+				variance[i] = runningVariance[c]
 			}
 
 			offset := n*batchOffset + c*sz
@@ -1439,35 +1411,17 @@ func (op *BatchNormOp) inferF64s(input, output *tensor.Dense) {
 			for ; d < loopBatch; d += 4 {
 				var data [4]float64
 				copy(data[:], I[offset+d:])
-				vecf64.Mul(data[:], α[:])
-				vecf64.Add(data[:], β[:])
-				copy(O[offset+d:], data[:])
-			}
-			if sz-d > 0 {
-				var data [4]float64
-				copy(data[:], I[offset+d:])
-				vecf64.Mul(data[:], α[:])
-				vecf64.Add(data[:], β[:])
+
+				vecf64.Mul(mean[:], oneNeg)
+				vecf64.Add(data[:], mean[:])
+
+				vecf64.Add(variance[:], epsilon)
+				vecf64.Sqrt(variance[:])
+
+				vecf64.Div(data[:], variance[:])
 				copy(O[offset+d:], data[:])
 			}
 		}
-	}
-}
-
-// collectF32s is collects the constant terms for inference purposes
-func (op *BatchNormOp) collectF32s() {
-	// μ and σ has size (c,) - given a shape of (b, c, h, w) from the inputs
-	μ := op.mean.Float32s()
-	σ := op.variance.Float32s()
-	α := op.runningMean.Float32s()
-	β := op.runningVariance.Float32s()
-	for i, m := range μ {
-		inv := 1.0 / math32.Sqrt(σ[i]+float32(op.epsilon))
-		// no weight or biases
-		// weight = 1.0
-		// bias = 0.0
-		α[i] = inv * float32(1.0)
-		β[i] = 0.0 - m*α[i]
 	}
 }
 
@@ -1523,7 +1477,6 @@ func (op *BatchNormOp) trainF32s(input, output *tensor.Dense) {
 	s := input.Shape()
 	batches := s[0]
 	chans := s[1]
-	//chans := s[0] * s[1]
 
 	in, err := native.SelectF32(input, 1)
 	if err != nil {
@@ -1563,32 +1516,21 @@ func (op *BatchNormOp) inferF32s(input, output *tensor.Dense) {
 	batchOffset := chans * sz
 	loopBatch := sz - (sz % 4) // vectorized operation at 8 at a time
 
-	op.collectF32s()
+	runningMean := op.runningMean.Float32s()
+	runningVariance := op.runningVariance.Float32s()
+	oneNeg := []float32{-1, -1, -1, -1}
+	epsilon := []float32{float32(op.epsilon), float32(op.epsilon), float32(op.epsilon), float32(op.epsilon)}
 
-	alpha := op.runningMean.Float32s()
-	beta := op.runningVariance.Float32s()
-
-	if sz == 1 {
-		// special loop for image size == 1
-		for n := 0; n < b; n++ {
-			for c := 0; c < chans; c++ {
-				offset := n*chans + c
-				O[offset] = I[offset]*alpha[c] + beta[c]
-			}
-		}
-		return
-
-	}
-
+	// (input - mean) / sqrt(var + epsilon)
 	for n := 0; n < b; n++ {
 		for c := 0; c < chans; c++ {
 			// broadcast meanTmp and varianceTmp into vectors
-			var α, β [4]float32
-			for i := range α {
-				α[i] = alpha[c]
+			var mean, variance [4]float32
+			for i := range mean {
+				mean[i] = runningMean[c]
 			}
-			for i := range β {
-				β[i] = beta[c]
+			for i := range variance {
+				variance[i] = runningVariance[c]
 			}
 
 			offset := n*batchOffset + c*sz
@@ -1596,15 +1538,14 @@ func (op *BatchNormOp) inferF32s(input, output *tensor.Dense) {
 			for ; d < loopBatch; d += 4 {
 				var data [4]float32
 				copy(data[:], I[offset+d:])
-				vecf32.Mul(data[:], α[:])
-				vecf32.Add(data[:], β[:])
-				copy(O[offset+d:], data[:])
-			}
-			if sz-d > 0 {
-				var data [4]float32
-				copy(data[:], I[offset+d:])
-				vecf32.Mul(data[:], α[:])
-				vecf32.Add(data[:], β[:])
+
+				vecf32.Mul(mean[:], oneNeg)
+				vecf32.Add(data[:], mean[:])
+
+				vecf32.Add(variance[:], epsilon)
+				vecf32.Sqrt(variance[:])
+
+				vecf32.Div(data[:], variance[:])
 				copy(O[offset+d:], data[:])
 			}
 		}
