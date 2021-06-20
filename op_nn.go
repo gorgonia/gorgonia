@@ -1391,10 +1391,26 @@ func (op *BatchNormOp) inferF64s(input, output *tensor.Dense) {
 
 	runningMean := op.runningMean.Float64s()
 	runningVariance := op.runningVariance.Float64s()
+
+	// (input - mean) / sqrt(var + epsilon)
+
+	// 1d version
+	if sz == 1 {
+		// special loop for image size == 1
+		for n := 0; n < b; n++ {
+			for c := 0; c < chans; c++ {
+				offset := n*chans + c
+				O[offset] = (I[offset] - runningMean[c]) / math.Sqrt(float64(runningVariance[c])+op.epsilon)
+			}
+		}
+
+		return
+	}
+
+	// 2d version
 	oneNeg := []float64{-1, -1, -1, -1}
 	epsilon := []float64{op.epsilon, op.epsilon, op.epsilon, op.epsilon}
 
-	// (input - mean) / sqrt(var + epsilon)
 	for n := 0; n < b; n++ {
 		for c := 0; c < chans; c++ {
 			// broadcast meanTmp and varianceTmp into vectors
@@ -1518,10 +1534,26 @@ func (op *BatchNormOp) inferF32s(input, output *tensor.Dense) {
 
 	runningMean := op.runningMean.Float32s()
 	runningVariance := op.runningVariance.Float32s()
+
+	// (input - mean) / sqrt(var + epsilon)
+
+	// 1d version
+	if sz == 1 {
+		// special loop for image size == 1
+		for n := 0; n < b; n++ {
+			for c := 0; c < chans; c++ {
+				offset := n*chans + c
+				O[offset] = (I[offset] - runningMean[c]) / float32(math.Sqrt(float64(runningVariance[c])+op.epsilon))
+			}
+		}
+
+		return
+	}
+
+	// 2d version
 	oneNeg := []float32{-1, -1, -1, -1}
 	epsilon := []float32{float32(op.epsilon), float32(op.epsilon), float32(op.epsilon), float32(op.epsilon)}
 
-	// (input - mean) / sqrt(var + epsilon)
 	for n := 0; n < b; n++ {
 		for c := 0; c < chans; c++ {
 			// broadcast meanTmp and varianceTmp into vectors

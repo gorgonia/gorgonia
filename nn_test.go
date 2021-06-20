@@ -405,7 +405,7 @@ func TestBatchNormAll(t *testing.T) {
 			ExpectedOutputGrad:  []float32{0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666},
 			ExpectedBiasGrad:    []float32{0.5, 0.5},
 			ExpectedScaleGrad:   []float32{5.9604645e-07, 5.9604645e-07},
-			ExpectedEvalResult:  []float32{0.5, 0.51, 0.52, 0.53, 0.54, 0.55},
+			ExpectedEvalResult:  []float32{0.1010063, 0.1041627, 0.1641351, 0.1672915, 0.22726409, 0.2304205},
 		},
 		{
 			desc:                "Example2 (1d)",
@@ -422,7 +422,7 @@ func TestBatchNormAll(t *testing.T) {
 			ExpectedOutputGrad:  []float64{0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666},
 			ExpectedBiasGrad:    []float64{0.5, 0.5},
 			ExpectedScaleGrad:   []float64{0, 0},
-			ExpectedEvalResult:  []float64{0.5, 0.51, 0.52, 0.53, 0.54, 0.55},
+			ExpectedEvalResult:  []float64{0.10100619619026019, 0.10416263982120583, 0.16413506880917292, 0.16729151244011856, 0.22726394142808565, 0.23042038505903129},
 		},
 		{
 			desc:                "Example3 (1d)",
@@ -439,7 +439,7 @@ func TestBatchNormAll(t *testing.T) {
 			ExpectedOutputGrad:  []float32{0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667},
 			ExpectedBiasGrad:    []float32{0.5, 0.5},
 			ExpectedScaleGrad:   []float32{3.501773e-07, 1.0579824e-06},
-			ExpectedEvalResult:  []float32{0.1, 0.101, 0.102, 0.103, 0.104, 0.105},
+			ExpectedEvalResult:  []float32{0.025928926, 0.02624516, 0.03225304, 0.032569274, 0.038577177, 0.038893387},
 		},
 		{
 			desc:                "Example4 (2d)",
