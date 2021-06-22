@@ -71,12 +71,8 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 	for _, n := range m.p.g.AllNodes() {
 		setEngine(n.boundTo, m.Engine)
 
-		if op, ok := n.op.(EvalModeOp); ok {
-			if m.evalMode {
-				op.SetTesting()
-			} else {
-				op.SetTraining()
-			}
+		if op, ok := n.op.(TrainModeOp); ok {
+			op.SetTraining(!m.evalMode)
 		}
 	}
 

@@ -129,10 +129,9 @@ type ReductionOp interface {
 	IsReduction() bool
 }
 
-// A EvalModeOp is an Op that supports modes for evaluation and training
-type EvalModeOp interface {
-	SetTraining()
-	SetTesting()
+// A TrainModeOp is an Op that supports modes to enable/disable training
+type TrainModeOp interface {
+	SetTraining(isTraining bool) error
 }
 
 // IncrDoer increments the toIncr with the result of doing

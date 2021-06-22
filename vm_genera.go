@@ -64,12 +64,8 @@ func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 	for _, n := range g.AllNodes() {
 		setEngine(n.boundTo, m.Engine)
 
-		if op, ok := n.op.(EvalModeOp); ok {
-			if m.evalMode {
-				op.SetTesting()
-			} else {
-				op.SetTraining()
-			}
+		if op, ok := n.op.(TrainModeOp); ok {
+			op.SetTraining(!m.evalMode)
 		}
 	}
 

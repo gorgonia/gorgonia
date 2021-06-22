@@ -65,7 +65,7 @@ func Test_tapeMachineEvalMode(t *testing.T) {
 	y, _, _, op, err := BatchNorm(x, scale, bias, 0.9, 1e-5)
 	c.NoError(err)
 
-	op.SetTraining()
+	op.SetTraining(true)
 
 	var yVal, scaleVal Value
 	Read(y, &yVal)
