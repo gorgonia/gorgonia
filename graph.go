@@ -25,7 +25,6 @@ type ExprGraph struct {
 	constants Nodes
 	roots     Nodes
 	counter   uint
-	evalMode  bool
 }
 
 // graphconopt sets options

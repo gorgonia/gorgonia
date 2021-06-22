@@ -72,7 +72,6 @@ func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 			}
 		}
 	}
-	g.evalMode = m.evalMode
 
 	runtime.SetFinalizer(m, finalizeLispMachine)
 	return m

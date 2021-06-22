@@ -71,7 +71,7 @@ func Dropout(x *Node, dropProb float64) (retVal *Node, err error) {
 type dropoutRandFn func(g *ExprGraph, dt tensor.Dtype, low, high float64, shape ...int) *Node
 
 func dropout(x *Node, dropProb float64, randFn dropoutRandFn) (retVal *Node, err error) {
-	if dropProb == 0.0 || x.Graph().evalMode {
+	if dropProb == 0.0 {
 		return x, nil
 	}
 	keepProb := 1.0 - dropProb

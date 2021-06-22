@@ -79,7 +79,6 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 			}
 		}
 	}
-	g.evalMode = m.evalMode
 
 	runtime.SetFinalizer(m, finalizeTapeMachine) // a "defer" to deinitialize CUDA stuff (if using CUDA build)
 	return m
