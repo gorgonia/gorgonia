@@ -78,7 +78,9 @@ In the example above, $(r, c)$ is the \textbf{shape} of the matrix $\mathbf{A}$.
 The usual, single dimensional array is a special case of a multidimensional array. By way of analogy, one may interrogate the fundamental operations of multidimensional arrays. Table \ref{analogies} enumerates the analogies of fundamental operations between multidimensional arrays and unidimensional arrays. Operations after the thick line indicates utility functions that are best treated as fundamental operations.
 
 \subsection{Size Descriptor}
+The length of a unidimensional array denotes the size of the array. For multidimensional arrays, the length needs to be specified for each dimension. This is called a \textbf{shape}. The \texttt{.Shape()} method returns the shape of a multidimensional array. Built in slices are interpreted as unidimensional arrays, with the length acting as its shape. All other values, with the exception of maps are assumed to be scalar shaped.
 \subsection{Ranks/Dimensions of}
+A unidimensional array has only one dimension, hence the array is of rank-1, or it has 1 dimension. $D$ is a function that takes an array, unidimensional or multidimensional, and returns the number of dimensions. In code, it is written as a method, \texttt{.Dims()}.
 \subsection{Indexing}
 
 Indexing allows for access to a particular element of an array. In code, it is written \texttt{A[idx]} or \texttt{A.Index(idx)}, where \texttt{A} is the multidimensional array, and \texttt{idx} is a list of numbers denoting the indices. It is important to note that indexing is different from slicing. Indexing returns an element in the array, while slicing returns another array.
@@ -108,8 +110,10 @@ Assuming a 0-based indexing system, let's say we want the 1st element of the 1st
 The shape signature of the indexing operation is as follows:
 
 $$
-Index: x:a \rightarrow idx \rightarrow () ,\ s.t.\ D\ idx\ = D\ x\ \wedge \forall\ (idx < a)
+Index: a \rightarrow idx \rightarrow () ,\ s.t.\ (D\ idx\ = D\ a\ \wedge \forall\ (idx < a))
 $$
+
+Read this as: $Index$ is a function that takes a shape (denoted by the variable $a$), and a list of indices (denoted by the variable $idx$), and returns $()$. This function is subject to the constraints that the dimensions of $a$ and dimensions of $idx$ are the same and that all values of $idx$ is smaller than the values of $a$.
 
 \subsection{Slicing}
 
@@ -262,6 +266,8 @@ Only variables and application really matters:
 
 
 \section{Semantics}
+
+\section{Constraint Solving}
 
 
 \end{document}
