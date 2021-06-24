@@ -122,7 +122,12 @@ func (p *parser) parse(q []tok) (err error) {
 			// Now, because of this, the special case of () has to be handled elsewhere
 			p.logstack(nil)
 			p.loginfixStack(nil)
+			log.EnterScope()
 			for len(p.infixStack) > 0 {
+				log.Logf("len stack %v", len(p.stack))
+				p.logstack(nil)
+				log.Logf("infix stack ")
+				p.loginfixStack(nil)
 				if err = p.condResolveInfix(t); err != nil {
 					_, ok := err.(noop)
 					if ok {
@@ -131,6 +136,7 @@ func (p *parser) parse(q []tok) (err error) {
 					return errors.Wrapf(err, "Unable to resolve the last infix before resolving a Shape at %d", t.l)
 				}
 			}
+			log.LeaveScope()
 			if err = p.resolveA(); err != nil {
 				return errors.Wrapf(err, "Unable to resolve an abstract shape at %d", t.l)
 			}
@@ -249,7 +255,7 @@ func (p *parser) condResolveInfix(cur tok) error {
 			// check for the operator precedence of other binop TODO
 			panic("NYI")
 		default:
-			return noop{}
+			return nil
 		}
 
 	case unop:
@@ -257,7 +263,7 @@ func (p *parser) condResolveInfix(cur tok) error {
 		case unop:
 			return p.resolveInfix()
 		default:
-			return noop{}
+			return nil
 		}
 	case cmpop:
 		switch last.t {
@@ -266,7 +272,7 @@ func (p *parser) condResolveInfix(cur tok) error {
 		case cmpop:
 			return p.resolveInfix()
 		default:
-			return noop{}
+			return nil
 		}
 	case logop:
 		switch last.t {
@@ -279,16 +285,26 @@ func (p *parser) condResolveInfix(cur tok) error {
 		case logop:
 			return p.resolveInfix()
 		default:
-			return noop{}
+			return nil
 		}
-	default:
+	case parenR:
 		switch last.t {
+		case unop:
+			return p.resolveInfix()
+		case binop:
+			return p.resolveInfix()
+		case cmpop, logop:
+			return p.resolveInfix()
 		case arrow:
 			return noop{}
 		}
+		p.logstack(nil)
+		panic(fmt.Sprintf("parenR. Last %c of %v", last.v, last.t))
+	default:
+		panic(fmt.Sprintf("tok %v of %v is unsupported", cur, cur.t))
 
 	}
-	return noop{}
+	panic("Unreachable")
 }
 
 func (p *parser) resolveInfix() error {
@@ -463,7 +479,29 @@ func (p *parser) resolveCmpOp(t tok) error {
 }
 
 func (p *parser) resolveLogOp(t tok) error {
-	panic("NYI")
+	snd := p.pop()
+	sndOp, ok := snd.(Operation)
+	if !ok {
+		return errors.Errorf("Cannot resolve snd of LogOp %c at %d as Operation. Got %T instead ", t.v, t.l, snd)
+	}
+	fst := p.pop()
+	fstOp, ok := fst.(Operation)
+	if !ok {
+		return errors.Errorf("Cannot resolve fst of LogOp %c at %d as Operation. Got %v of %T instead", t.v, t.l, fst, fst)
+	}
+
+	op, err := parseOpType(t.v)
+	if err != nil {
+		return errors.Wrapf(err, "Unable to parse LogOp OpType %v", t)
+	}
+
+	o := SubjectTo{
+		OpType: op,
+		A:      fstOp,
+		B:      sndOp,
+	}
+	p.push(o)
+	return nil
 }
 
 // resolveCompound expects the stack to look like this:
