@@ -2,7 +2,6 @@ package gorgonia
 
 import (
 	"io/ioutil"
-	"log"
 	"runtime"
 	"testing"
 
@@ -434,7 +433,6 @@ func TestSoftMax(t *testing.T) {
 	m2 := NewLispMachine(h)
 	defer m2.Close()
 	if err = m2.RunAll(); err != nil {
-		log.Printf("ERR %v", err)
 		t.Error(err)
 	}
 
@@ -775,7 +773,6 @@ func TestTensordot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	log.Printf("SHAPE a %v b %v c %v tensordot %v", a.Shape(), b.Shape(), c.Shape(), tensordot.Shape())
 
 	dtensordot, err := Backpropagate(Nodes{tensordot}, Nodes{c}, Nodes{a, b})
 
@@ -826,7 +823,6 @@ func TestTensordot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	log.Printf("TensorDot %v | %v", tensordot.Value().Shape(), tensordot.Type())
 	correctScalarlike = []float64{11}
 	assert.Equal(correctScalarlike, tensordot.Value().Data())
 

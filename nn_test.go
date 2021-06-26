@@ -1,7 +1,6 @@
 package gorgonia
 
 import (
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"testing"
@@ -232,9 +231,6 @@ func TestMaxPool(t *testing.T) {
 			output, err := tcase.PoolFunc(input, tcase.kernelSize, tcase.pad, tcase.stride)
 			c.NoError(err)
 
-			log.Printf("output shape: %v", output.Shape())
-			log.Printf("input shape: %v", input.Shape())
-
 			y := NewTensor(g, output.Dtype(), output.Dims(), WithShape(output.Shape()...), WithInit(Ones()))
 
 			cost := Must(Mean(Must((Sub(output, y))))) // MSE
@@ -255,10 +251,6 @@ func TestMaxPool(t *testing.T) {
 			c.NoError(vm.RunAll())
 			c.NoError(vm.Close())
 
-			log.Printf("input %v", input.Value())
-			log.Printf("result: %v", output.Value())
-			log.Printf("cost: %v", cost.Value())
-
 			c.Equal(tcase.expectedOutput, output.Value().Data())
 			c.Equal(tcase.expectedShape, output.Shape())
 			c.Equal(tcase.expectedCost, cost.Value().Data().(float64))
@@ -266,7 +258,7 @@ func TestMaxPool(t *testing.T) {
 	}
 }
 
-func TestBatchNorm1d(t *testing.T) {
+func TestBatchNormAll(t *testing.T) {
 	generator := func(start float64, increment float64) InitWFn {
 		return func(dt tensor.Dtype, s ...int) interface{} {
 			totalSize := tensor.Shape(s).TotalSize()
@@ -294,7 +286,8 @@ func TestBatchNorm1d(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc  string
+		desc string
+
 		Dtype tensor.Dtype
 
 		XInit  InitWFn
@@ -306,40 +299,76 @@ func TestBatchNorm1d(t *testing.T) {
 		BiasInit  InitWFn
 		BiasShape tensor.Shape
 
-		ExpectedResult interface{}
+		ExpectedTrainResult, ExpectedOutputGrad, ExpectedBiasGrad, ExpectedScaleGrad, ExpectedMean, ExpectedVariance interface{}
+		ExpectedEvalResult                                                                                           interface{}
 	}{
 		{
-			desc:           "Example1",
-			Dtype:          tensor.Float64,
-			XInit:          generator(0.5, 0.01),
-			XShape:         tensor.Shape{3, 2},
-			ScaleInit:      Ones(),
-			ScaleShape:     tensor.Shape{3, 1},
-			BiasInit:       Zeroes(),
-			BiasShape:      tensor.Shape{3, 1},
-			ExpectedResult: []float64{-1.2024072240843036, -1.2024072240843036, 0, 0, 1.2024072240843036, 1.2024072240843036},
+			desc:                "Example1 (1d)",
+			Dtype:               tensor.Float32,
+			XInit:               generator(0.5, 0.01),
+			XShape:              tensor.Shape{3, 2},
+			ScaleInit:           Ones(),
+			ScaleShape:          tensor.Shape{1, 2},
+			BiasInit:            Zeroes(),
+			BiasShape:           tensor.Shape{1, 2},
+			ExpectedTrainResult: []float32{-1.2024072240843036, -1.2024072240843036, 0, 0, 1.2024072240843036, 1.2024072240843036},
+			ExpectedMean:        []float32{0.4680, 0.4770},
+			ExpectedVariance:    []float32{0.10036002, 0.10036002},
+			ExpectedOutputGrad:  []float32{0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666},
+			ExpectedBiasGrad:    []float32{0.5, 0.5},
+			ExpectedScaleGrad:   []float32{5.9604645e-07, 5.9604645e-07},
+			ExpectedEvalResult:  []float32{0.1010063, 0.1041627, 0.1641351, 0.1672915, 0.22726409, 0.2304205},
 		},
 		{
-			desc:           "Example2",
-			Dtype:          tensor.Float64,
-			XInit:          generator(0.5, 0.01),
-			XShape:         tensor.Shape{3, 2},
-			ScaleInit:      Ones(),
-			ScaleShape:     tensor.Shape{3, 2},
-			BiasInit:       Zeroes(),
-			BiasShape:      tensor.Shape{3, 2},
-			ExpectedResult: []float64{-1.2024072240843036, -1.2024072240843036, 0, 0, 1.2024072240843036, 1.2024072240843036},
+			desc:                "Example2 (1d)",
+			Dtype:               tensor.Float64,
+			XInit:               generator(0.5, 0.01),
+			XShape:              tensor.Shape{3, 2},
+			ScaleInit:           Ones(),
+			ScaleShape:          tensor.Shape{1, 2},
+			BiasInit:            Zeroes(),
+			BiasShape:           tensor.Shape{1, 2},
+			ExpectedTrainResult: []float64{-1.2024072240843036, -1.2024072240843036, 0, 0, 1.2024072240843036, 1.2024072240843036},
+			ExpectedMean:        []float64{0.4680, 0.4770},
+			ExpectedVariance:    []float64{0.10035999999999998, 0.10035999999999998},
+			ExpectedOutputGrad:  []float64{0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666},
+			ExpectedBiasGrad:    []float64{0.5, 0.5},
+			ExpectedScaleGrad:   []float64{0, 0},
+			ExpectedEvalResult:  []float64{0.10100619619026019, 0.10416263982120583, 0.16413506880917292, 0.16729151244011856, 0.22726394142808565, 0.23042038505903129},
 		},
 		{
-			desc:           "Example3",
-			Dtype:          tensor.Float32,
-			XInit:          generator(0.1, 0.001),
-			XShape:         tensor.Shape{3, 2},
-			ScaleInit:      Ones(),
-			ScaleShape:     tensor.Shape{3, 2},
-			BiasInit:       Zeroes(),
-			BiasShape:      tensor.Shape{3, 2},
-			ExpectedResult: []float32{-0.5619547, -0.56195074, -4.1868648e-06, 0, 0.5619484, 0.56195074},
+			desc:                "Example3 (1d)",
+			Dtype:               tensor.Float32,
+			XInit:               generator(0.1, 0.001),
+			XShape:              tensor.Shape{3, 2},
+			ScaleInit:           Ones(),
+			ScaleShape:          tensor.Shape{1, 2},
+			BiasInit:            Zeroes(),
+			BiasShape:           tensor.Shape{1, 2},
+			ExpectedTrainResult: []float32{-0.5619505, -0.56194866, 0, 2.0934333e-06, 0.5619526, 0.5619529},
+			ExpectedMean:        []float32{0.0918, 0.0927},
+			ExpectedVariance:    []float32{0.10000362, 0.10000362},
+			ExpectedOutputGrad:  []float32{0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667},
+			ExpectedBiasGrad:    []float32{0.5, 0.5},
+			ExpectedScaleGrad:   []float32{3.501773e-07, 1.0579824e-06},
+			ExpectedEvalResult:  []float32{0.025928926, 0.02624516, 0.03225304, 0.032569274, 0.038577177, 0.038893387},
+		},
+		{
+			desc:                "Example4 (2d)",
+			Dtype:               tensor.Float32,
+			XInit:               generator(0.1, 0.001),
+			XShape:              tensor.Shape{2, 2, 2, 2},
+			ScaleInit:           Ones(),
+			ScaleShape:          tensor.Shape{1, 2, 1, 1},
+			BiasInit:            Zeroes(),
+			BiasShape:           tensor.Shape{1, 2, 1, 1},
+			ExpectedTrainResult: []float32{-1.0536097, -0.8620441, -0.67047983, -0.47891417, -1.0536081, -0.86204386, -0.6704782, -0.47891262, 0.47891274, 0.670477, 0.86204267, 1.0536083, 0.47891405, 0.6704782, 0.86204386, 1.0536095},
+			ExpectedMean:        []float32{0.094950005, 0.09855},
+			ExpectedVariance:    []float32{0.10001776, 0.10001776},
+			ExpectedOutputGrad:  []float32{0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625},
+			ExpectedBiasGrad:    []float32{0.5, 0.5},
+			ExpectedScaleGrad:   []float32{-4.4703484e-07, 1.7881393e-07},
+			ExpectedEvalResult:  []float32{0.015967274, 0.019129118, 0.02229094, 0.025452785, 0.01723203, 0.020393852, 0.023555698, 0.026717542, 0.041261986, 0.044423807, 0.047585655, 0.0507475, 0.042526744, 0.045688566, 0.04885041, 0.052012257},
 		},
 	}
 	for _, tC := range testCases {
@@ -351,6 +380,9 @@ func TestBatchNorm1d(t *testing.T) {
 			g := NewGraph()
 
 			x := NewTensor(g, tC.Dtype, tC.XShape.Dims(), WithShape(tC.XShape...), WithInit(tC.XInit), WithName("x"))
+
+			log.Printf("input: %v", x.Value())
+
 			scale := NewTensor(g, tC.Dtype, tC.ScaleShape.Dims(), WithShape(tC.ScaleShape...), WithInit(tC.ScaleInit), WithName("scale"))
 			bias := NewTensor(g, tC.Dtype, tC.BiasShape.Dims(), WithShape(tC.BiasShape...), WithInit(tC.BiasInit), WithName("bias"))
 
@@ -376,192 +408,34 @@ func TestBatchNorm1d(t *testing.T) {
 
 			c.NoError(m.Close())
 
-			c.Equal(tC.ExpectedResult, yVal.Data())
+			c.True(dawson.AllClose(tC.ExpectedTrainResult, yVal.Data()), "\n%v\n%v", yVal.Data(), tC.ExpectedTrainResult)
+
+			log.Printf("running mean: %v", op.mean)
+			log.Printf("running var: %v", op.variance)
+			log.Printf("running meanTmp: %v", op.runningMean)
+			log.Printf("running varTmp: %v", op.runningVariance)
+
+			log.Printf("output grad: %v", y.Deriv().Value())
+			log.Printf("scale grad: %v", scale.Deriv().Value())
+			log.Printf("bias grad: %v", bias.Deriv().Value())
+
+			c.True(dawson.AllClose(tC.ExpectedOutputGrad, y.Deriv().Value().Data()), "Output Grad doesn't match:\ngot=%v expected=%v", y.Deriv().Value().Data(), tC.ExpectedOutputGrad)
+			c.True(dawson.AllClose(tC.ExpectedBiasGrad, bias.Deriv().Value().Data()), "Bias Grad doesn't match:\ngot=%v expected=%v", bias.Deriv().Value().Data(), tC.ExpectedBiasGrad)
+			c.True(dawson.AllClose(tC.ExpectedScaleGrad, scale.Deriv().Value().Data()), "Scale Grad doens't match:\ngot=%v expected=%v", scale.Deriv().Value().Data(), tC.ExpectedScaleGrad)
+
+			c.True(dawson.AllClose(tC.ExpectedMean, op.runningMean.Data()), "Mean doesn't match:\ngot=%v expected=%v", op.runningMean.Data(), tC.ExpectedMean)
+			c.True(dawson.AllClose(tC.ExpectedVariance, op.runningVariance.Data()), "Variance doesn't match\ngot=%v expected=%v", op.runningVariance.Data(), tC.ExpectedVariance)
+
+			m2 := NewTapeMachine(g, TraceExec(), EvalMode())
+
+			err = m2.RunAll()
+			c.NoError(err)
+
+			c.NoError(m2.Close())
+
+			c.True(dawson.AllClose(tC.ExpectedEvalResult, yVal.Data()), "Output doesn't match\ngot=%v\nexpected=%v", yVal.Data(), tC.ExpectedEvalResult)
 		})
 	}
-}
-
-func TestBatchNorm_F64(t *testing.T) {
-	g := NewGraph()
-	x := NewTensor(g, Float64, 4, WithShape(5, 2, 3, 4), WithInit(Gaussian(0, 1)), WithName("x"))
-	scale := NewTensor(g, Float64, 4, WithShape(5, 2, 3, 4), WithInit(Ones()), WithName("scale"))
-	bias := NewTensor(g, Float64, 4, WithShape(5, 2, 3, 4), WithInit(Zeroes()), WithName("bias"))
-	y, _, _, _, err := BatchNorm(x, scale, bias, 0.9, 1e-5)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var yVal Value
-	Read(y, &yVal)
-
-	cost, _ := Mean(y)
-
-	if _, err := Grad(cost, x); err != nil {
-		t.Fatal(err)
-	}
-
-	m := NewTapeMachine(g, BindDualValues(x), TraceExec())
-	if err := m.RunAll(); err != nil {
-		t.Fatal(err)
-	}
-	m.Close()
-
-	shape := x.Shape()
-	n, c, h, w := shape[0], shape[1], shape[2], shape[3]
-
-	yVT := yVal.(*tensor.Dense)
-	for j := 0; j < c; j++ {
-		var sum, variance float64
-		for i := 0; i < n; i++ {
-			for k := 0; k < h; k++ {
-				for l := 0; l < w; l++ {
-					at, err := yVT.At(i, j, k, l)
-					if err != nil {
-						t.Fatal(err)
-					}
-					atf := at.(float64)
-					sum += atf
-					variance += atf * atf
-				}
-			}
-		}
-		sum /= float64(h * w * n)
-		variance /= float64(h * w * n)
-
-		if !dawson.ToleranceF64(sum, 0, 0.00001) {
-			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
-		}
-
-		if !dawson.ToleranceF64(variance, 1, 0.0001) {
-			t.Errorf("channel %d: Expected variance to be near 1. Got %v", j, variance)
-		}
-	}
-
-	m = NewTapeMachine(g, BindDualValues(x), EvalMode())
-	if err := m.RunAll(); err != nil {
-		t.Fatal(err)
-	}
-	m.Close()
-	yVT = yVal.(*tensor.Dense)
-	for j := 0; j < c; j++ {
-		var sum, variance float64
-		for i := 0; i < n; i++ {
-			for k := 0; k < h; k++ {
-				for l := 0; l < w; l++ {
-					at, err := yVT.At(i, j, k, l)
-					if err != nil {
-						t.Fatal(err)
-					}
-					atf := at.(float64)
-					sum += atf
-					variance += atf * atf
-				}
-			}
-		}
-		sum /= float64(h * w * n)
-		variance /= float64(h * w * n)
-
-		if !dawson.ToleranceF64(sum, 0, 0.00001) {
-			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
-		}
-
-		if !dawson.ToleranceF64(variance, 0.9833, 0.0001) {
-			t.Errorf("channel %d: Expected variance to be near 0.98. Got %v", j, variance)
-		}
-	}
-
-}
-
-func TestBatchNorm_F32(t *testing.T) {
-	g := NewGraph()
-	x := NewTensor(g, Float32, 4, WithShape(5, 2, 3, 4), WithInit(Gaussian(0, 1)))
-	scale := NewTensor(g, Float32, 4, WithShape(5, 2, 3, 4), WithInit(Ones()), WithName("scale"))
-	bias := NewTensor(g, Float32, 4, WithShape(5, 2, 3, 4), WithInit(Zeroes()), WithName("bias"))
-	y, _, _, _, err := BatchNorm(x, scale, bias, 0.9, 1e-5)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var yVal Value
-	Read(y, &yVal)
-
-	cost, _ := Mean(y)
-
-	if _, err := Grad(cost, x); err != nil {
-		ioutil.WriteFile("foo.dot", []byte(g.ToDot()), 0644)
-		t.Fatal(err)
-	}
-
-	m := NewTapeMachine(g, BindDualValues(x))
-	if err := m.RunAll(); err != nil {
-		t.Fatal(err)
-	}
-	m.Close()
-
-	shape := x.Shape()
-	n, c, h, w := shape[0], shape[1], shape[2], shape[3]
-
-	yVT := yVal.(*tensor.Dense)
-	for j := 0; j < c; j++ {
-		var sum, variance float32
-		for i := 0; i < n; i++ {
-			for k := 0; k < h; k++ {
-				for l := 0; l < w; l++ {
-					at, err := yVT.At(i, j, k, l)
-					if err != nil {
-						t.Fatal(err)
-					}
-					atf := at.(float32)
-					sum += atf
-					variance += atf * atf
-				}
-			}
-		}
-		sum /= float32(h * w * n)
-		variance /= float32(h * w * n)
-
-		if !dawson.ToleranceF32(sum, 0, 0.001) {
-			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
-		}
-
-		if !dawson.ToleranceF32(variance, 1, 0.001) {
-			t.Errorf("channel %d: Expected variance to be near 1. Got %v", j, variance)
-		}
-	}
-
-	m = NewTapeMachine(g, BindDualValues(x), EvalMode())
-	if err := m.RunAll(); err != nil {
-		t.Fatal(err)
-	}
-	m.Close()
-	yVT = yVal.(*tensor.Dense)
-	for j := 0; j < c; j++ {
-		var sum, variance float32
-		for i := 0; i < n; i++ {
-			for k := 0; k < h; k++ {
-				for l := 0; l < w; l++ {
-					at, err := yVT.At(i, j, k, l)
-					if err != nil {
-						t.Fatal(err)
-					}
-					atf := at.(float32)
-					sum += atf
-					variance += atf * atf
-				}
-			}
-		}
-		sum /= float32(h * w * n)
-		variance /= float32(h * w * n)
-
-		if !dawson.ToleranceF32(sum, 0, 0.001) {
-			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
-		}
-
-		if !dawson.ToleranceF32(variance, 0.9833, 0.001) {
-			t.Errorf("channel %d: Expected variance to be near 0.98. Got %v", j, variance)
-		}
-	}
-
 }
 
 func TestLeakyRelu(t *testing.T) {
