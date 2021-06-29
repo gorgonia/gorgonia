@@ -3,8 +3,6 @@ package shapes
 import (
 	"bytes"
 	"fmt"
-	"io"
-	"log"
 	"strconv"
 	"strings"
 	"unicode"
@@ -95,50 +93,6 @@ func (p *parser) popInfix() tok {
 	return retVal
 }
 
-// logstate prints the current state in a tab separated table that looks like this
-// 	| current token | stack  | infix stack |
-// 	|---------------|--------|-------------|
-func (p *parser) logstate(name ...interface{}) {
-	if p.log == nil {
-		return
-	}
-	var cur tok = tok{}
-	if p.qptr < len(p.queue) {
-		cur = p.queue[p.qptr]
-	}
-
-	// print current token if no name given
-	if len(name) > 0 {
-		n := fmt.Sprintf(name[0].(string), name[1:]...)
-		fmt.Fprintf(p.log, "%v\t[", n)
-	} else {
-		fmt.Fprintf(p.log, "%v\t[", cur)
-	}
-
-	// print stack
-	for _, item := range p.stack {
-		fmt.Fprintf(p.log, "%v;", item)
-	}
-
-	// print infix stack
-	fmt.Fprintf(p.log, "]\t[")
-	for _, item := range p.infixStack {
-		fmt.Fprintf(p.log, "%q ", item.v)
-	}
-	fmt.Fprintf(p.log, "]\n")
-}
-
-func (p *parser) printTab(w io.Writer) {
-	if p.log == nil {
-		return
-	}
-	if w == nil {
-		w = log.Default().Writer()
-	}
-	w.Write([]byte("Current Token\tStack\tInfix Stack\n"))
-	w.Write([]byte(p.log.String()))
-}
-
 func (p *parser) cur() (tok, error) {
 	if p.qptr < 0 || p.qptr >= len(p.queue) {
 		return tok{}, errors.Errorf("Cannot get current token. Pointer: %d. Queue: %v", p.qptr, len(p.queue))
@@ -165,7 +119,6 @@ func (p *parser) compareCur() func() error {
 	if err != nil {
 		return func() error { return errors.Wrap(err, "Cannot compareCur()") }
 	}
-	log.Printf("CUR %v", t)
 	switch t.t {
 	case digit:
 		return p.pushNum
@@ -180,7 +133,6 @@ func (p *parser) compareCur() func() error {
 		top := p.infixStack[len(p.infixStack)-1]
 		topPrec := opprec[top.v]
 		curPrec := opprec[t.v]
-		log.Printf("cur %q top %q || %d %d", t, top, curPrec, topPrec)
 
 		// if current is negative, we need to resolve until the infixStack has len 0 then pushCurTok
 		if curPrec < 0 {
@@ -213,6 +165,17 @@ func (p *parser) pushVar() error {
 		return err
 	}
 	p.push(Var(t.v))
+
+	// special case: check for '['
+	if p.qptr == len(p.queue)-1 {
+		return nil
+	}
+	if p.queue[p.qptr+1].v == '[' {
+		p.push(SliceOf{})
+		p.pushInfix(p.queue[p.qptr+1])
+		p.incrQPtr()
+		return nil
+	}
 	return nil
 }
 
@@ -240,7 +203,7 @@ func (p *parser) parse(q []tok) (err error) {
 	p.queue = q
 	for p.qptr < len(p.queue) {
 		if err = p.parseOne(); err != nil {
-			p.printTab(nil)
+			// p.printTab(nil)
 			return err
 		}
 		p.incrQPtr()
@@ -250,8 +213,7 @@ func (p *parser) parse(q []tok) (err error) {
 			return errors.Wrap(err, "Unable to resolve all infixes while in .parse")
 		}
 	}
-	log.Printf("q %v", q)
-	p.printTab(nil)
+	//p.printTab(nil)
 	return nil
 }
 
@@ -328,10 +290,42 @@ func (p *parser) resolveInfix() error {
 		if err := p.resolveCompound(); err != nil {
 			return errors.Wrapf(err, "Cannot resolve compound %v", last)
 		}
+	case brackR:
+		if err := p.resolveSlice(); err != nil {
+			return errors.Wrapf(err, "Cannot resolve slice %v", last)
+		}
+	case colon:
+		if err := p.resolveColon(); err != nil {
+			return errors.Wrapf(err, "Cannot resolve colon %v", last)
+		}
 	default:
-		log.Printf("last {%v %c %v} is unhandled", last.t, last.v, last.l)
+		// log.Printf("last {%v %c %v} is unhandled", last.t, last.v, last.l)
 	}
 
+	return nil
+}
+
+// resolveGroup resolves groupings of `(...)` and `[...]`
+func (p *parser) resolveGroup(want rune) error {
+	var bw []tok
+	for i := len(p.infixStack) - 1; i >= 0; i-- {
+		t := p.popInfix()
+		// keep going until you find the first '['
+		if t.v == want {
+			break
+		}
+		bw = append(bw, t)
+	}
+	reverse(bw)
+	backup := p.infixStack
+	p.infixStack = bw
+	if err := p.resolveAllInfix(); err != nil {
+		return errors.Wrapf(err, "Unable to resolveGroup. Group: %q", want)
+	}
+	if len(p.infixStack) > 0 {
+		// error? TODO
+	}
+	p.infixStack = backup
 	return nil
 }
 
@@ -353,7 +347,7 @@ func (p *parser) resolveA() error {
 		return errors.Wrap(err, "Unable to resolveA")
 	}
 	if len(p.infixStack) > 0 {
-		// do something
+		// error? TODO
 	}
 	p.infixStack = backup
 
@@ -369,8 +363,6 @@ func (p *parser) resolveA() error {
 }
 
 func (p *parser) resolveArrow(t tok) error {
-	p.logstate("resolveArrow")
-	defer p.logstate("resolveArrow END")
 	snd, err := p.popExpr()
 	if err != nil {
 		return errors.Wrapf(err, "Cannot resolve snd of arrow at %d as Expr.", t.l)
@@ -402,7 +394,6 @@ func (p *parser) resolveComma(t tok) error {
 	}
 
 	fst := p.pop()
-	log.Printf("resolveComma %v. fst %v snd %v", t, fst, snd)
 	switch f := fst.(type) {
 	case Abstract:
 		switch s := snd.(type) {
@@ -513,9 +504,6 @@ func (p *parser) resolveLogOp(t tok) error {
 	fst := p.pop()
 	fstOp, ok := fst.(Operation)
 	if !ok {
-		log.Printf("p.stack %v", p.stack)
-		log.Printf("snd %v, fst %v", snd, fst)
-
 		return errors.Errorf("Cannot resolve fst of LogOp %c at %d as Operation. Got %v of %T instead", t.v, t.l, fst, fst)
 	}
 
@@ -563,74 +551,105 @@ func (p *parser) resolveCompound() error {
 func (p *parser) resolveSlice() error {
 	// three cases:
 	// 1. single slice
-	//	- look at top 2
 	// 2. range
-	//	- look at top 3
 	// 3. range + step
-	//	- look at top 4
 
+	// pop infixStack
+	if err := p.resolveGroup('['); err != nil {
+		return errors.Wrap(err, "Unable to resolveSlice.")
+	}
+
+	// resolve any potential SliceOf{} or IndexOf{}
 	top := p.pop()
+
+	// check for case 1
+	var idxof bool
+	var idx int
+	var slice Sli
+	switch t := top.(type) {
+	case Sli:
+		slice = t
+	case Size:
+		idx = int(t)
+		idxof = true
+	default:
+		return errors.Errorf("top can either be Sli or Size. Got %v of %T instead", top, top)
+	}
+
 	snd := p.pop()
-
-	topN, ok := substToInt(top)
+	so, ok := snd.(SliceOf)
 	if !ok {
-		return errors.Errorf("Expected the top to be a Size. Got %v of %T instead", top, top)
-	}
-	if s, ok := snd.(Sli); ok {
-		// case 1
-		s.start = topN
-		s.end = topN + 1
-		s.step = 1
-		p.push(s)
+		p.push(snd)
+		// check if idxof is true
+		if idxof {
+			// top should no longer just be an int
+			top = Sli{start: idx, end: idx + 1, step: 1}
+		}
+		p.push(top)
 		return nil
 	}
 
-	thd := p.pop()
-	if s, ok := thd.(Sli); ok {
+	// if it's ok, then the third from the stack would be an Expr
+	thd := p.pop().(Expr)
+	if idxof {
+		// then use IndexOf instead of SliceOf
+		iof := IndexOf{I: Size(idx), A: thd}
+		p.push(iof)
+		return nil
+	}
+	so.Slice = slice
+	so.A = thd
+	p.push(so)
+	p.logstate("XXX END")
+	return nil
+}
+
+func (p *parser) resolveColon() error {
+	// four cases:
+	// 1.single slice (e.g. a[0])
+	// 2.range (e.g. a[0:2])
+	// 3. stepped range (e.g. a[0:2:2])
+	// 4. open range (e.g. a[1:])
+	// 5. limit range (e.g. a[:2])
+
+	// a colon is a binop
+	snd := p.pop()
+	fst := p.pop()
+
+	s, ok := substToInt(snd)
+	if !ok {
+		return errors.Errorf("Expected the top to be a Size. Got %v of %T instead", snd, snd)
+	}
+	switch f := fst.(type) {
+	case Size:
 		// case 2
-		sndN, ok := substToInt(snd)
-		if !ok {
-			return errors.Errorf("Expected the second of stack to be an intlike. Got %v of %T instead", snd, snd)
-		}
-		s.start = topN
-		s.end = sndN
-		s.step = 1
-		p.push(s)
-		return nil
-	}
-
-	fth := p.pop()
-	if s, ok := fth.(Sli); ok {
+		retVal := Sli{start: int(f), end: s, step: 1}
+		p.push(retVal)
+	case Sli:
 		// case 3
-		sndN, ok := substToInt(snd)
-		if !ok {
-			return errors.Errorf("Expected the second of stack to be an intlike. Got %v of %T instead", snd, snd)
-		}
-
-		thdN, ok := substToInt(thd)
-		if !ok {
-			return errors.Errorf("Expected the third of stack to be an intlike. Got %v of %T instead", thd, thd)
-		}
-
-		s.start = topN
-		s.end = sndN
-		s.step = thdN
-		p.push(s)
-		return nil
+		f.step = s
+		p.push(f)
+	default:
+		// case 4
+		// NOT REALLY SUPPORTED. TODO
+		retVal := Sli{start: int(s), end: int(s) + 1, step: 1}
+		p.push(fst) // put it back
+		p.push(retVal)
 	}
-	panic(fmt.Sprintf("Unreachable case. Got top %v of %T;\nSecond %v of %T;\nThird: %v of %v;\nFourth: %v of %T", top, top, snd, snd, thd, thd, fth, fth))
+
+	return nil
 }
 
 // operator precedence table
 var opprec = map[rune]int{
 	'(': 80,
 	')': -1,
-	'[': 10,
-	']': 10,
+	'[': 1,
+	']': 70,
 	'{': 70,
 	'}': -1,
 	',': 2,
-	':': 1,
+	':': 75,
 	'|': -1,
 	'→': 0,
 
@@ -803,7 +822,9 @@ func lex(a string) (retVal []tok, err error) {
 			retVal = append(retVal, tok{unop, rr, i})
 		case r == ',':
 			retVal = append(retVal, tok{comma, r, i})
-		case r == ':', unicode.IsSpace(r):
+		case r == ':':
+			retVal = append(retVal, tok{colon, r, i})
+		case unicode.IsSpace(r):
 			continue // we ignore spaces and delimiters
 		case unicode.IsDigit(r):
 			var rs2 = []rune{r}

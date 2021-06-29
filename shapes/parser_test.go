@@ -47,7 +47,7 @@ var lexCases = map[string][]tok{
 		{parenR, ')', 19},
 		{braceR, '}', 20},
 	},
-	"[0:2:1]": []tok{{brackL, '[', 0}, {digit, 0, 1}, {digit, 2, 3}, {digit, 1, 5}, {brackR, ']', 6}},
+	"[0:2:1]": []tok{{brackL, '[', 0}, {digit, 0, 1}, {colon, ':', 2}, {digit, 2, 3}, {colon, ':', 4}, {digit, 1, 5}, {brackR, ']', 6}},
 
 	// dubious API design wise
 	"& a": []tok{{letter, 'a', 2}}, // note that the singular '&' is ignored.
@@ -139,59 +139,95 @@ var parseCases = map[string]Expr{
 		},
 	},
 
-	/*
-		// Slicing
-		"{ a → [0:2] → a[0:2] | (a[0] ≥ 2) }": Compound{
-			Expr: Arrow{
-				Var('a'),
-				Arrow{
+	// Slicing
+	"{ a → [0:2] → a[0:2] | (a[0] ≥ 2) }": Compound{
+		Expr: Arrow{
+			Var('a'),
+			Arrow{
+				Sli{0, 2, 1},
+				SliceOf{
 					Sli{0, 2, 1},
-					SliceOf{
-						Sli{0, 2, 1},
-						Var('a'),
-					},
+					Var('a'),
 				},
 			},
-			SubjectTo: SubjectTo{
-				OpType: Gte,
-				A:      IndexOf{I: 0, A: Var('a')},
-				B:      Size(2),
-			},
 		},
+		SubjectTo: SubjectTo{
+			OpType: Gte,
+			A:      IndexOf{I: 0, A: Var('a')},
+			B:      Size(2),
+		},
+	},
 
-		// Reshaping
-		"{ a → b → b | (Π a = Π b) }": Compound{
+	// Slicing with steps
+	"{ a → [0:2:1] → a[0:2:1] | (a[0] ≥ 2) }": Compound{
+		Expr: Arrow{
+			Var('a'),
 			Arrow{
-				Var('a'),
-				Arrow{
-					Var('b'),
-					Var('b'),
+				Sli{0, 2, 1},
+				SliceOf{
+					Sli{0, 2, 1},
+					Var('a'),
 				},
 			},
-			SubjectTo{
-				Eq,
-				UnaryOp{Prod, Var('a')},
-				UnaryOp{Prod, Var('b')},
+		},
+		SubjectTo: SubjectTo{
+			OpType: Gte,
+			A:      IndexOf{I: 0, A: Var('a')},
+			B:      Size(2),
+		},
+	},
+
+	// Slicing with single slice
+	"{ a → [0] → a[0] | (a[0] ≥ 2) }": Compound{
+		Expr: Arrow{
+			Var('a'),
+			Arrow{
+				Sli{0, 1, 1},
+				IndexOf{
+					0,
+					Var('a'),
+				},
 			},
 		},
+		SubjectTo: SubjectTo{
+			OpType: Gte,
+			A:      IndexOf{I: 0, A: Var('a')},
+			B:      Size(2),
+		},
+	},
 
-		// Columnwise Sum Matrix
-		"{ a → b | (D b = D a - 1) }": Compound{
+	// Reshaping
+	"{ a → b → b | (Π a = Π b) }": Compound{
+		Arrow{
+			Var('a'),
 			Arrow{
-				Var('a'),
+				Var('b'),
 				Var('b'),
 			},
-			SubjectTo{
-				Eq,
-				UnaryOp{Dims, Var('b')},
-				BinOp{
-					Sub,
-					UnaryOp{Dims, Var('a')},
-					Size(1),
-				},
+		},
+		SubjectTo{
+			Eq,
+			UnaryOp{Prod, Var('a')},
+			UnaryOp{Prod, Var('b')},
+		},
+	},
+
+	// Columnwise Sum Matrix
+	"{ a → b | (D b = D a - 1) }": Compound{
+		Arrow{
+			Var('a'),
+			Var('b'),
+		},
+		SubjectTo{
+			Eq,
+			UnaryOp{Dims, Var('b')},
+			BinOp{
+				Sub,
+				UnaryOp{Dims, Var('a')},
+				Size(1),
 			},
 		},
-	*/
+	},
 }
 
 /*
@@ -203,6 +239,26 @@ var knownFail = map[string]Expr{
 			BinOp{Add, BinOp{Mul, Var('a'), Var('b')}, Var('c')},
 		},
 	},
+
+   // open ended slicing
+   "{ a → [1:] → a[1:] | (a[0] ≥ 2) }": Compound{
+		Expr: Arrow{
+			Var('a'),
+			Arrow{
+				Sli{0, 2, 1},
+				SliceOf{
+					Sli{0, 2, 1},
+					Var('a'),
+				},
+			},
+		},
+		SubjectTo: SubjectTo{
+			OpType: Gte,
+			A:      IndexOf{I: 0, A: Var('a')},
+			B:      Size(2),
+		},
+	},
+
 }
 */
 
