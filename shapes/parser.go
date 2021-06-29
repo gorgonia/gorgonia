@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
-	"strings"
 	"unicode"
 
 	"github.com/pkg/errors"
@@ -18,12 +17,6 @@ func Parse(a string) (retVal Expr, err error) {
 	}
 
 	p := newParser(true)
-	defer func() {
-		if r := recover(); r != nil {
-			p.printTab(nil)
-			panic(r)
-		}
-	}()
 	err = p.parse(q)
 	p.logstate()
 	if len(p.stack) <= 0 {
@@ -41,8 +34,6 @@ type parser struct {
 	stack      []substitutable // "working" stack
 	infixStack []tok           // stack of operators
 	qptr       int             // queue pointer
-
-	buf strings.Builder
 
 	log *bytes.Buffer
 }
@@ -76,13 +67,9 @@ func (p *parser) popExpr() (Expr, error) {
 	return e, nil
 }
 
-func (p *parser) push(a substitutable) {
-	p.stack = append(p.stack, a)
-}
+func (p *parser) push(a substitutable) { p.stack = append(p.stack, a) }
 
-func (p *parser) pushInfix(t tok) {
-	p.infixStack = append(p.infixStack, t)
-}
+func (p *parser) pushInfix(t tok) { p.infixStack = append(p.infixStack, t) }
 
 func (p *parser) popInfix() tok {
 	if len(p.infixStack) == 0 {
@@ -310,7 +297,7 @@ func (p *parser) resolveGroup(want rune) error {
 	var bw []tok
 	for i := len(p.infixStack) - 1; i >= 0; i-- {
 		t := p.popInfix()
-		// keep going until you find the first '['
+		// keep going until you find the first '[' or '(', whatever that was passed into `want`
 		if t.v == want {
 			break
 		}
@@ -330,26 +317,9 @@ func (p *parser) resolveGroup(want rune) error {
 }
 
 func (p *parser) resolveA() error {
-	var bw []tok
-	for i := len(p.infixStack) - 1; i >= 0; i-- {
-		t := p.popInfix()
-		// keep going until you find the first '('
-		if t.v == '(' {
-			break
-		}
-		bw = append(bw, t)
+	if err := p.resolveGroup('('); err != nil {
+		return errors.Wrap(err, "Unable to resolveA.")
 	}
-	reverse(bw)
-	backup := p.infixStack
-	p.infixStack = bw
-
-	if err := p.resolveAllInfix(); err != nil {
-		return errors.Wrap(err, "Unable to resolveA")
-	}
-	if len(p.infixStack) > 0 {
-		// error? TODO
-	}
-	p.infixStack = backup
 
 	last := p.pop()
 	if abs, ok := last.(Abstract); ok {
@@ -358,6 +328,7 @@ func (p *parser) resolveA() error {
 			return nil
 		}
 	}
+	// `last` is an Expr that is not a Shape or Abstract.
 	p.push(last)
 	return nil
 }
@@ -522,7 +493,7 @@ func (p *parser) resolveLogOp(t tok) error {
 }
 
 // resolveCompound expects the stack to look like this:
-// 	[..., Compound{}, Expr, SubjectTo{...}]
+// 	[..., Expr, SubjectTo{...}]
 // The result will look like this
 // 	[..., Compound{...}] (the Compound{} now has data)
 func (p *parser) resolveCompound() error {
@@ -549,12 +520,14 @@ func (p *parser) resolveCompound() error {
 }
 
 func (p *parser) resolveSlice() error {
-	// three cases:
-	// 1. single slice
-	// 2. range
-	// 3. range + step
+	// five cases:
+	// 1. single slice (e.g. a[0])
+	// 2. range (e.g. a[0:2])
+	// 3. stepped range (e.g. a[0:2:2])
+	// 4. open range (e.g. a[1:]) CURRENTLY UNSUPPORTED. TODO.
+	// 5. limit range (e.g. a[:2]) CURRENTLY UNSUPPORTED. TODO.
 
-	// pop infixStack
+	// pop infixStack - this will handle any of the cases with colons.
 	if err := p.resolveGroup('['); err != nil {
 		return errors.Wrap(err, "Unable to resolveSlice.")
 	}
@@ -600,17 +573,16 @@ func (p *parser) resolveSlice() error {
 	so.Slice = slice
 	so.A = thd
 	p.push(so)
-	p.logstate("XXX END")
 	return nil
 }
 
 func (p *parser) resolveColon() error {
-	// four cases:
-	// 1.single slice (e.g. a[0])
-	// 2.range (e.g. a[0:2])
+	// five cases:
+	// 1. single slice (e.g. a[0])
+	// 2. range (e.g. a[0:2])
 	// 3. stepped range (e.g. a[0:2:2])
-	// 4. open range (e.g. a[1:])
-	// 5. limit range (e.g. a[:2])
+	// 4. open range (e.g. a[1:]) CURRENTLY UNSUPPORTED. TODO.
+	// 5. limit range (e.g. a[:2]) CURRENTLY UNSUPPORTED. TODO.
 
 	// a colon is a binop
 	snd := p.pop()
