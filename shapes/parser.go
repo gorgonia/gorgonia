@@ -183,7 +183,7 @@ func (p *parser) compareCur() func() error {
 		log.Printf("cur %q top %q || %d %d", t, top, curPrec, topPrec)
 
 		// if current is negative, we need to resolve until the infixStack has len 0 then pushCurTok
-		if curPrec < 0 && topPrec > 0 {
+		if curPrec < 0 {
 			if err := p.pushCurTok(); err != nil {
 				return func() error { return errors.Wrap(err, "curPrec < 0") }
 			}
@@ -623,41 +623,41 @@ func (p *parser) resolveSlice() error {
 
 // operator precedence table
 var opprec = map[rune]int{
-	'(': 1,
+	'(': 80,
 	')': -1,
 	'[': 10,
 	']': 10,
-	'{': -2,
-	'}': 10,
+	'{': 70,
+	'}': -1,
 	',': 2,
 	':': 1,
 	'|': -1,
-	'→': -1,
+	'→': 0,
 
 	// unop
-	'K': 30,
-	'D': 30,
-	'Π': 30,
-	'Σ': 30,
-	'∀': 30,
+	'K': 60,
+	'D': 60,
+	'Π': 60,
+	'Σ': 60,
+	'∀': 60,
 
 	// binop
-	'+': 30,
-	'-': 30,
-	'×': 40,
-	'÷': 40,
+	'+': 40,
+	'-': 40,
+	'×': 50,
+	'÷': 50,
 
 	// cmpop
-	'=': 20,
-	'≠': 20,
-	'<': 20,
-	'>': 20,
-	'≤': 20,
-	'≥': 20,
+	'=': 30,
+	'≠': 30,
+	'<': 30,
+	'>': 30,
+	'≤': 30,
+	'≥': 30,
 
 	// logop
-	'∧': 30,
-	'∨': 30,
+	'∧': 20,
+	'∨': 10,
 }
 
 type tokentype int
