@@ -114,6 +114,35 @@ func (p *parser) compareCur() func() error {
 		return p.pushVar
 	case axesL:
 		return p.compose(p.pushVar, p.pushCurTok, "pushVar", "pushCurTok") // X is a special "variable". It's used to  mark how many items are in a axes.
+	case transposeop:
+		return func() error {
+			p.logstate("transposeop")
+			p.incrQPtr()
+			backup1 := p.stack
+			backup2 := p.infixStack
+
+			p.stack = nil
+			p.infixStack = nil
+			if err := p.expectAxes(); err != nil {
+				return errors.Wrapf(err, " failed to transpose")
+			}
+			p.logstate("axes")
+			axes := p.stack[len(p.stack)-1].(Axes)
+
+			p.stack = nil
+			p.infixStack = nil
+			if err := p.expectExpr(); err != nil {
+				return errors.Wrap(err, "failed to transposeOf")
+			}
+			p.logstate("expectExpr")
+			A := p.stack[len(p.stack)-1].(Expr)
+
+			p.stack = backup1
+			p.infixStack = backup2
+			p.push(TransposeOf{Axes: axes, A: A})
+			return nil
+
+		}
 	default:
 		if len(p.infixStack) == 0 {
 			// push the current to infixStack
@@ -474,12 +503,12 @@ func (p *parser) resolveCmpOp(t tok) error {
 	snd := p.pop()
 	sndOp, ok := snd.(Operation)
 	if !ok {
-		return errors.Errorf("Cannot resolve snd of CmpOp %c at %d as Operation. Got %T instead ", t.v, t.l, snd)
+		return errors.Errorf("Cannot resolve snd of CmpOp %c at %d as Operation. Got %v of %T instead ", t.v, t.l, snd, snd)
 	}
 	fst := p.pop()
 	fstOp, ok := fst.(Operation)
 	if !ok {
-		return errors.Errorf("Cannot resolve fst of CmpOp %c at %d as Operation.", t.v, t.l)
+		return errors.Errorf("Cannot resolve fst of CmpOp %c at %d as Operation. Got %v of %T instead.", t.v, t.l, fst, fst)
 	}
 
 	op, err := parseOpType(t.v)
@@ -662,6 +691,54 @@ func (p *parser) resolveAxes() error {
 	}
 	reverseAxes(bw)
 	p.push(bw)
+	return nil
+}
+
+func (p *parser) expectAxes() error {
+	x, err := p.cur()
+	if err != nil {
+		return errors.Wrap(err, "Failed to expect axes")
+	}
+	if x.v != 'X' {
+		return errors.Errorf("Expected 'X'. Got %q instead", x.v)
+	}
+	p.incrQPtr()
+
+	lbrack, err := p.cur()
+	if err != nil {
+		return errors.Wrap(err, "Failed to expect axes")
+	}
+	if lbrack.v != '[' {
+		return errors.Errorf("Expected '[. Got %q instead.", lbrack.v)
+	}
+	p.incrQPtr()
+
+	var axes Axes
+	for next, err := p.cur(); err == nil && next.v != ']'; next, err = p.cur() {
+		if next.t != digit {
+			// TODO: error?
+		}
+		axes = append(axes, Axis(next.v))
+		p.incrQPtr()
+	}
+	p.incrQPtr() // because this was not automatically incremented
+	p.push(axes)
+	return nil
+}
+
+func (p *parser) expectExpr() error {
+	for {
+		if err := p.parseOne(); err != nil {
+			return errors.Wrap(err, "Failed to expect Expr")
+		}
+		p.incrQPtr()
+
+		if len(p.infixStack) == 0 {
+			if _, ok := p.stack[0].(Expr); ok {
+				break
+			}
+		}
+	}
 	return nil
 }
 
