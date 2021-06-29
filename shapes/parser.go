@@ -659,6 +659,7 @@ const (
 	parenR
 	brackL
 	brackR
+	axesL // use brackR for closing
 	braceL
 	braceR
 	digit
@@ -671,6 +672,7 @@ const (
 	binop
 	cmpop
 	logop
+	transposeop
 )
 
 type tok struct {
@@ -792,6 +794,10 @@ func lex(a string) (retVal []tok, err error) {
 				rr = 'Σ'
 			}
 			retVal = append(retVal, tok{unop, rr, i})
+		case r == 'T':
+			retVal = append(retVal, tok{transposeop, r, i})
+		case r == 'X':
+			retVal = append(retVal, tok{axesL, r, i})
 		case r == ',':
 			retVal = append(retVal, tok{comma, r, i})
 		case r == ':':

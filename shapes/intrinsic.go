@@ -65,7 +65,7 @@ type TransposeOf struct {
 }
 
 func (t TransposeOf) isExpr()                    {}
-func (t TransposeOf) Format(s fmt.State, r rune) { fmt.Fprintf(s, "Tr %v %v", t.Axes, t.A) }
+func (t TransposeOf) Format(s fmt.State, r rune) { fmt.Fprintf(s, "T %v %v", t.Axes, t.A) }
 func (t TransposeOf) apply(ss substitutions) substitutable {
 	return TransposeOf{
 		Axes: t.Axes,
