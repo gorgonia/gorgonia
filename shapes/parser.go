@@ -3,6 +3,7 @@ package shapes
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"strconv"
 	"unicode"
 
@@ -111,6 +112,8 @@ func (p *parser) compareCur() func() error {
 		return p.pushNum
 	case letter:
 		return p.pushVar
+	case axesL:
+		return p.compose(p.pushVar, p.pushCurTok, "pushVar", "pushCurTok") // X is a special "variable". It's used to  mark how many items are in a axes.
 	default:
 		if len(p.infixStack) == 0 {
 			// push the current to infixStack
@@ -153,12 +156,15 @@ func (p *parser) pushVar() error {
 	}
 	p.push(Var(t.v))
 
-	// special case: check for '['
+	// special cases: a[...] and X[...]
 	if p.qptr == len(p.queue)-1 {
 		return nil
 	}
+
 	if p.queue[p.qptr+1].v == '[' {
-		p.push(SliceOf{})
+		if t.v != 'X' { // we don't push SliceOf{} if it's X, because there are special routines handling X[...]
+			p.push(SliceOf{})
+		}
 		p.pushInfix(p.queue[p.qptr+1])
 		p.incrQPtr()
 		return nil
@@ -285,8 +291,12 @@ func (p *parser) resolveInfix() error {
 		if err := p.resolveColon(); err != nil {
 			return errors.Wrapf(err, "Cannot resolve colon %v", last)
 		}
+	case axesL:
+		if err := p.resolveAxes(); err != nil {
+			return errors.Wrapf(err, "Cannot resolve Axes %v", last)
+		}
 	default:
-		// log.Printf("last {%v %c %v} is unhandled", last.t, last.v, last.l)
+		log.Printf("last {%v %c %v} is unhandled", last.t, last.v, last.l)
 	}
 
 	return nil
@@ -295,17 +305,38 @@ func (p *parser) resolveInfix() error {
 // resolveGroup resolves groupings of `(...)` and `[...]`
 func (p *parser) resolveGroup(want rune) error {
 	var bw []tok
+loop:
 	for i := len(p.infixStack) - 1; i >= 0; i-- {
 		t := p.popInfix()
 		// keep going until you find the first '[' or '(', whatever that was passed into `want`
-		if t.v == want {
-			break
+
+		switch {
+		case t.v == want && want == '[':
+			// special case, iterate once more to find out if the infix operator before is 'X'
+			if i-1 < 0 {
+				break loop
+			}
+
+			x := p.popInfix()
+			log.Printf("x %v", x)
+			if x.v != 'X' {
+				p.pushInfix(x) // undo the pop
+				break loop
+			}
+
+			bw = append(bw, x)
+
+			fallthrough
+		case t.v == want:
+			break loop
 		}
+
 		bw = append(bw, t)
 	}
 	reverse(bw)
 	backup := p.infixStack
 	p.infixStack = bw
+	p.logstate("Switched to bw")
 	if err := p.resolveAllInfix(); err != nil {
 		return errors.Wrapf(err, "Unable to resolveGroup. Group: %q", want)
 	}
@@ -545,6 +576,10 @@ func (p *parser) resolveSlice() error {
 	case Size:
 		idx = int(t)
 		idxof = true
+	case Axes:
+		// oops it's not actually a slice
+		p.push(top)
+		return nil
 	default:
 		return errors.Errorf("top can either be Sli or Size. Got %v of %T instead", top, top)
 	}
@@ -611,6 +646,24 @@ func (p *parser) resolveColon() error {
 
 	return nil
 }
+func (p *parser) resolveAxes() error {
+	p.logstate("resolveAxes")
+	var bw Axes
+	for i := len(p.stack) - 1; i >= 0; i-- {
+		t := p.pop()
+		if v, ok := t.(Var); ok && v == Var('X') {
+			break
+		}
+		ax, ok := substToInt(t)
+		if !ok {
+			return errors.Errorf("Failed to resolveAxes. %dth item in stack is expected to be an int-like. Got %v of %T instead", i, t, t)
+		}
+		bw = append(bw, Axis(ax))
+	}
+	reverseAxes(bw)
+	p.push(bw)
+	return nil
+}
 
 // operator precedence table
 var opprec = map[rune]int{
@@ -649,6 +702,12 @@ var opprec = map[rune]int{
 	// logop
 	'∧': 20,
 	'∨': 10,
+
+	// axes
+	'X': 60,
+
+	// TransposeOf
+	'T': 60,
 }
 
 type tokentype int

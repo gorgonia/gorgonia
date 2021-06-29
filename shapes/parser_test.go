@@ -64,177 +64,182 @@ func TestLex(t *testing.T) {
 }
 
 var parseCases = map[string]Expr{
-	// Axes
-	"X[0 1 3 2]": Axes{0, 1, 3, 2},
+	// TransposeOf
+	"T X[1 0] a": TransposeOf{
+		Axes{1, 0},
+		Var('a'),
+	},
 	/*
-		"()":   Shape{},
-		"(1,)": Shape{1},
+			"()":   Shape{},
+			"(1,)": Shape{1},
 
-		"(1,2,3,2325)": Shape{1, 2, 3, 2325},
-		"(1, a, 2)":    Abstract{Size(1), Var('a'), Size(2)},
+			"(1,2,3,2325)": Shape{1, 2, 3, 2325},
+			"(1, a, 2)":    Abstract{Size(1), Var('a'), Size(2)},
 
-		"(a,b,c) → (a*b, b*c)": Arrow{
-			Abstract{Var('a'), Var('b'), Var('c')},
-			Abstract{
-				BinOp{Mul, Var('a'), Var('b')},
-				BinOp{Mul, Var('b'), Var('c')},
-			},
-		},
-
-		// higher order functions, because why not
-		"(a -> b) -> a -> b": Arrow{
-			Arrow{Var('a'), Var('b')},
-			Arrow{Var('a'), Var('b')},
-		},
-
-		// SubjectTo clause
-		"{a -> b | (D a = D b)}": Compound{
-			Expr: Arrow{Var('a'), Var('b')},
-			SubjectTo: SubjectTo{
-				Eq,
-				UnaryOp{Dims, Var('a')},
-				UnaryOp{Dims, Var('b')},
-			},
-		},
-
-		// Transpose:
-		"{ a → X[0 1 3 2] → T X[0 1 3 2] a | (D X[0 1 3 2] = D a) }": Compound{
-			Expr: Arrow{
-				Var('a'),
-				Arrow{
-					Axes{0, 1, 3, 2},
-					TransposeOf{
-						Axes{0, 1, 3, 2},
-						Var('a'),
-					},
+			"(a,b,c) → (a*b, b*c)": Arrow{
+				Abstract{Var('a'), Var('b'), Var('c')},
+				Abstract{
+					BinOp{Mul, Var('a'), Var('b')},
+					BinOp{Mul, Var('b'), Var('c')},
 				},
 			},
-			SubjectTo: SubjectTo{
-				Eq,
-				UnaryOp{Dims, Axes{0, 1, 3, 2}},
-				UnaryOp{Dims, Var('a')},
-			},
-		},
 
-		// Indexing
-		"a → b -> ()": Arrow{
-			Var('a'),
-			Arrow{Var('b'), Shape{}},
-		},
-
-		// Indexing (constrained)
-		"{ a → b → () | ((D a = D b) ∧ (∀ b < ∀ a)) }": Compound{
-			Expr: Arrow{
-				Var('a'),
-				Arrow{
-					Var('b'),
-					Shape{},
-				},
+			// higher order functions, because why not
+			"(a -> b) -> a -> b": Arrow{
+				Arrow{Var('a'), Var('b')},
+				Arrow{Var('a'), Var('b')},
 			},
-			SubjectTo: SubjectTo{
-				And,
-				SubjectTo{
+
+			// SubjectTo clause
+			"{a -> b | (D a = D b)}": Compound{
+				Expr: Arrow{Var('a'), Var('b')},
+				SubjectTo: SubjectTo{
 					Eq,
 					UnaryOp{Dims, Var('a')},
 					UnaryOp{Dims, Var('b')},
 				},
-				SubjectTo{
-					Lt,
-					UnaryOp{ForAll, Var('b')},
-					UnaryOp{ForAll, Var('a')},
-				},
 			},
-		},
+		        	// Axes
+		"X[0 1 3 2]": Axes{0, 1, 3, 2},
 
-		// Slicing
-		"{ a → [0:2] → a[0:2] | (a[0] ≥ 2) }": Compound{
-			Expr: Arrow{
-				Var('a'),
-				Arrow{
-					Sli{0, 2, 1},
-					SliceOf{
-						Sli{0, 2, 1},
-						Var('a'),
+			// Transpose:
+			"{ a → X[0 1 3 2] → T X[0 1 3 2] a | (D X[0 1 3 2] = D a) }": Compound{
+				Expr: Arrow{
+					Var('a'),
+					Arrow{
+						Axes{0, 1, 3, 2},
+						TransposeOf{
+							Axes{0, 1, 3, 2},
+							Var('a'),
+						},
 					},
 				},
-			},
-			SubjectTo: SubjectTo{
-				OpType: Gte,
-				A:      IndexOf{I: 0, A: Var('a')},
-				B:      Size(2),
-			},
-		},
-
-		// Slicing with steps
-		"{ a → [0:2:1] → a[0:2:1] | (a[0] ≥ 2) }": Compound{
-			Expr: Arrow{
-				Var('a'),
-				Arrow{
-					Sli{0, 2, 1},
-					SliceOf{
-						Sli{0, 2, 1},
-						Var('a'),
-					},
-				},
-			},
-			SubjectTo: SubjectTo{
-				OpType: Gte,
-				A:      IndexOf{I: 0, A: Var('a')},
-				B:      Size(2),
-			},
-		},
-
-		// Slicing with single slice
-		"{ a → [0] → a[0] | (a[0] ≥ 2) }": Compound{
-			Expr: Arrow{
-				Var('a'),
-				Arrow{
-					Sli{0, 1, 1},
-					IndexOf{
-						0,
-						Var('a'),
-					},
-				},
-			},
-			SubjectTo: SubjectTo{
-				OpType: Gte,
-				A:      IndexOf{I: 0, A: Var('a')},
-				B:      Size(2),
-			},
-		},
-
-		// Reshaping
-		"{ a → b → b | (Π a = Π b) }": Compound{
-			Arrow{
-				Var('a'),
-				Arrow{
-					Var('b'),
-					Var('b'),
-				},
-			},
-			SubjectTo{
-				Eq,
-				UnaryOp{Prod, Var('a')},
-				UnaryOp{Prod, Var('b')},
-			},
-		},
-
-		// Columnwise Sum Matrix
-		"{ a → b | (D b = D a - 1) }": Compound{
-			Arrow{
-				Var('a'),
-				Var('b'),
-			},
-			SubjectTo{
-				Eq,
-				UnaryOp{Dims, Var('b')},
-				BinOp{
-					Sub,
+				SubjectTo: SubjectTo{
+					Eq,
+					UnaryOp{Dims, Axes{0, 1, 3, 2}},
 					UnaryOp{Dims, Var('a')},
-					Size(1),
 				},
 			},
-		},
+
+			// Indexing
+			"a → b -> ()": Arrow{
+				Var('a'),
+				Arrow{Var('b'), Shape{}},
+			},
+
+			// Indexing (constrained)
+			"{ a → b → () | ((D a = D b) ∧ (∀ b < ∀ a)) }": Compound{
+				Expr: Arrow{
+					Var('a'),
+					Arrow{
+						Var('b'),
+						Shape{},
+					},
+				},
+				SubjectTo: SubjectTo{
+					And,
+					SubjectTo{
+						Eq,
+						UnaryOp{Dims, Var('a')},
+						UnaryOp{Dims, Var('b')},
+					},
+					SubjectTo{
+						Lt,
+						UnaryOp{ForAll, Var('b')},
+						UnaryOp{ForAll, Var('a')},
+					},
+				},
+			},
+
+			// Slicing
+			"{ a → [0:2] → a[0:2] | (a[0] ≥ 2) }": Compound{
+				Expr: Arrow{
+					Var('a'),
+					Arrow{
+						Sli{0, 2, 1},
+						SliceOf{
+							Sli{0, 2, 1},
+							Var('a'),
+						},
+					},
+				},
+				SubjectTo: SubjectTo{
+					OpType: Gte,
+					A:      IndexOf{I: 0, A: Var('a')},
+					B:      Size(2),
+				},
+			},
+
+			// Slicing with steps
+			"{ a → [0:2:1] → a[0:2:1] | (a[0] ≥ 2) }": Compound{
+				Expr: Arrow{
+					Var('a'),
+					Arrow{
+						Sli{0, 2, 1},
+						SliceOf{
+							Sli{0, 2, 1},
+							Var('a'),
+						},
+					},
+				},
+				SubjectTo: SubjectTo{
+					OpType: Gte,
+					A:      IndexOf{I: 0, A: Var('a')},
+					B:      Size(2),
+				},
+			},
+
+			// Slicing with single slice
+			"{ a → [0] → a[0] | (a[0] ≥ 2) }": Compound{
+				Expr: Arrow{
+					Var('a'),
+					Arrow{
+						Sli{0, 1, 1},
+						IndexOf{
+							0,
+							Var('a'),
+						},
+					},
+				},
+				SubjectTo: SubjectTo{
+					OpType: Gte,
+					A:      IndexOf{I: 0, A: Var('a')},
+					B:      Size(2),
+				},
+			},
+
+			// Reshaping
+			"{ a → b → b | (Π a = Π b) }": Compound{
+				Arrow{
+					Var('a'),
+					Arrow{
+						Var('b'),
+						Var('b'),
+					},
+				},
+				SubjectTo{
+					Eq,
+					UnaryOp{Prod, Var('a')},
+					UnaryOp{Prod, Var('b')},
+				},
+			},
+
+			// Columnwise Sum Matrix
+			"{ a → b | (D b = D a - 1) }": Compound{
+				Arrow{
+					Var('a'),
+					Var('b'),
+				},
+				SubjectTo{
+					Eq,
+					UnaryOp{Dims, Var('b')},
+					BinOp{
+						Sub,
+						UnaryOp{Dims, Var('a')},
+						Size(1),
+					},
+				},
+			},
 	*/
 }
 
