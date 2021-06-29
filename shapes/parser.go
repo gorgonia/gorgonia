@@ -20,10 +20,20 @@ func Parse(a string) (retVal Expr, err error) {
 	}
 
 	p := newParser(true)
+	defer func() {
+		if r := recover(); r != nil {
+			p.printTab(nil)
+			panic(r)
+		}
+	}()
 	err = p.parse(q)
-	if len(p.stack) < 0 {
+	p.logstate()
+	if len(p.stack) <= 0 {
+		p.printTab(nil)
 		return nil, errors.Errorf("WTF?")
 	}
+
+	p.printTab(nil)
 	retVal = p.stack[0].(Expr)
 	return
 }
@@ -88,15 +98,29 @@ func (p *parser) popInfix() tok {
 // logstate prints the current state in a tab separated table that looks like this
 // 	| current token | stack  | infix stack |
 // 	|---------------|--------|-------------|
-func (p *parser) logstate() {
+func (p *parser) logstate(name ...interface{}) {
 	if p.log == nil {
 		return
 	}
-	cur := p.queue[p.qptr]
-	fmt.Fprintf(p.log, "%q\t[", cur.v)
+	var cur tok = tok{}
+	if p.qptr < len(p.queue) {
+		cur = p.queue[p.qptr]
+	}
+
+	// print current token if no name given
+	if len(name) > 0 {
+		n := fmt.Sprintf(name[0].(string), name[1:]...)
+		fmt.Fprintf(p.log, "%v\t[", n)
+	} else {
+		fmt.Fprintf(p.log, "%v\t[", cur)
+	}
+
+	// print stack
 	for _, item := range p.stack {
 		fmt.Fprintf(p.log, "%v;", item)
 	}
+
+	// print infix stack
 	fmt.Fprintf(p.log, "]\t[")
 	for _, item := range p.infixStack {
 		fmt.Fprintf(p.log, "%q ", item.v)
@@ -115,6 +139,103 @@ func (p *parser) printTab(w io.Writer) {
 	w.Write([]byte(p.log.String()))
 }
 
+func (p *parser) cur() (tok, error) {
+	if p.qptr < 0 || p.qptr >= len(p.queue) {
+		return tok{}, errors.Errorf("Cannot get current token. Pointer: %d. Queue: %v", p.qptr, len(p.queue))
+	}
+	return p.queue[p.qptr], nil
+}
+
+func (p *parser) compose(g, f func() error, fname, gname string) func() error {
+	return func() error {
+		if err := f(); err != nil {
+			return errors.Wrapf(err, "In composed functions %v ∘ %v. %v failed", fname, gname, fname)
+		}
+		if err := g(); err != nil {
+			return errors.Wrapf(err, "In composed functions %v ∘ %v. %v failed", fname, gname, gname)
+		}
+		return nil
+	}
+}
+
+// compareCur compares the cur token with  the top of the infix stack. It returns a function that the parser should take
+func (p *parser) compareCur() func() error {
+	p.logstate()
+	t, err := p.cur()
+	if err != nil {
+		return func() error { return errors.Wrap(err, "Cannot compareCur()") }
+	}
+	log.Printf("CUR %v", t)
+	switch t.t {
+	case digit:
+		return p.pushNum
+	case letter:
+		return p.pushVar
+	default:
+		if len(p.infixStack) == 0 {
+			// push the current to infixStack
+			return p.pushCurTok
+		}
+		// check if current token has greater op prec than top of stack
+		top := p.infixStack[len(p.infixStack)-1]
+		topPrec := opprec[top.v]
+		curPrec := opprec[t.v]
+		log.Printf("cur %q top %q || %d %d", t, top, curPrec, topPrec)
+
+		// if current is negative, we need to resolve until the infixStack has len 0 then pushCurTok
+		if curPrec < 0 && topPrec > 0 {
+			if err := p.pushCurTok(); err != nil {
+				return func() error { return errors.Wrap(err, "curPrec < 0") }
+			}
+			return p.resolveAllInfix
+		}
+
+		if curPrec > topPrec {
+			return p.pushCurTok
+		}
+
+		// check special case of arrows (which are right assoc)
+		if top.t == arrow && t.t == arrow {
+			return p.pushCurTok
+		}
+
+		// otherwise resolve first then pushcurtok
+		return p.compose(p.pushCurTok, p.resolveInfix, "resolveInfix", "pushCurTok")
+	}
+}
+
+func (p *parser) incrQPtr() error { p.qptr++; return nil }
+
+// pushVar pushes a var on to the values stack.
+func (p *parser) pushVar() error {
+	t, err := p.cur()
+	if err != nil {
+		return err
+	}
+	p.push(Var(t.v))
+	return nil
+}
+
+// pushNum pushes a number (typed as a Size) onto the values stack.
+func (p *parser) pushNum() error {
+	t, err := p.cur()
+	if err != nil {
+		return err
+	}
+	p.push(Size(int(t.v)))
+	return nil
+}
+
+// pushCurTok pushes the current token into the infixStack
+func (p *parser) pushCurTok() error {
+	t, err := p.cur()
+	if err != nil {
+		return err
+	}
+	p.pushInfix(t)
+	return nil
+}
+
 func (p *parser) parse(q []tok) (err error) {
 	p.queue = q
 	for p.qptr < len(p.queue) {
@@ -122,117 +243,53 @@ func (p *parser) parse(q []tok) (err error) {
 			p.printTab(nil)
 			return err
 		}
+		p.incrQPtr()
 	}
+	if len(p.infixStack) > 0 {
+		if err := p.resolveAllInfix(); err != nil {
+			return errors.Wrap(err, "Unable to resolve all infixes while in .parse")
+		}
+	}
+	log.Printf("q %v", q)
 	p.printTab(nil)
 	return nil
 }
 
-func (p *parser) parseOne() (err error) {
-	if p.log != nil {
-		p.logstate()
+func (p *parser) parseOne() error {
+	t, err := p.cur()
+	if err != nil {
+		return errors.Wrap(err, "Unable to parseOne")
 	}
 
-	q := p.queue
-	i := p.qptr
-	t := q[i]
-	defer func() { p.qptr++ }()
-
-	switch t.t {
-	case parenL:
-		// special case to handle ()
-		t2 := q[i+1]
-		if t2.t == parenR {
+	// special cases: ()
+	if t.v == '(' {
+		if p.qptr == len(p.queue)-1 {
+			return errors.Errorf("Dangling open paren '(' at %v", t.l)
+		}
+		if p.queue[p.qptr+1].v == ')' {
 			p.push(Shape{})
-			i++
+			p.incrQPtr()
 			return nil
 		}
-		p.push(Abstract{})
+	}
+
+	fn := p.compareCur()
+	if err := fn(); err != nil {
+		return errors.Wrap(err, "Unable to parseOne")
 	}
 	return nil
 }
 
-func (p *parser) maybeResolveInfix() error {
-	if len(p.infixStack) > 0 {
-		return p.resolveInfix()
+// resolveAllInfix resolves all the infixes in the infixStack. The result will be an empty infix stack.
+func (p *parser) resolveAllInfix() error {
+	var count int
+	for len(p.infixStack) > 0 {
+		if err := p.resolveInfix(); err != nil {
+			return errors.Wrapf(err, "Unable to resolve all infixes. %d processed.", count)
+		}
+		count++
 	}
 	return nil
-}
-
-// condResolveInfix conditionally resolves previous infixes given a "current" token. This uses operator precedence (which is not coded)
-func (p *parser) condResolveInfix(cur tok) error {
-	if len(p.infixStack) == 0 {
-		return nil
-	}
-	last := p.infixStack[len(p.infixStack)-1] // peek
-	switch cur.t {
-	case arrow:
-		// if the current token is an arrow, check previous infixes. Only fix them if they are not arrow, because arrow has the lowest operator precedence.
-
-		switch last.t {
-		case arrow:
-			// do nothing
-			return nil
-		default:
-			return p.resolveInfix()
-		}
-
-	case binop:
-		switch last.t {
-		case unop:
-			return p.resolveInfix()
-		case binop:
-			// check for the operator precedence of other binop TODO
-			panic("NYI")
-		default:
-			return nil
-		}
-
-	case unop:
-		switch last.t {
-		case unop:
-			return p.resolveInfix()
-		default:
-			return nil
-		}
-	case cmpop:
-		switch last.t {
-		case unop:
-			return p.resolveInfix()
-		case cmpop:
-			return p.resolveInfix()
-		default:
-			return nil
-		}
-	case logop:
-		switch last.t {
-		case unop:
-			return p.resolveInfix()
-		case binop:
-			return p.resolveInfix()
-		case cmpop:
-			return p.resolveInfix()
-		case logop:
-			return p.resolveInfix()
-		default:
-			return nil
-		}
-	case parenR:
-		switch last.t {
-		case unop:
-			return p.resolveInfix()
-		case binop:
-			return p.resolveInfix()
-		case cmpop, logop:
-			return p.resolveInfix()
-		case arrow:
-			return noop{}
-		}
-		panic(fmt.Sprintf("parenR. Last %c of %v", last.v, last.t))
-	default:
-		panic(fmt.Sprintf("tok %v of %v is unsupported", cur, cur.t))
-
-	}
-	panic("Unreachable")
 }
 
 func (p *parser) resolveInfix() error {
@@ -255,56 +312,65 @@ func (p *parser) resolveInfix() error {
 		if err = p.resolveLogOp(last); err != nil {
 			return errors.Wrapf(err, "Unable to resolve logop %v.", last)
 		}
-
 	case arrow:
 		if err := p.resolveArrow(last); err != nil {
 			return errors.Wrapf(err, "Cannot resolve arrow %v.", last)
 		}
+	case parenR:
+		if err := p.resolveA(); err != nil {
+			return errors.Wrap(err, "Cannot resolve A.")
+		}
+	case comma:
+		if err := p.resolveComma(last); err != nil {
+			return errors.Wrapf(err, "Cannot resolve comma %v", last)
+		}
+	case braceR:
+		if err := p.resolveCompound(); err != nil {
+			return errors.Wrapf(err, "Cannot resolve compound %v", last)
+		}
+	default:
+		log.Printf("last {%v %c %v} is unhandled", last.t, last.v, last.l)
 	}
 
 	return nil
 }
 
 func (p *parser) resolveA() error {
-	var abs Abstract
-	var ok bool
-	var bw []substitutable
-
-	// repeatedly pop stuff off the stack
-	for i := len(p.stack) - 1; i >= 0; i-- {
-		s := p.pop()
-		if abs, ok = s.(Abstract); ok && len(abs) == 0 {
+	var bw []tok
+	for i := len(p.infixStack) - 1; i >= 0; i-- {
+		t := p.popInfix()
+		// keep going until you find the first '('
+		if t.v == '(' {
 			break
 		}
-		bw = append(bw, s)
+		bw = append(bw, t)
 	}
-	if abs == nil {
-		return errors.Errorf("Popped every item of the stack, found no Abstract")
+	reverse(bw)
+	backup := p.infixStack
+	p.infixStack = bw
+
+	if err := p.resolveAllInfix(); err != nil {
+		return errors.Wrap(err, "Unable to resolveA")
 	}
-	var allSizelike bool = true
-	for _, v := range bw {
-		if _, ok = v.(Sizelike); !ok {
-			allSizelike = false
-		}
+	if len(p.infixStack) > 0 {
+		// do something
 	}
-	if allSizelike {
-		for i := len(bw) - 1; i >= 0; i-- {
-			s := bw[i].(Sizelike)
-			abs = append(abs, s)
-		}
-		shp, ok := abs.ToShape()
-		if ok {
+	p.infixStack = backup
+
+	last := p.pop()
+	if abs, ok := last.(Abstract); ok {
+		if shp, ok := abs.ToShape(); ok {
 			p.push(shp)
 			return nil
 		}
-		p.push(abs)
-		return nil
 	}
-	p.push(bw[0])
+	p.push(last)
 	return nil
 }
 
 func (p *parser) resolveArrow(t tok) error {
+	p.logstate("resolveArrow")
+	defer p.logstate("resolveArrow END")
 	snd, err := p.popExpr()
 	if err != nil {
 		return errors.Wrapf(err, "Cannot resolve snd of arrow at %d as Expr.", t.l)
@@ -319,6 +385,55 @@ func (p *parser) resolveArrow(t tok) error {
 	}
 	p.push(arr)
 	return nil
+}
+
+func (p *parser) resolveComma(t tok) error {
+	// comma is a binary option. However if it's a trailing comma, then there is no need.
+	snd := p.pop()
+
+	if len(p.stack) == 0 {
+		switch s := snd.(type) {
+		case Abstract:
+			p.push(s)
+		case Sizelike:
+			p.push(Abstract{s})
+		}
+		return nil
+	}
+
+	fst := p.pop()
+	log.Printf("resolveComma %v. fst %v snd %v", t, fst, snd)
+	switch f := fst.(type) {
+	case Abstract:
+		switch s := snd.(type) {
+		case Sizelike:
+			f = append(f, s)
+			p.push(f)
+			return nil
+		case Conser:
+			ret := f.Cons(s).(substitutable)
+			p.push(ret)
+			return nil
+		}
+	case Sizelike:
+		switch s := snd.(type) {
+		case Sizelike:
+			p.push(Abstract{f, s})
+			return nil
+		case Shape:
+			abs := Abstract{f}
+			ret := abs.Cons(s).(substitutable)
+			p.push(ret)
+			return nil
+		case Abstract:
+			s = append(s, f)
+			copy(s[1:], s[0:])
+			s[0] = f
+			p.push(s)
+			return nil
+		}
+	}
+	panic("Unreachable")
 }
 
 func (p *parser) resolveUnOp(t tok) error {
@@ -426,7 +541,6 @@ func (p *parser) resolveCompound() error {
 	// first check
 	var st SubjectTo
 	var e Expr
-	var c Compound
 	var ok bool
 
 	top := p.pop() // SubjectTo
@@ -437,12 +551,11 @@ func (p *parser) resolveCompound() error {
 	if e, ok = snd.(Expr); !ok {
 		return errors.Errorf("Expected Second of Stack to be a Expr is %v of %T. Stack: %v", snd, snd, p.stack)
 	}
-	thd := p.pop() // Compound{} (should be empty)
-	if c, ok = thd.(Compound); !ok {
-		return errors.Errorf("Expected Third of Stack to be a Compound is %v of %T. Stack: %v", thd, thd, p.stack)
+	c := Compound{
+		Expr:      e,
+		SubjectTo: st,
 	}
-	c.Expr = e
-	c.SubjectTo = st
+
 	p.push(c)
 	return nil
 }
@@ -508,58 +621,18 @@ func (p *parser) resolveSlice() error {
 	panic(fmt.Sprintf("Unreachable case. Got top %v of %T;\nSecond %v of %T;\nThird: %v of %v;\nFourth: %v of %T", top, top, snd, snd, thd, thd, fth, fth))
 }
 
-func (p *parser) resolveTop() (err error) {
-	top := p.pop()
-	snd := p.pop()
-	var ok bool
-	switch s := snd.(type) {
-	case Compound:
-		if s.Expr == nil {
-			if s.Expr, ok = top.(Expr); !ok {
-				return errors.Errorf("Expected top of the stack to be an expression. Got %v of %T instead", top, top)
-			}
-			p.push(s)
-			return nil
-		}
-		return nil
-	case UnaryOp:
-		if s.A, ok = top.(Expr); !ok {
-			return errors.Errorf("Expected top of the stack to be an expression. Got %v of %T instead", top, top)
-		}
-		p.push(s)
-		return nil
-	case BinOp:
-		if s.B, ok = top.(Expr); !ok {
-			return errors.Errorf("Expected top of the stack to be an expression. Got %v of %T instead", top, top)
-		}
-		p.push(s)
-		return nil
-	case Arrow:
-		if s.B, ok = top.(Expr); !ok {
-			return errors.Errorf("Expected top of the stack to be an expression. Got %v of %T instead", top, top)
-		}
-		p.push(s)
-		return nil
-	default:
-		p.push(snd)
-		p.push(top)
-		return nil
-
-	}
-}
-
 // operator precedence table
 var opprec = map[rune]int{
-	'(': 100,
-	')': 10,
+	'(': 1,
+	')': -1,
 	'[': 10,
 	']': 10,
-	'{': 10,
+	'{': -2,
 	'}': 10,
-	',': 10,
-	':': 10,
-	'|': 1,
-	'→': 1000,
+	',': 2,
+	':': 1,
+	'|': -1,
+	'→': -1,
 
 	// unop
 	'K': 30,
@@ -590,7 +663,7 @@ var opprec = map[rune]int{
 type tokentype int
 
 const (
-	ws tokentype = iota
+	eos tokentype = iota
 	parenL
 	parenR
 	brackL
@@ -613,6 +686,19 @@ type tok struct {
 	t tokentype // type
 	v rune      // value of the token
 	l int       // location
+}
+
+func (t tok) Format(s fmt.State, c rune) {
+	switch t.t {
+	case letter:
+		fmt.Fprintf(s, "{%c %d}", t.v, t.l)
+	case digit:
+		fmt.Fprintf(s, "{%d %d}", t.v, t.l)
+	case eos:
+		fmt.Fprintf(s, "{EOS %d}", t.l)
+	default:
+		fmt.Fprintf(s, "{%c %d}", t.v, t.l)
+	}
 }
 
 const eoserr = "Lex Error: sudden end of string found in %q. Position %d"

@@ -68,6 +68,12 @@ func extractForAll(a Expr) (UnaryOp, bool) {
 	return UnaryOp{}, false
 }
 
+func reverse(ts []tok) {
+	for i, j := 0, len(ts)-1; i < j; i, j = i+1, j-1 {
+		ts[i], ts[j] = ts[j], ts[i]
+	}
+}
+
 // IsMonotonicInts returns true if the slice of ints is monotonically increasing. It also returns true for incr1 if every succession is a succession of 1
 func IsMonotonicInts(a []int) (monotonic bool, incr1 bool) {
 	var prev int

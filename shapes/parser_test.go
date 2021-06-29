@@ -64,6 +64,7 @@ func TestLex(t *testing.T) {
 }
 
 var parseCases = map[string]Expr{
+
 	"{a -> b | (D a = D b)}": Compound{
 		Expr: Arrow{Var('a'), Var('b')},
 		SubjectTo: SubjectTo{
@@ -73,8 +74,9 @@ var parseCases = map[string]Expr{
 		},
 	},
 
-	"()":           Shape{},
-	"(1,)":         Shape{1},
+	"()":   Shape{},
+	"(1,)": Shape{1},
+
 	"(1,2,3,2325)": Shape{1, 2, 3, 2325},
 	"(1, a, 2)":    Abstract{Size(1), Var('a'), Size(2)},
 
@@ -85,26 +87,28 @@ var parseCases = map[string]Expr{
 			BinOp{Mul, Var('b'), Var('c')},
 		},
 	},
+
 	/*
-		// Transpose:
-		"{ a → X[0 1 3 2] → Tr X[0 1 3 2] a | (D X[0 1 3 2] = D a) }": Compound{
-			Expr: Arrow{
-				Var('a'),
-				Arrow{
-					Axes{0, 1, 3, 2},
-					TransposeOf{
+			// Transpose:
+			"{ a → X[0 1 3 2] → Tr X[0 1 3 2] a | (D X[0 1 3 2] = D a) }": Compound{
+				Expr: Arrow{
+					Var('a'),
+					Arrow{
 						Axes{0, 1, 3, 2},
-						Var('a'),
+						TransposeOf{
+							Axes{0, 1, 3, 2},
+							Var('a'),
+						},
 					},
 				},
-			},
-			SubjectTo: SubjectTo{
-				Eq,
-				UnaryOp{Dims, Axes{0, 1, 3, 2}},
-				UnaryOp{Dims, Var('a')},
-			},
+				SubjectTo: SubjectTo{
+					Eq,
+					UnaryOp{Dims, Axes{0, 1, 3, 2}},
+					UnaryOp{Dims, Var('a')},
+				},
 		},
 	*/
+
 	// Indexing
 	"a → b -> ()": Arrow{
 		Var('a'),
@@ -134,6 +138,7 @@ var parseCases = map[string]Expr{
 			},
 		},
 	},
+
 	/*
 		// Slicing
 		"{ a → [0:2] → a[0:2] | (a[0] ≥ 2) }": Compound{
