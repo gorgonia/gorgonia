@@ -63,7 +63,7 @@ func (p *parser) popExpr() (Expr, error) {
 	s := p.pop()
 	e, ok := s.(Expr)
 	if !ok {
-		return nil, errors.Errorf("Expected an Expr. Got %v of %v instead", s, s)
+		return nil, errors.Errorf("Expected an Expr. Got %v of %T instead", s, s)
 	}
 	return e, nil
 }
@@ -88,7 +88,8 @@ func (p *parser) cur() (tok, error) {
 	return p.queue[p.qptr], nil
 }
 
-func (p *parser) compose(g, f func() error, fname, gname string) func() error {
+// compose performs f() then g()
+func (p *parser) compose(g, f func() error, gname, fname string) func() error {
 	return func() error {
 		if err := f(); err != nil {
 			return errors.Wrapf(err, "In composed functions %v ∘ %v. %v failed", fname, gname, fname)
@@ -115,34 +116,7 @@ func (p *parser) compareCur() func() error {
 	case axesL:
 		return p.compose(p.pushVar, p.pushCurTok, "pushVar", "pushCurTok") // X is a special "variable". It's used to  mark how many items are in a axes.
 	case transposeop:
-		return func() error {
-			p.logstate("transposeop")
-			p.incrQPtr()
-			backup1 := p.stack
-			backup2 := p.infixStack
-
-			p.stack = nil
-			p.infixStack = nil
-			if err := p.expectAxes(); err != nil {
-				return errors.Wrapf(err, " failed to transpose")
-			}
-			p.logstate("axes")
-			axes := p.stack[len(p.stack)-1].(Axes)
-
-			p.stack = nil
-			p.infixStack = nil
-			if err := p.expectExpr(); err != nil {
-				return errors.Wrap(err, "failed to transposeOf")
-			}
-			p.logstate("expectExpr")
-			A := p.stack[len(p.stack)-1].(Expr)
-
-			p.stack = backup1
-			p.infixStack = backup2
-			p.push(TransposeOf{Axes: axes, A: A})
-			return nil
-
-		}
+		return p.resolveTranspose
 	default:
 		if len(p.infixStack) == 0 {
 			// push the current to infixStack
@@ -153,8 +127,11 @@ func (p *parser) compareCur() func() error {
 		topPrec := opprec[top.v]
 		curPrec := opprec[t.v]
 
+		log.Printf("cur %v %d ; top %v %d", t, curPrec, top, topPrec)
+
 		// if current is negative, we need to resolve until the infixStack has len 0 then pushCurTok
 		if curPrec < 0 {
+			log.Printf("curPrec < 0")
 			if err := p.pushCurTok(); err != nil {
 				return func() error { return errors.Wrap(err, "curPrec < 0") }
 			}
@@ -162,16 +139,19 @@ func (p *parser) compareCur() func() error {
 		}
 
 		if curPrec > topPrec {
+			log.Printf("curPrec > topPrec")
 			return p.pushCurTok
 		}
 
 		// check special case of arrows (which are right assoc)
 		if top.t == arrow && t.t == arrow {
+			log.Printf("-> ->")
 			return p.pushCurTok
 		}
 
 		// otherwise resolve first then pushcurtok
-		return p.compose(p.pushCurTok, p.resolveInfix, "resolveInfix", "pushCurTok")
+		log.Printf("Resolve Infix then Push")
+		return p.compose(p.pushCurTok, p.resolveInfixCompareCur, "pushCurTok", "resolveInfixCompareCur")
 	}
 }
 
@@ -273,6 +253,30 @@ func (p *parser) resolveAllInfix() error {
 		}
 		count++
 	}
+	return nil
+}
+
+// resolveInfixCompareCur will resolve the infixes until such a time that the top of the infixStack has smaller precedence than the current.
+func (p *parser) resolveInfixCompareCur() error {
+	t, err := p.cur()
+	if err != nil {
+		return errors.Wrap(err, "Cannot resolveInfixCompareCur")
+	}
+	top := p.infixStack[len(p.infixStack)-1]
+	topPrec := opprec[top.v]
+	curPrec := opprec[t.v]
+
+	for curPrec < topPrec && curPrec >= 0 {
+		if err := p.resolveInfix(); err != nil {
+			return errors.Wrap(err, "cannot resolveInfixCompareCur")
+		}
+		if len(p.infixStack) == 0 {
+			break
+		}
+		top = p.infixStack[len(p.infixStack)-1]
+		topPrec = opprec[top.v]
+	}
+
 	return nil
 }
 
@@ -692,6 +696,35 @@ func (p *parser) resolveAxes() error {
 	reverseAxes(bw)
 	p.push(bw)
 	return nil
+}
+
+func (p *parser) resolveTranspose() error {
+	p.logstate("transposeop")
+	p.incrQPtr()
+	backup1 := p.stack
+	backup2 := p.infixStack
+
+	p.stack = nil
+	p.infixStack = nil
+	if err := p.expectAxes(); err != nil {
+		return errors.Wrapf(err, " failed to transpose")
+	}
+	p.logstate("axes")
+	axes := p.stack[len(p.stack)-1].(Axes)
+
+	p.stack = nil
+	p.infixStack = nil
+	if err := p.expectExpr(); err != nil {
+		return errors.Wrap(err, "failed to transposeOf")
+	}
+	p.logstate("expectExpr")
+	A := p.stack[len(p.stack)-1].(Expr)
+
+	p.stack = backup1
+	p.infixStack = backup2
+	p.push(TransposeOf{Axes: axes, A: A})
+	return nil
+
 }
 
 func (p *parser) expectAxes() error {
