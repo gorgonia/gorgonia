@@ -8,6 +8,9 @@
 \usepackage{booktabs} % for \specialrule
 \usepackage{bussproofs}
 \usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usetikzlibrary{shapes.geometric, arrows}
 \hypersetup{
   colorlinks=true,
   linkcolor=magenta,
@@ -268,6 +271,25 @@ Only variables and application really matters:
 \section{Semantics}
 
 \section{Constraint Solving}
+
+\section{Parsing}
+The shape languaage is designed for a fairly straightforwards parsing algorithm. The shapes package comes with a parser. The code in its entirety can be found in \texttt{parser.go}. A brief description follows.
+
+The parser works by using two stacks (one for values and one for operators) and a queue. The folowing flowchart presents the big-picture ideas:
+
+\tikzstyle{arrow} = [thick,->,>=stealth]
+
+\begin{tikzcd}
+stack &                                                                        & queue \arrow[ld] &                               \\
+      & .compareCur() \arrow[d] \arrow[lu] \arrow[rr, two heads, dashed] &                  & .resolveXXX() \arrow[loop, distance=2em, in=305, out=235] \\
+      & infixStack                                                             &                  &
+\end{tikzcd}
+
+
+The main entry point to parsing is the \texttt{Parse()} function. In it, a \texttt{parser} object is created. The parsing process starts by lexing -  turning a string into a slice of tokens, which forms the queue. Then an item is dequeued off the queue and is placed onto either the \texttt{stack} or \texttt{infixStack}. The rules of when and how each token is turned into a value is described by the methods of the \texttt{parser} object.
+
+The main workhorse is the \texttt{.compareCur()} method, which compares the operator precedence of tokens of the current value off the queue to the top of the \texttt{infixStack}. The parser also has two main groups of methods, denoted by the prefix of the methods. The \texttt{.resolveXXX} methods generally use the existing values and operators on the \texttt{stack} and \texttt{infixStack} to create new values that are then pushed into the \texttt{stack}. The \texttt{.expectXXX} methods also does lookaheads in the queue and manage the queue pointers in order to create values and use them immediately. \textt{.compareCur()} calls these \texttt{.resolveXXX} and \texttt{expectXXX} methods in order to create values to put onto the \texttt{stack}.
+
 
 
 \end{document}
