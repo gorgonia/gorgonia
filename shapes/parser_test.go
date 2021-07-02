@@ -64,6 +64,7 @@ func TestLex(t *testing.T) {
 }
 
 var parseCases = map[string]Expr{
+
 	"()":   Shape{},
 	"(1,)": Shape{1},
 

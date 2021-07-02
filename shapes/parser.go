@@ -3,7 +3,6 @@ package shapes
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"strconv"
 	"unicode"
 
@@ -127,11 +126,8 @@ func (p *parser) compareCur() func() error {
 		topPrec := opprec[top.v]
 		curPrec := opprec[t.v]
 
-		log.Printf("cur %v %d ; top %v %d", t, curPrec, top, topPrec)
-
 		// if current is negative, we need to resolve until the infixStack has len 0 then pushCurTok
 		if curPrec < 0 {
-			log.Printf("curPrec < 0")
 			if err := p.pushCurTok(); err != nil {
 				return func() error { return errors.Wrap(err, "curPrec < 0") }
 			}
@@ -139,18 +135,15 @@ func (p *parser) compareCur() func() error {
 		}
 
 		if curPrec > topPrec {
-			log.Printf("curPrec > topPrec")
 			return p.pushCurTok
 		}
 
 		// check special case of arrows (which are right assoc)
 		if top.t == arrow && t.t == arrow {
-			log.Printf("-> ->")
 			return p.pushCurTok
 		}
 
 		// otherwise resolve first then pushcurtok
-		log.Printf("Resolve Infix then Push")
 		return p.compose(p.pushCurTok, p.resolveInfixCompareCur, "pushCurTok", "resolveInfixCompareCur")
 	}
 }
@@ -280,6 +273,7 @@ func (p *parser) resolveInfixCompareCur() error {
 	return nil
 }
 
+// resolveInfix resolves one infix operator from the infixStack
 func (p *parser) resolveInfix() error {
 	last := p.popInfix()
 	var err error
@@ -329,7 +323,7 @@ func (p *parser) resolveInfix() error {
 			return errors.Wrapf(err, "Cannot resolve Axes %v", last)
 		}
 	default:
-		log.Printf("last {%v %c %v} is unhandled", last.t, last.v, last.l)
+		//	log.Printf("last {%v %c %v} is unhandled", last.t, last.v, last.l)
 	}
 
 	return nil
@@ -351,7 +345,6 @@ loop:
 			}
 
 			x := p.popInfix()
-			log.Printf("x %v", x)
 			if x.v != 'X' {
 				p.pushInfix(x) // undo the pop
 				break loop
@@ -368,8 +361,8 @@ loop:
 	}
 	reverse(bw)
 	backup := p.infixStack
+
 	p.infixStack = bw
-	p.logstate("Switched to bw")
 	if err := p.resolveAllInfix(); err != nil {
 		return errors.Wrapf(err, "Unable to resolveGroup. Group: %q", want)
 	}
@@ -380,6 +373,7 @@ loop:
 	return nil
 }
 
+// resolveA resolves an Abstract{}. If it can be turned into a Shape{}, then the shape will be returned.
 func (p *parser) resolveA() error {
 	if err := p.resolveGroup('('); err != nil {
 		return errors.Wrap(err, "Unable to resolveA.")
@@ -397,6 +391,7 @@ func (p *parser) resolveA() error {
 	return nil
 }
 
+// resolveArrow resolves an Arrow.
 func (p *parser) resolveArrow(t tok) error {
 	snd, err := p.popExpr()
 	if err != nil {
@@ -414,20 +409,30 @@ func (p *parser) resolveArrow(t tok) error {
 	return nil
 }
 
+// resolveComma resolves a comma in group/shape.
 func (p *parser) resolveComma(t tok) error {
 	// comma is a binary option. However if it's a trailing comma, then there is no need.
 	snd := p.pop()
 
+	// If it's a trailing comma:
+	// 	(a, )
+	// then the stacks will look something like this:
+	// 	[a] ['(' ',' ]
+	// Thus after the stack is popped
+	// 	[] ['(']  | WORKING: snd == 'a'
 	if len(p.stack) == 0 {
 		switch s := snd.(type) {
 		case Abstract:
 			p.push(s)
 		case Sizelike:
 			p.push(Abstract{s})
+		default:
+			panic("Unreachable")
 		}
 		return nil
 	}
 
+	// if the length is not 0, then there are more values to pop off the stack.
 	fst := p.pop()
 	switch f := fst.(type) {
 	case Abstract:
@@ -462,6 +467,7 @@ func (p *parser) resolveComma(t tok) error {
 	panic("Unreachable")
 }
 
+// resolveUnOp resolves a unary op.
 func (p *parser) resolveUnOp(t tok) error {
 	expr, err := p.popExpr()
 	if err != nil {
@@ -479,6 +485,7 @@ func (p *parser) resolveUnOp(t tok) error {
 	return nil
 }
 
+// resolveBinOp resolves a binary op.
 func (p *parser) resolveBinOp(t tok) error {
 	snd, err := p.popExpr()
 	if err != nil {
@@ -503,6 +510,7 @@ func (p *parser) resolveBinOp(t tok) error {
 	return nil
 }
 
+// resolveCmpOp resolves a comparison op.
 func (p *parser) resolveCmpOp(t tok) error {
 	snd := p.pop()
 	sndOp, ok := snd.(Operation)
@@ -530,6 +538,7 @@ func (p *parser) resolveCmpOp(t tok) error {
 
 }
 
+// resolveLogOp resolves a logical op.
 func (p *parser) resolveLogOp(t tok) error {
 	snd := p.pop()
 	sndOp, ok := snd.(Operation)
@@ -583,6 +592,7 @@ func (p *parser) resolveCompound() error {
 	return nil
 }
 
+// resolveSlice resolves a slice. It calls resolveGroup().
 func (p *parser) resolveSlice() error {
 	// five cases:
 	// 1. single slice (e.g. a[0])
@@ -644,6 +654,7 @@ func (p *parser) resolveSlice() error {
 	return nil
 }
 
+// resolveColon resolves a colon much like resolveComma.
 func (p *parser) resolveColon() error {
 	// five cases:
 	// 1. single slice (e.g. a[0])
@@ -656,31 +667,32 @@ func (p *parser) resolveColon() error {
 	snd := p.pop()
 	fst := p.pop()
 
-	s, ok := substToInt(snd)
-	if !ok {
-		return errors.Errorf("Expected the top to be a Size. Got %v of %T instead", snd, snd)
-	}
-	switch f := fst.(type) {
+	switch s := snd.(type) {
 	case Size:
 		// case 2
-		retVal := Sli{start: int(f), end: s, step: 1}
+		f, ok := substToInt(fst)
+		if !ok {
+			return errors.Errorf("Expected fst to be a Size. Got %v of %T instead", fst, fst)
+		}
+		retVal := Sli{start: f, end: int(s), step: 1}
 		p.push(retVal)
 	case Sli:
 		// case 3
-		f.step = s
-		p.push(f)
+		f, ok := substToInt(fst)
+		if !ok {
+			return errors.Errorf("Expected fst to be a Size. Got %v of %T instead", fst, fst)
+		}
+		s.step = s.end
+		s.end = s.start
+		s.start = f
+		p.push(s)
 	default:
-		// case 4
-		// NOT REALLY SUPPORTED. TODO
-		retVal := Sli{start: int(s), end: int(s) + 1, step: 1}
-		p.push(fst) // put it back
-		p.push(retVal)
-	}
+		return errors.Errorf("Unsupported: case 4 and 5")
 
+	}
 	return nil
 }
 func (p *parser) resolveAxes() error {
-	p.logstate("resolveAxes")
 	var bw Axes
 	for i := len(p.stack) - 1; i >= 0; i-- {
 		t := p.pop()
@@ -698,8 +710,8 @@ func (p *parser) resolveAxes() error {
 	return nil
 }
 
+// resolveTranspose is a janky way of resolving a transpose operator.
 func (p *parser) resolveTranspose() error {
-	p.logstate("transposeop")
 	p.incrQPtr()
 	backup1 := p.stack
 	backup2 := p.infixStack
@@ -709,7 +721,6 @@ func (p *parser) resolveTranspose() error {
 	if err := p.expectAxes(); err != nil {
 		return errors.Wrapf(err, " failed to transpose")
 	}
-	p.logstate("axes")
 	axes := p.stack[len(p.stack)-1].(Axes)
 
 	p.stack = nil
@@ -717,7 +728,7 @@ func (p *parser) resolveTranspose() error {
 	if err := p.expectExpr(); err != nil {
 		return errors.Wrap(err, "failed to transposeOf")
 	}
-	p.logstate("expectExpr")
+
 	A := p.stack[len(p.stack)-1].(Expr)
 
 	p.stack = backup1
@@ -727,6 +738,7 @@ func (p *parser) resolveTranspose() error {
 
 }
 
+// expectAxes expects the next expression in the queue to be an Axes. Used only for transpose
 func (p *parser) expectAxes() error {
 	x, err := p.cur()
 	if err != nil {
@@ -759,18 +771,19 @@ func (p *parser) expectAxes() error {
 	return nil
 }
 
+// expectExpr parses the next Expr from the queue. Used only for transpose.
 func (p *parser) expectExpr() error {
 	for {
 		if err := p.parseOne(); err != nil {
 			return errors.Wrap(err, "Failed to expect Expr")
 		}
-		p.incrQPtr()
 
 		if len(p.infixStack) == 0 {
 			if _, ok := p.stack[0].(Expr); ok {
 				break
 			}
 		}
+		p.incrQPtr() // because this will not be automatically incremented as we are working outside the regular scheme.
 	}
 	return nil
 }
