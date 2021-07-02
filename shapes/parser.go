@@ -3,7 +3,6 @@ package shapes
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"strconv"
 	"unicode"
 
@@ -127,11 +126,8 @@ func (p *parser) compareCur() func() error {
 		topPrec := opprec[top.v]
 		curPrec := opprec[t.v]
 
-		log.Printf("cur %v %d ; top %v %d", t, curPrec, top, topPrec)
-
 		// if current is negative, we need to resolve until the infixStack has len 0 then pushCurTok
 		if curPrec < 0 {
-			log.Printf("curPrec < 0")
 			if err := p.pushCurTok(); err != nil {
 				return func() error { return errors.Wrap(err, "curPrec < 0") }
 			}
@@ -139,18 +135,15 @@ func (p *parser) compareCur() func() error {
 		}
 
 		if curPrec > topPrec {
-			log.Printf("curPrec > topPrec")
 			return p.pushCurTok
 		}
 
 		// check special case of arrows (which are right assoc)
 		if top.t == arrow && t.t == arrow {
-			log.Printf("-> ->")
 			return p.pushCurTok
 		}
 
 		// otherwise resolve first then pushcurtok
-		log.Printf("Resolve Infix then Push")
 		return p.compose(p.pushCurTok, p.resolveInfixCompareCur, "pushCurTok", "resolveInfixCompareCur")
 	}
 }
@@ -329,7 +322,7 @@ func (p *parser) resolveInfix() error {
 			return errors.Wrapf(err, "Cannot resolve Axes %v", last)
 		}
 	default:
-		log.Printf("last {%v %c %v} is unhandled", last.t, last.v, last.l)
+		//	log.Printf("last {%v %c %v} is unhandled", last.t, last.v, last.l)
 	}
 
 	return nil
@@ -351,7 +344,6 @@ loop:
 			}
 
 			x := p.popInfix()
-			log.Printf("x %v", x)
 			if x.v != 'X' {
 				p.pushInfix(x) // undo the pop
 				break loop
@@ -368,8 +360,8 @@ loop:
 	}
 	reverse(bw)
 	backup := p.infixStack
+
 	p.infixStack = bw
-	p.logstate("Switched to bw")
 	if err := p.resolveAllInfix(); err != nil {
 		return errors.Wrapf(err, "Unable to resolveGroup. Group: %q", want)
 	}
@@ -656,31 +648,32 @@ func (p *parser) resolveColon() error {
 	snd := p.pop()
 	fst := p.pop()
 
-	s, ok := substToInt(snd)
-	if !ok {
-		return errors.Errorf("Expected the top to be a Size. Got %v of %T instead", snd, snd)
-	}
-	switch f := fst.(type) {
+	switch s := snd.(type) {
 	case Size:
 		// case 2
-		retVal := Sli{start: int(f), end: s, step: 1}
+		f, ok := substToInt(fst)
+		if !ok {
+			return errors.Errorf("Expected fst to be a Size. Got %v of %T instead", fst, fst)
+		}
+		retVal := Sli{start: f, end: int(s), step: 1}
 		p.push(retVal)
 	case Sli:
 		// case 3
-		f.step = s
-		p.push(f)
+		f, ok := substToInt(fst)
+		if !ok {
+			return errors.Errorf("Expected fst to be a Size. Got %v of %T instead", fst, fst)
+		}
+		s.step = s.end
+		s.end = s.start
+		s.start = f
+		p.push(s)
 	default:
-		// case 4
-		// NOT REALLY SUPPORTED. TODO
-		retVal := Sli{start: int(s), end: int(s) + 1, step: 1}
-		p.push(fst) // put it back
-		p.push(retVal)
-	}
+		return errors.Errorf("Unsupported: case 4 and 5")
 
+	}
 	return nil
 }
 func (p *parser) resolveAxes() error {
-	p.logstate("resolveAxes")
 	var bw Axes
 	for i := len(p.stack) - 1; i >= 0; i-- {
 		t := p.pop()
@@ -699,7 +692,6 @@ func (p *parser) resolveAxes() error {
 }
 
 func (p *parser) resolveTranspose() error {
-	p.logstate("transposeop")
 	p.incrQPtr()
 	backup1 := p.stack
 	backup2 := p.infixStack
@@ -709,7 +701,6 @@ func (p *parser) resolveTranspose() error {
 	if err := p.expectAxes(); err != nil {
 		return errors.Wrapf(err, " failed to transpose")
 	}
-	p.logstate("axes")
 	axes := p.stack[len(p.stack)-1].(Axes)
 
 	p.stack = nil
@@ -717,7 +708,7 @@ func (p *parser) resolveTranspose() error {
 	if err := p.expectExpr(); err != nil {
 		return errors.Wrap(err, "failed to transposeOf")
 	}
-	p.logstate("expectExpr")
+
 	A := p.stack[len(p.stack)-1].(Expr)
 
 	p.stack = backup1
@@ -727,6 +718,7 @@ func (p *parser) resolveTranspose() error {
 
 }
 
+// expectAxes expects the next expression in the queue to be an Axes. Used only for transpose
 func (p *parser) expectAxes() error {
 	x, err := p.cur()
 	if err != nil {
@@ -759,18 +751,19 @@ func (p *parser) expectAxes() error {
 	return nil
 }
 
+// expectExpr parses the next Expr from the queue. Used only for transpose.
 func (p *parser) expectExpr() error {
 	for {
 		if err := p.parseOne(); err != nil {
 			return errors.Wrap(err, "Failed to expect Expr")
 		}
-		p.incrQPtr()
 
 		if len(p.infixStack) == 0 {
 			if _, ok := p.stack[0].(Expr); ok {
 				break
 			}
 		}
+		p.incrQPtr() // because this will not be automatically incremented as we are working outside the regular scheme.
 	}
 	return nil
 }
