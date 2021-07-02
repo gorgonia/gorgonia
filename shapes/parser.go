@@ -80,11 +80,11 @@ func (p *parser) popInfix() tok {
 	return retVal
 }
 
-func (p *parser) cur() (tok, error) {
-	if p.qptr < 0 || p.qptr >= len(p.queue) {
-		return tok{}, errors.Errorf("Cannot get current token. Pointer: %d. Queue: %v", p.qptr, len(p.queue))
-	}
-	return p.queue[p.qptr], nil
+func (p *parser) cur() tok {
+	// if p.qptr < 0 || p.qptr >= len(p.queue) {
+	// 	return tok{}, errors.Errorf("Cannot get current token. Pointer: %d. Queue: %v", p.qptr, len(p.queue))
+	// }
+	return p.queue[p.qptr]
 }
 
 // compose performs f() then g()
@@ -103,10 +103,8 @@ func (p *parser) compose(g, f func() error, gname, fname string) func() error {
 // compareCur compares the cur token with  the top of the infix stack. It returns a function that the parser should take
 func (p *parser) compareCur() func() error {
 	p.logstate()
-	t, err := p.cur()
-	if err != nil {
-		return func() error { return errors.Wrap(err, "Cannot compareCur()") }
-	}
+	t := p.cur()
+
 	switch t.t {
 	case digit:
 		return p.pushNum
@@ -152,10 +150,7 @@ func (p *parser) incrQPtr() error { p.qptr++; return nil }
 
 // pushVar pushes a var on to the values stack.
 func (p *parser) pushVar() error {
-	t, err := p.cur()
-	if err != nil {
-		return err
-	}
+	t := p.cur()
 	p.push(Var(t.v))
 
 	// special cases: a[...] and X[...]
@@ -176,20 +171,14 @@ func (p *parser) pushVar() error {
 
 // pushNum pushes a number (typed as a Size) onto the values stack.
 func (p *parser) pushNum() error {
-	t, err := p.cur()
-	if err != nil {
-		return err
-	}
+	t := p.cur()
 	p.push(Size(int(t.v)))
 	return nil
 }
 
 // pushCurTok pushes the current token into the infixStack
 func (p *parser) pushCurTok() error {
-	t, err := p.cur()
-	if err != nil {
-		return err
-	}
+	t := p.cur()
 	p.pushInfix(t)
 	return nil
 }
@@ -213,10 +202,7 @@ func (p *parser) parse(q []tok) (err error) {
 }
 
 func (p *parser) parseOne() error {
-	t, err := p.cur()
-	if err != nil {
-		return errors.Wrap(err, "Unable to parseOne")
-	}
+	t := p.cur()
 
 	// special cases: ()
 	if t.v == '(' {
@@ -251,10 +237,7 @@ func (p *parser) resolveAllInfix() error {
 
 // resolveInfixCompareCur will resolve the infixes until such a time that the top of the infixStack has smaller precedence than the current.
 func (p *parser) resolveInfixCompareCur() error {
-	t, err := p.cur()
-	if err != nil {
-		return errors.Wrap(err, "Cannot resolveInfixCompareCur")
-	}
+	t := p.cur()
 	top := p.infixStack[len(p.infixStack)-1]
 	topPrec := opprec[top.v]
 	curPrec := opprec[t.v]
@@ -740,26 +723,20 @@ func (p *parser) resolveTranspose() error {
 
 // expectAxes expects the next expression in the queue to be an Axes. Used only for transpose
 func (p *parser) expectAxes() error {
-	x, err := p.cur()
-	if err != nil {
-		return errors.Wrap(err, "Failed to expect axes")
-	}
+	x := p.cur()
 	if x.v != 'X' {
 		return errors.Errorf("Expected 'X'. Got %q instead", x.v)
 	}
 	p.incrQPtr()
 
-	lbrack, err := p.cur()
-	if err != nil {
-		return errors.Wrap(err, "Failed to expect axes")
-	}
+	lbrack := p.cur()
 	if lbrack.v != '[' {
 		return errors.Errorf("Expected '[. Got %q instead.", lbrack.v)
 	}
 	p.incrQPtr()
 
 	var axes Axes
-	for next, err := p.cur(); err == nil && next.v != ']'; next, err = p.cur() {
+	for next := p.cur(); next.v != ']'; next = p.cur() {
 		if next.t != digit {
 			// TODO: error?
 		}
@@ -1017,4 +994,5 @@ func lex(a string) (retVal []tok, err error) {
 
 	}
 	return retVal, nil
+	x
 }
