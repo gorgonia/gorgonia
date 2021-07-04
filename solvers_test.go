@@ -8,6 +8,7 @@ import (
 
 	"github.com/chewxy/math32"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gorgonia.org/dawson"
 	"gorgonia.org/tensor"
 )
@@ -324,7 +325,7 @@ func TestAdamSolver(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	solver := NewAdamSolver()
+	solver := NewAdamSolver(WithLearnRate(0.1))
 
 	maxIterations := 1000
 
@@ -350,6 +351,90 @@ func TestAdamSolver(t *testing.T) {
 	}
 
 	assert.InDelta(0, costFloat, costThreshold)
+}
+
+func TestAdamSolverPrecision(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		learnRate      float64
+		inputStart     float32
+		inputEnd       float32
+		inputIncrement float32
+		size           int
+		dtype          tensor.Dtype
+		expectedOutput interface{}
+	}{
+		{
+			desc:           "Example-float32-1",
+			learnRate:      0.1,
+			inputStart:     0.0,
+			inputEnd:       1.0,
+			inputIncrement: 0.1,
+			size:           4,
+			dtype:          tensor.Float32,
+			expectedOutput: []float32{0.18293014, 0.18293014, 0.18293014, 0.18293014},
+		},
+		{
+			desc:           "Example-float64-1",
+			learnRate:      0.1,
+			inputStart:     0.0,
+			inputEnd:       1.0,
+			inputIncrement: 0.1,
+			size:           8,
+			dtype:          tensor.Float64,
+			expectedOutput: []float64{0.18293561851374684, 0.18293561851374684, 0.18293561851374684, 0.18293561851374684, 0.18293561851374684, 0.18293561851374684, 0.18293561851374684, 0.18293561851374684},
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			c := require.New(t)
+			g := NewGraph()
+
+			weights := NewTensor(g, tC.dtype, 2, WithShape(tC.size, 1), WithInit(Ones()), WithName("weights"))
+			input := NewTensor(g, tC.dtype, 2, WithShape(1, tC.size), WithName("x"))
+
+			fc := Must(Mul(input, weights))
+			loss := Must(Mean(fc))
+
+			_, err := Grad(loss, weights)
+			c.NoError(err)
+
+			solver := NewAdamSolver(WithLearnRate(tC.learnRate))
+			vm := NewTapeMachine(g, BindDualValues(weights))
+
+			for d := tC.inputStart; d < tC.inputEnd; d += tC.inputIncrement {
+				var backing interface{}
+
+				if tC.dtype == tensor.Float32 {
+					arr := make([]float32, tC.size)
+					for i := range arr {
+						arr[i] = float32(d)
+					}
+
+					backing = arr
+				} else {
+					arr := make([]float64, tC.size)
+					for i := range arr {
+						arr[i] = float64(d)
+					}
+
+					backing = arr
+				}
+
+				Let(input, tensor.New(
+					tensor.WithShape(1, tC.size),
+					tensor.WithBacking(backing),
+				))
+				c.NoError(vm.RunAll())
+
+				c.NoError(solver.Step([]ValueGrad{weights}))
+
+				vm.Reset()
+			}
+
+			c.Equal(tC.expectedOutput, weights.Value().Data())
+		})
+	}
 }
 
 func TestBarzilaiBorweinSolver(t *testing.T) {
