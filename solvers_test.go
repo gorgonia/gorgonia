@@ -8,6 +8,7 @@ import (
 
 	"github.com/chewxy/math32"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gorgonia.org/dawson"
 	"gorgonia.org/tensor"
 )
@@ -350,6 +351,37 @@ func TestAdamSolver(t *testing.T) {
 	}
 
 	assert.InDelta(0, costFloat, costThreshold)
+}
+
+func TestAdamSolver2(t *testing.T) {
+	c := require.New(t)
+	g := NewGraph()
+
+	weights := NewTensor(g, tensor.Float32, 2, WithShape(4, 1), WithInit(Ones()), WithName("weights"))
+	input := NewTensor(g, tensor.Float32, 2, WithShape(1, 4), WithName("x"))
+
+	fc := Must(Mul(input, weights))
+	loss := Must(Mean(fc))
+
+	_, err := Grad(loss, weights)
+	c.NoError(err)
+
+	solver := NewAdamSolver(WithLearnRate(0.1))
+	vm := NewTapeMachine(g, BindDualValues(weights))
+
+	for d := float32(0.0); d < 1.0; d += 0.1 {
+		Let(input, tensor.New(
+			tensor.WithShape(1, 4),
+			tensor.WithBacking([]float32{d, d, d, d}),
+		))
+		c.NoError(vm.RunAll())
+
+		c.NoError(solver.Step([]ValueGrad{weights}))
+
+		vm.Reset()
+	}
+
+	c.Equal([]float32{0.18293014, 0.18293014, 0.18293014, 0.18293014}, weights.Value().Data())
 }
 
 func TestBarzilaiBorweinSolver(t *testing.T) {
