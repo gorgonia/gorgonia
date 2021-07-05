@@ -994,5 +994,4 @@ func lex(a string) (retVal []tok, err error) {
 
 	}
 	return retVal, nil
-	x
 }
