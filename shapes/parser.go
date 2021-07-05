@@ -15,8 +15,14 @@ func Parse(a string) (retVal Expr, err error) {
 	if err != nil {
 		return nil, err
 	}
-
 	p := newParser(true)
+	defer func() {
+		if r := recover(); r != nil {
+			p.printTab(nil)
+			panic(r)
+		}
+	}()
+
 	err = p.parse(q)
 	p.logstate()
 	if len(p.stack) <= 0 {
@@ -25,7 +31,10 @@ func Parse(a string) (retVal Expr, err error) {
 	}
 
 	p.printTab(nil)
-	retVal = p.stack[0].(Expr)
+	var ok bool
+	if retVal, ok = p.stack[0].(Expr); !ok {
+		return nil, errors.Errorf("Expected the final parse to be an Expr. Got %v of %T instead", p.stack[0], p.stack[0])
+	}
 	return
 }
 
@@ -158,14 +167,22 @@ func (p *parser) pushVar() error {
 		return nil
 	}
 
-	if p.queue[p.qptr+1].v == '[' {
-		if t.v != 'X' { // we don't push SliceOf{} if it's X, because there are special routines handling X[...]
-			p.push(SliceOf{})
-		}
-		p.pushInfix(p.queue[p.qptr+1])
+	next := p.queue[p.qptr+1] // peek
+	switch {
+	case t.v != 'X' && next.v == '[':
+		p.push(SliceOf{})
+		// consume the '[' token
 		p.incrQPtr()
-		return nil
+		p.pushInfix(p.queue[p.qptr])
+	case t.v == 'X' && next.v != '[':
+		// error
+		return errors.Errorf("Expected '[' after X. Got %v instead", next)
+	case t.v == 'X' && next.v == '[':
+		// consume the '[' token
+		p.incrQPtr()
+		p.pushInfix(p.queue[p.qptr])
 	}
+
 	return nil
 }
 
@@ -180,6 +197,14 @@ func (p *parser) pushNum() error {
 func (p *parser) pushCurTok() error {
 	t := p.cur()
 	p.pushInfix(t)
+	return nil
+}
+
+// checkItems checks that there are at least `expected` number of items in the stack
+func (p *parser) checkItems(expected int) error {
+	if len(p.stack) < expected {
+		return errors.Errorf("Expected at least %d items in stack. Stack %v", expected, p.stack)
+	}
 	return nil
 }
 
@@ -315,6 +340,7 @@ func (p *parser) resolveInfix() error {
 // resolveGroup resolves groupings of `(...)` and `[...]`
 func (p *parser) resolveGroup(want rune) error {
 	var bw []tok
+	var found bool
 loop:
 	for i := len(p.infixStack) - 1; i >= 0; i-- {
 		t := p.popInfix()
@@ -324,12 +350,14 @@ loop:
 		case t.v == want && want == '[':
 			// special case, iterate once more to find out if the infix operator before is 'X'
 			if i-1 < 0 {
+				found = true
 				break loop
 			}
 
 			x := p.popInfix()
 			if x.v != 'X' {
 				p.pushInfix(x) // undo the pop
+				found = true
 				break loop
 			}
 
@@ -337,10 +365,14 @@ loop:
 
 			fallthrough
 		case t.v == want:
+			found = true
 			break loop
 		}
 
 		bw = append(bw, t)
+	}
+	if !found {
+		return errors.Errorf("Could not find a corresponding %q in expression. Unable to resolveGroup", want)
 	}
 	reverse(bw)
 	backup := p.infixStack
@@ -410,7 +442,7 @@ func (p *parser) resolveComma(t tok) error {
 		case Sizelike:
 			p.push(Abstract{s})
 		default:
-			panic("Unreachable")
+			return errors.Errorf("Failed to resolveComma. Cannot handle %v of %T as a Sizelike.", snd, snd)
 		}
 		return nil
 	}
@@ -447,11 +479,14 @@ func (p *parser) resolveComma(t tok) error {
 			return nil
 		}
 	}
-	panic("Unreachable")
+	return errors.Errorf("Unable to resolveComma. Arrived at an unreachable state. Check your input expression.")
 }
 
 // resolveUnOp resolves a unary op.
 func (p *parser) resolveUnOp(t tok) error {
+	if err := p.checkItems(1); err != nil {
+		return errors.Wrap(err, "Unable to resolveUnOp.")
+	}
 	expr, err := p.popExpr()
 	if err != nil {
 		return errors.Wrapf(err, "Cannot resolve expr of unop %c at %d.", t.v, t.l)
@@ -470,6 +505,10 @@ func (p *parser) resolveUnOp(t tok) error {
 
 // resolveBinOp resolves a binary op.
 func (p *parser) resolveBinOp(t tok) error {
+	if err := p.checkItems(2); err != nil {
+		return errors.Wrap(err, "Unable to resolveBinOp")
+	}
+
 	snd, err := p.popExpr()
 	if err != nil {
 		return errors.Wrapf(err, "Unable to resolve snd of BinOp at %d as Expr.", t.l)
@@ -495,6 +534,10 @@ func (p *parser) resolveBinOp(t tok) error {
 
 // resolveCmpOp resolves a comparison op.
 func (p *parser) resolveCmpOp(t tok) error {
+	if err := p.checkItems(2); err != nil {
+		return errors.Wrap(err, "Unable to resolveCmpOp")
+	}
+
 	snd := p.pop()
 	sndOp, ok := snd.(Operation)
 	if !ok {
@@ -523,6 +566,10 @@ func (p *parser) resolveCmpOp(t tok) error {
 
 // resolveLogOp resolves a logical op.
 func (p *parser) resolveLogOp(t tok) error {
+	if err := p.checkItems(2); err != nil {
+		return errors.Wrap(err, "Unable to resolveLogOp")
+	}
+
 	snd := p.pop()
 	sndOp, ok := snd.(Operation)
 	if !ok {
@@ -553,6 +600,10 @@ func (p *parser) resolveLogOp(t tok) error {
 // The result will look like this
 // 	[..., Compound{...}] (the Compound{} now has data)
 func (p *parser) resolveCompound() error {
+	if err := p.checkItems(2); err != nil {
+		return errors.Wrap(err, "Unable to resolveCompound")
+	}
+
 	// first check
 	var st SubjectTo
 	var e Expr
@@ -646,6 +697,10 @@ func (p *parser) resolveColon() error {
 	// 4. open range (e.g. a[1:]) CURRENTLY UNSUPPORTED. TODO.
 	// 5. limit range (e.g. a[:2]) CURRENTLY UNSUPPORTED. TODO.
 
+	if err := p.checkItems(2); err != nil {
+		return errors.Wrap(err, "Unable to resolveColon.")
+	}
+
 	// a colon is a binop
 	snd := p.pop()
 	fst := p.pop()
@@ -699,6 +754,11 @@ func (p *parser) resolveTranspose() error {
 	backup1 := p.stack
 	backup2 := p.infixStack
 
+	// check
+	if len(p.queue) <= p.qptr {
+		return errors.Errorf("Dangling T operator")
+	}
+
 	p.stack = nil
 	p.infixStack = nil
 	if err := p.expectAxes(); err != nil {
@@ -728,6 +788,10 @@ func (p *parser) expectAxes() error {
 		return errors.Errorf("Expected 'X'. Got %q instead", x.v)
 	}
 	p.incrQPtr()
+
+	if len(p.queue) <= p.qptr {
+		return errors.Errorf("Dangling X.")
+	}
 
 	lbrack := p.cur()
 	if lbrack.v != '[' {
@@ -965,7 +1029,8 @@ func lex(a string) (retVal []tok, err error) {
 			continue // we ignore spaces and delimiters
 		case unicode.IsDigit(r):
 			var rs2 = []rune{r}
-			for j := i + 1; j < len(rs); j++ {
+			var j int
+			for j = i + 1; j < len(rs); j++ {
 				r2 := rs[j]
 				if !unicode.IsDigit(r2) {
 					i = j - 1
@@ -973,6 +1038,7 @@ func lex(a string) (retVal []tok, err error) {
 				}
 				rs2 = append(rs2, r2)
 			}
+			i = j - 1
 			s := string(rs2)
 			num, err := strconv.Atoi(s)
 			if err != nil {

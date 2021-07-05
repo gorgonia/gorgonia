@@ -13,6 +13,8 @@ var lexCases = map[string][]tok{
 	"() -> ()":   []tok{{parenL, '(', 0}, {parenR, ')', 1}, {arrow, '→', 4}, {parenL, '(', 6}, {parenR, ')', 7}},
 	"() → ()":    []tok{{parenL, '(', 0}, {parenR, ')', 1}, {arrow, '→', 3}, {parenL, '(', 5}, {parenR, ')', 6}},
 
+	"1000": []tok{{digit, 1000, 3}},
+
 	// unop
 	"P a": []tok{{unop, 'Π', 0}, {letter, 'a', 2}},
 	"S a": []tok{{unop, 'Σ', 0}, {letter, 'a', 2}},
@@ -282,5 +284,30 @@ func TestParse(t *testing.T) {
 			t.Fatalf("Unable to parse %q: %+v", k, err)
 		}
 		assert.Equal(t, v, expr, "Failed to parse %q", k)
+	}
+}
+
+var badInputs = []string{
+	"X1000",
+	"0,0,0)0(0P0b0)0,0,0)0T",
+	//	"0->0->->b[",
+	">]]>0",
+	":",
+	"-0",
+	"1<",
+	"1∧",
+	"{|}",
+	"0*0",
+	"0,>(0)",
+	"0,>-0a->",
+	"TX",
+	"(),(0)",
+}
+
+func TestParseBadInputs(t *testing.T) {
+	for _, in := range badInputs {
+		if _, err := Parse(in); err == nil {
+			t.Errorf("Expected errors when parsing %q.", in)
+		}
 	}
 }

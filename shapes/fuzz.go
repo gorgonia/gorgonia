@@ -12,13 +12,9 @@ func Fuzz(data []byte) int {
 		return -1
 	}
 	switch expr.(type) {
-	case Shape:
-		return -1
-	case Abstract:
-		return -1
-	case Size:
-		return -1
-	case Var:
+	case Arrow:
+	case Compound:
+	default:
 		return -1
 	}
 	var b Shape
