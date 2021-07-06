@@ -253,6 +253,9 @@ func (p *parser) resolveAllInfix() error {
 	var count int
 	for len(p.infixStack) > 0 {
 		if err := p.resolveInfix(); err != nil {
+			if _, ok := err.(NoOpError); ok {
+				break
+			}
 			return errors.Wrapf(err, "Unable to resolve all infixes. %d processed.", count)
 		}
 		count++
@@ -268,7 +271,11 @@ func (p *parser) resolveInfixCompareCur() error {
 	curPrec := opprec[t.v]
 
 	for curPrec < topPrec && curPrec >= 0 {
+		p.logstate("cur %v top %v | %d %d", t, top, curPrec, topPrec)
 		if err := p.resolveInfix(); err != nil {
+			if _, ok := err.(NoOpError); ok {
+				break // No Op error is returned when there is a paren
+			}
 			return errors.Wrap(err, "cannot resolveInfixCompareCur")
 		}
 		if len(p.infixStack) == 0 {
@@ -284,6 +291,7 @@ func (p *parser) resolveInfixCompareCur() error {
 // resolveInfix resolves one infix operator from the infixStack
 func (p *parser) resolveInfix() error {
 	last := p.popInfix()
+	p.logstate("resolveInfix %v", last)
 	var err error
 	switch last.t {
 	case unop:
@@ -306,6 +314,9 @@ func (p *parser) resolveInfix() error {
 		if err := p.resolveArrow(last); err != nil {
 			return errors.Wrapf(err, "Cannot resolve arrow %v.", last)
 		}
+	case parenL:
+		p.pushInfix(last)
+		return noopError{}
 	case parenR:
 		if err := p.resolveA(); err != nil {
 			return errors.Wrap(err, "Cannot resolve A.")
@@ -372,7 +383,7 @@ loop:
 		bw = append(bw, t)
 	}
 	if !found {
-		return errors.Errorf("Could not find a corresponding %q in expression. Unable to resolveGroup", want)
+		return errors.Errorf("Could not find a corresponding %q in expression. Unable to resolveGroup. Popped Infix (in backwards order) %v", want, bw)
 	}
 	reverse(bw)
 	backup := p.infixStack
@@ -603,6 +614,18 @@ func (p *parser) resolveCompound() error {
 	if err := p.checkItems(2); err != nil {
 		return errors.Wrap(err, "Unable to resolveCompound")
 	}
+	
+	// find '{'
+	var found bool
+	for i := len(p.infixStack)-1; i>= 0; i--{
+		if p.infixStack[i].t == braceL{
+			found = true
+			break
+		}
+	}
+	if !found {
+return errors.Errorf("Unable to resolveCompound. Received a '}' with no preceeding '{'")
+	}
 
 	// first check
 	var st SubjectTo
@@ -831,7 +854,7 @@ func (p *parser) expectExpr() error {
 
 // operator precedence table
 var opprec = map[rune]int{
-	'(': 80,
+	'(': 70,
 	')': -1,
 	'[': 1,
 	']': 70,
