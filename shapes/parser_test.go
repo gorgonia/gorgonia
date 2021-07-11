@@ -1,6 +1,7 @@
 package shapes
 
 import (
+	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -66,9 +67,9 @@ func TestLex(t *testing.T) {
 }
 
 var parseCases = map[string]Expr{
-
-	"()":   Shape{},
-	"(1,)": Shape{1},
+	"()":     Shape{},
+	"(1,)":   Shape{1},
+	"(a,b,)": Abstract{Var('a'), Var('b')},
 
 	"(1,2,3,2325)": Shape{1, 2, 3, 2325},
 	"(1, a, 2)":    Abstract{Size(1), Var('a'), Size(2)},
@@ -243,6 +244,21 @@ var parseCases = map[string]Expr{
 			},
 		},
 	},
+
+	// Weird but acceptable inputs for Shapes and Abstracts
+	"(1, (a,))":     Abstract{Size(1), Var('a')},
+	"(1, (a, b,),)": Abstract{Size(1), Var('a'), Var('b')},
+	"(1, (2,3),)":   Shape{1, 2, 3},
+	"((1,), b)":     Abstract{Size(1), Var('b')},
+	"((1,), 2)":     Shape{1, 2},
+	"((1), (2))":    Shape{1, 2},
+
+	"((1,), (a,))":   Abstract{Size(1), Var('a')},
+	"((1,), (a,b,))": Abstract{Size(1), Var('a'), Var('b')},
+
+	"((a, b), c)":     Abstract{Var('a'), Var('b'), Var('c')},
+	"((), a)":         Abstract{Var('a')},
+	"((a,b), (c, d))": Abstract{Var('a'), Var('b'), Var('c'), Var('d')},
 }
 
 /*
@@ -274,6 +290,7 @@ var knownFail = map[string]Expr{
 		},
 	},
 
+
 }
 */
 
@@ -304,13 +321,23 @@ var badInputs = []string{
 	"TX",
 	//"(),(0)",
 	"(",
+	//"(,y)0}0=",
 
-	"(,y)0}0=",
+	",c[SS[S ->S0",
+	//"0TX[",
 }
 
 func TestParseBadInputs(t *testing.T) {
-	for _, in := range badInputs {
+	var in string
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("in: %q", in)
+			panic(r)
+		}
+	}()
+	for _, in = range badInputs {
 		if _, err := Parse(in); err == nil {
+
 			t.Errorf("Expected errors when parsing %q.", in)
 		}
 	}

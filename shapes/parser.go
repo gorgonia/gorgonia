@@ -25,9 +25,13 @@ func Parse(a string) (retVal Expr, err error) {
 
 	err = p.parse(q)
 	p.logstate()
-	if len(p.stack) <= 0 {
+	if len(p.stack) == 0 {
 		p.printTab(nil)
 		return nil, errors.Errorf("WTF?")
+	}
+	if len(p.infixStack) > 0 {
+		p.printTab(nil)
+		return nil, errors.New("Incomplete expression. There are operators remaining that are unparsed.")
 	}
 
 	p.printTab(nil)
@@ -155,7 +159,13 @@ func (p *parser) compareCur() func() error {
 	}
 }
 
-func (p *parser) incrQPtr() error { p.qptr++; return nil }
+func (p *parser) incrQPtr() error {
+	p.qptr++
+	if p.qptr >= len(p.queue) {
+		return errors.Errorf("XXX")
+	}
+	return nil
+}
 
 // pushVar pushes a var on to the values stack.
 func (p *parser) pushVar() error {
@@ -271,7 +281,6 @@ func (p *parser) resolveInfixCompareCur() error {
 	curPrec := opprec[t.v]
 
 	for curPrec < topPrec && curPrec >= 0 {
-		p.logstate("cur %v top %v | %d %d", t, top, curPrec, topPrec)
 		if err := p.resolveInfix(); err != nil {
 			if _, ok := err.(NoOpError); ok {
 				break // No Op error is returned when there is a paren
@@ -325,10 +334,17 @@ func (p *parser) resolveInfix() error {
 		if err := p.resolveComma(last); err != nil {
 			return errors.Wrapf(err, "Cannot resolve comma %v", last)
 		}
+	case braceL:
+		p.pushInfix(last)
+		return noopError{}
 	case braceR:
 		if err := p.resolveCompound(); err != nil {
 			return errors.Wrapf(err, "Cannot resolve compound %v", last)
 		}
+
+	case brackL:
+		p.pushInfix(last)
+		return noopError{}
 	case brackR:
 		if err := p.resolveSlice(); err != nil {
 			return errors.Wrapf(err, "Cannot resolve slice %v", last)
@@ -437,6 +453,7 @@ func (p *parser) resolveArrow(t tok) error {
 
 // resolveComma resolves a comma in group/shape.
 func (p *parser) resolveComma(t tok) error {
+	p.logstate("resolveComma")
 	// comma is a binary option. However if it's a trailing comma, then there is no need.
 	snd := p.pop()
 
@@ -466,6 +483,22 @@ func (p *parser) resolveComma(t tok) error {
 		case Sizelike:
 			f = append(f, s)
 			p.push(f)
+			return nil
+		case Conser:
+			ret := f.Cons(s).(substitutable)
+			p.push(ret)
+			return nil
+		}
+	case Shape:
+		switch s := snd.(type) {
+		case Size:
+			f = append(f, int(s))
+			p.push(f)
+			return nil
+		case Sizelike:
+			f2 := f.toAbs(len(f) + 1)
+			f2 = append(f2, s)
+			p.push(f2)
 			return nil
 		case Conser:
 			ret := f.Cons(s).(substitutable)
@@ -602,6 +635,9 @@ func (p *parser) resolveLogOp(t tok) error {
 		A:      fstOp,
 		B:      sndOp,
 	}
+	if !o.isValid() {
+		return errors.Errorf("SubjectTo %v is not a valid SubjectTo", o)
+	}
 	p.push(o)
 	return nil
 }
@@ -611,20 +647,15 @@ func (p *parser) resolveLogOp(t tok) error {
 // The result will look like this
 // 	[..., Compound{...}] (the Compound{} now has data)
 func (p *parser) resolveCompound() error {
+	p.logstate("resolveCompound")
 	if err := p.checkItems(2); err != nil {
 		return errors.Wrap(err, "Unable to resolveCompound")
 	}
-	
+
 	// find '{'
-	var found bool
-	for i := len(p.infixStack)-1; i>= 0; i--{
-		if p.infixStack[i].t == braceL{
-			found = true
-			break
-		}
-	}
-	if !found {
-return errors.Errorf("Unable to resolveCompound. Received a '}' with no preceeding '{'")
+	opening := p.popInfix()
+	if opening.t != braceL {
+		return errors.Errorf("Unable to resolveCompound. No corresponding'{' for a given '}")
 	}
 
 	// first check

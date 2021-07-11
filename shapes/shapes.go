@@ -20,10 +20,7 @@ func (s Shape) Cons(other Conser) Conser {
 	case Shape:
 		return append(s, ot...)
 	case Abstract:
-		retVal := make(Abstract, 0, len(s)+len(ot))
-		for i := range s {
-			retVal = append(retVal, Size(s[i]))
-		}
+		retVal := s.toAbs(len(s) + len(ot))
 		retVal = append(retVal, ot...)
 		return retVal
 	}
@@ -31,6 +28,17 @@ func (s Shape) Cons(other Conser) Conser {
 }
 
 func (s Shape) isConser() {}
+
+func (s Shape) toAbs(hint int) Abstract {
+	if hint <= 0 {
+		hint = len(s)
+	}
+	retVal := make(Abstract, 0, hint)
+	for i := range s {
+		retVal = append(retVal, Size(s[i]))
+	}
+	return retVal
+}
 
 func (s Shape) Clone() interface{} {
 	retVal := make(Shape, len(s))
