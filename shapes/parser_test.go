@@ -309,6 +309,7 @@ func TestParse(t *testing.T) {
 }
 
 var badInputs = []string{
+
 	"X1000",
 	"0,0,0)0(0P0b0)0,0,0)0T",
 	"0->0->->b[",
@@ -329,6 +330,8 @@ var badInputs = []string{
 	"[->]",
 	"(0[])",
 	"(a->a[]7476837158203120)",
+
+	"(Y0-0)0{TX[0]",
 }
 
 func TestParseBadInputs(t *testing.T) {
