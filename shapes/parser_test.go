@@ -259,6 +259,9 @@ var parseCases = map[string]Expr{
 	"((a, b), c)":     Abstract{Var('a'), Var('b'), Var('c')},
 	"((), a)":         Abstract{Var('a')},
 	"((a,b), (c, d))": Abstract{Var('a'), Var('b'), Var('c'), Var('d')},
+
+	// please don't write something like this.
+	"(),(0)": Shape{0},
 }
 
 /*
@@ -308,7 +311,7 @@ var badInputs = []string{
 
 	"X1000",
 	"0,0,0)0(0P0b0)0,0,0)0T",
-	//	"0->0->->b[",
+	"0->0->->b[",
 	">]]>0",
 	":",
 	"-0",
@@ -319,12 +322,10 @@ var badInputs = []string{
 	"0,>(0)",
 	"0,>-0a->",
 	"TX",
-	//"(),(0)",
 	"(",
-	//"(,y)0}0=",
-
+	"(,y)0}0=",
 	",c[SS[S ->S0",
-	//"0TX[",
+	"0TX[",
 }
 
 func TestParseBadInputs(t *testing.T) {
@@ -335,10 +336,10 @@ func TestParseBadInputs(t *testing.T) {
 			panic(r)
 		}
 	}()
-	for _, in = range badInputs {
-		if _, err := Parse(in); err == nil {
 
-			t.Errorf("Expected errors when parsing %q.", in)
+	for _, in = range badInputs {
+		if wtf, err := Parse(in); err == nil {
+			t.Errorf("Expected errors when parsing %q. Got %v", in, wtf)
 		}
 	}
 }

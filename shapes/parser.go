@@ -210,10 +210,26 @@ func (p *parser) pushCurTok() error {
 	return nil
 }
 
-// checkItems checks that there are at least `expected` number of items in the stack
+// checkItems checks that there are at least `expected` number of items in the stack.
 func (p *parser) checkItems(expected int) error {
 	if len(p.stack) < expected {
 		return errors.Errorf("Expected at least %d items in stack. Stack %v", expected, p.stack)
+	}
+	return nil
+}
+
+// checkInfix checks that there are at least `expected` number of infix operataors in the infixStack.
+func (p *parser) checkInfix(expected int) error {
+	if len(p.infixStack) < expected {
+		return errors.Errorf("Expected at least %d items in infixStack. InfixStack: %v", expected, p.infixStack)
+	}
+	return nil
+}
+
+// checkEOF checks that there are enough items on the queue. Otherwise it's an "EOF" error - something is dangling.
+func (p *parser) checkEOF() error {
+	if len(p.queue) <= p.qptr {
+		return errors.Errorf("Unexpected EOF.")
 	}
 	return nil
 }
@@ -651,6 +667,9 @@ func (p *parser) resolveCompound() error {
 	if err := p.checkItems(2); err != nil {
 		return errors.Wrap(err, "Unable to resolveCompound")
 	}
+	if err := p.checkInfix(1); err != nil {
+		return errors.Wrap(err, "Unable to resolveCompound: Cannot find '{'")
+	}
 
 	// find '{'
 	opening := p.popInfix()
@@ -809,8 +828,8 @@ func (p *parser) resolveTranspose() error {
 	backup2 := p.infixStack
 
 	// check
-	if len(p.queue) <= p.qptr {
-		return errors.Errorf("Dangling T operator")
+	if err := p.checkEOF(); err != nil {
+		return errors.Wrap(err, "Dangling T operator.")
 	}
 
 	p.stack = nil
@@ -841,17 +860,21 @@ func (p *parser) expectAxes() error {
 	if x.v != 'X' {
 		return errors.Errorf("Expected 'X'. Got %q instead", x.v)
 	}
+	// consume and check EOF.
 	p.incrQPtr()
-
-	if len(p.queue) <= p.qptr {
-		return errors.Errorf("Dangling X.")
+	if err := p.checkEOF(); err != nil {
+		return errors.Wrap(err, "Dangling X operator.")
 	}
 
 	lbrack := p.cur()
 	if lbrack.v != '[' {
 		return errors.Errorf("Expected '[. Got %q instead.", lbrack.v)
 	}
+	// consume and check EOF
 	p.incrQPtr()
+	if err := p.checkEOF(); err != nil {
+		return errors.Wrap(err, "Dangling X[... operator.")
+	}
 
 	var axes Axes
 	for next := p.cur(); next.v != ']'; next = p.cur() {
@@ -859,7 +882,11 @@ func (p *parser) expectAxes() error {
 			// TODO: error?
 		}
 		axes = append(axes, Axis(next.v))
+
 		p.incrQPtr()
+		if err := p.checkEOF(); err != nil {
+			return errors.Wrap(err, "Dangling X[... operator.")
+		}
 	}
 	p.incrQPtr() // because this was not automatically incremented
 	p.push(axes)
