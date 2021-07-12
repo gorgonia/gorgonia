@@ -50,9 +50,7 @@ func (a Abstract) isExpr() {}
 // Dims returns the number of dimensions in the shape
 func (a Abstract) Dims() int { return len(a) }
 
-func (a Abstract) TotalSize() int {
-	panic("not implemented") // TODO: Implement
-}
+func (a Abstract) TotalSize() int { panic("Unable to get TotalSize for Abstract") }
 
 func (a Abstract) DimSize(dim int) (Sizelike, error) {
 	if a.Dims() <= dim {

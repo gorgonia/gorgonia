@@ -1,8 +1,6 @@
 package values
 
 import (
-	"fmt"
-
 	"github.com/chewxy/hm"
 	"gorgonia.org/tensor"
 )
@@ -19,7 +17,6 @@ import (
 // There are some performance tradeoffs made in this decision, but ultimately this is better than having to manually manage blocks of memory
 type Value interface {
 	tensor.Tensor
-	fmt.Formatter
 }
 
 // Typer is anything that knows its own type
