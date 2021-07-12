@@ -67,6 +67,7 @@ func TestLex(t *testing.T) {
 }
 
 var parseCases = map[string]Expr{
+
 	"()":     Shape{},
 	"(1,)":   Shape{1},
 	"(a,b,)": Abstract{Var('a'), Var('b')},
@@ -308,7 +309,6 @@ func TestParse(t *testing.T) {
 }
 
 var badInputs = []string{
-
 	"X1000",
 	"0,0,0)0(0P0b0)0,0,0)0T",
 	"0->0->->b[",
@@ -326,6 +326,9 @@ var badInputs = []string{
 	"(,y)0}0=",
 	",c[SS[S ->S0",
 	"0TX[",
+	"[->]",
+	"(0[])",
+	"(a->a[]7476837158203120)",
 }
 
 func TestParseBadInputs(t *testing.T) {

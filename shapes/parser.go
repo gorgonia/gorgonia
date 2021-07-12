@@ -142,6 +142,10 @@ func (p *parser) compareCur() func() error {
 			if err := p.pushCurTok(); err != nil {
 				return func() error { return errors.Wrap(err, "curPrec < 0") }
 			}
+			// special case because ']' has -1 opprec but doesn't really require ALL infixes to be resolved before hand
+			if t.v == ']' {
+				return p.resolveInfix
+			}
 			return p.resolveAllInfix
 		}
 
@@ -316,7 +320,6 @@ func (p *parser) resolveInfixCompareCur() error {
 // resolveInfix resolves one infix operator from the infixStack
 func (p *parser) resolveInfix() error {
 	last := p.popInfix()
-	p.logstate("resolveInfix %v", last)
 	var err error
 	switch last.t {
 	case unop:
@@ -451,6 +454,10 @@ func (p *parser) resolveA() error {
 
 // resolveArrow resolves an Arrow.
 func (p *parser) resolveArrow(t tok) error {
+	if err := p.checkItems(2); err != nil {
+		return errors.Wrap(err, "Cannot resolveArrow: Not enough items on stack")
+	}
+
 	snd, err := p.popExpr()
 	if err != nil {
 		return errors.Wrapf(err, "Cannot resolve snd of arrow at %d as Expr.", t.l)
@@ -469,7 +476,6 @@ func (p *parser) resolveArrow(t tok) error {
 
 // resolveComma resolves a comma in group/shape.
 func (p *parser) resolveComma(t tok) error {
-	p.logstate("resolveComma")
 	// comma is a binary option. However if it's a trailing comma, then there is no need.
 	snd := p.pop()
 
@@ -663,7 +669,6 @@ func (p *parser) resolveLogOp(t tok) error {
 // The result will look like this
 // 	[..., Compound{...}] (the Compound{} now has data)
 func (p *parser) resolveCompound() error {
-	p.logstate("resolveCompound")
 	if err := p.checkItems(2); err != nil {
 		return errors.Wrap(err, "Unable to resolveCompound")
 	}
@@ -731,9 +736,12 @@ func (p *parser) resolveSlice() error {
 		p.push(top)
 		return nil
 	default:
-		return errors.Errorf("top can either be Sli or Size. Got %v of %T instead", top, top)
+		return errors.Errorf("Unable to resolveSlice. top can either be Sli or Size. Got %v of %T instead", top, top)
 	}
 
+	if err := p.checkItems(1); err != nil {
+		return errors.Wrap(err, "Unable to resolveSlice. Expected at least one item on the stack.")
+	}
 	snd := p.pop()
 	so, ok := snd.(SliceOf)
 	if !ok {
@@ -915,7 +923,7 @@ var opprec = map[rune]int{
 	'(': 70,
 	')': -1,
 	'[': 1,
-	']': 70,
+	']': -1,
 	'{': 70,
 	'}': -1,
 	',': 2,
