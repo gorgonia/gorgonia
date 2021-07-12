@@ -729,6 +729,9 @@ func (p *parser) resolveSlice() error {
 	}
 
 	// resolve any potential SliceOf{} or IndexOf{}
+	if err := p.checkItems(1); err != nil {
+		return errors.Wrap(err, "Unable to resolveSlice. Expected at least a SliceOf{} or an IndexOf{}")
+	}
 	top := p.pop()
 
 	// check for case 1
@@ -863,7 +866,10 @@ func (p *parser) resolveTranspose() error {
 		return errors.Wrap(err, "failed to transposeOf")
 	}
 
-	A := p.stack[len(p.stack)-1].(Expr)
+	A, ok := p.stack[len(p.stack)-1].(Expr)
+	if !ok {
+		return errors.Errorf("Cannot resolveTranspose. Expected the top of the stack to be an Expr. Got %v of %T instead", p.stack[len(p.stack)-1], p.stack[len(p.stack)-1])
+	}
 
 	p.stack = backup1
 	p.infixStack = backup2
