@@ -92,8 +92,11 @@ func (s Shape) IsScalarEquiv() bool {
 	if s.IsScalar() {
 		return true
 	}
-	p := prodInts([]int(s))
-	return p == 1 || p == 0
+	asInts := []int(s)
+	if allEq(asInts, 0) {
+		return true
+	}
+	return prodInts(asInts) == 1
 }
 
 // IsVector returns whether the access pattern falls into one of three possible definitions of vectors:

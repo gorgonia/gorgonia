@@ -28,6 +28,15 @@ func prodInts(a []int) int {
 	return retVal
 }
 
+func allEq(a []int, e int) bool {
+	for _, v := range a {
+		if v != e {
+			return false
+		}
+	}
+	return true
+}
+
 func substToInt(a substitutable) (int, bool) {
 	switch at := a.(type) {
 	case Size:
