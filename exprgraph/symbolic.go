@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"unsafe"
 
-	"gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
 
-var _ gorgonia.Tensor = &Symbolic{}
+var _ Tensor = &Symbolic{}
+var _ tensor.Tensor = &Symbolic{}
 
 // Symbolic is a representation of a Symbolic tensor - it has no data
 type Symbolic struct {
@@ -54,8 +54,18 @@ func (t *Symbolic) ScalarValue() interface{} { return nil }
 
 // Format ...
 func (t *Symbolic) Format(f fmt.State, c rune) {
-	fmt.Fprintf(f, "TODO")
+	var name string
+	if n := t.g.find(t); n != nil {
+		name = n.name
+	}
+
+	switch {
+	case f.Flag('#'), f.Flag('+'):
+		fmt.Fprintf(f, "%v %v", name, t.Shape())
+	default:
+		fmt.Fprint(f, name)
+	}
 }
 
-// Data returns nil
+// Data returns nil because there's no associated data.
 func (t *Symbolic) Data() interface{} { return nil }

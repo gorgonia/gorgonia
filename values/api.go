@@ -5,6 +5,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/datatypes"
 	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/internal/memutils"
 	"gorgonia.org/gorgonia/types"
@@ -96,7 +97,7 @@ func Zero(dt tensor.Dtype) Scalar {
 
 func MakeFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal Value, err error) {
 	var dt tensor.Dtype
-	if dt, err = types.DtypeOf(t); err != nil {
+	if dt, err = datatypes.DtypeOf(t); err != nil {
 		return
 	}
 	if s.IsScalar() {
@@ -117,7 +118,7 @@ func MakeFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal Value, er
 
 func Make(t hm.Type, s tensor.Shape) (retVal Value, err error) {
 	var dt tensor.Dtype
-	if dt, err = types.DtypeOf(t); err != nil {
+	if dt, err = datatypes.DtypeOf(t); err != nil {
 		return
 	}
 	/*

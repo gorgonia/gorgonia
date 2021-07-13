@@ -1,11 +1,10 @@
 package exprgraph
 
 import (
-	"errors"
 	"fmt"
 
+	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
-	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/exprgraph/internal/uid"
 	"gorgonia.org/tensor"
 )
@@ -49,76 +48,45 @@ func (g *Graph) Graph() *Graph {
 	return g
 }
 
-// NameOf returns the name of the given gorgonia.Tensor.
+// NameOf returns the name of the given Tensor.
 // It returns an error if the tensor is not found in the graph
-func (g *Graph) NameOf(t gorgonia.Tensor) (string, error) {
-	// search backwards because it's more probable that you're using newer created nodes
-	for _, n := range g.nodes {
-		// this little trick here (to inspect the internal structure - i.e g.nodes[i].Tensor == t)
-		// is the real reason why you cannot really create Node{Node{Node{...}}}
-		// without doing it explicitly
-		if tt, ok := n.Tensor.(gorgonia.Tensor); ok {
-			if t == tt {
-				return n.name, nil
-			}
-		}
-		if n.beforeLift != nil {
-			if tt, ok := n.beforeLift.(gorgonia.Tensor); ok {
-				if t == tt {
-					return n.name, nil
-				}
-			}
-		}
-		if t == n {
-			return n.name, nil
-		}
+func (g *Graph) NameOf(t Tensor) (string, error) {
+	n := g.find(t)
+	if n == nil {
+		return "", errors.Wrapf(ErrNotFoundInGraph, "Cannot find name of %v", t)
 	}
-	return "", fmt.Errorf("%q: %w", t, ErrNotFoundInGraph)
+	return n.name, nil
 }
 
-// IDOf returns the ID of the given gorgonia.Tensor.
+// IDOf returns the ID of the given Tensor.
 // it returns -1 if the node is not found
-func (g *Graph) IDOf(t gorgonia.Tensor) (NodeID, error) {
-	// search backwards because it's more probable that you're using newer created nodes
-	for i, n := range g.nodes {
-		// this little trick here (to inspect the internal structure - i.e g.nodes[i].Tensor == t)
-		// is the real reason why you cannot really create Node{Node{Node{...}}}
-		// without doing it explicitly
-		if tt, ok := n.Tensor.(gorgonia.Tensor); ok {
-			if t == tt {
-				return NodeID(i), nil
-			}
-
-		}
-		if n.beforeLift != nil {
-			if tt, ok := n.beforeLift.(gorgonia.Tensor); ok {
-				if t == tt {
-					return NodeID(i), nil
-				}
-			}
-		}
-		if t == n {
-			return NodeID(i), nil
-		}
+func (g *Graph) IDOf(t Tensor) (NodeID, error) {
+	n := g.find(t)
+	if n == nil {
+		return -1, errors.Wrapf(ErrNotFoundInGraph, "Cannot find ID of %v", t)
 	}
-	return -1, fmt.Errorf("%q: %w", t, ErrNotFoundInGraph)
+	return NodeID(n.id), nil
 }
 
-// NodeOf returns the node of the given gorgonia.Tensor.
+// NodeOf returns the node of the given Tensor.
 // it returns nil if the node is not found
-func (g *Graph) NodeOf(t gorgonia.Tensor) *Node {
+func (g *Graph) NodeOf(t Tensor) *Node {
+	return g.find(t)
+}
+
+func (g *Graph) find(t Tensor) *Node {
 	// search backwards because it's more probable that you're using newer created nodes
 	for _, n := range g.nodes {
 		// this little trick here (to inspect the internal structure - i.e g.nodes[i].Tensor == t)
 		// is the real reason why you cannot really create Node{Node{Node{...}}}
 		// without doing it explicitly
-		if tt, ok := n.Tensor.(gorgonia.Tensor); ok {
+		if tt, ok := n.Tensor.(Tensor); ok {
 			if t == tt {
 				return n
 			}
 		}
 		if n.beforeLift != nil {
-			if tt, ok := (n.beforeLift).(gorgonia.Tensor); ok {
+			if tt, ok := n.beforeLift.(Tensor); ok {
 				if t == tt {
 					return n
 				}

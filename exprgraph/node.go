@@ -4,14 +4,13 @@ import (
 	"errors"
 	"fmt"
 
-	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
 
 // constraints
 var (
-	_ gorgonia.Tensor = &Node{}
+	_ Tensor = &Node{}
 )
 
 // NodeID represents a Node's ID
@@ -22,12 +21,12 @@ func (n NodeID) ID() int64 { return int64(n) }
 
 // Node is a tuple of a Tensor, ID, and name.
 type Node struct {
-	gorgonia.Tensor
+	Tensor
 	id   int64
 	name string
 	Op   ops.Op
 	// beforeLift tracks the old value of a tensor before it has been lifted
-	beforeLift gorgonia.Tensor
+	beforeLift Tensor
 }
 
 // GetName returns the name of the node

@@ -95,6 +95,19 @@ type Arrow struct {
 	A, B Expr
 }
 
+func MakeArrow(exprs ...Expr) Arrow {
+	if len(exprs) < 2 {
+		panic("Expect at least two expressions to make an Arrow")
+	}
+	a := Arrow{A: exprs[0]}
+	if len(exprs) > 2 {
+		a.B = MakeArrow(exprs[1:]...)
+	} else {
+		a.B = exprs[1]
+	}
+	return a
+}
+
 func (a Arrow) isExpr() {}
 
 func (a Arrow) Format(s fmt.State, r rune) {

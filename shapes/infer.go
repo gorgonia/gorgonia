@@ -99,7 +99,7 @@ func Infer(ce ConstraintsExpr) (Expr, error) {
 
 func InferApp(a Expr, others ...Expr) (retVal Expr, err error) {
 	if len(others) == 0 {
-		// error
+		return nil, errors.New("Expected at least one other shape expression in order to InferApp")
 	}
 	fst := a
 	for _, e := range others {

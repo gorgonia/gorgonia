@@ -1,11 +1,11 @@
 package ops
 
 import (
+	"context"
 	"fmt"
 	"runtime/trace"
 
 	"github.com/chewxy/hm"
-	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/shapes"
 	"gorgonia.org/gorgonia/values"
 )
@@ -43,7 +43,7 @@ type Op interface {
 	// e.g. if a op is a reshape operation, then the standard implementation would have the
 	// target shape as part of the name (e.g. "reshape(2,3)"). In this case it's best to just
 	// call the task name "reshape", instead of "reshape(2,3)"
-	Task() *trace.Task
+	Task(ctx context.Context) (context.Context, *trace.Task)
 
 	fmt.Stringer
 }
@@ -69,6 +69,7 @@ type AnalyzableOp interface {
 	OverwritesInput() int
 }
 
+/*
 // SDOp is any Op that supports symbolic differentiation
 type SDOp interface {
 	Op
@@ -80,6 +81,7 @@ type SDOp interface {
 	// SymDiff symbolically differentiates the op
 	SymDiff(inputs gorgonia.Tensors, output, grad gorgonia.Tensor) (retVal gorgonia.Tensors, err error)
 }
+*/
 
 // ADOp is any Op that supports automatic differentiation. TODO
 type ADOp interface {

@@ -4,20 +4,19 @@ import (
 	"fmt"
 	"strconv"
 
-	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
 )
 
-// T2T tries to find a `tensor.Tensor` from a gorgonia.Tensor
+// T2T tries to find a `tensor.Tensor` from a Tensor
 // it returns nil if no tensor is found
-func T2T(a gorgonia.Tensor) tensor.Tensor {
+func T2T(a Tensor) tensor.Tensor {
 	switch t := a.(type) {
 	case *Node:
 		if t.Tensor == nil {
 			return nil
 		}
-		return T2T(t.Tensor.(gorgonia.Tensor))
+		return T2T(t.Tensor.(Tensor))
 	case *dual.Dual:
 		return t
 	case tensor.Tensor:

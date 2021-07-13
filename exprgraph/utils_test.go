@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"testing"
 
-	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
 )
@@ -13,7 +12,7 @@ func TestT2T(t *testing.T) {
 	sampleTensor := tensor.NewDense(tensor.Float32, []int{1})
 	sampleDV := dual.New(tensor.NewDense(tensor.Float32, []int{1}))
 	type args struct {
-		a gorgonia.Tensor
+		a Tensor
 	}
 	tests := []struct {
 		name string

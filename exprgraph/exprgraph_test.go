@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gonum.org/v1/gonum/graph"
-	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/exprgraph/internal/uid"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
@@ -252,7 +251,7 @@ func TestGraph_NameOf(t *testing.T) {
 		nodeIDs uid.Set
 	}
 	type args struct {
-		t gorgonia.Tensor
+		t Tensor
 	}
 	tests := []struct {
 		name    string
@@ -362,7 +361,7 @@ func TestGraph_IDOf(t *testing.T) {
 		nodeIDs uid.Set
 	}
 	type args struct {
-		t gorgonia.Tensor
+		t Tensor
 	}
 	tests := []struct {
 		name    string
@@ -473,7 +472,7 @@ func TestGraph_NodeOf(t *testing.T) {
 		nodeIDs uid.Set
 	}
 	type args struct {
-		t gorgonia.Tensor
+		t Tensor
 	}
 	tests := []struct {
 		name   string
@@ -1106,7 +1105,7 @@ type dummyLifter struct {
 	tensor.StdEng
 }
 
-func (*dummyLifter) Lift(t gorgonia.Tensor) gorgonia.Tensor {
+func (*dummyLifter) Lift(t Tensor) Tensor {
 	return t.(tensor.Tensor).Clone().(tensor.Tensor)
 }
 

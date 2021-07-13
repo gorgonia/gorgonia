@@ -15,6 +15,7 @@ func Test_NewSymbolic(t *testing.T) {
 		e     tensor.Engine
 		dt    tensor.Dtype
 		shape tensor.Shape
+		name  string
 	}
 	tests := []struct {
 		name string
@@ -28,6 +29,7 @@ func Test_NewSymbolic(t *testing.T) {
 				e:     &tensor.StdEng{},
 				dt:    tensor.Float32,
 				shape: tensor.Shape{1, 2, 3},
+				name:  "simple",
 			},
 			&Symbolic{
 				AP: tensor.MakeAP(tensor.Shape{1, 2, 3}, tensor.Shape{1, 2, 3}.CalcStrides(), 0, 0),
@@ -74,7 +76,7 @@ func Test_NewSymbolic(t *testing.T) {
 				t.Error("Data")
 			}
 			if out := fmt.Sprintf("%v", got); out != "TODO" {
-				t.Error("Format")
+				t.Errorf("Format %v", got)
 			}
 		})
 	}

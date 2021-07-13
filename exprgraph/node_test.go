@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"testing"
 
-	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/tensor"
 )
@@ -125,7 +124,7 @@ func TestCons(t *testing.T) {
 
 func TestNode_GetName(t *testing.T) {
 	type fields struct {
-		Tensor gorgonia.Tensor
+		Tensor Tensor
 		id     int64
 		name   string
 		Op     ops.Op

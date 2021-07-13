@@ -3,25 +3,31 @@ package types
 import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
-	gerrors "gorgonia.org/gorgonia/internal/errors"
-	"gorgonia.org/tensor"
 )
 
-// DtypeOf returns the dtype of a given type.
+// Infer infers the application of the children on the opType. Note that children should already match the arity of the opType.
 //
-// If the input hm.Type is not a parameterized type, or a Dtype, an error will be returned.
-func DtypeOf(t hm.Type) (retVal tensor.Dtype, err error) {
-	switch p := t.(type) {
-	case tensor.Dtype:
-		retVal = p
-	case TensorType:
-		return DtypeOf(p.Of)
-	case hm.TypeVariable:
-		err = errors.Errorf("instance %v does not have a dtype", p)
-	default:
-		err = errors.Errorf(gerrors.NYITypeFail, "dtypeOf", p)
-		return
+// Example:
+// 	opType: a → a → a
+// 	children: [Float64, Float64, b] // note that `b` has to already been passed in.
+func Infer(opType hm.Type, children ...hm.Type) (retVal hm.Type, err error) {
+
+	last := children[len(children)-1]
+	b, ok := last.(hm.TypeVariable) // check that the last thing is a variable
+	if !ok {
+		return nil, errors.Errorf("Expected the last child type to be a variable. Got %v of %T instead", last, last)
 	}
 
-	return
+	fn2 := hm.NewFnType(children...)
+	defer hm.ReturnFnType(fn2)
+
+	var sub hm.Subs
+	if sub, err = hm.Unify(opType, fn2); err != nil {
+		return nil, errors.Wrapf(err, "Unable to infer %v @ %v", opType, fn2)
+	}
+
+	if retVal, ok = sub.Get(b); !ok {
+		return nil, errors.Errorf("Expected a replacement for the variable %v", b)
+	}
+	return retVal, nil
 }
