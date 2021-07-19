@@ -22,7 +22,7 @@ func (m mul) Dual(ds ...*dual.Dual) (values.Value, error) {
 
 // valToFloat64 is a helper function for this example
 func valToFloat64(v values.Value) float64 {
-	return float64(*(v.(*values.F64)))
+	return v.Data().(float64)
 }
 
 // singlesMul is the kernel of the op (i.e. the actual algorithm for multiplicatoin)
@@ -38,19 +38,19 @@ func Mul(vals ...values.Value) (values.Value, error) {
 		return singlesMul(vals...)
 	}
 
-	a := *(ds[0].Value.(*values.F64))
-	bɛ := *(ds[0].Deriv().(*values.F64))
-	c := *(ds[1].Value.(*values.F64))
-	dɛ := *(ds[1].Deriv().(*values.F64))
+	a := ds[0].Value.Data().(float64)
+	bɛ := ds[0].Deriv().Data().(float64)
+	c := ds[1].Value.Data().(float64)
+	dɛ := ds[1].Deriv().Data().(float64)
 
 	e := a * c
 	f := a*dɛ + c*bɛ
 
 	retVal := new(dual.Dual)
-	if err := retVal.SetValue(&e); err != nil {
+	if err := retVal.SetValue(values.NewF64(e)); err != nil {
 		return nil, err
 	}
-	if err := retVal.SetDeriv(&f); err != nil {
+	if err := retVal.SetDeriv(values.NewF64(f)); err != nil {
 		return nil, err
 	}
 	return retVal, nil

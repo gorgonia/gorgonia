@@ -5,10 +5,13 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/datatypes"
 	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 )
+
+var _ datatypes.Tensor = &Dual{}
 
 // Op is a function that takes an arbitrary number of Values and returns a Value
 type Op func(vals ...values.Value) (values.Value, error)
@@ -21,22 +24,6 @@ type DualOp interface {
 	Do(vals ...values.Value) (values.Value, error)
 	Dual(vals ...*Dual) (values.Value, error)
 }
-
-/*
-type Op interface {
-	Do(...values.Value) (values.Value, error)
-}
-
-type ExternalOp interface {
-	Op
-	Get(device execution.Device, size int64) (tensor.Memory, error)
-	Device() execution.Device
-}
-
-type UsePreallocDoer interface {
-	UsePreallocDo(prealloc values.Value, inputs ...values.Value) (values.Value, error)
-}
-*/
 
 // Dual represents a dual value. In this instance, a dual value usually holds the value and a gradient value.
 type Dual struct {

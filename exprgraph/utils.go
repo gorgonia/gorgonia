@@ -18,7 +18,7 @@ func T2T(a Tensor) tensor.Tensor {
 		}
 		return T2T(t.Tensor.(Tensor))
 	case *dual.Dual:
-		return t
+		panic("Not handled yet")
 	case tensor.Tensor:
 		return t
 	default:

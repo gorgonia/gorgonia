@@ -2,11 +2,10 @@ package values
 
 import (
 	"github.com/chewxy/hm"
-	"gorgonia.org/gorgonia/internal/datatypes"
+	"gorgonia.org/tensor"
 )
 
 // Value represents a value that Gorgonia accepts. At this point it is implemented by:
-//		- all scalar value types (F64, F32... etc)
 // 		- *tensor.Dense
 // 		- *dualValue
 //
@@ -16,7 +15,8 @@ import (
 // This also means for the most part most Values will be allocated on the heap.
 // There are some performance tradeoffs made in this decision, but ultimately this is better than having to manually manage blocks of memory
 type Value interface {
-	datatypes.Tensor
+	// datatypes.Tensor
+	tensor.Tensor
 }
 
 // Typer is anything that knows its own type

@@ -32,7 +32,7 @@ func Test_NewSymbolic(t *testing.T) {
 				name:  "simple",
 			},
 			&Symbolic{
-				AP: tensor.MakeAP(tensor.Shape{1, 2, 3}, tensor.Shape{1, 2, 3}.CalcStrides(), 0, 0),
+				AP: tensor.MakeAP(tensor.Shape{1, 2, 3}, tensor.CalcStrides(tensor.Shape{1, 2, 3}), 0, 0),
 				e:  &tensor.StdEng{},
 				dt: tensor.Float32,
 				g:  g,

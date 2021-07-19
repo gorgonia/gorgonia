@@ -5,84 +5,90 @@ import (
 	"gorgonia.org/tensor"
 )
 
+/*
 func scalarEq(a, b Scalar) bool {
 	switch at := a.(type) {
-	case *F64:
-		if bt, ok := b.(*F64); ok {
-			if at == bt {
-				return true
+
+		case *F64:
+			if bt, ok := b.(*F64); ok {
+				if at == bt {
+					return true
+				}
+				return *at == *bt
 			}
-			return *at == *bt
-		}
-		return false
-	case *F32:
-		if bt, ok := b.(*F32); ok {
-			if at == bt {
-				return true
+			return false
+		case *F32:
+			if bt, ok := b.(*F32); ok {
+				if at == bt {
+					return true
+				}
+				return *at == *bt
 			}
-			return *at == *bt
-		}
-		return false
-	case *I:
-		if bt, ok := b.(*I); ok {
-			if at == bt {
-				return true
+			return false
+		case *I:
+			if bt, ok := b.(*I); ok {
+				if at == bt {
+					return true
+				}
+				return *at == *bt
 			}
-			return *at == *bt
-		}
-		return false
-	case *I32:
-		if bt, ok := b.(*I32); ok {
-			if at == bt {
-				return true
+			return false
+		case *I32:
+			if bt, ok := b.(*I32); ok {
+				if at == bt {
+					return true
+				}
+				return *at == *bt
 			}
-			return *at == *bt
-		}
-		return false
-	case *I64:
-		if bt, ok := b.(*I64); ok {
-			if at == bt {
-				return true
+			return false
+		case *I64:
+			if bt, ok := b.(*I64); ok {
+				if at == bt {
+					return true
+				}
+				return *at == *bt
 			}
-			return *at == *bt
-		}
-		return false
-	case *U8:
-		if bt, ok := b.(*U8); ok {
-			if at == bt {
-				return true
+			return false
+		case *U8:
+			if bt, ok := b.(*U8); ok {
+				if at == bt {
+					return true
+				}
+				return *at == *bt
 			}
-			return *at == *bt
-		}
-		return false
-	case *B:
-		if bt, ok := b.(*B); ok {
-			if at == bt {
-				return true
+			return false
+		case *B:
+			if bt, ok := b.(*B); ok {
+				if at == bt {
+					return true
+				}
+				return *at == *bt
 			}
-			return *at == *bt
-		}
-		return false
+			return false
+
 	}
 	return false
 }
 
 func scalarClose(a, b Scalar) bool {
 	switch at := a.(type) {
-	case *F64:
-		if bt, ok := b.(*F64); ok {
-			return dawson.CloseF64(float64(*at), float64(*bt))
-		}
-		return false
-	case *F32:
-		if bt, ok := b.(*F32); ok {
-			return dawson.CloseF32(float32(*at), float32(*bt))
-		}
-		return false
+
+		case *F64:
+			if bt, ok := b.(*F64); ok {
+				return dawson.CloseF64(float64(*at), float64(*bt))
+			}
+			return false
+		case *F32:
+			if bt, ok := b.(*F32); ok {
+				return dawson.CloseF32(float32(*at), float32(*bt))
+			}
+			return false
+
 	default:
 		return scalarEq(a, b)
 	}
 }
+*/
 
 func tensorClose(a, b tensor.Tensor) bool {
 	aDt := a.Dtype()
