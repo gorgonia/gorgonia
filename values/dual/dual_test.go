@@ -184,9 +184,8 @@ func TestClone(t *testing.T) {
 
 	f := values.NewF64(3.14)
 	fds := New(f)
-	fds2, err := fds.Clone()
+	fds2 := fds.Clone()
 
-	assert.Nil(err)
 	assert.Equal(fds, fds2, "expected fds2 == fds")
 	assert.True(fds.ValueEq(fds2.(*Dual)))
 	if fds == fds2 {
@@ -195,8 +194,7 @@ func TestClone(t *testing.T) {
 
 	T := tensor.New(tensor.WithShape(3, 4), tensor.WithBacking([]float32{1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6}))
 	Tds := NewVar(T)
-	Tds2, err := Tds.Clone()
-	assert.Nil(err)
+	Tds2 := Tds.Clone()
 	assert.True(Tds.ValueEq(Tds2.(*Dual)))
 
 }
@@ -210,7 +208,7 @@ func TestNewAlike(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(0.0, fds2.Value.Data().(float64))
 	assert.Equal(0.0, fds2.Deriv().Data().(float64))
-	assert.False(fds.ValueEq(fds2))
+	assert.False(fds.ValueEq(fds2), "Should be different values: fds %v | fds2 %v", fds, fds2)
 	if fds == fds2 {
 		t.Error("Cloned values should never be the same pointer!")
 	}
@@ -219,7 +217,7 @@ func TestNewAlike(t *testing.T) {
 	Tds := NewVar(T)
 	Tds2, err := NewAlike(Tds)
 	assert.Nil(err)
-	assert.False(Tds.ValueEq(Tds2))
+	assert.False(Tds.ValueEq(Tds2), "Should be different values: Tds %v | Tds2 %v", Tds, Tds2)
 }
 
 func TestSetEngine(t *testing.T) {

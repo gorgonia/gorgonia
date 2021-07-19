@@ -6,8 +6,8 @@ import (
 	"runtime/trace"
 
 	"github.com/chewxy/hm"
-	"gorgonia.org/gorgonia/shapes"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/shapes"
 )
 
 // An Op is a symbolic representation of an operation

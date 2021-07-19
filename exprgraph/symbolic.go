@@ -8,7 +8,6 @@ import (
 )
 
 var _ Tensor = &Symbolic{}
-var _ tensor.Tensor = &Symbolic{}
 
 // Symbolic is a representation of a Symbolic tensor - it has no data
 type Symbolic struct {
@@ -20,7 +19,7 @@ type Symbolic struct {
 
 // NewSymbolic tensor
 func NewSymbolic(g *Graph, e tensor.Engine, dt tensor.Dtype, shape tensor.Shape) *Symbolic {
-	strides := shape.CalcStrides()
+	strides := tensor.CalcStrides(shape)
 	ap := tensor.MakeAP(shape, strides, 0, 0)
 	return &Symbolic{AP: ap, dt: dt, g: g, e: e}
 }
