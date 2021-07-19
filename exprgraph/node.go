@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 
+	"gorgonia.org/dtype"
 	"gorgonia.org/gorgonia/ops"
+	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 )
 
@@ -42,6 +44,29 @@ func NewNode(g *Graph, name string, opts ...tensor.ConsOpt) *Node {
 		panic(err)
 	}
 	return n
+}
+
+// NewSymbolic creates a new symbolic Tensor (*Node itself).
+func NewSymbolic(g *Graph, name string, dt dtype.Dtype, shape shapes.Shape) (*Node, error) {
+	hdr := newHeader(g, dt, shape)
+	if g != nil {
+		nm := g.NodeOf(hdr)
+		if nm == nil {
+			nm = g.NewNode()
+			nm.Tensor = hdr
+			nm.name = name
+			err := g.AddNode(nm)
+			if err != nil {
+				return nil, err
+			}
+			return nm, nil
+		}
+		if nm.name != name {
+			return nil, errors.New("A node holding the tensor exists with a different name")
+		}
+		return nm, nil
+	}
+	return &Node{Tensor: hdr, name: name, id: 0, Op: nil}, nil
 }
 
 // Cons constructs a Node. It should be used very carefully.

@@ -48,16 +48,12 @@ func MatMul(a, b gorgonia.Tensor) (gorgonia.Tensor, error) {
 		if bNode != nil {
 			return nil, exprgraph.ErrNotFoundInGraph
 		}
-		retVal := exprgraph.NewSymbolic(g, e, dt, shp)
-		n, err := exprgraph.Cons(e, cname, exprgraph.T2T(retVal))
+		cNode, err := exprgraph.NewSymbolic(g, cname, dt, shp)
+		err = e.AddChildren(cNode, aNode, bNode)
 		if err != nil {
 			return nil, err
 		}
-		err = e.AddChildren(n, aNode, bNode)
-		if err != nil {
-			return nil, err
-		}
-		return retVal, nil
+		return cNode, nil
 	case tensor.MatMuler:
 		at := exprgraph.T2T(a)
 		bt := exprgraph.T2T(b)
@@ -102,8 +98,7 @@ func Add(a, b gorgonia.Tensor) (gorgonia.Tensor, error) {
 		// TODO: check shapes obvs
 		shp := a.Shape().Clone()
 		dt := a.Dtype()
-		retVal := exprgraph.NewSymbolic(g, e, dt, shp)
-		c, err := exprgraph.Cons(e, aname+"+"+bname, exprgraph.T2T(retVal))
+		c, err := exprgraph.NewSymbolic(g, aname+"+"+bname, dt, shp)
 		if err != nil {
 			return nil, err
 		}
@@ -111,7 +106,7 @@ func Add(a, b gorgonia.Tensor) (gorgonia.Tensor, error) {
 		if err != nil {
 			return nil, err
 		}
-		return retVal, nil
+		return c, nil
 	case tensor.Adder:
 		at := exprgraph.T2T(a)
 		bt := exprgraph.T2T(b)

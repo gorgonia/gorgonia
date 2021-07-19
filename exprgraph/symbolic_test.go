@@ -12,7 +12,6 @@ func Test_NewSymbolic(t *testing.T) {
 	g := NewGraph(&tensor.StdEng{})
 	type args struct {
 		g     *Graph
-		e     tensor.Engine
 		dt    tensor.Dtype
 		shape tensor.Shape
 		name  string
@@ -20,20 +19,18 @@ func Test_NewSymbolic(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *Symbolic
+		want *header
 	}{
 		{
 			"simple",
 			args{
 				g:     g,
-				e:     &tensor.StdEng{},
 				dt:    tensor.Float32,
 				shape: tensor.Shape{1, 2, 3},
 				name:  "simple",
 			},
-			&Symbolic{
+			&header{
 				AP: tensor.MakeAP(tensor.Shape{1, 2, 3}, tensor.CalcStrides(tensor.Shape{1, 2, 3}), 0, 0),
-				e:  &tensor.StdEng{},
 				dt: tensor.Float32,
 				g:  g,
 			},
@@ -41,7 +38,7 @@ func Test_NewSymbolic(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewSymbolic(tt.args.g, tt.args.e, tt.args.dt, tt.args.shape)
+			got := newHeader(tt.args.g, tt.args.dt, tt.args.shape)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("newSymbolic() = %v, want %v", got, tt.want)
 			}
@@ -51,7 +48,7 @@ func Test_NewSymbolic(t *testing.T) {
 			if got.Dtype() != tt.args.dt {
 				t.Error("Dtype fail")
 			}
-			if got.Engine() != tt.args.g.Engine {
+			if got.Engine() != tt.args.g {
 				t.Error("Engine")
 			}
 			if got.IsNativelyAccessible() != false {

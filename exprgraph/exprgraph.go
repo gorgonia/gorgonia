@@ -70,9 +70,7 @@ func (g *Graph) IDOf(t Tensor) (NodeID, error) {
 
 // NodeOf returns the node of the given Tensor.
 // it returns nil if the node is not found
-func (g *Graph) NodeOf(t Tensor) *Node {
-	return g.find(t)
-}
+func (g *Graph) NodeOf(t Tensor) *Node { return g.find(t) }
 
 func (g *Graph) find(t Tensor) *Node {
 	// search backwards because it's more probable that you're using newer created nodes

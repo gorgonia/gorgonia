@@ -41,7 +41,7 @@ func (g *Graph) Apply(op ops.Op, newname string, children ...*Node) (*Node, erro
 	if err != nil {
 		return nil, errors.Wrapf(err, "Unable to get Shape of shape expression %v", s)
 	}
-	T := NewSymbolic(g, g, dt, shp)
+	T := newHeader(g, dt, shp)
 
 	n, err := Cons(g, newname, T2T(T))
 	if err != nil {
