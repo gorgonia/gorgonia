@@ -75,8 +75,8 @@ func Test_NewSymbolic(t *testing.T) {
 			if got.Data() != nil {
 				t.Error("Data")
 			}
-			if out := fmt.Sprintf("%v", got); out != "TODO" {
-				t.Errorf("Format %v", got)
+			if out := fmt.Sprintf("%v", got); out != "" {
+				t.Errorf("Format %q x", got)
 			}
 		})
 	}

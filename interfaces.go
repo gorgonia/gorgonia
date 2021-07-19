@@ -4,7 +4,6 @@ import (
 	"hash"
 
 	"gorgonia.org/gorgonia/internal/datatypes"
-	"gorgonia.org/tensor"
 )
 
 // Tensor represents values that are acceptable in Gorgonia. At this point, it is implemented by:
