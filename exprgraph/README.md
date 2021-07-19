@@ -19,6 +19,7 @@ A `Node` is many things. A `Node` represents a vertex in the expression graph. O
 ### Interfaces
 
 #### `Lifter`
+A `Lifter` is something that can turn the underlying type of a `gorgonia.Tensor` into another `gorgonia.Tensor` of a different underlying type.
 
 #### `gorgonia.Tensor`
 

@@ -16,7 +16,7 @@ func T2T(a Tensor) tensor.Tensor {
 		if t.Tensor == nil {
 			return nil
 		}
-		return T2T(t.Tensor.(Tensor))
+		return T2T(t.Value())
 	case *dual.Dual:
 		return t
 	case tensor.Tensor:

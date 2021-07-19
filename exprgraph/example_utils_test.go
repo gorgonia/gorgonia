@@ -1,11 +1,15 @@
 package exprgraph_test
 
 import (
+	"context"
 	"errors"
-	"fmt"
+	"runtime/trace"
 
+	"github.com/chewxy/hm"
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/exprgraph"
+	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 )
 
@@ -14,58 +18,104 @@ type GraphEngine interface {
 	Graph() *exprgraph.Graph
 }
 
-func MatMul(a, b gorgonia.Tensor) (gorgonia.Tensor, error) {
-	eng := a.Engine().(GraphEngine)
-	if eng == nil {
-		eng = b.Engine().(GraphEngine)
-	}
-	if eng == nil {
-		return nil, errors.New("Nil engine")
+// matmul is an Op
+type matmul struct{}
+
+// Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime.
+func (op matmul) Arity() int { return 2 }
+
+// Type informs the type of the Op (not the node). This will be used by the type system to infer the final type of the node.
+func (op matmul) Type() hm.Type {
+	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'))
+}
+
+// ShapeExpr informs the shape operations that the Op will do. A quick primer is given in the README of the shapes package.
+func (op matmul) ShapeExpr() shapes.Expr {
+	a := shapes.Var('a')
+	b := shapes.Var('b')
+	c := shapes.Var('c')
+	return shapes.MakeArrow(
+		shapes.Abstract{a, b},
+		shapes.Abstract{b, c},
+		shapes.Abstract{a, c},
+	)
+}
+
+// Do executes the op. Unused in this example, so not actually implemneted
+func (op matmul) Do(vs ...values.Value) (values.Value, error) { panic("not implemented") }
+
+// Task generates a trace.Task for the Op. The Op is responsible for naming the task. Unused in this example, so not actually implemented
+func (op matmul) Task(ctx context.Context) (context.Context, *trace.Task) { panic("not implemented") }
+
+func (op matmul) String() string { return "×" }
+
+func MatMul(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
+	eng, ok := a.Engine().(GraphEngine)
+	if !ok {
+		eng, ok = b.Engine().(GraphEngine)
 	}
 
-	g := eng.Graph()
-	aname, err := g.NameOf(a)
-	if err != nil {
-		return nil, err
-	}
-	bname, err := g.NameOf(b)
-	if err != nil {
-		return nil, err
-	}
-	cname := aname + "×" + bname
-
-	// TODO: check shapes obvs
-	shp := tensor.Shape{a.Shape()[0], b.Shape()[1]}
-	dt := a.Dtype()
-
-	switch e := eng.(type) {
-	case *exprgraph.Graph:
-		aNode := g.NodeOf(a)
-		if aNode == nil {
-			return nil, exprgraph.ErrNotFoundInGraph
-		}
-		bNode := g.NodeOf(b)
-		if bNode != nil {
-			return nil, exprgraph.ErrNotFoundInGraph
-		}
-		cNode, err := exprgraph.NewSymbolic(g, cname, dt, shp)
-		err = e.AddChildren(cNode, aNode, bNode)
+	op := matmul{}
+	if ok {
+		// do symbolic stuff
+		g := eng.Graph()
+		aname, err := g.NameOf(a)
 		if err != nil {
 			return nil, err
 		}
-		return cNode, nil
-	case tensor.MatMuler:
-		at := exprgraph.T2T(a)
-		bt := exprgraph.T2T(b)
-		prealloc := exprgraph.NewNode(g, cname, tensor.WithShape(shp...), tensor.Of(dt))
-		ct := exprgraph.T2T(prealloc)
-		if err := e.MatMul(at, bt, ct); err != nil {
+		bname, err := g.NameOf(b)
+		if err != nil {
 			return nil, err
 		}
-		return prealloc, nil
-	default:
-		panic(fmt.Sprintf("ENGINE %T", eng))
+		cname := aname + op.String() + bname
+
+		// construct node
+		anode := g.NodeOf(a)
+		if anode == nil {
+			return nil, err
+		}
+		bnode := g.NodeOf(b)
+		if bnode == nil {
+			return nil, err
+		}
+
+		// shape checks are done here
+		cnode, err := g.Apply(op, cname, anode, bnode)
+		if err != nil {
+			return nil, err
+		}
+		retVal = cnode
 	}
+
+	// TODO: check shapes obvs
+
+	mm, ok := a.Engine().(tensor.MatMuler)
+	if !ok {
+		mm, ok = b.Engine().(tensor.MatMuler)
+	}
+
+	if ok {
+		// do the values stuff
+		at := exprgraph.T2T(a)
+		bt := exprgraph.T2T(b)
+		var ct tensor.Tensor
+		if retVal != nil {
+			ct = exprgraph.T2T(retVal)
+		} else {
+			// we'd have to create one ourselves
+			shp := tensor.Shape{a.Shape()[0], b.Shape()[1]}
+			dt := a.Dtype()
+			ct = tensor.New(tensor.WithShape(shp...), tensor.Of(dt))
+		}
+		if err := mm.MatMul(at, bt, ct); err != nil {
+			return nil, err
+		}
+		if retVal == nil {
+			retVal = ct // return not the Node, but the value.
+		}
+
+	}
+	return
 }
 
 func Add(a, b gorgonia.Tensor) (gorgonia.Tensor, error) {

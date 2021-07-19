@@ -24,7 +24,7 @@ func (e *FwdEngine) Graph() *exprgraph.Graph { return e.g }
 
 func (e *FwdEngine) SetGraph(g *exprgraph.Graph) { e.g = g }
 
-func (e *FwdEngine) Lift(a gorgonia.Tensor) gorgonia.Tensor {
+func (e *FwdEngine) Lift(a exprgraph.Tensor) exprgraph.Tensor {
 	switch t := a.(type) {
 	case *dual.Dual:
 		return a

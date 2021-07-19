@@ -42,8 +42,7 @@ func (g *Graph) Apply(op ops.Op, newname string, children ...*Node) (*Node, erro
 		return nil, errors.Wrapf(err, "Unable to get Shape of shape expression %v", s)
 	}
 	T := newHeader(g, dt, shp)
-
-	n, err := Cons(g, newname, T2T(T))
+	n, err := cons(g, newname, T)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to construct a new Node")
 	}
