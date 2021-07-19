@@ -41,13 +41,20 @@ func (op matmul) ShapeExpr() shapes.Expr {
 	)
 }
 
-// Do executes the op. Unused in this example, so not actually implemneted
-func (op matmul) Do(vs ...values.Value) (values.Value, error) { panic("not implemented") }
-
-// Task generates a trace.Task for the Op. The Op is responsible for naming the task. Unused in this example, so not actually implemented
-func (op matmul) Task(ctx context.Context) (context.Context, *trace.Task) { panic("not implemented") }
+// Do executes the op.
+func (op matmul) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
+	a := vs[0].(tensor.Tensor)
+	b := vs[1].(tensor.Tensor)
+	return tensor.MatMul(a, b)
+}
 
 func (op matmul) String() string { return "×" }
+
+func (op matmul) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
+	a := vs[0].(tensor.Tensor)
+	b := vs[1].(tensor.Tensor)
+	return tensor.MatMul(a, b, tensor.WithPrealloc(prealloc))
+}
 
 func MatMul(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 	eng, ok := a.Engine().(GraphEngine)
@@ -87,34 +94,25 @@ func MatMul(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 		retVal = cnode
 	}
 
-	// TODO: check shapes obvs
-
-	mm, ok := a.Engine().(tensor.MatMuler)
-	if !ok {
-		mm, ok = b.Engine().(tensor.MatMuler)
+	// do the values stuff
+	at := exprgraph.T2T(a)
+	bt := exprgraph.T2T(b)
+	var ct tensor.Tensor
+	if retVal != nil {
+		ct = exprgraph.T2T(retVal)
+	} else {
+		// we'd have to create one ourselves
+		shp := tensor.Shape{a.Shape()[0], b.Shape()[1]}
+		dt := a.Dtype()
+		ct = tensor.New(tensor.WithShape(shp...), tensor.Of(dt))
+	}
+	if ct, err = op.PreallocDo(nil, at, bt, ct); err != nil {
+		return nil, err
+	}
+	if retVal == nil {
+		retVal = ct // return not the Node, but the value.
 	}
 
-	if ok {
-		// do the values stuff
-		at := exprgraph.T2T(a)
-		bt := exprgraph.T2T(b)
-		var ct tensor.Tensor
-		if retVal != nil {
-			ct = exprgraph.T2T(retVal)
-		} else {
-			// we'd have to create one ourselves
-			shp := tensor.Shape{a.Shape()[0], b.Shape()[1]}
-			dt := a.Dtype()
-			ct = tensor.New(tensor.WithShape(shp...), tensor.Of(dt))
-		}
-		if err := mm.MatMul(at, bt, ct); err != nil {
-			return nil, err
-		}
-		if retVal == nil {
-			retVal = ct // return not the Node, but the value.
-		}
-
-	}
 	return
 }
 

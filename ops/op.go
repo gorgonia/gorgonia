@@ -32,41 +32,27 @@ type Op interface {
 	/* Machine related */
 
 	// Do executes the op.
-	Do(...values.Value) (values.Value, error)
+	Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error)
 
 	/* Operational stuff */
 
-	// Task generates a trace.Task for the Op. The Op is responsible for naming the task.
-	//
-	// In general it is best to just name it in the most general way possible.
-	//
-	// e.g. if a op is a reshape operation, then the standard implementation would have the
-	// target shape as part of the name (e.g. "reshape(2,3)"). In this case it's best to just
-	// call the task name "reshape", instead of "reshape(2,3)"
-	Task(ctx context.Context) (context.Context, *trace.Task)
-
 	fmt.Stringer
+}
+
+// PreAllocOp represents and Op that has a PreallocDo() method. The PreallocDo method is exactly the same as Do() except it also requres a previously preallocated value.
+type PreallocOp interface{
+	Op
+
+	// PreallocDo performs the Op with the return value passed in as a preallocated value.
+	PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error)
 }
 
 // AnalyzableOp is any Op that provides enough intensionality for analysis during compilation phase.
 type AnalyzableOp interface {
 	Op
 
-	// ReturnsPtr indicates if the Op will return a pointer (allowing possible inplace edits) or by value.
-	// If it's false, the return value of the Op will be a copy of its input.
-	ReturnsPtr() bool
-
 	// CallsExtern informs if an op potentially call external (cgo or cuda) functions (thereby requiring extra overhead for Go's trampolining thing)
 	CallsExtern() bool
-
-	// OverwritesInput() is a method which states which input the output will be overwriting.
-	// This allows for some efficiency gains as the underlying arrays wouldn't have to be re-allocated.
-	// The method returns an int instead of a bool because potentially different operations may be allowed
-	// to overwrite certain inputs. For example, consider an operation to increment a value:
-	// the IncrementOp would be a unary operator, and assuming we would like to overwrite the input,
-	// the retVal of overwriteInput() will be 0 (inputs[0]).
-	// -1 is returned if overwriting of input is disallowed
-	OverwritesInput() int
 }
 
 /*
