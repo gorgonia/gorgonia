@@ -16,7 +16,12 @@ func T2T(a Tensor) tensor.Tensor {
 		if t.Tensor == nil {
 			return nil
 		}
-		return T2T(t.Value())
+		switch t.Tensor.(type) {
+		case *header:
+			return nil
+		default:
+			return T2T(t.Tensor)
+		}
 	case *dual.Dual:
 		return t
 	case tensor.Tensor:

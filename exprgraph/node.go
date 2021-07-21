@@ -105,7 +105,6 @@ func (n Node) Format(f fmt.State, c rune) {
 }
 
 func (n *Node) Value() values.Value {
-
 	switch t := n.Tensor.(type) {
 	case values.Value:
 		return t
@@ -120,6 +119,7 @@ func (n *Node) Value() values.Value {
 		}
 		n.Tensor = v
 		return v
+
 	default:
 		panic(fmt.Sprintf("Tensor of %T unhandled by node.Value()", n.Tensor))
 

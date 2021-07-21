@@ -85,8 +85,8 @@ func Example_symbolicEngineUsingTensorAPI() {
 	// ⎣2  1⎦
 	//
 	// xy:
-	// node(3,Random_1×Random_2,Random_1×Random_2)
+	// node(3,Random_2×Random_3,Random_2×Random_3)
 	// xy+z:
-	// node(5,Random_1×Random_2+Random_3,Random_1×Random_2+Random_3)
+	// node(5,Random_2×Random_3+Random_4,Random_2×Random_3+Random_4)
 
 }

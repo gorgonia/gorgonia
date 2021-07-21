@@ -3,7 +3,6 @@ package exprgraph_test
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -118,13 +117,19 @@ func MatMul(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 	at := exprgraph.T2T(a)
 	bt := exprgraph.T2T(b)
 	var ct tensor.Tensor
-	if retVal != nil {
-		ct = exprgraph.T2T(retVal)
-	} else {
+
+	switch {
+	case at != nil && bt != nil && retVal != nil:
+		// both a and b  are values, so we can "materialize" c
+		ct = retVal.(*exprgraph.Node).Value() // Value will "lift" *header into a proper tensor.Dense
+	case at != nil && bt != nil && retVal == nil:
 		// we'd have to create one ourselves
 		shp := tensor.Shape{a.Shape()[0], b.Shape()[1]}
 		dt := a.Dtype()
 		ct = tensor.New(tensor.WithShape(shp...), tensor.Of(dt))
+	default:
+		// one of a or b is not a value tensor
+		return retVal, nil
 	}
 
 	if ct, err = op.PreallocDo(nil, ct, at, bt); err != nil {
@@ -145,7 +150,7 @@ func (op add) Arity() int { return 2 }
 
 // Type informs the type of the Op (not the node). This will be used by the type system to infer the final type of the node.
 func (op add) Type() hm.Type {
-	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'))
+	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('b'), hm.TypeVariable('a'))
 }
 
 // ShapeExpr informs the shape operations that the Op will do. A quick primer is given in the README of the shapes package.
@@ -166,11 +171,7 @@ func (op add) String() string { return "+" }
 func (op add) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	a := vs[0].(tensor.Tensor)
 	b := vs[1].(tensor.Tensor)
-	c, err := tensor.Add(a, b, tensor.WithReuse(prealloc))
-	if err != nil {
-		log.Printf("ERR %v", err)
-	}
-	return c, err
+	return tensor.Add(a, b, tensor.WithReuse(prealloc))
 }
 
 func Add(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
@@ -230,21 +231,26 @@ func Add(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 		}
 	}
 
-	// do the values stuff
+	// do the values stuff'
 	at := exprgraph.T2T(a)
 	bt := exprgraph.T2T(b)
 	var ct tensor.Tensor
-	if retVal != nil {
-		ct = exprgraph.T2T(retVal)
-		if ct, err = op.PreallocDo(nil, ct, at, bt); err != nil {
-			return nil, err
-		}
-		return
-	} else {
+
+	switch {
+	case at != nil && bt != nil && retVal != nil:
+		// both a and b  are values, so we can "materialize" c
+		ct = retVal.(*exprgraph.Node).Value() // Value will "lift" *header into a proper tensor.Dense
+	case at != nil && bt != nil && retVal == nil:
 		return op.Do(nil, at, bt)
+	default:
+		// one of a or b is not a value tensor
+		return retVal, nil
 	}
 
-	return nil, errors.New("NotImplemented")
+	if ct, err = op.PreallocDo(nil, ct, at, bt); err != nil {
+		return nil, err
+	}
+	return
 }
 
 // ExampleOperations is a placeholder to display documentation of
