@@ -42,5 +42,4 @@ func Example_nograph() {
 	// xy+z:
 	// ⎡21  15⎤
 	// ⎣57  42⎦
-
 }

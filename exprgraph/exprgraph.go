@@ -44,9 +44,7 @@ type Graph struct {
 }
 
 // Graph returns itself
-func (g *Graph) Graph() *Graph {
-	return g
-}
+func (g *Graph) Graph() *Graph { return g }
 
 // NameOf returns the name of the given Tensor.
 // It returns an error if the tensor is not found in the graph
@@ -99,6 +97,9 @@ func (g *Graph) find(t Tensor) *Node {
 
 // NewGraph with default values
 func NewGraph(e tensor.Engine) *Graph {
+	if e == nil {
+		e = tensor.StdEng{}
+	}
 	return &Graph{
 		Engine: e,
 		nodes:  make(map[int64]*Node),

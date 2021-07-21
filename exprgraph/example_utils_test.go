@@ -2,6 +2,7 @@ package exprgraph_test
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/chewxy/hm"
@@ -66,24 +67,36 @@ func MatMul(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 	if ok {
 		// do symbolic stuff
 		g := eng.Graph()
-		aname, err := g.NameOf(a)
-		if err != nil {
-			return nil, err
+
+		var aname, bname string
+		var anode, bnode *exprgraph.Node
+
+		if aname, err = g.NameOf(a); err != nil {
+			// create a node
+			aname = randomName(a)
+			if anode, err = exprgraph.Cons(g, aname, a.(tensor.Tensor)); err != nil {
+				return nil, err
+			}
 		}
-		bname, err := g.NameOf(b)
-		if err != nil {
-			return nil, err
+		if bname, err = g.NameOf(b); err != nil {
+			// create b node
+			bname = randomName(b)
+			if bnode, err = exprgraph.Cons(g, bname, b.(tensor.Tensor)); err != nil {
+				return nil, err
+			}
 		}
 		cname := aname + op.String() + bname
 
 		// construct node
-		anode := g.NodeOf(a)
 		if anode == nil {
-			return nil, err
+			if anode = g.NodeOf(a); anode == nil {
+				return nil, errors.Errorf("MatMul: Cannot find Node a of %v", a)
+			}
 		}
-		bnode := g.NodeOf(b)
 		if bnode == nil {
-			return nil, err
+			if bnode = g.NodeOf(b); bnode == nil {
+				return nil, errors.Errorf("MatMul: Cannot find Node b of %v", b)
+			}
 		}
 
 		// shape checks are done here
@@ -92,6 +105,13 @@ func MatMul(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 			return nil, err
 		}
 		retVal = cnode
+	}
+
+	// check if engine supports MatMul. If not, return
+	if _, ok := a.Engine().(tensor.MatMuler); !ok {
+		if _, ok := b.Engine().(tensor.MatMuler); !ok {
+			return
+		}
 	}
 
 	// do the values stuff
@@ -162,26 +182,37 @@ func Add(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 	op := add{}
 	if ok {
 		// do symbolic stuff
-		// do symbolic stuff
 		g := eng.Graph()
-		aname, err := g.NameOf(a)
-		if err != nil {
-			return nil, err
+
+		var aname, bname string
+		var anode, bnode *exprgraph.Node
+
+		if aname, err = g.NameOf(a); err != nil {
+			// create a node
+			aname = randomName(a)
+			if anode, err = exprgraph.Cons(g, aname, a.(tensor.Tensor)); err != nil {
+				return nil, err
+			}
 		}
-		bname, err := g.NameOf(b)
-		if err != nil {
-			return nil, err
+		if bname, err = g.NameOf(b); err != nil {
+			// create b node
+			bname = randomName(b)
+			if bnode, err = exprgraph.Cons(g, bname, b.(tensor.Tensor)); err != nil {
+				return nil, err
+			}
 		}
 		cname := aname + op.String() + bname
 
 		// construct node
-		anode := g.NodeOf(a)
 		if anode == nil {
-			return nil, err
+			if anode = g.NodeOf(a); anode == nil {
+				return nil, errors.Errorf("MatMul: Cannot find Node a of %v", a)
+			}
 		}
-		bnode := g.NodeOf(b)
 		if bnode == nil {
-			return nil, err
+			if bnode = g.NodeOf(b); bnode == nil {
+				return nil, errors.Errorf("MatMul: Cannot find Node b of %v", b)
+			}
 		}
 
 		// shape checks are done here
@@ -191,6 +222,14 @@ func Add(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 		}
 		retVal = cnode
 	}
+
+	// check if engine supports MatMul. If not, return
+	if _, ok := a.Engine().(tensor.Adder); !ok {
+		if _, ok := b.Engine().(tensor.Adder); !ok {
+			return
+		}
+	}
+
 	// do the values stuff
 	at := exprgraph.T2T(a)
 	bt := exprgraph.T2T(b)
@@ -212,4 +251,11 @@ func Add(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 // the MatMul and Add functions used in the other examples.
 func Example_operations() {
 	// See other examples for usage
+}
+
+var rndCounter int
+
+func randomName(a gorgonia.Tensor) string {
+	rndCounter++
+	return fmt.Sprintf("Random_%d", rndCounter)
 }

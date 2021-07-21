@@ -44,6 +44,8 @@ func TypeOf(t Tensor) hm.Type {
 	switch tt := t.(type) {
 	case tensor.Tensor:
 		return types.MakeTensorType(tt.Dims(), tt.Dtype())
+	case hm.Typer:
+		return tt.Type()
 	default:
 		panic(fmt.Sprintf("%v of %T is currently unsupported", tt, tt))
 	}

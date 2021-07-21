@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"unsafe"
 
+	"github.com/chewxy/hm"
+	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/tensor"
 )
 
@@ -67,3 +69,11 @@ func (t *header) Format(f fmt.State, c rune) {
 
 // Data returns nil because there's no associated data.
 func (t *header) Data() interface{} { return nil }
+
+// Type returns the type of the *header. This implements hm.Typer.
+func (t *header) Type() hm.Type {
+	if t.Shape().IsScalar() {
+		return t.dt
+	}
+	return types.TensorType{Dims: t.Shape().Dims(), Of: t.dt}
+}
