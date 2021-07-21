@@ -3,7 +3,6 @@ package ops
 import (
 	"context"
 	"fmt"
-	"runtime/trace"
 
 	"github.com/chewxy/hm"
 	"gorgonia.org/gorgonia/values"
@@ -40,7 +39,7 @@ type Op interface {
 }
 
 // PreAllocOp represents and Op that has a PreallocDo() method. The PreallocDo method is exactly the same as Do() except it also requres a previously preallocated value.
-type PreallocOp interface{
+type PreallocOp interface {
 	Op
 
 	// PreallocDo performs the Op with the return value passed in as a preallocated value.

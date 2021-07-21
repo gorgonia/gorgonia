@@ -2,10 +2,9 @@ package exprgraph_test
 
 import (
 	"context"
-	"errors"
-	"runtime/trace"
 
 	"github.com/chewxy/hm"
+	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/exprgraph"
 	"gorgonia.org/gorgonia/values"
@@ -53,7 +52,7 @@ func (op matmul) String() string { return "×" }
 func (op matmul) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	a := vs[0].(tensor.Tensor)
 	b := vs[1].(tensor.Tensor)
-	return tensor.MatMul(a, b, tensor.WithPrealloc(prealloc))
+	return tensor.MatMul(a, b, tensor.WithReuse(prealloc))
 }
 
 func MatMul(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
@@ -106,7 +105,8 @@ func MatMul(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 		dt := a.Dtype()
 		ct = tensor.New(tensor.WithShape(shp...), tensor.Of(dt))
 	}
-	if ct, err = op.PreallocDo(nil, at, bt, ct); err != nil {
+
+	if ct, err = op.PreallocDo(nil, ct, at, bt); err != nil {
 		return nil, err
 	}
 	if retVal == nil {
