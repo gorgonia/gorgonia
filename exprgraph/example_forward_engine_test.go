@@ -74,11 +74,25 @@ func (e *FwdEngine) MatMul(a, b, c tensor.Tensor) error {
 func (e *FwdEngine) AddScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (tensor.Tensor, error) {
 	adv := a.(*dual.Dual)
 	bdv := b.(*dual.Dual)
-	c, err := e.StdEng.AddScalar(a, b, leftTensor, opts...)
+	fo := tensor.ParseFuncOpts(opts...)
+	reuse := fo.Reuse()
+
+	var cdv *dual.Dual
+	if reuse != nil {
+		cdv = reuse.(*dual.Dual)
+		fo.SetReuse(cdv.Value)
+	}
+
+	c, err := e.StdEng.AddScalar(a, b, leftTensor, fo.FuncOpts()...)
 	if err != nil {
 		return nil, err
 	}
-	c = e.Lift(c).(tensor.Tensor)
+	if cdv == nil {
+		c = e.Lift(c).(tensor.Tensor)
+	} else {
+		cdv.Value = c
+		c = cdv
+	}
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
@@ -108,6 +122,7 @@ func Example_forward_differentiation_engine() {
 	xypz, err := Add(xy, z)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	getDeriv := func(t gorgonia.Tensor) values.Value {
