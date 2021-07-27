@@ -13,6 +13,11 @@ import (
 	"gorgonia.org/tensor"
 )
 
+type NoOp struct{}
+
+func (NoOp) NoOp()         {}
+func (NoOp) Error() string { return "NoOp" }
+
 type GraphEngine interface {
 	tensor.Engine
 	Graph() *exprgraph.Graph
@@ -51,6 +56,14 @@ func (op matmul) Do(ctx context.Context, vs ...values.Value) (values.Value, erro
 func (op matmul) String() string { return "×" }
 
 func (op matmul) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
+	if ctx != nil {
+		select {
+		case <-ctx.Done():
+			return nil, NoOp{}
+		default:
+		}
+
+	}
 	a := vs[0].(tensor.Tensor)
 	b := vs[1].(tensor.Tensor)
 	return tensor.MatMul(a, b, tensor.WithReuse(prealloc))
@@ -169,6 +182,15 @@ func (op add) Do(ctx context.Context, vs ...values.Value) (values.Value, error) 
 func (op add) String() string { return "+" }
 
 func (op add) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
+	if ctx != nil {
+		select {
+		case <-ctx.Done():
+			return nil, NoOp{}
+		default:
+		}
+
+	}
+
 	a := vs[0].(tensor.Tensor)
 	b := vs[1].(tensor.Tensor)
 	return tensor.Add(a, b, tensor.WithReuse(prealloc))
@@ -235,7 +257,6 @@ func Add(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 	at := exprgraph.T2T(a)
 	bt := exprgraph.T2T(b)
 	var ct tensor.Tensor
-
 	switch {
 	case at != nil && bt != nil && retVal != nil:
 		// both a and b  are values, so we can "materialize" c
@@ -246,7 +267,6 @@ func Add(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 		// one of a or b is not a value tensor
 		return retVal, nil
 	}
-
 	if ct, err = op.PreallocDo(nil, ct, at, bt); err != nil {
 		return nil, err
 	}

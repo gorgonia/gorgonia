@@ -46,6 +46,7 @@ func (g *Graph) Apply(op ops.Op, newname string, children ...*Node) (*Node, erro
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to construct a new Node")
 	}
+	n.Op = op
 
 	err = g.AddChildren(n, children...)
 	return n, err

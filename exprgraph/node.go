@@ -30,6 +30,8 @@ type Node struct {
 	Op   ops.Op
 	// beforeLift tracks the old value of a tensor before it has been lifted
 	beforeLift Tensor
+
+	waiting int64 // atomic updates only please
 }
 
 // GetName returns the name of the node
