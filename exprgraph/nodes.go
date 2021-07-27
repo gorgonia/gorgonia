@@ -2,7 +2,6 @@ package exprgraph
 
 import (
 	"gonum.org/v1/gonum/graph"
-	"gorgonia.org/gorgonia/values"
 )
 
 // Nodes is an iterator over Nodes
@@ -38,17 +37,6 @@ func (n *Nodes) NodeSlice() []*Node {
 	}
 	retVal := n.ns[n.i:len(n.ns)]
 	n.i = len(n.ns)
-	return retVal
-}
-
-// ValueSlice returns all the remaining values of the nodes in the iterator and advances
-// the iterator. The order of the values within the returned slices are sorted by ID.
-func (n *Nodes) ValueSlice() []values.Value {
-	ns := n.NodeSlice()
-	retVal := make([]values.Value, 0, len(ns))
-	for _, n := range ns {
-		retVal = append(retVal, n.Value())
-	}
 	return retVal
 }
 
