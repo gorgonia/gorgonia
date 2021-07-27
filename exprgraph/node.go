@@ -3,6 +3,7 @@ package exprgraph
 import (
 	"errors"
 	"fmt"
+	"sync/atomic"
 
 	"gorgonia.org/dtype"
 	"gorgonia.org/gorgonia/ops"
@@ -31,7 +32,7 @@ type Node struct {
 	// beforeLift tracks the old value of a tensor before it has been lifted
 	beforeLift Tensor
 
-	waiting int64 // atomic updates only please
+	waiting int32 // atomic updates only please
 }
 
 // GetName returns the name of the node
@@ -106,6 +107,7 @@ func (n Node) Format(f fmt.State, c rune) {
 	}
 }
 
+// Value returns the value stored in a node. If the node represents a symbolic value, it will be converted into an actual value.
 func (n *Node) Value() values.Value {
 	switch t := n.Tensor.(type) {
 	case values.Value:
@@ -127,3 +129,12 @@ func (n *Node) Value() values.Value {
 
 	}
 }
+
+func (n *Node) AddWaiting() { atomic.AddInt32(&n.waiting, 1) }
+
+func (n *Node) Waiting() int {
+	retVal := atomic.LoadInt32(&n.waiting)
+	return int(retVal)
+}
+
+func (n *Node) ZeroWaiting() { atomic.StoreInt32(&n.waiting, int32(0)) }

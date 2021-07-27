@@ -27,6 +27,7 @@ type RxEngine struct {
 	q chan obs // queue of nodes to be updated
 
 	l             sync.Mutex
+	current       context.Context
 	cancelCurrent context.CancelFunc // cancelCurrent is the cancel function for the top level "job" (which is a `Let``)
 	wg            sync.WaitGroup     // cannot be embedded because it has a .Add() method, which confuses Go
 
@@ -54,6 +55,7 @@ func (e *RxEngine) Update(a gorgonia.Tensor) {
 		e.cancelCurrent = nil
 	}
 	ctx, cancel := context.WithCancel(context.Background())
+	e.current = ctx
 	e.cancelCurrent = cancel
 	e.l.Unlock()
 	g := e.Graph()
@@ -71,35 +73,43 @@ func (e *RxEngine) doUpdate() {
 		ctx := o.ctx
 		cancel := o.cancel
 
-		// delete n from not yet updated.
-		delete(e.nyu, n)
+		// compute all dependencies first
+		if err := e.flowDown(ctx, n); err != nil {
+			// ???? TODO
+		}
 
 		nonRootParents := e.flowUp(ctx, n)
-		// if there are no more parents, then cancel current after 500ms
+
+		// if there are no more parents, then we are done
 		if nonRootParents == 0 {
 			cancel()
 			e.wg.Done()
 		}
-
 	}
 }
 
 // flowUp makes the tensor flows upwards towards the root.
 func (e *RxEngine) flowUp(ctx context.Context, n *exprgraph.Node) int {
-	var tos []*exprgraph.Node
+	var parents []*exprgraph.Node
 	ns, ok := e.g.To(n.ID()).(*exprgraph.Nodes)
 	if ok {
-		tos = ns.NodeSlice()
+		parents = ns.NodeSlice()
 	}
 	var nonRootParents int
-	for _, parent := range tos {
-		children := e.g.From(parent.ID()).(*exprgraph.Nodes).ValueSlice()
+	for _, parent := range parents {
+		/*
+			children := e.g.From(parent.ID()).(*exprgraph.Nodes).ValueSlice()
 
-		if po, ok := parent.Op.(ops.PreallocOp); ok {
-			if _, err := po.PreallocDo(ctx, parent.Value(), children...); err != nil {
-				e.nyu[parent] = struct{}{}
-				continue
+			if po, ok := parent.Op.(ops.PreallocOp); ok {
+				if _, err := po.PreallocDo(ctx, parent.Value(), children...); err != nil {
+					log.Printf("err %v | Adding Waiting to %s", err, parent)
+					parent.AddWaiting()
+					continue
+				}
 			}
+		*/
+		if err := e.flowDown(ctx, parent); err != nil {
+			continue
 		}
 
 		if e.g.To(parent.ID()).Len() != 0 {
@@ -109,6 +119,46 @@ func (e *RxEngine) flowUp(ctx context.Context, n *exprgraph.Node) int {
 		}
 	}
 	return nonRootParents
+}
+
+// flowDown recomputes the value of `n`, and recomputes any of the children if need be.
+func (e *RxEngine) flowDown(ctx context.Context, n *exprgraph.Node) error {
+	children := e.g.From(n.ID())
+	if children.Len() == 0 {
+		// done
+		return nil
+	}
+	children.Reset()
+	childNodes := children.(*exprgraph.Nodes).NodeSlice()
+
+	// Depth first search.
+	// TODO: maybe traverse and process the graph concurrently?
+	for _, c := range childNodes {
+		if c.Waiting() > 0 {
+			// then it needs to be reprocessed
+			ctx2, cancel2 := context.WithCancel(ctx)
+			e.flowDown(ctx2, c)
+			c.ZeroWaiting()
+			cancel2()
+		}
+	}
+
+	childValues := make([]values.Value, 0, len(childNodes))
+	for _, n := range childNodes {
+		childValues = append(childValues, n.Value())
+	}
+
+	switch o := n.Op.(type) {
+	case ops.PreallocOp:
+		if _, err := o.PreallocDo(ctx, n.Value(), childValues...); err != nil {
+			n.AddWaiting()
+			return err
+		}
+	default:
+		// TODO: non PreallocOp
+	}
+	return nil
+
 }
 
 func LetRx(a gorgonia.Tensor, v values.Value) {
@@ -191,7 +241,7 @@ func Example_rx_engine() {
 	// ⎣56000  41000⎦
 	//
 	// xy+z:
-	// ⎡20001  14001⎤
-	// ⎣56001  41001⎦
+	// ⎡21010  15010⎤
+	// ⎣57010  42010⎦
 
 }
