@@ -2,6 +2,7 @@ package exprgraph
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
@@ -126,7 +127,11 @@ func (g *Graph) Nodes() graph.Nodes {
 	if len(g.nodes) == 0 {
 		return graph.Empty
 	}
-	return NewNodes(g.nodes, nil)
+	ordered := make([]*Node, len(g.nodes))
+	for id, n := range g.nodes {
+		ordered[id] = n
+	}
+	return NodesFromOrdered(ordered)
 }
 
 // From returns the list of nodes that can be reached directly from the given ID.
@@ -134,7 +139,18 @@ func (g *Graph) From(id int64) graph.Nodes {
 	if len(g.from[id]) == 0 {
 		return graph.Empty
 	}
-	return NewNodes(g.nodes, g.from[id])
+	edges := g.from[id]
+	es := make(byWeight, 0, len(edges))
+	for _, e := range edges {
+		es = append(es, e)
+	}
+	sort.Sort(es)
+	ns := make([]*Node, 0, len(es))
+	for _, e := range es {
+		ns = append(ns, g.nodes[e.To().ID()])
+	}
+	return NodesFromOrdered(ns)
+
 }
 
 // HasEdgeBetween returns whether an edge exists between x and y.
@@ -174,7 +190,18 @@ func (g *Graph) To(id int64) graph.Nodes {
 	if len(g.to[id]) == 0 {
 		return graph.Empty
 	}
-	return NewNodes(g.nodes, g.to[id])
+
+	edges := g.to[id]
+	es := make(byWeight, 0, len(edges))
+	for _, e := range edges {
+		es = append(es, e)
+	}
+	sort.Sort(es)
+	ns := make([]*Node, 0, len(es))
+	for _, e := range es {
+		ns = append(ns, g.nodes[e.From().ID()])
+	}
+	return NodesFromOrdered(ns)
 }
 
 // NewNode returns a new Node with a unique
@@ -266,7 +293,7 @@ func (g *Graph) AddChildren(n *Node, children ...*Node) error {
 		err := g.setWeightedEdge(WeightedEdge{
 			F: n,
 			T: child,
-			W: float64(i),
+			W: float64(i), // the weight of the child is the order of the children into the Op
 		},
 		)
 		if err != nil {

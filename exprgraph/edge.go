@@ -21,3 +21,11 @@ func (e WeightedEdge) ReversedEdge() graph.Edge { return WeightedEdge{F: e.T, T:
 
 // Weight returns the weight of the edge.
 func (e WeightedEdge) Weight() float64 { return e.W }
+
+type byWeight []graph.WeightedEdge
+
+func (l byWeight) Len() int { return len(l) }
+
+func (l byWeight) Less(i, j int) bool { return l[i].Weight() < l[j].Weight() }
+
+func (l byWeight) Swap(i, j int) { l[i], l[j] = l[j], l[i] }
