@@ -97,17 +97,6 @@ func (e *RxEngine) flowUp(ctx context.Context, n *exprgraph.Node) int {
 	}
 	var nonRootParents int
 	for _, parent := range parents {
-		/*
-			children := e.g.From(parent.ID()).(*exprgraph.Nodes).ValueSlice()
-
-			if po, ok := parent.Op.(ops.PreallocOp); ok {
-				if _, err := po.PreallocDo(ctx, parent.Value(), children...); err != nil {
-					log.Printf("err %v | Adding Waiting to %s", err, parent)
-					parent.AddWaiting()
-					continue
-				}
-			}
-		*/
 		if err := e.flowDown(ctx, parent); err != nil {
 			continue
 		}
