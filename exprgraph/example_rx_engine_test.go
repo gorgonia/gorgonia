@@ -31,8 +31,6 @@ type RxEngine struct {
 	cancelCurrent context.CancelFunc // cancelCurrent is the cancel function for the top level "job" (which is a `Let``)
 	wg            sync.WaitGroup     // cannot be embedded because it has a .Add() method, which confuses Go
 
-	// nyu is a list of not yet updated nodes.
-	nyu map[gorgonia.Tensor]struct{}
 }
 
 func NewRx() *RxEngine {
@@ -40,15 +38,15 @@ func NewRx() *RxEngine {
 	g := exprgraph.NewGraph(eng)
 	eng.g = g
 	eng.q = make(chan obs, 1024)
-	eng.nyu = make(map[gorgonia.Tensor]struct{})
-	go eng.doUpdate()
+	go eng.loop()
 	return eng
 }
 func (e *RxEngine) Graph() *exprgraph.Graph { return e.g }
 
 func (e *RxEngine) SetGraph(g *exprgraph.Graph) { e.g = g }
 
-func (e *RxEngine) Update(a gorgonia.Tensor) {
+// NotifyUpdated tells the engine that `a` has been updated.
+func (e *RxEngine) NotifyUpdated(a gorgonia.Tensor) {
 	e.l.Lock()
 	if e.cancelCurrent != nil {
 		e.cancelCurrent()
@@ -64,9 +62,12 @@ func (e *RxEngine) Update(a gorgonia.Tensor) {
 	e.q <- obs{n, ctx, cancel}
 }
 
+// Wait waits for the engine to finish updating.
 func (e *RxEngine) Wait() { e.wg.Wait() }
 
-func (e *RxEngine) doUpdate() {
+// loop is the main loop for doing things. It pick nodes up from the `e.q` channel, and then
+// flow the data up and down the graph.
+func (e *RxEngine) loop() {
 	for o := range e.q {
 
 		n := o.n
@@ -89,6 +90,9 @@ func (e *RxEngine) doUpdate() {
 }
 
 // flowUp makes the tensor flows upwards towards the root.
+// Given a node, it computes the results of the parent node(s).
+// If the parent node(s) themselves have parent node(s), those parent nodes will
+// be placed into the queue.
 func (e *RxEngine) flowUp(ctx context.Context, n *exprgraph.Node) int {
 	var parents []*exprgraph.Node
 	ns, ok := e.g.To(n.ID()).(*exprgraph.Nodes)
@@ -111,6 +115,7 @@ func (e *RxEngine) flowUp(ctx context.Context, n *exprgraph.Node) int {
 }
 
 // flowDown recomputes the value of `n`, and recomputes any of the children if need be.
+// The criteria for recomputation is in the .Waiting() method of a `*Node`.
 func (e *RxEngine) flowDown(ctx context.Context, n *exprgraph.Node) error {
 	children := e.g.From(n.ID())
 	if children.Len() == 0 {
@@ -150,6 +155,7 @@ func (e *RxEngine) flowDown(ctx context.Context, n *exprgraph.Node) error {
 
 }
 
+// LetRx is Let() but for reactive engine.
 func LetRx(a gorgonia.Tensor, v values.Value) {
 	// do Let
 	switch at := a.(type) {
@@ -164,7 +170,7 @@ func LetRx(a gorgonia.Tensor, v values.Value) {
 	eng := a.Engine()
 	switch e := eng.(type) {
 	case *RxEngine:
-		e.Update(a)
+		e.NotifyUpdated(a)
 	}
 }
 
