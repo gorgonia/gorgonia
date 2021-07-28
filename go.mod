@@ -5,6 +5,7 @@ go 1.12
 replace gorgonia.org/tensor => /home/chewxy/workspace/gorgoniaws/src/gorgonia.org/tensor
 
 replace gorgonia.org/dtype => /home/chewxy/workspace/gorgoniaws/src/gorgonia.org/dtype
+replace gorgonia.org/shapes => /home/chewxy/workspace/gorgoniaws/src/gorgonia.org/shapes
 
 require (
 	github.com/chewxy/hm v1.0.0

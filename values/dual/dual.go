@@ -116,6 +116,15 @@ func (dv *Dual) Format(s fmt.State, c rune) {
 	fmt.Fprintf(s, "%v", dv.Value)
 }
 
+// CopyFrom copies the values from a values.Value to the first value of the *Dual. The deriv is untouched.
+func (dv *Dual) CopyFrom(src interface{}) error {
+	if v, ok := src.(values.Value); ok {
+		_, err := values.Copy(dv.Value, v)
+		return err
+	}
+	return errors.Errorf("Unable to CopyFrom %T", src)
+}
+
 func (dv *Dual) sanity() error {
 	// check that d and v are the same type
 

@@ -231,7 +231,17 @@ func ZeroValue(v Value) Value {
 // Copy copies the src values into dest values. For scalars, it just returns itself
 func Copy(dest, src Value) (Value, error) {
 	var ok bool
+
+	var copyFrom CopierFrom
+	if copyFrom, ok = dest.(CopierFrom); ok {
+		err := copyFrom.CopyFrom(src)
+		return dest, err
+	}
+
 	switch srcT := src.(type) {
+	case CopierTo:
+		err := srcT.CopyTo(dest)
+		return dest, err
 	case tensor.Tensor:
 		var destT tensor.Tensor
 		if destT, ok = dest.(tensor.Tensor); !ok {
@@ -239,15 +249,8 @@ func Copy(dest, src Value) (Value, error) {
 		}
 		err := tensor.Copy(destT, srcT)
 		return dest, err
-	case CopierTo:
-		err := srcT.CopyTo(dest)
-		return dest, err
+
 	default:
-		var copyFrom CopierFrom
-		if copyFrom, ok = dest.(CopierFrom); ok {
-			err := copyFrom.CopyFrom(src)
-			return dest, err
-		}
 		return nil, errors.Errorf("Unable to copy value of type %T into value of type %T", src, dest)
 	}
 }

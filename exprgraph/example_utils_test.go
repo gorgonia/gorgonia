@@ -9,6 +9,7 @@ import (
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/exprgraph"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 )
@@ -284,4 +285,10 @@ var rndCounter int
 func randomName(a gorgonia.Tensor) string {
 	rndCounter++
 	return fmt.Sprintf("Random_%d", rndCounter)
+}
+
+// getDeriv is a utility function
+func getDeriv(t gorgonia.Tensor) values.Value {
+	n := t.(*exprgraph.Node)
+	return n.Tensor.(*dual.Dual).Deriv()
 }

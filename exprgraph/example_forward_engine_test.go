@@ -3,9 +3,7 @@ package exprgraph_test
 import (
 	"fmt"
 
-	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/exprgraph"
-	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
 )
@@ -125,10 +123,7 @@ func Example_forward_differentiation_engine() {
 		return
 	}
 
-	getDeriv := func(t gorgonia.Tensor) values.Value {
-		n := t.(*exprgraph.Node)
-		return n.Tensor.(*dual.Dual).Deriv()
-	}
+	// note: getDeriv is defined in example_utils_test.go
 
 	fmt.Printf("x:\n%v\ny:\n%v\nxy:\n%v\nxy+z:\n%v\n", x, y, xy, xypz)
 	fmt.Printf("dx:\n%v\ndy:\n%v\ndxy:\n%v\ndxy+z:\n%v\n", getDeriv(x), getDeriv(y), getDeriv(xy), getDeriv(xypz))

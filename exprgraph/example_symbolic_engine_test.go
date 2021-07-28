@@ -2,7 +2,6 @@ package exprgraph_test
 
 import (
 	"fmt"
-	"log"
 
 	"gorgonia.org/gorgonia/exprgraph"
 	"gorgonia.org/tensor"
@@ -61,7 +60,6 @@ func Example_symbolicEngineUsingTensorAPI() {
 
 	xy, err := MatMul(x, y)
 	if err != nil {
-		log.Printf("MATMUL")
 		fmt.Println(err)
 		return
 	}

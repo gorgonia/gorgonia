@@ -22,7 +22,7 @@ type obs struct {
 
 // RxEngine is a reactive engine for Gorgonia
 type RxEngine struct {
-	tensor.StdEng
+	tensor.StandardEngine
 	g *exprgraph.Graph
 	q chan obs // queue of nodes to be updated
 
@@ -33,9 +33,20 @@ type RxEngine struct {
 
 }
 
-func NewRx() *RxEngine {
-	eng := &RxEngine{}
-	g := exprgraph.NewGraph(eng)
+func NewRx(std tensor.StandardEngine, g *exprgraph.Graph) *RxEngine {
+	if std == nil {
+		std = tensor.StdEng{}
+	}
+	eng := &RxEngine{
+		StandardEngine: std,
+	}
+
+	if g == nil {
+		g = exprgraph.NewGraph(eng)
+	} else {
+		g.Engine = eng
+	}
+
 	eng.g = g
 	eng.q = make(chan obs, 1024)
 	go eng.loop()
@@ -44,6 +55,14 @@ func NewRx() *RxEngine {
 func (e *RxEngine) Graph() *exprgraph.Graph { return e.g }
 
 func (e *RxEngine) SetGraph(g *exprgraph.Graph) { e.g = g }
+
+// Lift implements lift only iff the underlying StandardEngine is a Lifter.
+func (e *RxEngine) Lift(a gorgonia.Tensor) gorgonia.Tensor {
+	if lifter, ok := e.StandardEngine.(exprgraph.Lifter); ok {
+		return lifter.Lift(a)
+	}
+	return a
+}
 
 // NotifyUpdated tells the engine that `a` has been updated.
 func (e *RxEngine) NotifyUpdated(a gorgonia.Tensor) {
@@ -161,9 +180,11 @@ func LetRx(a gorgonia.Tensor, v values.Value) {
 	switch at := a.(type) {
 	case *exprgraph.Node:
 		av := at.Value()
-		values.Copy(av, v)
+		values.Copy(av, v) // in real life you gotta return error
 	case values.Value:
 		values.Copy(at, v)
+	default:
+		fmt.Printf("Cannot do Let %s %T\n%v", a, a, a)
 	}
 
 	// do reactive things
@@ -171,11 +192,13 @@ func LetRx(a gorgonia.Tensor, v values.Value) {
 	switch e := eng.(type) {
 	case *RxEngine:
 		e.NotifyUpdated(a)
+	default:
+		fmt.Printf("ENGINE %T NOT HANDLED\n", eng)
 	}
 }
 
 func Example_rx_engine() {
-	engine := NewRx()
+	engine := NewRx(nil, nil)
 	g := engine.Graph()
 	x := exprgraph.NewNode(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
 	y := exprgraph.NewNode(g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
@@ -238,5 +261,111 @@ func Example_rx_engine() {
 	// xy+z:
 	// ⎡21010  15010⎤
 	// ⎣57010  42010⎦
+
+}
+
+func Example_rx_engine_composed() {
+	fwd := &FwdEngine{}
+	g := exprgraph.NewGraph(fwd)
+	fwd.g = g
+	engine := NewRx(fwd, g)
+
+	x := exprgraph.NewNode(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	y := exprgraph.NewNode(g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
+	z := exprgraph.NewNode(g, "z", tensor.WithShape(), tensor.WithBacking([]float64{1}))
+
+	xy, err := MatMul(x, y)
+	if err != nil {
+		fmt.Println(err)
+	}
+	xypz, err := Add(xy, z)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Printf("x:\n%v\ny:\n%v\nxy:\n%v\nxy+z:\n%v\n", x, y, xy, xypz)
+	fmt.Printf("dx:\n%v\ndy:\n%v\ndxy:\n%v\ndxy+z:\n%v\n", getDeriv(x), getDeriv(y), getDeriv(xy), getDeriv(xypz))
+
+	// Update
+	xv := tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{100, 200, 300, 400, 500, 600}))
+	yv := tensor.New(tensor.WithShape(3, 2), tensor.WithBacking([]float64{60, 50, 40, 30, 20, 10}))
+	zv := tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{1010}))
+	LetRx(x, xv)
+	LetRx(y, yv)
+	LetRx(z, zv)
+	engine.Wait()
+	fmt.Printf("After Updating\n-----\nx:\n%v\ny:\n%v\nxy:\n%v\nxy+z:\n%v\n", x, y, xy, xypz)
+	fmt.Printf("dx:\n%v\ndy:\n%v\ndxy:\n%v\ndxy+z:\n%v\n", getDeriv(x), getDeriv(y), getDeriv(xy), getDeriv(xypz))
+
+	// Output:
+	// x:
+	// ⎡1  2  3⎤
+	// ⎣4  5  6⎦
+	//
+	// y:
+	// ⎡6  5⎤
+	// ⎢4  3⎥
+	// ⎣2  1⎦
+	//
+	// xy:
+	// ⎡20  14⎤
+	// ⎣56  41⎦
+	//
+	// xy+z:
+	// ⎡21  15⎤
+	// ⎣57  42⎦
+	//
+	// dx:
+	// ⎡190  122   54⎤
+	// ⎣541  347  153⎦
+	//
+	// dy:
+	// ⎡244  178⎤
+	// ⎢320  233⎥
+	// ⎣396  288⎦
+	//
+	// dxy:
+	// ⎡1  1⎤
+	// ⎣1  1⎦
+	//
+	// dxy+z:
+	// ⎡0  0⎤
+	// ⎣0  0⎦
+	//
+	// After Updating
+	// -----
+	// x:
+	// ⎡100  200  300⎤
+	// ⎣400  500  600⎦
+	//
+	// y:
+	// ⎡60  50⎤
+	// ⎢40  30⎥
+	// ⎣20  10⎦
+	//
+	// xy:
+	// ⎡20000  14000⎤
+	// ⎣56000  41000⎦
+	//
+	// xy+z:
+	// ⎡21010  15010⎤
+	// ⎣57010  42010⎦
+	//
+	// dx:
+	// ⎡ 1.9e+06  1.22e+06    540000⎤
+	// ⎣5.41e+06  3.47e+06  1.53e+06⎦
+	//
+	// dy:
+	// ⎡2.44e+07  1.78e+07⎤
+	// ⎢ 3.2e+07  2.33e+07⎥
+	// ⎣3.96e+07  2.88e+07⎦
+	//
+	// dxy:
+	// ⎡1  1⎤
+	// ⎣1  1⎦
+	//
+	// dxy+z:
+	// ⎡0  0⎤
+	// ⎣0  0⎦
 
 }
