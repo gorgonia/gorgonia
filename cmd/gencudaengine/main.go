@@ -66,7 +66,7 @@ func init() {
 			log.Fatal("You need to define a $GOPATH")
 		}
 	}
-	cudaengloc = path.Join(gopath, "src/gorgonia.org/gorgonia/cuda")
+	cudaengloc = path.Join(gopath, "src/gorgonia.org/gorgonia/execution/engines/cuda")
 }
 
 func generateAriths() {

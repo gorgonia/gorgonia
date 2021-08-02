@@ -6,6 +6,9 @@ const (
 	NYITypeFail = "%s Not Yet Implemented for %T"
 	NYIFail     = "%s Not Yet Implemented for %v"
 
+	TypeMismatch  = "Type Mismatch: a %T and b %T"
+	ShapeMismatch = "Shape Mismatch. Expected %v. Got %v"
+
 	noopMsg = "NoOp"
 )
 
