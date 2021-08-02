@@ -323,11 +323,25 @@ func Make(alignment int64) BFC {
 	}
 }
 
-func (b *BFC) Reset() {
+func (b *BFC) reset() {
 	b.allocated = 0
 	b.allocs = 0
 	b.frees = 0
 }
+
+func (b *BFC) Reset() {
+	used := make([]uintptr, 0, len(b.used))
+	for k := range b.used {
+		used = append(used, k)
+	}
+	for _, ptr := range used {
+		b.Free(ptr + b.start)
+	}
+	b.coalesce()
+	b.reset()
+}
+
+func (b *BFC) Start() uintptr {return b.start}
 
 func (b *BFC) Reserve(start uintptr, size int64) {
 	allocatorLogf("RESERVE starts: 0x%x | size: %v", start, size)
