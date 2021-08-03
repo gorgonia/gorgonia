@@ -99,6 +99,7 @@ func (e *Engine) Init(device cu.Device, size int64) (err error) {
 	}
 
 	e.Lock()
+	defer e.Unlock()
 	e.d = device
 	if err = e.doInit(size); err != nil {
 		e.Unlock()
@@ -109,7 +110,6 @@ func (e *Engine) Init(device cu.Device, size int64) (err error) {
 		return errors.Wrapf(err, "Failed to initialize CUDA Engine with size %d for device %v", size, device)
 	}
 	e.initialized = true
-	e.Unlock()
 	return
 }
 
@@ -117,7 +117,6 @@ func (e *Engine) doInit(size int64) (err error) {
 	e.workAvailable = make(chan bool)
 	e.syncChan = make(chan struct{})
 	e.finishChan = make(chan struct{})
-	e.finishChan2 = make(chan struct{}, 1)
 	e.a = allocator.Make(memalign)
 
 	// create and set context
@@ -160,6 +159,11 @@ func (e *Engine) doInit(size int64) (err error) {
 
 	// actually reserve memory for the allocator
 	var allocsize int64 = 2*size + (size / 2) + minAllocSize
+	if size <= 0 {
+		// if the hint given is undefined, we just reserve 80% off free memory
+		allocsize = e.freeMem * 8 / 10
+	}
+
 	if allocsize >= e.freeMem {
 		return errors.Errorf("Unable to get %v bytes. Free memory available %v", allocsize, e.freeMem)
 	}
@@ -216,10 +220,11 @@ func (e *Engine) Close() error {
 		return errors.Wrapf(err, "Failed to cloes CUDA Context ")
 	}
 
-	runtime.Gosched() // make sure everyone has a fair play
-	e.finishChan <- struct{}{}
-	e.finishChan2 <- struct{}{} // wait
+	runtime.Gosched()   // make sure everyone has a fair play
+	close(e.finishChan) // tell Run() to finish up
+	e.wg.Wait()         // wait for Run() to finish
 	e.initialized = false
+	e.running = false
 	return nil
 }
 
@@ -230,7 +235,9 @@ func (e *Engine) DoWork() error {
 }
 
 // Run initialises and starts the engine
-func (e *Engine) Run() {
+func (e *Engine) Run() { e.once.Do(e.run) }
+
+func (e *Engine) run() {
 	e.Lock()
 	if e.running {
 		e.Unlock()
@@ -241,11 +248,13 @@ func (e *Engine) Run() {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	// finish initialization
-	e.b.Init(cublas.WithContext(&e.c))
+	e.wg.Add(1)
+	defer e.wg.Done()
 
-	// finishChan2 blocks any external commands to engine (like Close) until it's ready to finish.
-	e.finishChan2 <- struct{}{}
+	// finish initialization
+	if err := e.b.Init(cublas.WithContext(&e.c)); err != nil {
+		panic(err)
+	}
 
 loop:
 	for {
@@ -253,10 +262,7 @@ loop:
 		case <-e.c.WorkAvailable():
 			e.c.DoWork()
 			if err := e.c.Errors(); err != nil {
-				e.Lock()
 				e.err = err
-				e.running = false
-				e.Unlock()
 				break loop
 			}
 		case w := <-e.c.Work():
@@ -265,18 +271,18 @@ loop:
 				e.c.ErrChan() <- err
 
 				if err != nil {
-					e.Lock()
 					e.err = err
-					e.running = false
-					e.Unlock()
 					break loop
 				}
+			} else {
+				// if nil, it means the channel hasa been closed
+				break loop
 			}
 		case <-e.finishChan:
 			break loop
 		}
 	}
-	<-e.finishChan2
+	return
 }
 
 // blockThread is an easier version of calculating <<threads, blocks>> for CUDA. Useful for debugging

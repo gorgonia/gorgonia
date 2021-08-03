@@ -15,17 +15,17 @@ var (
 // this file implements all the tensor linalg engine interfaces
 
 func (e *Engine) checkThreeFloat(a, b, ret tensor.Tensor) (ad, bd, retVal *tensor.Dense, err error) {
-	if /*a.IsNativelyAccessible() &&*/ !a.IsManuallyManaged() {
-		return nil, nil, nil, errors.New("CUDA Engine only takes non-natively accessible memory (memory on graphics cards). a isn't.")
-	}
+	// if /*a.IsNativelyAccessible() &&*/ !a.IsManuallyManaged() {
+	// 	return nil, nil, nil, errors.New("CUDA Engine only takes non-natively accessible memory (memory on graphics cards). a isn't.")
+	// }
 
-	if /* b.IsNativelyAccessible() && */ !b.IsManuallyManaged() {
-		return nil, nil, nil, errors.New("CUDA Engine only takes non-natively accessible memory (memory on graphics cards). b isn't")
-	}
+	// if /* b.IsNativelyAccessible() && */ !b.IsManuallyManaged() {
+	// 	return nil, nil, nil, errors.New("CUDA Engine only takes non-natively accessible memory (memory on graphics cards). b isn't")
+	// }
 
-	if /* ret.IsNativelyAccessible() && */ !ret.IsManuallyManaged() {
-		return nil, nil, nil, errors.New("CUDA Engine only takes non-natively accessible memory (memory on graphics cards). ret isn't")
-	}
+	// if /* ret.IsNativelyAccessible() && */ !ret.IsManuallyManaged() {
+	// 	return nil, nil, nil, errors.New("CUDA Engine only takes non-natively accessible memory (memory on graphics cards). ret isn't")
+	// }
 
 	if a.Dtype() != b.Dtype() || b.Dtype() != ret.Dtype() {
 		return nil, nil, nil, errors.New("Expected a and b and retVal all to have the same Dtype")
@@ -224,6 +224,7 @@ func (e *Engine) MatMul(a, b, prealloc tensor.Tensor) (err error) {
 	default:
 		return errors.Errorf("Unsupported Dtype %v", ad.Dtype())
 	}
+	e.c.DoWork()
 
 	return e.b.Err()
 }

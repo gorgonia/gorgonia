@@ -3,6 +3,7 @@ package cuda
 import "C"
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
@@ -46,11 +47,32 @@ type Engine struct {
 
 	syncChan      chan struct{}
 	finishChan    chan struct{}
-	finishChan2   chan struct{}
+	wg            sync.WaitGroup // wait for Run() to finish.
+	once          sync.Once
 	workAvailable chan bool
 	err           error
 	initialized   bool
 	running       bool
+}
+
+// New creates and initializes the engine. This is to be used when then engine is standalone.
+// It will reserve 80% of your GPU memory if no hints are provided.
+// This function will panic if there are any CUDA errors.
+//
+// You will need to manually call `.Run()`
+func New(hint int64) *Engine {
+	dev, err := cu.GetDevice(0)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to get CUDA device 0. Error %v", err))
+	}
+	e := &Engine{}
+	if err := e.Init(dev, hint); err != nil {
+		panic(fmt.Sprintf("Failed to init Engine: %v", err))
+	}
+	if err := e.loadStdLib(); err != nil {
+		panic(fmt.Sprintf("Unable to load standard library. %v", err))
+	}
+	return e
 }
 
 // AllocAccessible returns true because the engine return Go-accessible memory pointers
@@ -113,7 +135,32 @@ func (e *Engine) memcpy(dst cu.DevicePtr, src cu.DevicePtr, size int64) {
 }
 
 func (e *Engine) Accessible(mem tensor.Memory) (tensor.Memory, error) {
-	panic("not implemented")
+	size := mem.MemSize()
+	bs := make([]byte, int(size))
+	e.c.MemcpyDtoH(unsafe.Pointer(&bs[0]), cu.DevicePtr(mem.Uintptr()), int64(size))
+	switch t := mem.(type) {
+	case *tensor.Dense:
+		dt := t.Dtype()
+		l := int(size / dt.Size())
+		backingHdr := &reflect.SliceHeader{
+			Data: uintptr(unsafe.Pointer(&bs[0])),
+			Len:  l,
+			Cap:  l,
+		}
+		switch dt {
+		case tensor.Float64:
+			backing := *(*[]float64)(unsafe.Pointer(backingHdr))
+			retVal := tensor.New(tensor.WithShape(t.Shape().Clone()...), tensor.WithBacking(backing))
+			return retVal, e.c.Error()
+		case tensor.Float32:
+			backing := *(*[]float32)(unsafe.Pointer(backingHdr))
+			retVal := tensor.New(tensor.WithShape(t.Shape().Clone()...), tensor.WithBacking(backing))
+			return retVal, e.c.Error()
+		}
+	default:
+		return nil, errors.Errorf("mem of type %T unsupported by Accessible", mem)
+	}
+	panic("Unreachable")
 }
 
 // WorksWith returns true because the data order can be directly worked with

@@ -173,14 +173,14 @@ func main() {
 package %v
 `, packageName)
 	buf.WriteString(header)
-	if ! *sameModule {
-		buf.WriteString("import \"gorgonia.org/gorgonia\"\n")
+	if !*sameModule {
+		buf.WriteString("import cudalib \"gorgonia.org/gorgonia/cuda\"\n")
 	}
 
 	buf.WriteString("func init() {\n")
 	for name := range m {
-		if ! *sameModule {
-			buf.WriteString("gorgonia.")
+		if !*sameModule {
+			buf.WriteString("cudalib.")
 		}
 		buf.WriteString(fmt.Sprintf("AddToStdLib(%q, %sPTX, []string{\"%s\"})\n", name, name, strings.Join(funcs[name], "\", \"")))
 	}

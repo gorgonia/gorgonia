@@ -1,4 +1,4 @@
-package exprgraph_test
+package cuda_test
 
 import (
 	"context"

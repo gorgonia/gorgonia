@@ -2,12 +2,26 @@ package cuda
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
+	cudalib "gorgonia.org/gorgonia/cuda"
 )
 
 // this file relates to code that allows you to extend Engine
+
+func (e *Engine) loadStdLib() error {
+	stdlib := cudalib.StandardLib()
+
+	for _, l := range stdlib {
+		log.Printf("Loading %v", l.ModuleName)
+		if err := e.LoadCUDAFunc(l.ModuleName, l.Data, l.Funcs); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // LoadCUDAFunc loads a string representing a CUDA PTX file into the engine, giving it the universe of computing functions.
 func (e *Engine) LoadCUDAFunc(moduleName, data string, funcs []string) (err error) {
