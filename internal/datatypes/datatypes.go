@@ -43,6 +43,9 @@ type Tensor interface {
 func TypeOf(t Tensor) hm.Type {
 	switch tt := t.(type) {
 	case tensor.Tensor:
+		if tt.Shape().IsScalar() {
+			return tt.Dtype()
+		}
 		return types.MakeTensorType(tt.Dims(), tt.Dtype())
 	case hm.Typer:
 		return tt.Type()

@@ -76,8 +76,27 @@ func generateAriths() error {
 			return err
 		}
 
+		// extra: write symdiff to stubs
 		if err := binSymDiffTmpl.Execute(stubsFile, op); err != nil {
 			return errors.Wrapf(err, "Unable to add %v SymDiff stubs", op.Name)
+		}
+	}
+	for _, op := range arithTest {
+		filename := strings.ToLower(op.Name) + "_generated_test.go"
+		p := path.Join(stdopsloc, filename)
+		f, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(f, "package stdops\n\n%v\n\n", genmsg)
+		if err := binopTestTmpl.Execute(f, op); err != nil {
+			return errors.Wrapf(err, "Unable to execute binopTmpl for %v", op.Name)
+		}
+		if err := f.Close(); err != nil {
+			return errors.Wrapf(err, "Unable to close %v", p)
+		}
+		if err := goimports(p); err != nil {
+			return err
 		}
 	}
 	return nil
