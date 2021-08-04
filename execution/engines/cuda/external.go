@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
+	"gorgonia.org/internal/debug"
 	cublas "gorgonia.org/cu/blas"
 	cudnn "gorgonia.org/cu/dnn"
 	"gorgonia.org/gorgonia/internal/allocator"
@@ -183,7 +184,7 @@ func (e *Engine) doInit(size int64) (err error) {
 func (e *Engine) Close() error {
 	e.Signal() // tell the engine to do all the work now.
 
-	logtid("engine.Close", 1)
+	debug.Logtid("engine.Close", 1)
 	// start the Close process.
 	e.Lock()
 	defer e.Unlock()
@@ -233,7 +234,7 @@ func (e *Engine) Close() error {
 
 // DoWork sends a signal to the batched CUDA Context to actually do work
 func (e *Engine) DoWork() error {
-	logtid("engine.DoWork", 1)
+	debug.Logtid("engine.DoWork", 1)
 	e.c.DoWork()
 	return e.c.Errors()
 }
@@ -251,7 +252,7 @@ func (e *Engine) run() {
 
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
-	logtid("engine.run(locked)", 1)
+	debug.Logtid("engine.run(locked)", 1)
 
 	// initialize the engine because it needs to also be initialized in the same
 	// thread.
@@ -261,11 +262,9 @@ func (e *Engine) run() {
 	e.totalMem = 0
 	e.Unlock()
 
-	logf("Init(%d %v)", dev, hint)
 	if err := e.Init(dev, hint); err != nil {
 		panic(fmt.Sprintf("Failed to init Engine: %v", err))
 	}
-	logf("Total %v", e.totalMem)
 	if err := LoadStdLib(e); err != nil {
 		panic(fmt.Sprintf("Unable to load standard library. %v", err))
 	}
@@ -288,7 +287,7 @@ loop:
 	for {
 		select {
 		case <-e.c.WorkAvailable():
-			logtid("engine.run - WorkAvailable", 0)
+			debug.Logtid("engine.run - WorkAvailable", 0)
 			e.c.DoWork()
 			if err := e.c.Errors(); err != nil {
 				e.err = err
@@ -331,7 +330,7 @@ loop:
 	}
 
 	// DoWork
-	logtid("engine.run (finish)", 0)
+	debug.Logtid("engine.run (finish)", 0)
 	e.c.DoWork()
 	if err := e.c.Errors(); err != nil {
 		e.err = err

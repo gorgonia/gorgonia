@@ -64,7 +64,6 @@ func New(hint int64) *Engine {
 	if err != nil {
 		panic(fmt.Sprintf("Failed to get CUDA device 0. Error %v", err))
 	}
-	logf("hint %v", hint)
 	e := &Engine{totalMem: hint, d: dev}
 
 	return e

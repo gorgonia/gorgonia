@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
+	"gorgonia.org/internal/debug"
 	"gorgonia.org/tensor"
 )
 
@@ -56,9 +57,9 @@ func (e *Engine) Add(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
 	}
-	logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
-	logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return
 }
@@ -118,9 +119,9 @@ func (e *Engine) AddScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
 	}
-	logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
-	logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return
 }
@@ -171,9 +172,9 @@ func (e *Engine) Sub(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
 	}
-	logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
-	logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return
 }
@@ -233,9 +234,9 @@ func (e *Engine) SubScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
 	}
-	logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
-	logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return
 }
@@ -286,9 +287,9 @@ func (e *Engine) Mul(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
 	}
-	logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
-	logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return
 }
@@ -348,9 +349,9 @@ func (e *Engine) MulScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
 	}
-	logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
-	logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return
 }
@@ -401,9 +402,9 @@ func (e *Engine) Div(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
 	}
-	logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
-	logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return
 }
@@ -463,9 +464,9 @@ func (e *Engine) DivScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
 	}
-	logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
-	logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return
 }
@@ -516,9 +517,9 @@ func (e *Engine) Pow(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
 	}
-	logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
-	logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return
 }
@@ -578,9 +579,9 @@ func (e *Engine) PowScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
 	}
-	logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
-	logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return
 }
@@ -631,9 +632,9 @@ func (e *Engine) Mod(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
 	}
-	logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
-	logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return
 }
@@ -693,9 +694,9 @@ func (e *Engine) ModScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
 	}
-	logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
-	logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return
 }
