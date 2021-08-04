@@ -27,7 +27,7 @@ func Example() {
 	g := exprgraph.NewGraph(engine)
 	engine.g = g
 
-	x := exprgraph.NewNode(g, "x", tensor.WithShape(2, 3), tensor.Of(tensor.Float64), tensor.WithBacking([]float64{10, 20, 30, 40, 50, 60}))
+	x := exprgraph.NewNode(g, "x", tensor.WithShape(2, 3), tensor.Of(tensor.Float64), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
 	y := exprgraph.NewNode(g, "y", tensor.WithShape(3, 2), tensor.Of(tensor.Float64), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
 	z := exprgraph.NewNode(g, "z", tensor.WithShape(), tensor.Of(tensor.Float64), tensor.WithBacking([]float64{1}))
 
@@ -42,6 +42,19 @@ func Example() {
 		fmt.Printf("Add Error:\n%+v\n", err)
 		return
 	}
+	engine.Signal()
+
+	// xypz2, err := Add(xypz, z)
+	// if err != nil {
+	// 	fmt.Printf("AAddERr %v", err)
+	// 	return
+	// }
+
+	// xypz3, err := engine.Accessible(xypz)
+	// if err != nil {
+	// 	fmt.Printf("Unable to copy xypz to a local variable. Err: %v\n", err)
+	// 	return
+	// }
 
 	fmt.Printf("x:\n%v\ny:\n%v\nxy:\n%v\nxy+z:\n%v\n", x, y, xy, xypz)
 

@@ -2,7 +2,6 @@ package cuda
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
@@ -11,11 +10,13 @@ import (
 
 // this file relates to code that allows you to extend Engine
 
-func (e *Engine) loadStdLib() error {
+// LoadStdLib loads the standard lib from the gorgonia standard library.
+// This function needs to be called in the same threadlocked OS thread as the thread
+// that created the engine.
+func LoadStdLib(e *Engine) error {
 	stdlib := cudalib.StandardLib()
 
 	for _, l := range stdlib {
-		log.Printf("Loading %v", l.ModuleName)
 		if err := e.LoadCUDAFunc(l.ModuleName, l.Data, l.Funcs); err != nil {
 			return err
 		}

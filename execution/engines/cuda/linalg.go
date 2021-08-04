@@ -74,7 +74,7 @@ func (e *Engine) MatVecMul(a, b, prealloc tensor.Tensor) (err error) {
 		tA = blas.NoTrans
 	}
 
-	e.c.DoWork()
+	e.Signal()
 	incX, incY := 1, 1 // step size
 
 	// ASPIRATIONAL TODO: different incX and incY
@@ -84,21 +84,18 @@ func (e *Engine) MatVecMul(a, b, prealloc tensor.Tensor) (err error) {
 	// log.Printf("b %v", b.Strides())
 	// incX := a.Strides()[0]
 	// incY = b.Strides()[0]
-
 	switch ad.Dtype() {
 	case tensor.Float64:
 		A := ad.Float64s()
 		X := bd.Float64s()
 		Y := pd.Float64s()
 		alpha, beta := float64(1), float64(0)
-		e.c.DoWork()
 		e.c.Do(func() error { e.b.Dgemv(tA, m, n, alpha, A, lda, X, incX, beta, Y, incY); return e.b.Err() })
 	case tensor.Float32:
 		A := ad.Float32s()
 		X := bd.Float32s()
 		Y := pd.Float32s()
 		alpha, beta := float32(1), float32(0)
-		e.c.DoWork()
 		e.c.Do(func() error { e.b.Sgemv(tA, m, n, alpha, A, lda, X, incX, beta, Y, incY); return e.b.Err() })
 	default:
 		return errors.New("Unsupported Dtype")
@@ -204,8 +201,7 @@ func (e *Engine) MatMul(a, b, prealloc tensor.Tensor) (err error) {
 	default:
 		panic("Unreachable")
 	}
-
-	e.c.DoWork()
+	e.Signal()
 	switch ad.Dtype() {
 	case tensor.Float64:
 		A := ad.Float64s()
@@ -224,7 +220,7 @@ func (e *Engine) MatMul(a, b, prealloc tensor.Tensor) (err error) {
 	default:
 		return errors.Errorf("Unsupported Dtype %v", ad.Dtype())
 	}
-	e.c.DoWork()
+	e.Signal()
 
 	return e.b.Err()
 }
@@ -266,7 +262,7 @@ func (e *Engine) Outer(a, b, prealloc tensor.Tensor) (err error) {
 		return nil
 	}
 
-	e.c.DoWork()
+	e.Signal()
 	incX, incY := 1, 1
 	switch ad.Dtype() {
 	case tensor.Float64:

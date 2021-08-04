@@ -1,6 +1,7 @@
 package cuda
 
 import (
+	"fmt"
 	"runtime"
 
 	"github.com/pkg/errors"
@@ -33,9 +34,7 @@ func (e *Engine) HasFunc(name string) bool { _, ok := e.f[name]; return ok }
 func (e *Engine) Sync() chan struct{} { return e.syncChan }
 
 // Signal signals the machine to do work
-func (e *Engine) Signal() {
-	e.workAvailable <- true
-}
+func (e *Engine) Signal() { e.c.Signal() }
 
 // Context returns the BatchedContext
 func (e *Engine) Context() *cu.BatchedContext { return &e.c }
@@ -88,7 +87,11 @@ func (e *Engine) ElemGridSize(n int) (gridDimX, gridDimY, gridDimZ, blockDimX, b
 	return
 }
 
-// Init creates a CUDA engine with the given size for the given device
+// Init creates a CUDA engine with the given size for the given device.
+// Generally this is not needed, as it will be handled by the .Run() method
+// of the engine. However, this method is included for instances where one would
+// need to manually manage the engine.
+// Init() needs to run in the same threadlocked OS thread as the .Run() (or manual equivalent).
 func (e *Engine) Init(device cu.Device, size int64) (err error) {
 	e.Lock()
 	initialized := e.initialized
@@ -114,7 +117,6 @@ func (e *Engine) Init(device cu.Device, size int64) (err error) {
 }
 
 func (e *Engine) doInit(size int64) (err error) {
-	e.workAvailable = make(chan bool)
 	e.syncChan = make(chan struct{})
 	e.finishChan = make(chan struct{})
 	e.a = allocator.Make(memalign)
@@ -179,12 +181,17 @@ func (e *Engine) doInit(size int64) (err error) {
 
 // Close cleans up the machine, and closes all available resources
 func (e *Engine) Close() error {
+	e.Signal() // tell the engine to do all the work now.
+
+	logtid("engine.Close", 1)
+	// start the Close process.
 	e.Lock()
 	defer e.Unlock()
 	e.c.Cleanup() // frees all ancillary allocations in C land
 	if e.c.Context == nil {
 		return nil
 	}
+
 	cu.SetCurrentContext(e.c.Context.CUDAContext())
 
 	// Unload all modules (and consequently all functions)
@@ -212,10 +219,6 @@ func (e *Engine) Close() error {
 		return errors.Wrap(e.err, "Failed to close cuDNN context")
 	}
 
-	if e.workAvailable != nil {
-		close(e.workAvailable)
-	}
-
 	if err := e.c.Close(); err != nil {
 		return errors.Wrapf(err, "Failed to cloes CUDA Context ")
 	}
@@ -230,6 +233,7 @@ func (e *Engine) Close() error {
 
 // DoWork sends a signal to the batched CUDA Context to actually do work
 func (e *Engine) DoWork() error {
+	logtid("engine.DoWork", 1)
 	e.c.DoWork()
 	return e.c.Errors()
 }
@@ -247,24 +251,50 @@ func (e *Engine) run() {
 
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
+	logtid("engine.run(locked)", 1)
+
+	// initialize the engine because it needs to also be initialized in the same
+	// thread.
+	e.Lock()
+	dev := e.d
+	hint := e.totalMem
+	e.totalMem = 0
+	e.Unlock()
+
+	logf("Init(%d %v)", dev, hint)
+	if err := e.Init(dev, hint); err != nil {
+		panic(fmt.Sprintf("Failed to init Engine: %v", err))
+	}
+	logf("Total %v", e.totalMem)
+	if err := LoadStdLib(e); err != nil {
+		panic(fmt.Sprintf("Unable to load standard library. %v", err))
+	}
 
 	e.wg.Add(1)
 	defer e.wg.Done()
 
-	// finish initialization
+	// final initializations: CUBLAS
+	e.Lock()
 	if err := e.b.Init(cublas.WithContext(&e.c)); err != nil {
 		panic(err)
 	}
+
+	// OK, now everything has been initialized, then let's go:
+
+	e.running = true
+	e.Unlock()
 
 loop:
 	for {
 		select {
 		case <-e.c.WorkAvailable():
+			logtid("engine.run - WorkAvailable", 0)
 			e.c.DoWork()
 			if err := e.c.Errors(); err != nil {
 				e.err = err
 				break loop
 			}
+
 		case w := <-e.c.Work():
 			if w != nil {
 				err := w()
@@ -278,10 +308,36 @@ loop:
 				// if nil, it means the channel hasa been closed
 				break loop
 			}
+		case <-e.c.Done():
+			break loop
 		case <-e.finishChan:
 			break loop
 		}
 	}
+	// we need to wait for the CUDA context to finish first
+	err := e.c.Close()
+	if err != nil {
+		e.err = err // TODO: check if e.err already has an error in there
+		return
+	}
+
+	// now we drain the work chan
+	if w := <-e.c.Work(); w != nil {
+		err := w()
+		if err != nil {
+			e.err = err
+			return
+		}
+	}
+
+	// DoWork
+	logtid("engine.run (finish)", 0)
+	e.c.DoWork()
+	if err := e.c.Errors(); err != nil {
+		e.err = err
+
+	}
+
 	return
 }
 

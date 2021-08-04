@@ -45,14 +45,13 @@ type Engine struct {
 	freeMem  int64
 	totalMem int64
 
-	syncChan      chan struct{}
-	finishChan    chan struct{}
-	wg            sync.WaitGroup // wait for Run() to finish.
-	once          sync.Once
-	workAvailable chan bool
-	err           error
-	initialized   bool
-	running       bool
+	syncChan    chan struct{}
+	finishChan  chan struct{}
+	wg          sync.WaitGroup // wait for Run() to finish.
+	once        sync.Once
+	err         error
+	initialized bool
+	running     bool
 }
 
 // New creates and initializes the engine. This is to be used when then engine is standalone.
@@ -65,14 +64,18 @@ func New(hint int64) *Engine {
 	if err != nil {
 		panic(fmt.Sprintf("Failed to get CUDA device 0. Error %v", err))
 	}
-	e := &Engine{}
-	if err := e.Init(dev, hint); err != nil {
-		panic(fmt.Sprintf("Failed to init Engine: %v", err))
-	}
-	if err := e.loadStdLib(); err != nil {
-		panic(fmt.Sprintf("Unable to load standard library. %v", err))
-	}
+	logf("hint %v", hint)
+	e := &Engine{totalMem: hint, d: dev}
+
 	return e
+}
+
+// IsInitialized returns true when the engine has been initialized
+func (e *Engine) IsInitialized() bool {
+	e.Lock()
+	initialized := e.initialized
+	e.Unlock()
+	return initialized
 }
 
 // AllocAccessible returns true because the engine return Go-accessible memory pointers
@@ -81,6 +84,10 @@ func (e *Engine) AllocAccessible() bool { return true }
 // Alloc allocates a chunk of certain size from engine memory
 func (e *Engine) Alloc(size int64) (tensor.Memory, error) {
 	// return e.c.MemAllocManaged(size, cu.AttachGlobal)
+
+	// loop here to wait for initialization
+	for initialized := e.IsInitialized(); !initialized; initialized = e.IsInitialized() {
+	}
 	return e.Get(size)
 }
 
@@ -137,7 +144,10 @@ func (e *Engine) memcpy(dst cu.DevicePtr, src cu.DevicePtr, size int64) {
 func (e *Engine) Accessible(mem tensor.Memory) (tensor.Memory, error) {
 	size := mem.MemSize()
 	bs := make([]byte, int(size))
-	e.c.MemcpyDtoH(unsafe.Pointer(&bs[0]), cu.DevicePtr(mem.Uintptr()), int64(size))
+	e.c.Context.MemcpyDtoH(unsafe.Pointer(&bs[0]), cu.DevicePtr(mem.Uintptr()), int64(size))
+	if err := e.c.Context.Error(); err != nil {
+		return nil, err
+	}
 	switch t := mem.(type) {
 	case *tensor.Dense:
 		dt := t.Dtype()
@@ -193,7 +203,7 @@ func (e *Engine) HasNaN(a tensor.Tensor) (bool, error) {
 		unsafe.Pointer(&retVal),
 	}
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
-	e.DoWork()
+	e.Signal()
 	return int(retVal) > 0, e.c.Error()
 }
 
@@ -218,6 +228,6 @@ func (e *Engine) HasInf(a tensor.Tensor) (bool, error) {
 		unsafe.Pointer(&retVal),
 	}
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
-	e.DoWork()
+	e.Signal()
 	return int(retVal) > 0, e.c.Error()
 }
