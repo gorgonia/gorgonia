@@ -32,3 +32,33 @@ func (op binop) ShapeExpr() shapes.Expr {
 
 // DiffWRT returns {true, true} for all binops defined in this library.
 func (op binop) DiffWRT(inputs int) []bool { return twotrues }
+
+type binopVS struct{ binop }
+
+// Type returns the operation type of (·) : a → b → a
+func (op binopVS) Type() hm.Type {
+	a := hm.TypeVariable('a')
+	b := hm.TypeVariable('b')
+	return hm.NewFnType(a, b, a)
+}
+
+// ShapeExpr returns the shape expression of (·) : a → () → a.
+func (op binopVS) ShapeExpr() shapes.Expr {
+	a := shapes.Var('a')
+	return shapes.MakeArrow(a, shapes.ScalarShape(), a)
+}
+
+type binOpSV struct{ binop }
+
+// Type returns the operation type of (·) : a → b → b
+func (op binopSV) Type() hm.Type {
+	a := hm.TypeVariable('a')
+	b := hm.TypeVariable('b')
+	return hm.NewFnType(a, b, b)
+}
+
+// ShapeExpr returns the shape expression of (·) : () → a → a.
+func (op binopVS) ShapeExpr() shapes.Expr {
+	a := shapes.Var('a')
+	return shapes.MakeArrow(shapes.ScalarShape(), a, a)
+}
