@@ -15,7 +15,7 @@ var twotrues = []bool{true, true}
 // it into other structs.
 type binop struct{}
 
-// Arity returns 2. The Add operation requires two inputs.
+// Arity returns 2. The operation requires two inputs.
 func (op binop) Arity() int { return 2 }
 
 // Type returns the operation type of (·) : a → a → a
@@ -48,7 +48,7 @@ func (op binopVS) ShapeExpr() shapes.Expr {
 	return shapes.MakeArrow(a, shapes.ScalarShape(), a)
 }
 
-type binOpSV struct{ binop }
+type binopSV struct{ binop }
 
 // Type returns the operation type of (·) : a → b → b
 func (op binopSV) Type() hm.Type {
@@ -58,7 +58,7 @@ func (op binopSV) Type() hm.Type {
 }
 
 // ShapeExpr returns the shape expression of (·) : () → a → a.
-func (op binopVS) ShapeExpr() shapes.Expr {
+func (op binopSV) ShapeExpr() shapes.Expr {
 	a := shapes.Var('a')
 	return shapes.MakeArrow(shapes.ScalarShape(), a, a)
 }
