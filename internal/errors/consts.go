@@ -9,6 +9,8 @@ const (
 	TypeMismatch  = "Type Mismatch: a %T and b %T"
 	ShapeMismatch = "Shape Mismatch. Expected %v. Got %v"
 
+	SymbolicOpFail = "Failed to perform %v symbolically"
+
 	noopMsg = "NoOp"
 )
 

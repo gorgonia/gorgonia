@@ -82,11 +82,7 @@ func (e *Engine) AllocAccessible() bool { return true }
 
 // Alloc allocates a chunk of certain size from engine memory
 func (e *Engine) Alloc(size int64) (tensor.Memory, error) {
-	// return e.c.MemAllocManaged(size, cu.AttachGlobal)
-
-	// loop here to wait for initialization
-	for initialized := e.IsInitialized(); !initialized; initialized = e.IsInitialized() {
-	}
+	e.waitForInit()
 	return e.Get(size)
 }
 
@@ -97,8 +93,7 @@ func (e *Engine) AllocFlags() (tensor.MemoryFlag, tensor.DataOrder) {
 
 // Free rees memory
 func (e *Engine) Free(mem tensor.Memory, size int64) error {
-	// e.c.MemFree(mem.(cu.DevicePtr))
-	// return e.c.Error()
+	e.waitForInit()
 	e.Put(mem, size)
 	return nil
 }
@@ -181,52 +176,8 @@ func (e *Engine) NonStdAlloc() {}
 // Errors returns an error message
 func (e *Engine) Errors() error { return e.c.Errors() }
 
-// NaNChecker checks that the tensor contains a NaN
-func (e *Engine) HasNaN(a tensor.Tensor) (bool, error) {
-	dt := a.Dtype()
-	name := fmt.Sprintf("misc.hasNaN_f%v", int(dt.Size()*8))
-
-	if !e.HasFunc(name) {
-		return false, errors.Errorf("Unable to perform HasNaN(). The tensor engine does not have the function %q", name)
+// waitForInit is a loop that blocks and waits till the engine is initialized.
+func (e *Engine) waitForInit() {
+	for ok := e.IsInitialized(); !ok; ok = e.IsInitialized() {
 	}
-
-	mem := cu.DevicePtr(a.Uintptr())
-	size := int64(logicalSize(a.Shape()))
-	fn := e.f[name]
-
-	var retVal C.int
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&size),
-		unsafe.Pointer(&retVal),
-	}
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
-	e.Signal()
-	return int(retVal) > 0, e.c.Error()
-}
-
-// InfChecker checks that the tensor contains a Inf
-func (e *Engine) HasInf(a tensor.Tensor) (bool, error) {
-	dt := a.Dtype()
-	name := fmt.Sprintf("misc.hasInf_f%v", int(dt.Size()*8))
-
-	if !e.HasFunc(name) {
-		return false, errors.Errorf("Unable to perform HasInf(). The tensor engine does not have the function %q", name)
-	}
-
-	mem := cu.DevicePtr(a.Uintptr())
-	size := int64(logicalSize(a.Shape()))
-	fn := e.f[name]
-
-	var retVal C.int
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&size),
-		unsafe.Pointer(&retVal),
-	}
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
-	e.Signal()
-	return int(retVal) > 0, e.c.Error()
 }
