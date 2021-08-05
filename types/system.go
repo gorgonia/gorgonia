@@ -5,6 +5,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+type dependentType interface {
+	ResolveDepends() hm.Type
+}
+
 // Infer infers the application of the children on the opType. Note that children should already match the arity of the opType.
 //
 // Example:
@@ -28,6 +32,10 @@ func Infer(opType hm.Type, children ...hm.Type) (retVal hm.Type, err error) {
 
 	if retVal, ok = sub.Get(b); !ok {
 		return nil, errors.Errorf("Expected a replacement for the variable %v", b)
+	}
+	if dep, ok := retVal.(dependentType); ok {
+		return dep.ResolveDepends(), nil
+
 	}
 	return retVal, nil
 }
