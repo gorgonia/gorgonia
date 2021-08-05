@@ -4,6 +4,7 @@ import (
 	"context"
 	"runtime/trace"
 
+	"github.com/chewxy/hm"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 )
@@ -18,6 +19,16 @@ type Gt struct {
 
 // String implements fmt.Stringer.
 func (op Gt) String() string { return ">" }
+
+// Type returns the type: (·) : a → a → a or (·) :  a → a → b
+func (op Gt) Type() hm.Type {
+	a := hm.TypeVariable('a') // (T U) or U
+	if op.retSame {
+		return hm.NewFnType(a, a, a)
+	}
+	b := hm.TypeVariable('b') // (T Bool) or Bool
+	return hm.NewFnType(a, a, b)
+}
 
 // Do performs elementwise greater-than.
 func (op Gt) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
@@ -68,6 +79,17 @@ type GtVS struct {
 // String implements fmt.Stringer.
 func (op GtVS) String() string { return ">·" }
 
+// Type returns the type: (·) : a → b → a or (·) :  a → b → c
+func (op GtVS) Type() hm.Type {
+	a := hm.TypeVariable('a') // (T U) or U
+	b := hm.TypeVariable('b') // U
+	if op.retSame {
+		return hm.NewFnType(a, b, a)
+	}
+	c := hm.TypeVariable('c') // (T Bool) or Bool
+	return hm.NewFnType(a, b, c)
+}
+
 // Do performs elementwise greater-than.
 func (op GtVS) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
 	if err := handleCtx(ctx); err != nil {
@@ -116,6 +138,17 @@ type GtSV struct {
 
 // String implements fmt.Stringer.
 func (op GtSV) String() string { return "·>" }
+
+// Type returns the type: (·) : a → b → b or (·) :  a → b → c
+func (op GtSV) Type() hm.Type {
+	a := hm.TypeVariable('a') // U
+	b := hm.TypeVariable('b') // (T U) or U
+	if op.retSame {
+		return hm.NewFnType(a, b, b)
+	}
+	c := hm.TypeVariable('c') // (T Bool) or Bool
+	return hm.NewFnType(a, b, c)
+}
 
 // Do performs elementwise greater-than.
 func (op GtSV) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {

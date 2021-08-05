@@ -4,6 +4,7 @@ import (
 	"context"
 	"runtime/trace"
 
+	"github.com/chewxy/hm"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 )
@@ -18,6 +19,16 @@ type ElEq struct {
 
 // String implements fmt.Stringer.
 func (op ElEq) String() string { return "=" }
+
+// Type returns the type: (·) : a → a → a or (·) :  a → a → b
+func (op ElEq) Type() hm.Type {
+	a := hm.TypeVariable('a') // (T U) or U
+	if op.retSame {
+		return hm.NewFnType(a, a, a)
+	}
+	b := hm.TypeVariable('b') // (T Bool) or Bool
+	return hm.NewFnType(a, a, b)
+}
 
 // Do performs elementwise equal-to.
 func (op ElEq) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
@@ -68,6 +79,17 @@ type ElEqVS struct {
 // String implements fmt.Stringer.
 func (op ElEqVS) String() string { return "=·" }
 
+// Type returns the type: (·) : a → b → a or (·) :  a → b → c
+func (op ElEqVS) Type() hm.Type {
+	a := hm.TypeVariable('a') // (T U) or U
+	b := hm.TypeVariable('b') // U
+	if op.retSame {
+		return hm.NewFnType(a, b, a)
+	}
+	c := hm.TypeVariable('c') // (T Bool) or Bool
+	return hm.NewFnType(a, b, c)
+}
+
 // Do performs elementwise equal-to.
 func (op ElEqVS) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
 	if err := handleCtx(ctx); err != nil {
@@ -116,6 +138,17 @@ type ElEqSV struct {
 
 // String implements fmt.Stringer.
 func (op ElEqSV) String() string { return "·=" }
+
+// Type returns the type: (·) : a → b → b or (·) :  a → b → c
+func (op ElEqSV) Type() hm.Type {
+	a := hm.TypeVariable('a') // U
+	b := hm.TypeVariable('b') // (T U) or U
+	if op.retSame {
+		return hm.NewFnType(a, b, b)
+	}
+	c := hm.TypeVariable('c') // (T Bool) or Bool
+	return hm.NewFnType(a, b, c)
+}
 
 // Do performs elementwise equal-to.
 func (op ElEqSV) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {

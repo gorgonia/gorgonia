@@ -104,3 +104,13 @@ var cmps = []binOp{
 	{"ElEq", "ElEq", "elementwise equal-to", "="},
 	{"ElNe", "ElNe", "elementwise not-equal-to", "≠"},
 }
+
+var cmpTestResultsBool = []binopTestResult{
+	// lt
+	{
+		"[]float64{11, 22, 33, 44, 55, 66}",
+		"[]float64{101, 102, 103, 104, 105, 106}",
+		"[]float64{101, 102, 103, 104, 105, 106}",
+		"3.0",
+	},
+}

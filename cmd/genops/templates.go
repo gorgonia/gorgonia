@@ -43,6 +43,11 @@ if err := handleCtx(ctx); err != nil {
 	task.End()
 	return retVal, err
 {{- end -}}
+
+{{/* we don't need to generate Type() for arithmetic Ops */}}
+{{define "Type()VV"}}{{end}}
+{{define "Type()VS"}}{{end}}
+{{define "Type()SV"}}{{end}}
 `
 
 const cmpMetaRaw = `
@@ -93,6 +98,42 @@ if err := handleCtx(ctx); err != nil {
 	task.End()
 	return retVal, err
 {{- end -}}
+
+{{define "Type()VV"}}
+// Type returns the type: (·) : a → a → a or (·) :  a → a → b
+func (op {{.Name}}) Type() hm.Type{
+	a := hm.TypeVariable('a') // (T U) or U
+	if op.retSame{
+		return hm.NewFnType(a, a, a)
+	}
+	b := hm.TypeVariable('b') // (T Bool) or Bool
+	return hm.NewFnType(a,a,b)
+}
+{{end}}
+{{define "Type()VS"}}
+// Type returns the type: (·) : a → b → a or (·) :  a → b → c
+func (op {{.Name}}VS) Type() hm.Type {
+	a := hm.TypeVariable('a') // (T U) or U
+	b := hm.TypeVariable('b') // U
+	if op.retSame{
+		return hm.NewFnType(a, b, a)
+	}
+	c := hm.TypeVariable('c') // (T Bool) or Bool
+	return hm.NewFnType(a,b,c)
+}
+{{end}}
+{{define "Type()SV"}}
+// Type returns the type: (·) : a → b → b or (·) :  a → b → c
+func (op {{.Name}}SV) Type() hm.Type {
+	a := hm.TypeVariable('a') // U
+	b := hm.TypeVariable('b') // (T U) or U
+	if op.retSame{
+		return hm.NewFnType(a, b, b)
+	}
+	c := hm.TypeVariable('c') // (T Bool) or Bool
+	return hm.NewFnType(a,b,c)
+}
+{{end}}
 `
 
 const binOpRaw = `// {{.Name}} is a tensor-tensor {{.CommentOp}}.
@@ -100,6 +141,8 @@ const binOpRaw = `// {{.Name}} is a tensor-tensor {{.CommentOp}}.
 
 // String implements fmt.Stringer.
 func (op {{.Name}}) String() string { return "{{.Symbol}}" }
+
+{{ template "Type()VV" . }}
 
 // Do performs {{.CommentOp}}.
 func (op {{.Name}}) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
@@ -119,6 +162,8 @@ func (op {{.Name}}) PreallocDo(ctx context.Context, prealloc values.Value, vs ..
 // String implements fmt.Stringer.
 func (op {{.Name}}VS) String() string { return "{{.Symbol}}·" }
 
+{{ template "Type()VS" . }}
+
 // Do performs {{.CommentOp}}.
 func (op {{.Name}}VS) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
 	{{- template "Do" . -}}
@@ -136,6 +181,8 @@ func (op {{.Name}}VS) PreallocDo(ctx context.Context, prealloc values.Value, vs 
 
 // String implements fmt.Stringer.
 func (op {{.Name}}SV) String() string { return "·{{.Symbol}}" }
+
+{{ template "Type()SV" . }}
 
 // Do performs {{.CommentOp}}.
 func (op {{.Name}}SV) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
