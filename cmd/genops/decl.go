@@ -108,9 +108,62 @@ var cmps = []binOp{
 var cmpTestResultsBool = []binopTestResult{
 	// lt
 	{
-		"[]float64{11, 22, 33, 44, 55, 66}",
-		"[]float64{101, 102, 103, 104, 105, 106}",
-		"[]float64{101, 102, 103, 104, 105, 106}",
-		"3.0",
+		"[]bool{false, false, false, true, true, true}",
+		"[]bool{true, true, true, true, true, true}",
+		"[]bool{false, false, false, false, false, false}",
+		"true",
 	},
+	// lte
+	{
+		"[]bool{true, true, true, true, true, true}",
+		"[]bool{true, true, true, true, true, true}",
+		"[]bool{false, false, false, false, false, false}",
+		"true",
+	},
+	// gt
+	{
+		"[]bool{false, false, false, false, false, false}",
+		"[]bool{false, false, false, false, false, false}",
+		"[]bool{true, true, true, true, true, true}",
+		"false",
+	},
+
+	// gte
+	{
+		"[]bool{false, false, false, false, false, false}",
+		"[]bool{false, false, false, false, false, false}",
+		"[]bool{true, true, true, true, true, true}",
+		"false",
+	},
+
+	// eq
+	{
+		"[]bool{false, false, false, false, false, false}",
+		"[]bool{false, false, false, false, false, false}",
+		"[]bool{true, true, true, true, true, true}",
+		"false",
+	},
+	// ne
+	{
+		"[]bool{false, false, false, false, false, false}",
+		"[]bool{false, false, false, false, false, false}",
+		"[]bool{true, true, true, true, true, true}",
+		"false",
+	},
+}
+
+var cmpTestInputBool = binopTestInput{
+	AVV:  "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
+	BVV:  "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1,2, 3, 40, 50, 60}))",
+	AVV2: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{1}))",
+	BVV2: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{2}))",
+	CVV:  "tensor.New(tensor.WithShape(), tensor.WithBacking([]bool{false}))",
+
+	AVS: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
+	BVS: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))",
+	CVS: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))",
+
+	ASV: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))",
+	BSV: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
+	CSV: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))",
 }

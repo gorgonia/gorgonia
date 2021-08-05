@@ -120,7 +120,13 @@ func generateAriths() error {
 }
 
 func generateCmps() error {
-	return generateBinOp(cmps, cmpOpTmpl)
+	if err := generateBinOp(cmps, cmpOpTmpl); err != nil {
+		return errors.Wrap(err, "generateCmps.generateBinOp")
+	}
+	if err := generateBinOpTest(cmps, cmpTestInputBool, cmpTestResultsBool, false, arithOpTestTmpl); err != nil {
+		return errors.Wrap(err, "generateCmps.generateBinOpTests")
+	}
+	return nil
 }
 
 func finishStubs() error {
