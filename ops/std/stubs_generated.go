@@ -75,3 +75,75 @@ func (op ModVS) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *
 func (op ModSV) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
 	panic("not implemented")
 }
+
+func (op Lt) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op LtVS) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op LtSV) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op Lte) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op LteVS) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op LteSV) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op Gt) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op GtVS) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op GtSV) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op Gte) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op GteVS) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op GteSV) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op ElEq) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op ElEqVS) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op ElEqSV) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op ElNe) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op ElNeVS) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+func (op ElNeSV) SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
