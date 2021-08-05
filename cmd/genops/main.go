@@ -85,9 +85,9 @@ func generateBinOp(ops []binOp, tmpl *template.Template) error {
 	return nil
 }
 
-func generateBinOpTest(ops []binOp, input binopTestInput, results []binopTestResult, asSame bool, tmpl *template.Template) error {
+func generateBinOpTest(ops []binOp, input binopTestInput, results []binopTestResult, isCmp bool, tmpl *template.Template) error {
 	for i, op := range ops {
-		opTest := binopTest{binOp: op, binopTestInput: input, binopTestResult: results[i], IsCmpRetTrue: asSame}
+		opTest := binopTest{binOp: op, binopTestInput: input, binopTestResult: results[i]}
 		filename := strings.ToLower(op.Name) + "_generated_test.go"
 		p := path.Join(stdopsloc, filename)
 		f, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
@@ -98,6 +98,7 @@ func generateBinOpTest(ops []binOp, input binopTestInput, results []binopTestRes
 		if err := tmpl.Execute(f, opTest); err != nil {
 			return errors.Wrapf(err, "Unable to execute binopTmpl for %v", op.Name)
 		}
+
 		if err := f.Close(); err != nil {
 			return errors.Wrapf(err, "Unable to close %v", p)
 		}

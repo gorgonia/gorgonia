@@ -130,7 +130,7 @@ var cmpTestResultsBool = []binopTestResult{
 
 	// gte
 	{
-		"[]bool{false, false, false, false, false, false}",
+		"[]bool{true, true, true, false, false, false}",
 		"[]bool{false, false, false, false, false, false}",
 		"[]bool{true, true, true, true, true, true}",
 		"false",
@@ -138,17 +138,17 @@ var cmpTestResultsBool = []binopTestResult{
 
 	// eq
 	{
+		"[]bool{true, true, true, false, false, false}",
 		"[]bool{false, false, false, false, false, false}",
 		"[]bool{false, false, false, false, false, false}",
-		"[]bool{true, true, true, true, true, true}",
 		"false",
 	},
 	// ne
 	{
-		"[]bool{false, false, false, false, false, false}",
-		"[]bool{false, false, false, false, false, false}",
+		"[]bool{false, false, false, true, true, true}",
 		"[]bool{true, true, true, true, true, true}",
-		"false",
+		"[]bool{true, true, true, true, true, true}",
+		"true",
 	},
 }
 
@@ -166,4 +166,67 @@ var cmpTestInputBool = binopTestInput{
 	ASV: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))",
 	BSV: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
 	CSV: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))",
+}
+
+var cmpTestResultsSame = []binopTestResult{
+	// lt
+	{
+		"[]float64{0, 0, 0, 1, 1, 1}",
+		"[]float64{1, 1, 1, 1, 1, 1}",
+		"[]float64{0, 0, 0, 0, 0, 0}",
+		"1.0",
+	},
+	// lte
+	{
+		"[]float64{1, 1, 1, 1, 1, 1}",
+		"[]float64{1, 1, 1, 1, 1, 1}",
+		"[]float64{0, 0, 0, 0, 0, 0}",
+		"1.0",
+	},
+	// gt
+	{
+		"[]float64{0, 0, 0, 0, 0, 0}",
+		"[]float64{0, 0, 0, 0, 0, 0}",
+		"[]float64{1, 1, 1, 1, 1, 1}",
+		"0.0",
+	},
+
+	// gte
+	{
+		"[]float64{1, 1, 1, 0, 0, 0}",
+		"[]float64{0, 0, 0, 0, 0, 0}",
+		"[]float64{1, 1, 1, 1, 1, 1}",
+		"0.0",
+	},
+
+	// eq
+	{
+		"[]float64{1, 1, 1, 0, 0, 0}",
+		"[]float64{0, 0, 0, 0, 0, 0}",
+		"[]float64{0, 0, 0, 0, 0, 0}",
+		"0.0",
+	},
+	// ne
+	{
+		"[]float64{0, 0, 0, 1, 1, 1}",
+		"[]float64{1, 1, 1, 1, 1, 1}",
+		"[]float64{1, 1, 1, 1, 1, 1}",
+		"1.0",
+	},
+}
+
+var cmpTestInputSame = binopTestInput{
+	AVV:  "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
+	BVV:  "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1,2, 3, 40, 50, 60}))",
+	AVV2: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{1}))",
+	BVV2: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{2}))",
+	CVV:  "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{0}))",
+
+	AVS: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
+	BVS: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))",
+	CVS: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 0, 0, 0, 0, 0}))",
+
+	ASV: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))",
+	BSV: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
+	CSV: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 0, 0, 0, 0, 0}))",
 }

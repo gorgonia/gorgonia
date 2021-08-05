@@ -106,7 +106,7 @@ func (op {{.Name}}) Type() hm.Type{
 	if op.retSame{
 		return hm.NewFnType(a, a, a)
 	}
-	b := hm.TypeVariable('b') // (T Bool) or Bool
+	b := types.MakeDependent(a, tensor.Bool) // (T Bool) or Bool
 	return hm.NewFnType(a,a,b)
 }
 {{end}}
@@ -118,7 +118,7 @@ func (op {{.Name}}VS) Type() hm.Type {
 	if op.retSame{
 		return hm.NewFnType(a, b, a)
 	}
-	c := hm.TypeVariable('c') // (T Bool) or Bool
+	c := types.MakeDependent(a, tensor.Bool) // (T Bool) or Bool
 	return hm.NewFnType(a,b,c)
 }
 {{end}}
@@ -130,7 +130,7 @@ func (op {{.Name}}SV) Type() hm.Type {
 	if op.retSame{
 		return hm.NewFnType(a, b, b)
 	}
-	c := hm.TypeVariable('c') // (T Bool) or Bool
+	c := types.MakeDependent(b, tensor.Bool) // (T Bool) or Bool
 	return hm.NewFnType(a,b,c)
 }
 {{end}}

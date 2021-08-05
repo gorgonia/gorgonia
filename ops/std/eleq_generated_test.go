@@ -44,7 +44,7 @@ func TestElEq(t *testing.T) {
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
-	correct := []bool{false, false, false, false, false, false}
+	correct := []bool{true, true, true, false, false, false}
 	assert.Equal(t, correct, c.Data())
 
 	/* PreallocDo (using scalar-scalar to make sure things don't go wrong) */
@@ -171,7 +171,7 @@ func TestElEqSV(t *testing.T) {
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
-	correct := []bool{true, true, true, true, true, true}
+	correct := []bool{false, false, false, false, false, false}
 	assert.Equal(t, correct, c.Data())
 
 	/* PreallocDo */
