@@ -95,7 +95,7 @@ if err := handleCtx(ctx); err != nil {
 {{- end -}}
 `
 
-const arithOpRaw = `// {{.Name}} is a tensor-tensor {{.CommentOp}}.
+const binOpRaw = `// {{.Name}} is a tensor-tensor {{.CommentOp}}.
 {{- template "TypeDefVV" . -}}
 
 // String implements fmt.Stringer.
@@ -321,13 +321,17 @@ func Test{{.Name}}SV(t *testing.T) {
 var (
 	arithMetaTmpl   *template.Template
 	arithOpTmpl     *template.Template
+	cmpMetaTmpl     *template.Template
+	cmpOpTmpl       *template.Template
 	binSymDiffTmpl  *template.Template
 	arithOpTestTmpl *template.Template
 )
 
 func init() {
 	arithMetaTmpl = template.Must(template.New("arith meta-templates").Funcs(funcmap).Parse(arithMetaRaw))
-	arithOpTmpl = template.Must(arithMetaTmpl.New("arith").Funcs(funcmap).Parse(arithOpRaw))
+	arithOpTmpl = template.Must(arithMetaTmpl.New("arith").Funcs(funcmap).Parse(binOpRaw))
+	cmpMetaTmpl = template.Must(template.New("cmp meta-templates").Funcs(funcmap).Parse(cmpMetaRaw))
+	cmpOpTmpl = template.Must(cmpMetaTmpl.New("cmp").Funcs(funcmap).Parse(binOpRaw))
 	binSymDiffTmpl = template.Must(template.New("binsymdiff").Funcs(funcmap).Parse(binSymDiffRaw))
 	arithOpTestTmpl = template.Must(template.New("binopTest").Funcs(funcmap).Parse(arithOpTestRaw))
 

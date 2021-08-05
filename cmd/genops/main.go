@@ -9,6 +9,7 @@ import (
 	"os/user"
 	"path"
 	"strings"
+	"text/template"
 
 	"github.com/pkg/errors"
 )
@@ -57,8 +58,8 @@ func goimports(filename string) error {
 	return nil
 }
 
-func generateAriths() error {
-	for _, op := range ariths {
+func generateBinOp(ops []binOp, tmpl *template.Template) error {
+	for _, op := range ops {
 		filename := strings.ToLower(op.Name) + "_generated.go"
 		p := path.Join(stdopsloc, filename)
 		f, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
@@ -66,7 +67,7 @@ func generateAriths() error {
 			return err
 		}
 		fmt.Fprintf(f, "package stdops\n\n%v\n\n", genmsg)
-		if err := arithOpTmpl.Execute(f, op); err != nil {
+		if err := tmpl.Execute(f, op); err != nil {
 			return errors.Wrapf(err, "Unable to execute binopTmpl for %v", op.Name)
 		}
 		if err := f.Close(); err != nil {
@@ -80,6 +81,13 @@ func generateAriths() error {
 		if err := binSymDiffTmpl.Execute(stubsFile, op); err != nil {
 			return errors.Wrapf(err, "Unable to add %v SymDiff stubs", op.Name)
 		}
+	}
+	return nil
+}
+
+func generateAriths() error {
+	if err := generateBinOp(ariths, arithOpTmpl); err != nil {
+		return errors.Wrap(err, "generateAriths.generateBinOp")
 	}
 	for _, op := range arithTest {
 		filename := strings.ToLower(op.Name) + "_generated_test.go"
@@ -102,6 +110,10 @@ func generateAriths() error {
 	return nil
 }
 
+func generateCmps() error {
+	return generateBinOp(cmps, cmpOpTmpl)
+}
+
 func finishStubs() error {
 	if err := stubsFile.Close(); err != nil {
 		return err
@@ -112,6 +124,9 @@ func finishStubs() error {
 func main() {
 	defer finishStubs()
 	if err := generateAriths(); err != nil {
+		log.Fatal(err)
+	}
+	if err := generateCmps(); err != nil {
 		log.Fatal(err)
 	}
 }
