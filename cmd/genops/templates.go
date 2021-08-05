@@ -4,7 +4,20 @@ import (
 	"text/template"
 )
 
-const arithBodiesRaw = `{{- define "Do" -}}
+const arithMetaRaw = `
+{{define "TypeDefVV"}}
+type {{.Name}} struct { binop }
+{{end}}
+
+{{define "TypeDefVS"}}
+type {{.Name}}VS struct { binop }
+{{end}}
+
+{{define "TypeDefSV"}}
+type {{.Name}}SV struct { binop }
+{{end}}
+
+{{- define "Do" -}}
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
 	}
@@ -12,9 +25,8 @@ const arithBodiesRaw = `{{- define "Do" -}}
 	a := vs[0].(tensor.Tensor)
 	b := vs[1].(tensor.Tensor)
 
-	// Do the actual operation
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err := tensor.{{.Method}}(a, b, tensor.WithContext(ctx2))
+	retVal, err = tensor.{{.Method}}(a, b, tensor.WithContext(ctx2))
 	task.End()
 	return retVal, err
 {{- end -}}
@@ -27,62 +39,111 @@ if err := handleCtx(ctx); err != nil {
 	b := vs[1].(tensor.Tensor)
 
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err := tensor.{{.Method}}(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
+	retVal, err = tensor.{{.Method}}(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
 	task.End()
 	return retVal, err
 {{- end -}}
-
 `
 
-const arithOpRaw = `// {{.Name}} is a tensor-tensor {{.CommentOp}}
-type {{.Name}} struct{ binop }
+const cmpMetaRaw = `
+{{define "TypeDefVV"}}
+type {{.Name}} struct { binop; retSame bool }
+{{end}}
+
+{{define "TypeDefVS"}}
+type {{.Name}}VS struct { binop; retSame bool }
+{{end}}
+
+{{define "TypeDefSV"}}
+type {{.Name}}SV struct { binop; retSame bool }
+{{end}}
+
+{{- define "Do" -}}
+	if err := handleCtx(ctx); err != nil {
+		return nil, err
+	}
+
+	a := vs[0].(tensor.Tensor)
+	b := vs[1].(tensor.Tensor)
+
+	// Do the actual operation
+	ctx2, task := trace.NewTask(ctx, op.String())
+	if op.retSame{
+		retVal, err = tensor.{{.Method}}(a, b, tensor.WithContext(ctx2), tensor.AsSame())
+	} else {
+		retVal, err = tensor.{{.Method}}(a, b, tensor.WithContext(ctx2))
+	}
+	task.End()
+	return retVal, err
+{{- end -}}
+{{- define "PreallocDo" -}}
+if err := handleCtx(ctx); err != nil {
+		return nil, err
+	}
+
+	a := vs[0].(tensor.Tensor)
+	b := vs[1].(tensor.Tensor)
+
+	ctx2, task := trace.NewTask(ctx, op.String())
+	if op.retSame {
+	retVal, err = tensor.{{.Method}}(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2), tensor.AsSame())
+	} else {
+	retVal, err = tensor.{{.Method}}(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
+	}
+	task.End()
+	return retVal, err
+{{- end -}}
+`
+
+const arithOpRaw = `// {{.Name}} is a tensor-tensor {{.CommentOp}}.
+{{- template "TypeDefVV" . -}}
 
 // String implements fmt.Stringer.
 func (op {{.Name}}) String() string { return "{{.Symbol}}" }
 
 // Do performs {{.CommentOp}}.
-func (op {{.Name}}) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
+func (op {{.Name}}) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
 	{{- template "Do" . -}}
 }
 
 // PreallocDo performs {{.CommentOp}} but with a preallocated return value.
-// PreallocDo allows {{.Name}} to implement ops.PreallocOp
-func (op {{.Name}}) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
+// PreallocDo allows {{.Name}} to implement ops.PreallocOp.
+func (op {{.Name}}) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	{{- template "PreallocDo" . -}}
 }
 
 
-// {{.Name}}VS is a tensor-scalar {{.CommentOp}}
-type {{.Name}}VS struct { binopVS }
+// {{.Name}}VS is a tensor-scalar {{.CommentOp}}.
+{{- template "TypeDefVS" . -}}
 
 // String implements fmt.Stringer.
 func (op {{.Name}}VS) String() string { return "{{.Symbol}}·" }
 
 // Do performs {{.CommentOp}}.
-func (op {{.Name}}VS) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
+func (op {{.Name}}VS) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
 	{{- template "Do" . -}}
 }
 
 // PreallocDo performs {{.CommentOp}} but with a preallocated return value.
-// PreallocDo allows {{.Name}}VS to implement ops.PreallocOp
-func (op {{.Name}}VS) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
+// PreallocDo allows {{.Name}}VS to implement ops.PreallocOp.
+func (op {{.Name}}VS) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	{{- template "PreallocDo" . -}}
 }
 
 
-// {{.Name}}SV is a scalar-tensor {{.CommentOp}}
-type {{.Name}}SV struct{ binopSV }
+// {{.Name}}SV is a scalar-tensor {{.CommentOp}}.
+{{- template "TypeDefSV" . -}}
 
 // String implements fmt.Stringer.
 func (op {{.Name}}SV) String() string { return "·{{.Symbol}}" }
 
 // Do performs {{.CommentOp}}.
-func (op {{.Name}}SV) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
+func (op {{.Name}}SV) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
 	{{- template "Do" . -}}
 }
 
 // PreallocDo performs {{.CommentOp}} but with a preallocated return value.
-// PreallocDo allows {{.Name}}SV to implement ops.PreallocOp
+// PreallocDo allows {{.Name}}SV to implement ops.PreallocOp.
 func (op {{.Name}}SV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	{{- template "PreallocDo" . -}}
 }
@@ -258,15 +319,15 @@ func Test{{.Name}}SV(t *testing.T) {
 `
 
 var (
-	arithBodiesTmpl *template.Template
+	arithMetaTmpl   *template.Template
 	arithOpTmpl     *template.Template
 	binSymDiffTmpl  *template.Template
 	arithOpTestTmpl *template.Template
 )
 
 func init() {
-	arithBodiesTmpl = template.Must(template.New("arithbodies").Funcs(funcmap).Parse(arithBodiesRaw))
-	arithOpTmpl = template.Must(arithBodiesTmpl.New("binop").Funcs(funcmap).Parse(arithOpRaw))
+	arithMetaTmpl = template.Must(template.New("arith meta-templates").Funcs(funcmap).Parse(arithMetaRaw))
+	arithOpTmpl = template.Must(arithMetaTmpl.New("arith").Funcs(funcmap).Parse(arithOpRaw))
 	binSymDiffTmpl = template.Must(template.New("binsymdiff").Funcs(funcmap).Parse(binSymDiffRaw))
 	arithOpTestTmpl = template.Must(template.New("binopTest").Funcs(funcmap).Parse(arithOpTestRaw))
 
