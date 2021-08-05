@@ -48,7 +48,7 @@ func (op Pow) PreallocDo(ctx context.Context, prealloc values.Value, vs ...value
 }
 
 // PowVS is a tensor-scalar elementwise exponentiation.
-type PowVS struct{ binop }
+type PowVS struct{ binopVS }
 
 // String implements fmt.Stringer.
 func (op PowVS) String() string { return "^·" }
@@ -85,7 +85,7 @@ func (op PowVS) PreallocDo(ctx context.Context, prealloc values.Value, vs ...val
 }
 
 // PowSV is a scalar-tensor elementwise exponentiation.
-type PowSV struct{ binop }
+type PowSV struct{ binopSV }
 
 // String implements fmt.Stringer.
 func (op PowSV) String() string { return "·^" }
@@ -107,7 +107,7 @@ func (op PowSV) Do(ctx context.Context, vs ...values.Value) (retVal values.Value
 
 // PreallocDo performs elementwise exponentiation but with a preallocated return value.
 // PreallocDo allows PowSV to implement ops.PreallocOp.
-func (op PowSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
+func (op PowSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
 	}

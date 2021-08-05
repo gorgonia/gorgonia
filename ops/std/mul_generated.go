@@ -48,7 +48,7 @@ func (op Mul) PreallocDo(ctx context.Context, prealloc values.Value, vs ...value
 }
 
 // MulVS is a tensor-scalar elementwise multiplciatio=.
-type MulVS struct{ binop }
+type MulVS struct{ binopVS }
 
 // String implements fmt.Stringer.
 func (op MulVS) String() string { return "*·" }
@@ -85,7 +85,7 @@ func (op MulVS) PreallocDo(ctx context.Context, prealloc values.Value, vs ...val
 }
 
 // MulSV is a scalar-tensor elementwise multiplciatio=.
-type MulSV struct{ binop }
+type MulSV struct{ binopSV }
 
 // String implements fmt.Stringer.
 func (op MulSV) String() string { return "·*" }
@@ -107,7 +107,7 @@ func (op MulSV) Do(ctx context.Context, vs ...values.Value) (retVal values.Value
 
 // PreallocDo performs elementwise multiplciatio= but with a preallocated return value.
 // PreallocDo allows MulSV to implement ops.PreallocOp.
-func (op MulSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
+func (op MulSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
 	}

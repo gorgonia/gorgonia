@@ -10,11 +10,11 @@ type {{.Name}} struct { binop }
 {{end}}
 
 {{define "TypeDefVS"}}
-type {{.Name}}VS struct { binop }
+type {{.Name}}VS struct { binopVS }
 {{end}}
 
 {{define "TypeDefSV"}}
-type {{.Name}}SV struct { binop }
+type {{.Name}}SV struct { binopSV }
 {{end}}
 
 {{- define "Do" -}}
@@ -51,11 +51,11 @@ type {{.Name}} struct { binop; retSame bool }
 {{end}}
 
 {{define "TypeDefVS"}}
-type {{.Name}}VS struct { binop; retSame bool }
+type {{.Name}}VS struct { binopVS; retSame bool }
 {{end}}
 
 {{define "TypeDefSV"}}
-type {{.Name}}SV struct { binop; retSame bool }
+type {{.Name}}SV struct { binopSV; retSame bool }
 {{end}}
 
 {{- define "Do" -}}
@@ -69,7 +69,7 @@ type {{.Name}}SV struct { binop; retSame bool }
 	// Do the actual operation
 	ctx2, task := trace.NewTask(ctx, op.String())
 	if op.retSame{
-		retVal, err = tensor.{{.Method}}(a, b, tensor.WithContext(ctx2), tensor.AsSame())
+		retVal, err = tensor.{{.Method}}(a, b, tensor.WithContext(ctx2), tensor.AsSameType())
 	} else {
 		retVal, err = tensor.{{.Method}}(a, b, tensor.WithContext(ctx2))
 	}
@@ -86,7 +86,7 @@ if err := handleCtx(ctx); err != nil {
 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	if op.retSame {
-	retVal, err = tensor.{{.Method}}(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2), tensor.AsSame())
+	retVal, err = tensor.{{.Method}}(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2), tensor.AsSameType())
 	} else {
 	retVal, err = tensor.{{.Method}}(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
 	}
@@ -144,7 +144,7 @@ func (op {{.Name}}SV) Do(ctx context.Context, vs ...values.Value) (retVal values
 
 // PreallocDo performs {{.CommentOp}} but with a preallocated return value.
 // PreallocDo allows {{.Name}}SV to implement ops.PreallocOp.
-func (op {{.Name}}SV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
+func (op {{.Name}}SV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	{{- template "PreallocDo" . -}}
 }
 

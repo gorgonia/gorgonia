@@ -48,7 +48,7 @@ func (op Add) PreallocDo(ctx context.Context, prealloc values.Value, vs ...value
 }
 
 // AddVS is a tensor-scalar elementwise addition.
-type AddVS struct{ binop }
+type AddVS struct{ binopVS }
 
 // String implements fmt.Stringer.
 func (op AddVS) String() string { return "+·" }
@@ -85,7 +85,7 @@ func (op AddVS) PreallocDo(ctx context.Context, prealloc values.Value, vs ...val
 }
 
 // AddSV is a scalar-tensor elementwise addition.
-type AddSV struct{ binop }
+type AddSV struct{ binopSV }
 
 // String implements fmt.Stringer.
 func (op AddSV) String() string { return "·+" }
@@ -107,7 +107,7 @@ func (op AddSV) Do(ctx context.Context, vs ...values.Value) (retVal values.Value
 
 // PreallocDo performs elementwise addition but with a preallocated return value.
 // PreallocDo allows AddSV to implement ops.PreallocOp.
-func (op AddSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
+func (op AddSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
 	}

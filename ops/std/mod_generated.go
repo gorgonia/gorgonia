@@ -48,7 +48,7 @@ func (op Mod) PreallocDo(ctx context.Context, prealloc values.Value, vs ...value
 }
 
 // ModVS is a tensor-scalar elementwise mod.
-type ModVS struct{ binop }
+type ModVS struct{ binopVS }
 
 // String implements fmt.Stringer.
 func (op ModVS) String() string { return "%·" }
@@ -85,7 +85,7 @@ func (op ModVS) PreallocDo(ctx context.Context, prealloc values.Value, vs ...val
 }
 
 // ModSV is a scalar-tensor elementwise mod.
-type ModSV struct{ binop }
+type ModSV struct{ binopSV }
 
 // String implements fmt.Stringer.
 func (op ModSV) String() string { return "·%" }
@@ -107,7 +107,7 @@ func (op ModSV) Do(ctx context.Context, vs ...values.Value) (retVal values.Value
 
 // PreallocDo performs elementwise mod but with a preallocated return value.
 // PreallocDo allows ModSV to implement ops.PreallocOp.
-func (op ModSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
+func (op ModSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
 	}

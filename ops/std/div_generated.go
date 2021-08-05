@@ -48,7 +48,7 @@ func (op Div) PreallocDo(ctx context.Context, prealloc values.Value, vs ...value
 }
 
 // DivVS is a tensor-scalar elementwise division.
-type DivVS struct{ binop }
+type DivVS struct{ binopVS }
 
 // String implements fmt.Stringer.
 func (op DivVS) String() string { return "÷·" }
@@ -85,7 +85,7 @@ func (op DivVS) PreallocDo(ctx context.Context, prealloc values.Value, vs ...val
 }
 
 // DivSV is a scalar-tensor elementwise division.
-type DivSV struct{ binop }
+type DivSV struct{ binopSV }
 
 // String implements fmt.Stringer.
 func (op DivSV) String() string { return "·÷" }
@@ -107,7 +107,7 @@ func (op DivSV) Do(ctx context.Context, vs ...values.Value) (retVal values.Value
 
 // PreallocDo performs elementwise division but with a preallocated return value.
 // PreallocDo allows DivSV to implement ops.PreallocOp.
-func (op DivSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
+func (op DivSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
 	}

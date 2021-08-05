@@ -48,7 +48,7 @@ func (op Sub) PreallocDo(ctx context.Context, prealloc values.Value, vs ...value
 }
 
 // SubVS is a tensor-scalar elementwise subtraction.
-type SubVS struct{ binop }
+type SubVS struct{ binopVS }
 
 // String implements fmt.Stringer.
 func (op SubVS) String() string { return "-·" }
@@ -85,7 +85,7 @@ func (op SubVS) PreallocDo(ctx context.Context, prealloc values.Value, vs ...val
 }
 
 // SubSV is a scalar-tensor elementwise subtraction.
-type SubSV struct{ binop }
+type SubSV struct{ binopSV }
 
 // String implements fmt.Stringer.
 func (op SubSV) String() string { return "·-" }
@@ -107,7 +107,7 @@ func (op SubSV) Do(ctx context.Context, vs ...values.Value) (retVal values.Value
 
 // PreallocDo performs elementwise subtraction but with a preallocated return value.
 // PreallocDo allows SubSV to implement ops.PreallocOp.
-func (op SubSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
+func (op SubSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
 	}
