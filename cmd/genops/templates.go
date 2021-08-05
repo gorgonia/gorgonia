@@ -190,18 +190,18 @@ const arithOpTestRaw = `{{ define "varExpected" }}
 {{- $VV := ( printf "%v" .Name ) -}}
 {{- $VS := ( printf "%vVS" .Name ) -}}
 {{- $SV := ( printf "%vSV" .Name ) -}}
-func Test{{$VV}}(t *testing.T) {
-	op := {{$VV}}{}
+func Test{{$VV}}{{if .IsCmpRetTrue}}RetSame{{end}}(t *testing.T) {
+	op := {{$VV}}{ {{if .IsCmpRetTrue}}retSame: true{{end}} }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
-/* Do (using tensor-tensor) */
+	/* Do (using tensor-tensor) */
 
 	// set up
 	var a, b, c values.Value
 	{{- template "varExpected" }}
-	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	b = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{10, 20, 30, 40, 50, 60}))
+	a = {{.AVV}}
+	b = {{.BVV}}
 
 	// type and shape checks
 	{{-  template "typeshapecheck" $VV }}
@@ -214,9 +214,9 @@ func Test{{$VV}}(t *testing.T) {
 	/* PreallocDo (using scalar-scalar to make sure things don't go wrong) */
 
 	// set up
-	a = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{1}))
-	b = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{2}))
-	c = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{-1}))
+	a = {{.AVV2}}
+	b = {{.BVV2}}
+	c = {{.CVV}}
 
 	// type and shape checks
 	{{- template "typeshapecheck" $VV }}
@@ -239,8 +239,8 @@ func Test{{$VV}}(t *testing.T) {
 
 }
 
-func Test{{$VS}}(t *testing.T) {
-	op := {{$VS}}{}
+func Test{{$VS}}{{if .IsCmpRetTrue}}RetSame{{end}}(t *testing.T) {
+	op := {{$VS}}{ {{if .IsCmpRetTrue}}retSame: true{{end}} }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -249,8 +249,8 @@ func Test{{$VS}}(t *testing.T) {
 	// set up
 	var a, b, c values.Value
 	{{- template "varExpected" }}
-	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	b = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))
+	a = {{.AVS}}
+	b = {{.BVS}}
 
 	// type and shape checks
 	{{- template "typeshapecheck" $VS }}
@@ -263,7 +263,7 @@ func Test{{$VS}}(t *testing.T) {
 	/* PreallocDo */
 
 	// set up - create a new preallocated result
-	c = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{-1, -1, -1, -1, -1, -1}))
+	c = {{.CVS}}
 
 	// actually PreallocDo-ing and checking
 	{{- template "op.PreallocDo" $VS -}}
@@ -279,8 +279,8 @@ func Test{{$VS}}(t *testing.T) {
 	}
 }
 
-func Test{{$SV}}(t *testing.T) {
-	op := {{$SV}}{}
+func Test{{$SV}}{{if .IsCmpRetTrue}}RetSame{{end}}(t *testing.T) {
+	op := {{$SV}}{ {{if .IsCmpRetTrue}}retSame: true{{end}}  }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -289,8 +289,8 @@ func Test{{$SV}}(t *testing.T) {
 	// set up
 	var a, b, c values.Value
 	{{- template "varExpected" }}
-	a = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))
-	b = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	a = {{.ASV}}
+	b = {{.BSV}}
 
 
 	// type and shape checks
@@ -304,7 +304,7 @@ func Test{{$SV}}(t *testing.T) {
 	/* PreallocDo */
 
 	// set up - create a new preallocated result
-	c = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{-1, -1, -1, -1, -1, -1}))
+	c = {{.CSV}}
 
 	// actually PreallocDo-ing and checking
 	{{- template "op.PreallocDo" $VS -}}
