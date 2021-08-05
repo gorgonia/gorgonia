@@ -237,7 +237,7 @@ const arithOpTestRaw = `{{ define "varExpected" }}
 {{- $VV := ( printf "%v" .Name ) -}}
 {{- $VS := ( printf "%vVS" .Name ) -}}
 {{- $SV := ( printf "%vSV" .Name ) -}}
-func Test{{$VV}}{{if .IsCmpRetTrue}}RetSame{{end}}(t *testing.T) {
+func Test{{$VV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 	op := {{$VV}}{ {{if .IsCmpRetTrue}}retSame: true{{end}} }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
@@ -286,7 +286,7 @@ func Test{{$VV}}{{if .IsCmpRetTrue}}RetSame{{end}}(t *testing.T) {
 
 }
 
-func Test{{$VS}}{{if .IsCmpRetTrue}}RetSame{{end}}(t *testing.T) {
+func Test{{$VS}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 	op := {{$VS}}{ {{if .IsCmpRetTrue}}retSame: true{{end}} }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
@@ -326,7 +326,7 @@ func Test{{$VS}}{{if .IsCmpRetTrue}}RetSame{{end}}(t *testing.T) {
 	}
 }
 
-func Test{{$SV}}{{if .IsCmpRetTrue}}RetSame{{end}}(t *testing.T) {
+func Test{{$SV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 	op := {{$SV}}{ {{if .IsCmpRetTrue}}retSame: true{{end}}  }
 	// basic test
 	assert.Equal(t, 2, op.Arity())

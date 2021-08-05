@@ -98,7 +98,15 @@ func generateBinOpTest(ops []binOp, input binopTestInput, results []binopTestRes
 		if err := tmpl.Execute(f, opTest); err != nil {
 			return errors.Wrapf(err, "Unable to execute binopTmpl for %v", op.Name)
 		}
-
+		// for cmp
+		if isCmp {
+			opTest.IsCmpRetTrue = true
+			opTest.binopTestInput = cmpTestInputSame
+			opTest.binopTestResult = cmpTestResultsSame[i]
+			if err := tmpl.Execute(f, opTest); err != nil {
+				return errors.Wrapf(err, "Unable to execute binopTmpl for %v", op.Name)
+			}
+		}
 		if err := f.Close(); err != nil {
 			return errors.Wrapf(err, "Unable to close %v", p)
 		}
@@ -124,7 +132,7 @@ func generateCmps() error {
 	if err := generateBinOp(cmps, cmpOpTmpl); err != nil {
 		return errors.Wrap(err, "generateCmps.generateBinOp")
 	}
-	if err := generateBinOpTest(cmps, cmpTestInputBool, cmpTestResultsBool, false, arithOpTestTmpl); err != nil {
+	if err := generateBinOpTest(cmps, cmpTestInputBool, cmpTestResultsBool, true, arithOpTestTmpl); err != nil {
 		return errors.Wrap(err, "generateCmps.generateBinOpTests")
 	}
 	return nil
