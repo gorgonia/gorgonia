@@ -20,16 +20,18 @@ func TestPow(t *testing.T) {
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
-	// tensor-tensor / Do()
+	/* Do (using tensor-tensor) */
 
+	// set up
 	var a, b, c values.Value
-	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	b = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{10, 20, 30, 40, 50, 60}))
-
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
 	var err error
 
+	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	b = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{10, 20, 30, 40, 50, 60}))
+
+	// type and shape checks
 	if expectedType, err = typecheck(op, a, b); err != nil {
 		t.Fatalf("Expected Pow{} to pass type checking. Err: %v", err)
 	}
@@ -37,6 +39,7 @@ func TestPow(t *testing.T) {
 		t.Fatalf("Expected Pow{} to pass shape checking. Err: %v", err)
 	}
 
+	// actually doing and testing
 	if c, err = op.Do(context.Background(), a, b); err != nil {
 		t.Fatalf("Expected Pow{} to work correctly. Err: %v", err)
 	}
@@ -45,12 +48,14 @@ func TestPow(t *testing.T) {
 	correct := []float64{1, math.Pow(2, 20), math.Pow(3, 30), math.Pow(4, 40), math.Pow(5, 50), math.Pow(6, 60)}
 	assert.Equal(t, correct, c.Data())
 
-	// scalar-scalar / PreallocDo
+	/* PreallocDo (using scalar-scalar to make sure things don't go wrong) */
 
+	// set up
 	a = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{1}))
 	b = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{2}))
 	c = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{-1}))
 
+	// type and shape checks
 	if expectedType, err = typecheck(op, a, b); err != nil {
 		t.Fatalf("Expected Pow{} to pass type checking. Err: %v", err)
 	}
@@ -58,14 +63,15 @@ func TestPow(t *testing.T) {
 		t.Fatalf("Expected Pow{} to pass shape checking. Err: %v", err)
 	}
 
+	// actually PreallocDo-ing and testing
 	c, err = op.PreallocDo(context.Background(), c, a, b)
 	if err != nil {
 		t.Fatalf("Expected Pow{}'s Prealloc to work. Err: %v", err)
 	}
-	correctScalar := 1.0
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
-	assert.Equal(t, correctScalar, c.Data())
 	assert.True(t, expectedShape.Eq(c.Shape()))
+	correctScalar := 1.0
+	assert.Equal(t, correctScalar, c.Data())
 
 	// bad cases: fails  typecheck and shapecheck
 	a = tensor.New(tensor.WithShape(2, 3), tensor.Of(tensor.Float64))
@@ -81,16 +87,21 @@ func TestPow(t *testing.T) {
 
 func TestPowVS(t *testing.T) {
 	op := PowVS{}
+	// basic test
+	assert.Equal(t, 2, op.Arity())
 
-	// Do
+	/* Do */
+
+	// set up
 	var a, b, c values.Value
-	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	b = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))
-
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
 	var err error
 
+	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	b = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))
+
+	// type and shape checks
 	if expectedType, err = typecheck(op, a, b); err != nil {
 		t.Fatalf("Expected PowVS{} to pass type checking. Err: %v", err)
 	}
@@ -98,6 +109,7 @@ func TestPowVS(t *testing.T) {
 		t.Fatalf("Expected PowVS{} to pass shape checking. Err: %v", err)
 	}
 
+	// actually doing and test
 	if c, err = op.Do(context.Background(), a, b); err != nil {
 		t.Fatalf("Expected PowVS{} to work correctly. Err: %v", err)
 	}
@@ -106,18 +118,22 @@ func TestPowVS(t *testing.T) {
 	correct := []float64{1, math.Pow(2, 100), math.Pow(3, 100), math.Pow(4, 100), math.Pow(5, 100), math.Pow(6, 100)}
 	assert.Equal(t, correct, c.Data())
 
-	// PreallocDo
+	/* PreallocDo */
+
+	// set up - create a new preallocated result
 	c = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{-1, -1, -1, -1, -1, -1}))
 
+	// actually PreallocDo-ing and checking
 	c, err = op.PreallocDo(context.Background(), c, a, b)
 	if err != nil {
-		t.Fatalf("Expected addition operation to work. Err: %v", err)
+		t.Fatalf("Expected PowVS{}'s Prealloc to work. Err: %v", err)
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
 	assert.Equal(t, correct, c.Data())
 
-	// bad cases: PowVS{} on tensor-tensor
+	/* bad cases: PowVS{} on tensor-tensor */
+
 	b = tensor.New(tensor.WithShape(2, 3), tensor.Of(tensor.Float64))
 	// we won't type check because the type system is not a dependent type system, thus
 	// PowVS : (a → b → a) will always type check without errors
@@ -128,16 +144,21 @@ func TestPowVS(t *testing.T) {
 
 func TestPowSV(t *testing.T) {
 	op := PowSV{}
+	// basic test
+	assert.Equal(t, 2, op.Arity())
 
-	// Do
+	/* Do */
+
+	// set up
 	var a, b, c values.Value
-	a = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))
-	b = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
 	var err error
 
+	a = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))
+	b = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+
+	// type and shape checks
 	if expectedType, err = typecheck(op, a, b); err != nil {
 		t.Fatalf("Expected PowSV{} to pass type checking. Err: %v", err)
 	}
@@ -145,6 +166,7 @@ func TestPowSV(t *testing.T) {
 		t.Fatalf("Expected PowSV{} to pass shape checking. Err: %v", err)
 	}
 
+	// actually doing and test
 	if c, err = op.Do(context.Background(), a, b); err != nil {
 		t.Fatalf("Expected PowSV{} to work correctly. Err: %v", err)
 	}
@@ -153,18 +175,22 @@ func TestPowSV(t *testing.T) {
 	correct := []float64{math.Pow(100, 1), math.Pow(100, 2), math.Pow(100, 3), math.Pow(100, 4), math.Pow(100, 5), math.Pow(100, 6)}
 	assert.Equal(t, correct, c.Data())
 
-	// PreallocDo
+	/* PreallocDo */
+
+	// set up - create a new preallocated result
 	c = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{-1, -1, -1, -1, -1, -1}))
 
+	// actually PreallocDo-ing and checking
 	c, err = op.PreallocDo(context.Background(), c, a, b)
 	if err != nil {
-		t.Fatalf("Expected addition operation to work. Err: %v", err)
+		t.Fatalf("Expected PowVS{}'s Prealloc to work. Err: %v", err)
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
 	assert.Equal(t, correct, c.Data())
 
-	// bad cases: PowSV{} on tensor-tensor
+	/* bad cases: PowSV{} on tensor-tensor */
+
 	a = tensor.New(tensor.WithShape(2, 3), tensor.Of(tensor.Float64))
 	// we won't type check because the type system is not a dependent type system, thus
 	// PowSV : (a → b → b) will always type check without errors
