@@ -32,6 +32,8 @@ func (op Div) Do(ctx context.Context, vs ...values.Value) (values.Value, error) 
 	return retVal, err
 }
 
+// PreallocDo performs elementwise division but with a preallocated return value.
+// PreallocDo allows Div to implement ops.PreallocOp
 func (op Div) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
@@ -68,6 +70,8 @@ func (op DivVS) Do(ctx context.Context, vs ...values.Value) (values.Value, error
 	return retVal, err
 }
 
+// PreallocDo performs elementwise division but with a preallocated return value.
+// PreallocDo allows DivVS to implement ops.PreallocOp
 func (op DivVS) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
@@ -104,6 +108,8 @@ func (op DivSV) Do(ctx context.Context, vs ...values.Value) (values.Value, error
 	return retVal, err
 }
 
+// PreallocDo performs elementwise division but with a preallocated return value.
+// PreallocDo allows DivSV to implement ops.PreallocOp
 func (op DivSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err

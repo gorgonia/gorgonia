@@ -66,7 +66,7 @@ func generateAriths() error {
 			return err
 		}
 		fmt.Fprintf(f, "package stdops\n\n%v\n\n", genmsg)
-		if err := binopTmpl.Execute(f, op); err != nil {
+		if err := arithOpTmpl.Execute(f, op); err != nil {
 			return errors.Wrapf(err, "Unable to execute binopTmpl for %v", op.Name)
 		}
 		if err := f.Close(); err != nil {
@@ -89,7 +89,7 @@ func generateAriths() error {
 			return err
 		}
 		fmt.Fprintf(f, "package stdops\n\n%v\n\n", genmsg)
-		if err := binopTestTmpl.Execute(f, op); err != nil {
+		if err := arithOpTestTmpl.Execute(f, op); err != nil {
 			return errors.Wrapf(err, "Unable to execute binopTmpl for %v", op.Name)
 		}
 		if err := f.Close(); err != nil {

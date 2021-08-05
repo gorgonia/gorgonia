@@ -32,6 +32,8 @@ func (op Add) Do(ctx context.Context, vs ...values.Value) (values.Value, error) 
 	return retVal, err
 }
 
+// PreallocDo performs elementwise addition but with a preallocated return value.
+// PreallocDo allows Add to implement ops.PreallocOp
 func (op Add) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
@@ -68,6 +70,8 @@ func (op AddVS) Do(ctx context.Context, vs ...values.Value) (values.Value, error
 	return retVal, err
 }
 
+// PreallocDo performs elementwise addition but with a preallocated return value.
+// PreallocDo allows AddVS to implement ops.PreallocOp
 func (op AddVS) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
@@ -104,6 +108,8 @@ func (op AddSV) Do(ctx context.Context, vs ...values.Value) (values.Value, error
 	return retVal, err
 }
 
+// PreallocDo performs elementwise addition but with a preallocated return value.
+// PreallocDo allows AddSV to implement ops.PreallocOp
 func (op AddSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err

@@ -55,4 +55,11 @@ var arithTest = []struct {
 		"1.0"},
 }
 
-var cmps = []binOp{}
+var cmps = []binOp{
+	{"Lt", "Lt", "elementwise less-than", "<"},
+	{"Lte", "Lte", "elementwise less-than-or-equal-to", "≤"},
+	{"Gt", "Gt", "elementwise greater-than", ">"},
+	{"Gte", "Gte", "elementwise greater-than-or-equal-to", "≥"},
+	{"ElEq", "ElEq", "elementwise equal-to", "="},
+	{"ElNe", "ElNe", "elementwise not-equal-to", "≠"},
+}

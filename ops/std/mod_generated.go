@@ -32,6 +32,8 @@ func (op Mod) Do(ctx context.Context, vs ...values.Value) (values.Value, error) 
 	return retVal, err
 }
 
+// PreallocDo performs elementwise mod but with a preallocated return value.
+// PreallocDo allows Mod to implement ops.PreallocOp
 func (op Mod) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
@@ -68,6 +70,8 @@ func (op ModVS) Do(ctx context.Context, vs ...values.Value) (values.Value, error
 	return retVal, err
 }
 
+// PreallocDo performs elementwise mod but with a preallocated return value.
+// PreallocDo allows ModVS to implement ops.PreallocOp
 func (op ModVS) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
@@ -104,6 +108,8 @@ func (op ModSV) Do(ctx context.Context, vs ...values.Value) (values.Value, error
 	return retVal, err
 }
 
+// PreallocDo performs elementwise mod but with a preallocated return value.
+// PreallocDo allows ModSV to implement ops.PreallocOp
 func (op ModSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err

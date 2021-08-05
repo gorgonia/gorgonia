@@ -32,6 +32,8 @@ func (op Sub) Do(ctx context.Context, vs ...values.Value) (values.Value, error) 
 	return retVal, err
 }
 
+// PreallocDo performs elementwise subtraction but with a preallocated return value.
+// PreallocDo allows Sub to implement ops.PreallocOp
 func (op Sub) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
@@ -68,6 +70,8 @@ func (op SubVS) Do(ctx context.Context, vs ...values.Value) (values.Value, error
 	return retVal, err
 }
 
+// PreallocDo performs elementwise subtraction but with a preallocated return value.
+// PreallocDo allows SubVS to implement ops.PreallocOp
 func (op SubVS) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
@@ -104,6 +108,8 @@ func (op SubSV) Do(ctx context.Context, vs ...values.Value) (values.Value, error
 	return retVal, err
 }
 
+// PreallocDo performs elementwise subtraction but with a preallocated return value.
+// PreallocDo allows SubSV to implement ops.PreallocOp
 func (op SubSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err

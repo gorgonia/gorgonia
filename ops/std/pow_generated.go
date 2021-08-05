@@ -32,6 +32,8 @@ func (op Pow) Do(ctx context.Context, vs ...values.Value) (values.Value, error) 
 	return retVal, err
 }
 
+// PreallocDo performs elementwise exponentiation but with a preallocated return value.
+// PreallocDo allows Pow to implement ops.PreallocOp
 func (op Pow) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
@@ -68,6 +70,8 @@ func (op PowVS) Do(ctx context.Context, vs ...values.Value) (values.Value, error
 	return retVal, err
 }
 
+// PreallocDo performs elementwise exponentiation but with a preallocated return value.
+// PreallocDo allows PowVS to implement ops.PreallocOp
 func (op PowVS) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
@@ -104,6 +108,8 @@ func (op PowSV) Do(ctx context.Context, vs ...values.Value) (values.Value, error
 	return retVal, err
 }
 
+// PreallocDo performs elementwise exponentiation but with a preallocated return value.
+// PreallocDo allows PowSV to implement ops.PreallocOp
 func (op PowSV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err

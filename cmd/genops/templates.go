@@ -1,15 +1,10 @@
 package main
 
-import "text/template"
+import (
+	"text/template"
+)
 
-const binopRaw = `// {{.Name}} is a tensor-tensor {{.CommentOp}}
-type {{.Name}} struct{ binop }
-
-// String implements fmt.Stringer.
-func (op {{.Name}}) String() string { return "{{.Symbol}}" }
-
-// Do performs {{.CommentOp}}.
-func (op {{.Name}}) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
+const arithBodiesRaw = `{{- define "Do" -}}
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
 	}
@@ -22,10 +17,9 @@ func (op {{.Name}}) Do(ctx context.Context, vs ...values.Value) (values.Value, e
 	retVal, err := tensor.{{.Method}}(a, b, tensor.WithContext(ctx2))
 	task.End()
 	return retVal, err
-}
-
-func (op {{.Name}}) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
-	if err := handleCtx(ctx); err != nil {
+{{- end -}}
+{{- define "PreallocDo" -}}
+if err := handleCtx(ctx); err != nil {
 		return nil, err
 	}
 
@@ -36,6 +30,25 @@ func (op {{.Name}}) PreallocDo(ctx context.Context, prealloc values.Value, vs ..
 	retVal, err := tensor.{{.Method}}(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
 	task.End()
 	return retVal, err
+{{- end -}}
+
+`
+
+const arithOpRaw = `// {{.Name}} is a tensor-tensor {{.CommentOp}}
+type {{.Name}} struct{ binop }
+
+// String implements fmt.Stringer.
+func (op {{.Name}}) String() string { return "{{.Symbol}}" }
+
+// Do performs {{.CommentOp}}.
+func (op {{.Name}}) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
+	{{- template "Do" . -}}
+}
+
+// PreallocDo performs {{.CommentOp}} but with a preallocated return value.
+// PreallocDo allows {{.Name}} to implement ops.PreallocOp
+func (op {{.Name}}) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
+	{{- template "PreallocDo" . -}}
 }
 
 
@@ -47,32 +60,13 @@ func (op {{.Name}}VS) String() string { return "{{.Symbol}}·" }
 
 // Do performs {{.CommentOp}}.
 func (op {{.Name}}VS) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
-	if err := handleCtx(ctx); err != nil {
-		return nil, err
-	}
-
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
-
-	// Do the actual operation
-	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err := tensor.{{.Method}}(a, b, tensor.WithContext(ctx2))
-	task.End()
-	return retVal, err
+	{{- template "Do" . -}}
 }
 
+// PreallocDo performs {{.CommentOp}} but with a preallocated return value.
+// PreallocDo allows {{.Name}}VS to implement ops.PreallocOp
 func (op {{.Name}}VS) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
-	if err := handleCtx(ctx); err != nil {
-		return nil, err
-	}
-
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
-
-	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err := tensor.{{.Method}}(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
-	task.End()
-	return retVal, err
+	{{- template "PreallocDo" . -}}
 }
 
 
@@ -84,32 +78,13 @@ func (op {{.Name}}SV) String() string { return "·{{.Symbol}}" }
 
 // Do performs {{.CommentOp}}.
 func (op {{.Name}}SV) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
-	if err := handleCtx(ctx); err != nil {
-		return nil, err
-	}
-
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
-
-	// Do the actual operation
-	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err := tensor.{{.Method}}(a, b, tensor.WithContext(ctx2))
-	task.End()
-	return retVal, err
+	{{- template "Do" . -}}
 }
 
+// PreallocDo performs {{.CommentOp}} but with a preallocated return value.
+// PreallocDo allows {{.Name}}SV to implement ops.PreallocOp
 func (op {{.Name}}SV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
-	if err := handleCtx(ctx); err != nil {
-		return nil, err
-	}
-
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
-
-	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err := tensor.{{.Method}}(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
-	task.End()
-	return retVal, err
+	{{- template "PreallocDo" . -}}
 }
 
 `
@@ -122,7 +97,7 @@ func (op {{.Name}}SV)SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, g
 
 `
 
-const binopTestRaw = `func Test{{.Name}}(t *testing.T) {
+const arithOpTestRaw = `func Test{{.Name}}(t *testing.T) {
 	op := {{.Name}}{}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
@@ -283,13 +258,16 @@ func Test{{.Name}}SV(t *testing.T) {
 `
 
 var (
-	binopTmpl      *template.Template
-	binSymDiffTmpl *template.Template
-	binopTestTmpl  *template.Template
+	arithBodiesTmpl *template.Template
+	arithOpTmpl     *template.Template
+	binSymDiffTmpl  *template.Template
+	arithOpTestTmpl *template.Template
 )
 
 func init() {
-	binopTmpl = template.Must(template.New("binop").Funcs(funcmap).Parse(binopRaw))
+	arithBodiesTmpl = template.Must(template.New("arithbodies").Funcs(funcmap).Parse(arithBodiesRaw))
+	arithOpTmpl = template.Must(arithBodiesTmpl.New("binop").Funcs(funcmap).Parse(arithOpRaw))
 	binSymDiffTmpl = template.Must(template.New("binsymdiff").Funcs(funcmap).Parse(binSymDiffRaw))
-	binopTestTmpl = template.Must(template.New("binopTest").Funcs(funcmap).Parse(binopTestRaw))
+	arithOpTestTmpl = template.Must(template.New("binopTest").Funcs(funcmap).Parse(arithOpTestRaw))
+
 }
