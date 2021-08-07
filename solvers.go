@@ -469,7 +469,7 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 			w := weights.(*tensor.Dense)
 			v := cvv.(*tensor.Dense)
 
-			var l1reg, l2reg, clip, negClip, beta1, beta2, omβ1, omβ2, eps, eta, onePerBatch interface{}
+			var l1reg, l2reg, clip, negClip, beta1, beta2, omβ1, omβ2, eps, negEta, onePerBatch interface{}
 			var correctionV1, correctionV2 interface{}
 			switch m.Dtype() {
 			case tensor.Float64:
@@ -482,7 +482,7 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 				omβ1 = float64(1) - s.beta1
 				omβ2 = float64(1) - s.beta2
 				eps = s.eps
-				eta = -s.eta
+				negEta = -s.eta
 				onePerBatch = float64(1) / s.batch
 				correctionV1 = float64(1) / float64(correction1)
 				correctionV2 = float64(1) / float64(correction2)
@@ -496,7 +496,7 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 				omβ1 = float32(1) - float32(s.beta1)
 				omβ2 = float32(1) - float32(s.beta2)
 				eps = float32(s.eps)
-				eta = -float32(s.eta)
+				negEta = -float32(s.eta)
 				onePerBatch = float32(1) / float32(s.batch)
 				correctionV1 = float32(1) / float32(correction1)
 				correctionV2 = float32(1) / float32(correction2)
@@ -547,13 +547,13 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 			//		(β_1 * m_t-1) + (1 - β_1)g_t ..................	1
 			//		(β_2 * v_t-1) + (1 - β_2)*(g_t)² .............	2
 
-			// equation(1)
+			// equation(1): t1 = grad * (1 - β_1)
 			t1 := g.Clone().(*tensor.Dense)
 			if _, err = tensor.Mul(t1, omβ1, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			// equation(2)
+			// equation(2): g = grad**2 * (1 - β_2)
 			if _, err = tensor.Mul(g, g, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
@@ -561,13 +561,13 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			// equation (1)
-			if _, err = tensor.Mul(m, beta1, tensor.WithIncr(t1)); err != nil {
+			// equation (1): cached = cached * beta1 + t1
+			if _, err = tensor.Mul(m, beta1, tensor.WithIncr(t1), tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			// equation (2)
-			if _, err = tensor.Mul(v, beta2, tensor.WithIncr(g)); err != nil {
+			// equation (2): v = v * beta2 + g
+			if _, err = tensor.Mul(v, beta2, tensor.WithIncr(g), tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
@@ -597,11 +597,11 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 				return
 			}
 
-			if _, err = tensor.Mul(mHats, eta, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(mHats, negEta, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			if _, err = tensor.Div(mHats, vHats, tensor.WithIncr(w)); err != nil {
+			if _, err = tensor.Div(mHats, vHats, tensor.UseUnsafe()); err != nil {
 				return
 			}
 
