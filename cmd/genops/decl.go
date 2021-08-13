@@ -1,6 +1,6 @@
 package main
 
-type binOp struct {
+type op struct {
 	// Name of the Op. It will be suffixed with -VV, -VS, -SV.
 	Name string
 
@@ -17,7 +17,7 @@ type binOp struct {
 	IsDiff bool
 }
 
-var ariths = []binOp{
+var ariths = []op{
 	{"add", "Add", "elementwise addition", "+", true},
 	{"sub", "Sub", "elementwise subtraction", "-", true},
 	{"mul", "Mul", "elementwise multiplciatio=", "*", true},
@@ -27,7 +27,7 @@ var ariths = []binOp{
 }
 
 type binopTest struct {
-	binOp
+	op
 	binopTestInput
 	binopTestResult
 	IsCmpRetTrue bool // to generate tests for AsSameType()
@@ -106,7 +106,7 @@ var arithTestResults = []binopTestResult{
 	},
 }
 
-var cmps = []binOp{
+var cmps = []op{
 	{"lt", "Lt", "elementwise less-than", "<", false},
 	{"lte", "Lte", "elementwise less-than-or-equal-to", "≤", false},
 	{"gt", "Gt", "elementwise greater-than", ">", false},
@@ -241,14 +241,28 @@ var cmpTestInputSame = binopTestInput{
 	CSV: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 0, 0, 0, 0, 0}))",
 }
 
-// unary operators
-type unop struct {
-	// name of the op.
-	Name string
+var unops = []op{
+	{"abs", "Abs", "elementwise absolute value", "|·|", false},
+	{"sign", "Sign", "elementwise sign", "Sign", false},
+	//	{"ceil", "Ceil", "elementwise ceil", "⌈·⌉", false},
+	//{"floor", "Floor", "elementwise floor", "⌊·⌋", false},
 
-	// The tensor.XXX function to call.
-	Method string
+	// {"sin", "Sin", "elementwise sine", "Sin", true},
+	//{"cos", "Cos", "elementwise cos", "Cos", true},
+	{"exp", "Exp", "elementwise exp", "Exp", true},
+	{"ln", "Log", "elementwise ln", "Ln", true},
+	{"log2", "Log2", "elementwise log2", "Log2", true},
+	{"neg", "Neg", "elementwise negation", "Neg", true},
+	{"square", "Square", "elementwise square", "²", true},
+	{"sqrt", "Sqrt", "elementwise square root", "√", true},
+	{"inv", "Inv", "elementwise 1/x", "1/·", true},
+	{"invSqrt", "InvSqrt", "elementwise 1/√x", "1/√·", true},
 
-	// IsDiff indicates if the operation is differentiable.
-	IsDiff bool
+	// numerical stabilization
+	//{"log1p", "Log1p", "elementwise log1p", "Log1p", true},
+	//{"expm1", "Expm1", "elementwise expm1", "Expm1", true},
+
+	// activation functions... perhaps move them to NN
+	{"cube", "Cube", "elementwise cube", "³", true},
+	{"tanh", "Tanh", "elementwise tanh", "tanh", true},
 }

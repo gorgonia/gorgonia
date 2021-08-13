@@ -58,7 +58,7 @@ func goimports(filename string) error {
 	return nil
 }
 
-func generateBinOp(ops []binOp, tmpl *template.Template) error {
+func generateBinOp(ops []op, tmpl *template.Template) error {
 	for _, op := range ops {
 		filename := strings.ToLower(op.Name) + "_generated.go"
 		p := path.Join(stdopsloc, filename)
@@ -85,9 +85,9 @@ func generateBinOp(ops []binOp, tmpl *template.Template) error {
 	return nil
 }
 
-func generateBinOpTest(ops []binOp, input binopTestInput, results []binopTestResult, isCmp bool, tmpl *template.Template) error {
+func generateBinOpTest(ops []op, input binopTestInput, results []binopTestResult, isCmp bool, tmpl *template.Template) error {
 	for i, op := range ops {
-		opTest := binopTest{binOp: op, binopTestInput: input, binopTestResult: results[i]}
+		opTest := binopTest{op: op, binopTestInput: input, binopTestResult: results[i]}
 		filename := strings.ToLower(op.Name) + "_generated_test.go"
 		p := path.Join(stdopsloc, filename)
 		f, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
@@ -138,6 +138,34 @@ func generateCmps() error {
 	return nil
 }
 
+func generateUnOps() error {
+	tmpl := unopTmpl
+	for _, op := range unops {
+		filename := strings.ToLower(op.Name) + "_generated.go"
+		p := path.Join(stdopsloc, filename)
+		f, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(f, "package stdops\n\n%v\n\n", genmsg)
+		if err := tmpl.Execute(f, op); err != nil {
+			return errors.Wrapf(err, "Unable to execute unopTmpl for %v", op.Name)
+		}
+		if err := f.Close(); err != nil {
+			return errors.Wrapf(err, "Unable to close %v", p)
+		}
+		if err := goimports(p); err != nil {
+			return err
+		}
+
+		// extra: write symdiff to stubs
+		if err := binSymDiffTmpl.Execute(stubsFile, op); err != nil {
+			return errors.Wrapf(err, "Unable to add %v SymDiff stubs", op.Name)
+		}
+	}
+	return nil
+}
+
 func finishStubs() error {
 	if err := stubsFile.Close(); err != nil {
 		return err
@@ -151,6 +179,9 @@ func main() {
 		log.Fatal(err)
 	}
 	if err := generateCmps(); err != nil {
+		log.Fatal(err)
+	}
+	if err := generateUnOps(); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -217,11 +217,7 @@ func (op {{.Name}}SV) String() string { return "·{{.Symbol}}" }
 `
 
 const binSymDiffRaw = `{{ if .IsDiff }}
-func (op {{.Name}}VV)SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error){ panic("not implemented" )}
-
-func (op {{.Name}}VS)SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error){ panic("not implemented" )}
-
-func (op {{.Name}}SV)SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error){ panic("not implemented" )}
+func (op {{.Name}}Op)SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error){ panic("not implemented" )}
 {{ end }}
 
 `
@@ -387,6 +383,40 @@ func Test{{$SV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 		t.Fatalf("Expected {{.Name}}SV{} to NOT pass shape checking. Got %v ~ (%v, %v) = %v", op.ShapeExpr(), a.Shape(), b.Shape(), expectedShape)
 	}
 }
+`
+
+const unopTmplRaw = `// {{.Name}} is a {{.CommentOp}}.
+type {{.Name}}Op struct{unop}
+
+// String implements fmt.Stringer.
+func (op {{.Name}}Op) String() string {return "{{.Symbol}}" }
+
+// Do performs {{.CommentOp}}.
+func (op {{.Name}}Op) Do(ctx context.Context, vs ...values.Value)(retVal values.Value, err error){
+if err := handleCtx(ctx); err != nil {
+		return nil, err
+	}
+
+	a := vs[0].(tensor.Tensor)
+	ctx2, task := trace.NewTask(ctx, op.String())
+	retVal, err = tensor.{{.Method}}(a, tensor.WithContext(ctx2))
+	task.End()
+	return retVal, err
+}
+
+// PreallocDo performs {{.CommentOp}} but with a preallocated return value.
+// PreallocDo allows add to implement ops.PreallocOp.
+func (op {{.Name}}Op) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+	if err := handleCtx(ctx); err != nil {
+		return nil, err
+	}
+
+	a := vs[0].(tensor.Tensor)
+	ctx2, task := trace.NewTask(ctx, op.String())
+	retVal, err = tensor.{{.Method}}(a, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
+	task.End()
+	return retVal, err
+}
 
 `
 
@@ -397,6 +427,7 @@ var (
 	cmpOpTmpl       *template.Template
 	binSymDiffTmpl  *template.Template
 	arithOpTestTmpl *template.Template
+	unopTmpl        *template.Template
 )
 
 func init() {
@@ -406,5 +437,5 @@ func init() {
 	cmpOpTmpl = template.Must(cmpMetaTmpl.New("cmp").Funcs(funcmap).Parse(binOpRaw))
 	binSymDiffTmpl = template.Must(template.New("binsymdiff").Funcs(funcmap).Parse(binSymDiffRaw))
 	arithOpTestTmpl = template.Must(template.New("binopTest").Funcs(funcmap).Parse(arithOpTestRaw))
-
+	unopTmpl = template.Must(template.New("unary op").Funcs(funcmap).Parse(unopTmplRaw))
 }
