@@ -246,9 +246,9 @@ type unop struct {
 	// name of the op.
 	Name string
 
-	// engine name to check
-	Engine string
+	// The tensor.XXX function to call.
+	Method string
 
-	// IsDiff
+	// IsDiff indicates if the operation is differentiable.
 	IsDiff bool
 }

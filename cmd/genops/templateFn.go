@@ -1,5 +1,10 @@
 package main
 
-import "text/template"
+import (
+	"strings"
+	"text/template"
+)
 
-var funcmap = template.FuncMap{}
+var funcmap = template.FuncMap{
+	"lower": strings.ToLower,
+}

@@ -199,7 +199,7 @@ func TestltSV(t *testing.T) {
 }
 
 func TestltVV_RetSame(t *testing.T) {
-	op := ltVV{retSame: true}
+	op := ltVV{ltOp{retSame: true}, binopVV{}}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -269,7 +269,7 @@ func TestltVV_RetSame(t *testing.T) {
 }
 
 func TestltVS_RetSame(t *testing.T) {
-	op := ltVS{retSame: true}
+	op := ltVS{ltOp{retSame: true}, binopVS{}}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -326,7 +326,7 @@ func TestltVS_RetSame(t *testing.T) {
 }
 
 func TestltSV_RetSame(t *testing.T) {
-	op := ltSV{retSame: true}
+	op := ltSV{ltOp{retSame: true}, binopSV{}}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 

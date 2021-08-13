@@ -5,16 +5,40 @@ import (
 )
 
 const arithMetaRaw = `
+{{define "TypeDefRaw"}}
+type {{.Name }}Op struct{ binop }
+
+// String implements fmt.Stringer.
+func (op {{.Name}}Op) String() string { return "{{.Symbol}}" }
+
+// Do performs {{.CommentOp}}.
+func (op {{.Name}}Op) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+	{{- template "Do" . -}}
+}
+
+// PreallocDo performs {{.CommentOp}} but with a preallocated return value.
+// PreallocDo allows {{.Name}} to implement ops.PreallocOp.
+func (op {{.Name}}Op) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+	{{- template "PreallocDo" . -}}
+}
+
+
+{{- if not .IsDiff -}}
+// DiffWRT returns {false, false} for {{.Name}}
+func (op {{.Name}}Op) DiffWRT(inputs int) []bool { return twofalses }
+{{- end -}}
+{{end}}
+
 {{define "TypeDefVV"}}
-type {{.Name}}VV struct { binop }
+type {{.Name}}VV struct { {{.Name }}Op ; binopVV }
 {{end}}
 
 {{define "TypeDefVS"}}
-type {{.Name}}VS struct { binopVS }
+type {{.Name}}VS struct { {{.Name}}Op ; binopVS }
 {{end}}
 
 {{define "TypeDefSV"}}
-type {{.Name}}SV struct { binopSV }
+type {{.Name}}SV struct { {{.Name}}Op ; binopSV }
 {{end}}
 
 {{- define "Do" -}}
@@ -51,16 +75,41 @@ if err := handleCtx(ctx); err != nil {
 `
 
 const cmpMetaRaw = `
+
+{{define "TypeDefRaw"}}
+type {{.Name}}Op struct{ binop; retSame bool }
+
+// String implements fmt.Stringer.
+func (op {{.Name}}Op) String() string { return "{{.Symbol}}" }
+
+// Do performs {{.CommentOp}}.
+func (op {{.Name}}Op) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+	{{- template "Do" . -}}
+}
+
+// PreallocDo performs {{.CommentOp}} but with a preallocated return value.
+// PreallocDo allows {{.Name}} to implement ops.PreallocOp.
+func (op {{.Name}}Op) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+	{{- template "PreallocDo" . -}}
+}
+
+{{- if not .IsDiff -}}
+// DiffWRT returns {false, false} for {{.Name}}
+func (op {{.Name}}Op) DiffWRT(inputs int) []bool { return twofalses }
+{{- end -}}
+{{end}}
+
+
 {{define "TypeDefVV"}}
-type {{.Name}}VV struct { binop; retSame bool }
+type {{.Name}}VV struct { {{.Name}}Op; binopVV  }
 {{end}}
 
 {{define "TypeDefVS"}}
-type {{.Name}}VS struct { binopVS; retSame bool }
+type {{.Name}}VS struct { {{.Name}}Op; binopVS }
 {{end}}
 
 {{define "TypeDefSV"}}
-type {{.Name}}SV struct { binopSV; retSame bool }
+type {{.Name}}SV struct { {{.Name}}Op; binopSV }
 {{end}}
 
 {{- define "Do" -}}
@@ -136,30 +185,15 @@ func (op {{.Name}}SV) Type() hm.Type {
 {{end}}
 `
 
-const binOpRaw = `// {{.Name}}VV is a tensor-tensor {{.CommentOp}}.
+const binOpRaw = `// {{.Name}}Op is the base op for {{.CommentOp}}.
+{{- template "TypeDefRaw" . }}
+
+// {{.Name}}VV is a tensor-tensor {{.CommentOp}}.
 {{- template "TypeDefVV" . -}}
 
-// String implements fmt.Stringer.
-func (op {{.Name}}VV) String() string { return "{{.Symbol}}" }
+
 
 {{ template "Type()VV" . }}
-
-// Do performs {{.CommentOp}}.
-func (op {{.Name}}VV) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
-	{{- template "Do" . -}}
-}
-
-// PreallocDo performs {{.CommentOp}} but with a preallocated return value.
-// PreallocDo allows {{.Name}} to implement ops.PreallocOp.
-func (op {{.Name}}VV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
-	{{- template "PreallocDo" . -}}
-}
-
-{{- if not .IsDiff -}}
-// DiffWRT returns {false, false} for {{.Name}}
-func (op {{.Name}}VV) DiffWRT(inputs int) []bool { return twofalses }
-{{- end -}}
-
 
 
 // {{.Name}}VS is a tensor-scalar {{.CommentOp}}.
@@ -170,21 +204,6 @@ func (op {{.Name}}VS) String() string { return "{{.Symbol}}·" }
 
 {{ template "Type()VS" . }}
 
-// Do performs {{.CommentOp}}.
-func (op {{.Name}}VS) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
-	{{- template "Do" . -}}
-}
-
-// PreallocDo performs {{.CommentOp}} but with a preallocated return value.
-// PreallocDo allows {{.Name}}VS to implement ops.PreallocOp.
-func (op {{.Name}}VS) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
-	{{- template "PreallocDo" . -}}
-}
-
-{{- if not .IsDiff -}}
-// DiffWRT returns {false, false} for {{.Name}}
-func (op {{.Name}}VS) DiffWRT(inputs int) []bool { return twofalses }
-{{- end -}}
 
 
 // {{.Name}}SV is a scalar-tensor {{.CommentOp}}.
@@ -194,23 +213,6 @@ func (op {{.Name}}VS) DiffWRT(inputs int) []bool { return twofalses }
 func (op {{.Name}}SV) String() string { return "·{{.Symbol}}" }
 
 {{ template "Type()SV" . }}
-
-// Do performs {{.CommentOp}}.
-func (op {{.Name}}SV) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
-	{{- template "Do" . -}}
-}
-
-// PreallocDo performs {{.CommentOp}} but with a preallocated return value.
-// PreallocDo allows {{.Name}}SV to implement ops.PreallocOp.
-func (op {{.Name}}SV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
-	{{- template "PreallocDo" . -}}
-}
-
-{{- if not .IsDiff -}}
-// DiffWRT returns {false, false} for {{.Name}}
-func (op {{.Name}}SV) DiffWRT(inputs int) []bool { return twofalses }
-{{- end -}}
-
 
 `
 
@@ -257,7 +259,7 @@ const arithOpTestRaw = `{{ define "varExpected" }}
 {{- $VS := ( printf "%vVS" .Name ) -}}
 {{- $SV := ( printf "%vSV" .Name ) -}}
 func Test{{$VV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
-	op := {{$VV}}{ {{if .IsCmpRetTrue}}retSame: true{{end}} }
+	op := {{$VV}}{ {{if .IsCmpRetTrue}}{{.Name}}Op{retSame: true}, binopVV{} {{end}} }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -306,7 +308,7 @@ func Test{{$VV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 }
 
 func Test{{$VS}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
-	op := {{$VS}}{ {{if .IsCmpRetTrue}}retSame: true{{end}} }
+	op := {{$VS}}{ {{if .IsCmpRetTrue}}{{.Name}}Op{retSame: true}, binopVS{} {{end}} }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -346,7 +348,7 @@ func Test{{$VS}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 }
 
 func Test{{$SV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
-	op := {{$SV}}{ {{if .IsCmpRetTrue}}retSame: true{{end}}  }
+	op := {{$SV}}{ {{if .IsCmpRetTrue}}{{.Name}}Op{retSame: true}, binopSV{} {{end}}  }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 

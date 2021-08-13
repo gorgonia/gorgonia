@@ -21,22 +21,24 @@ type binop struct{}
 // Arity returns 2. The operation requires two inputs.
 func (op binop) Arity() int { return 2 }
 
+// DiffWRT returns {true, true} for all binops defined in this library.
+func (op binop) DiffWRT(inputs int) []bool { return twotrues }
+
+type binopVV struct{}
+
 // Type returns the operation type of (·) : a → a → a
-func (op binop) Type() hm.Type {
+func (op binopVV) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	return hm.NewFnType(a, a, a)
 }
 
 // ShapeExpr returns the shape expression of (·) : a → a → a.
-func (op binop) ShapeExpr() shapes.Expr {
+func (op binopVV) ShapeExpr() shapes.Expr {
 	a := shapes.Var('a')
 	return shapes.MakeArrow(a, a, a)
 }
 
-// DiffWRT returns {true, true} for all binops defined in this library.
-func (op binop) DiffWRT(inputs int) []bool { return twotrues }
-
-type binopVS struct{ binop }
+type binopVS struct{}
 
 // Type returns the operation type of (·) : a → b → a
 func (op binopVS) Type() hm.Type {
@@ -51,7 +53,7 @@ func (op binopVS) ShapeExpr() shapes.Expr {
 	return shapes.MakeArrow(a, shapes.ScalarShape(), a)
 }
 
-type binopSV struct{ binop }
+type binopSV struct{}
 
 // Type returns the operation type of (·) : a → b → b
 func (op binopSV) Type() hm.Type {

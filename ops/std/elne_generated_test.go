@@ -199,7 +199,7 @@ func TestelNeSV(t *testing.T) {
 }
 
 func TestelNeVV_RetSame(t *testing.T) {
-	op := elNeVV{retSame: true}
+	op := elNeVV{elNeOp{retSame: true}, binopVV{}}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -269,7 +269,7 @@ func TestelNeVV_RetSame(t *testing.T) {
 }
 
 func TestelNeVS_RetSame(t *testing.T) {
-	op := elNeVS{retSame: true}
+	op := elNeVS{elNeOp{retSame: true}, binopVS{}}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -326,7 +326,7 @@ func TestelNeVS_RetSame(t *testing.T) {
 }
 
 func TestelNeSV_RetSame(t *testing.T) {
-	op := elNeSV{retSame: true}
+	op := elNeSV{elNeOp{retSame: true}, binopSV{}}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 

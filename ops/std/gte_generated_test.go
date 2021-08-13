@@ -199,7 +199,7 @@ func TestgteSV(t *testing.T) {
 }
 
 func TestgteVV_RetSame(t *testing.T) {
-	op := gteVV{retSame: true}
+	op := gteVV{gteOp{retSame: true}, binopVV{}}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -269,7 +269,7 @@ func TestgteVV_RetSame(t *testing.T) {
 }
 
 func TestgteVS_RetSame(t *testing.T) {
-	op := gteVS{retSame: true}
+	op := gteVS{gteOp{retSame: true}, binopVS{}}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -326,7 +326,7 @@ func TestgteVS_RetSame(t *testing.T) {
 }
 
 func TestgteSV_RetSame(t *testing.T) {
-	op := gteSV{retSame: true}
+	op := gteSV{gteOp{retSame: true}, binopSV{}}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
