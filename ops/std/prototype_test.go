@@ -13,7 +13,7 @@ import (
 )
 
 func TestAdd__(t *testing.T) {
-	op := Add{}
+	op := addVV{}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -77,7 +77,7 @@ func TestAdd__(t *testing.T) {
 }
 
 func TestAddVS__(t *testing.T) {
-	op := AddVS{}
+	op := addVS{}
 
 	// Do
 	var a, b, c values.Value
@@ -124,7 +124,7 @@ func TestAddVS__(t *testing.T) {
 }
 
 func TestAddSV__(t *testing.T) {
-	op := AddSV{}
+	op := addSV{}
 
 	// Do
 	var a, b, c values.Value

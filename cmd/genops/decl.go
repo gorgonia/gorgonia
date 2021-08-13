@@ -1,19 +1,29 @@
 package main
 
 type binOp struct {
-	Name      string
-	Method    string
+	// Name of the Op. It will be suffixed with -VV, -VS, -SV.
+	Name string
+
+	// Name of the tensor.XXX function to be called.
+	Method string
+
+	// Comment on what the binop actually does.
 	CommentOp string
-	Symbol    string
+
+	// Symbol for the bin op.
+	Symbol string
+
+	// IsDiff denotes whether the operation is differentiable.
+	IsDiff bool
 }
 
 var ariths = []binOp{
-	{"Add", "Add", "elementwise addition", "+"},
-	{"Sub", "Sub", "elementwise subtraction", "-"},
-	{"Mul", "Mul", "elementwise multiplciatio=", "*"},
-	{"Div", "Div", "elementwise division", "÷"},
-	{"Pow", "Pow", "elementwise exponentiation", "^"},
-	{"Mod", "Mod", "elementwise mod", "%"},
+	{"add", "Add", "elementwise addition", "+", true},
+	{"sub", "Sub", "elementwise subtraction", "-", true},
+	{"mul", "Mul", "elementwise multiplciatio=", "*", true},
+	{"div", "Div", "elementwise division", "÷", true},
+	{"pow", "Pow", "elementwise exponentiation", "^", true},
+	{"mod", "Mod", "elementwise mod", "%", false},
 }
 
 type binopTest struct {
@@ -97,12 +107,12 @@ var arithTestResults = []binopTestResult{
 }
 
 var cmps = []binOp{
-	{"Lt", "Lt", "elementwise less-than", "<"},
-	{"Lte", "Lte", "elementwise less-than-or-equal-to", "≤"},
-	{"Gt", "Gt", "elementwise greater-than", ">"},
-	{"Gte", "Gte", "elementwise greater-than-or-equal-to", "≥"},
-	{"ElEq", "ElEq", "elementwise equal-to", "="},
-	{"ElNe", "ElNe", "elementwise not-equal-to", "≠"},
+	{"lt", "Lt", "elementwise less-than", "<", false},
+	{"lte", "Lte", "elementwise less-than-or-equal-to", "≤", false},
+	{"gt", "Gt", "elementwise greater-than", ">", false},
+	{"gte", "Gte", "elementwise greater-than-or-equal-to", "≥", false},
+	{"elEq", "ElEq", "elementwise equal-to", "=", false},
+	{"elNe", "ElNe", "elementwise not-equal-to", "≠", false},
 }
 
 var cmpTestResultsBool = []binopTestResult{
@@ -229,4 +239,16 @@ var cmpTestInputSame = binopTestInput{
 	ASV: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))",
 	BSV: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
 	CSV: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 0, 0, 0, 0, 0}))",
+}
+
+// unary operators
+type unop struct {
+	// name of the op.
+	Name string
+
+	// engine name to check
+	Engine string
+
+	// IsDiff
+	IsDiff bool
 }

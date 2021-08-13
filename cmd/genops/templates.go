@@ -6,7 +6,7 @@ import (
 
 const arithMetaRaw = `
 {{define "TypeDefVV"}}
-type {{.Name}} struct { binop }
+type {{.Name}}VV struct { binop }
 {{end}}
 
 {{define "TypeDefVS"}}
@@ -52,7 +52,7 @@ if err := handleCtx(ctx); err != nil {
 
 const cmpMetaRaw = `
 {{define "TypeDefVV"}}
-type {{.Name}} struct { binop; retSame bool }
+type {{.Name}}VV struct { binop; retSame bool }
 {{end}}
 
 {{define "TypeDefVS"}}
@@ -101,7 +101,7 @@ if err := handleCtx(ctx); err != nil {
 
 {{define "Type()VV"}}
 // Type returns the type: (·) : a → a → a or (·) :  a → a → b
-func (op {{.Name}}) Type() hm.Type{
+func (op {{.Name}}VV) Type() hm.Type{
 	a := hm.TypeVariable('a') // (T U) or U
 	if op.retSame{
 		return hm.NewFnType(a, a, a)
@@ -136,24 +136,30 @@ func (op {{.Name}}SV) Type() hm.Type {
 {{end}}
 `
 
-const binOpRaw = `// {{.Name}} is a tensor-tensor {{.CommentOp}}.
+const binOpRaw = `// {{.Name}}VV is a tensor-tensor {{.CommentOp}}.
 {{- template "TypeDefVV" . -}}
 
 // String implements fmt.Stringer.
-func (op {{.Name}}) String() string { return "{{.Symbol}}" }
+func (op {{.Name}}VV) String() string { return "{{.Symbol}}" }
 
 {{ template "Type()VV" . }}
 
 // Do performs {{.CommentOp}}.
-func (op {{.Name}}) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op {{.Name}}VV) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
 	{{- template "Do" . -}}
 }
 
 // PreallocDo performs {{.CommentOp}} but with a preallocated return value.
 // PreallocDo allows {{.Name}} to implement ops.PreallocOp.
-func (op {{.Name}}) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op {{.Name}}VV) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	{{- template "PreallocDo" . -}}
 }
+
+{{- if not .IsDiff -}}
+// DiffWRT returns {false, false} for {{.Name}}
+func (op {{.Name}}VV) DiffWRT(inputs int) []bool { return twofalses }
+{{- end -}}
+
 
 
 // {{.Name}}VS is a tensor-scalar {{.CommentOp}}.
@@ -175,6 +181,11 @@ func (op {{.Name}}VS) PreallocDo(ctx context.Context, prealloc values.Value, vs 
 	{{- template "PreallocDo" . -}}
 }
 
+{{- if not .IsDiff -}}
+// DiffWRT returns {false, false} for {{.Name}}
+func (op {{.Name}}VS) DiffWRT(inputs int) []bool { return twofalses }
+{{- end -}}
+
 
 // {{.Name}}SV is a scalar-tensor {{.CommentOp}}.
 {{- template "TypeDefSV" . -}}
@@ -195,13 +206,21 @@ func (op {{.Name}}SV) PreallocDo(ctx context.Context, prealloc values.Value, vs 
 	{{- template "PreallocDo" . -}}
 }
 
+{{- if not .IsDiff -}}
+// DiffWRT returns {false, false} for {{.Name}}
+func (op {{.Name}}SV) DiffWRT(inputs int) []bool { return twofalses }
+{{- end -}}
+
+
 `
 
-const binSymDiffRaw = `func (op {{.Name}})SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error){ panic("not implemented" )}
+const binSymDiffRaw = `{{ if .IsDiff }}
+func (op {{.Name}}VV)SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error){ panic("not implemented" )}
 
 func (op {{.Name}}VS)SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error){ panic("not implemented" )}
 
 func (op {{.Name}}SV)SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error){ panic("not implemented" )}
+{{ end }}
 
 `
 
@@ -234,7 +253,7 @@ const arithOpTestRaw = `{{ define "varExpected" }}
 	assert.True(t, expectedShape.Eq(c.Shape()))
 {{ end }}
 
-{{- $VV := ( printf "%v" .Name ) -}}
+{{- $VV := ( printf "%vVV" .Name ) -}}
 {{- $VS := ( printf "%vVS" .Name ) -}}
 {{- $SV := ( printf "%vSV" .Name ) -}}
 func Test{{$VV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
@@ -278,10 +297,10 @@ func Test{{$VV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 	a = tensor.New(tensor.WithShape(2, 3), tensor.Of(tensor.Float64))
 	b = tensor.New(tensor.WithShape(), tensor.Of(tensor.Float64))
 	if expectedType, err = typecheck(op, a, b); err == nil {
-		t.Fatalf("Expected {{.Name}}{} to NOT pass type checking. Got ~(%v %v) =  %v ", datatypes.TypeOf(a), datatypes.TypeOf(b), expectedType)
+		t.Fatalf("Expected {{.Name}}VV{} to NOT pass type checking. Got ~(%v %v) =  %v ", datatypes.TypeOf(a), datatypes.TypeOf(b), expectedType)
 	}
 	if expectedShape, err = shapecheck(op, a, b); err == nil {
-		t.Fatalf("Expected {{.Name}}{} to NOT pass shape checking. Got expectedShape = %v", expectedShape)
+		t.Fatalf("Expected {{.Name}}VV{} to NOT pass shape checking. Got expectedShape = %v", expectedShape)
 	}
 
 }
@@ -322,7 +341,7 @@ func Test{{$VS}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 	// we won't type check because the type system is not a dependent type system, thus
 	// {{.Name}}VS : (a → b → a) will always type check without errors
 	if expectedShape, err = shapecheck(op, a, b); err == nil {
-		t.Fatalf("Expected {{.Name}}{} to NOT pass shape checking. Got %v ~ (%v, %v) = %v", op.ShapeExpr(), a.Shape(), b.Shape(), expectedShape)
+		t.Fatalf("Expected {{.Name}}VS{} to NOT pass shape checking. Got %v ~ (%v, %v) = %v", op.ShapeExpr(), a.Shape(), b.Shape(), expectedShape)
 	}
 }
 
@@ -363,7 +382,7 @@ func Test{{$SV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 	// we won't type check because the type system is not a dependent type system, thus
 	// {{.Name}}SV : (a → b → b) will always type check without errors
 	if expectedShape, err = shapecheck(op, a, b); err == nil {
-		t.Fatalf("Expected {{.Name}}{} to NOT pass shape checking. Got %v ~ (%v, %v) = %v", op.ShapeExpr(), a.Shape(), b.Shape(), expectedShape)
+		t.Fatalf("Expected {{.Name}}SV{} to NOT pass shape checking. Got %v ~ (%v, %v) = %v", op.ShapeExpr(), a.Shape(), b.Shape(), expectedShape)
 	}
 }
 

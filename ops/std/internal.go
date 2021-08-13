@@ -8,6 +8,9 @@ import (
 // internal.go provides the data structures that are useful for the specific implementations in this package.
 
 var twotrues = []bool{true, true}
+var twofalses = []bool{false, false}
+var onetrue = []bool{true}
+var onefalse = []bool{false}
 
 // binop is a generic data structure meant to be embedded in any binary operations.
 // binop has the basic methods of all binary operations. One may elect to think of
@@ -62,3 +65,23 @@ func (op binopSV) ShapeExpr() shapes.Expr {
 	a := shapes.Var('a')
 	return shapes.MakeArrow(shapes.ScalarShape(), a, a)
 }
+
+type unop struct{}
+
+// Arity returns 2. The operation requires two inputs.
+func (op unop) Arity() int { return 1 }
+
+// Type returns the operation type of (·) : a → a.
+func (op unop) Type() hm.Type {
+	a := hm.TypeVariable('a')
+	return hm.NewFnType(a, a)
+}
+
+// ShapeExpr returns the shape expression of (·) : a → a.
+func (op unop) ShapeExpr() shapes.Expr {
+	a := shapes.Var('a')
+	return shapes.MakeArrow(a, a)
+}
+
+// DiffWRT returns {true, true} for all unops defined in this library.
+func (op unop) DiffWRT(inputs int) []bool { return onetrue }
