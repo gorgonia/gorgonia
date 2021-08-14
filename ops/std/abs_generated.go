@@ -41,4 +41,5 @@ func (op absOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...val
 	retVal, err = tensor.Abs(a, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
 	task.End()
 	return retVal, err
-}
+}                                          // DiffWRT returns {false, false} for abs
+func (op absOp) DiffWRT(inputs int) []bool { return onefalse }
