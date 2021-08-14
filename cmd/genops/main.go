@@ -163,6 +163,28 @@ func generateUnOps() error {
 			return errors.Wrapf(err, "Unable to add %v SymDiff stubs", op.Name)
 		}
 	}
+
+	tmpl = unopTestTmpl
+	for i, op := range unops {
+		filename := strings.ToLower(op.Name) + "_generated_test.go"
+		p := path.Join(stdopsloc, filename)
+		f, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(f, "package stdops\n\n%v\n\n", genmsg)
+
+		o := unoptestWithOp{op, unopTests[i]}
+		if err := tmpl.Execute(f, o); err != nil {
+			return errors.Wrapf(err, "Unable to execute unopTmpl for %v", op.Name)
+		}
+		if err := f.Close(); err != nil {
+			return errors.Wrapf(err, "Unable to close %v", p)
+		}
+		if err := goimports(p); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

@@ -169,3 +169,40 @@ func TestAddSV__(t *testing.T) {
 		t.Fatalf("Expected Add{} to NOT pass shape checking. Got %v ~ (%v, %v) = %v", op.ShapeExpr(), a.Shape(), b.Shape(), expectedShape)
 	}
 }
+
+func TestAbs__(t *testing.T) {
+	op := absOp{}
+
+	// Do
+	var a, b values.Value
+	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{-1, -2, -3, 4, 5, 6}))
+
+	var expectedType hm.Type
+	var expectedShape shapes.Shape
+	var err error
+
+	if expectedType, err = typecheck(op, a); err != nil {
+		t.Fatalf("...")
+	}
+
+	if expectedShape, err = shapecheck(op, a); err != nil {
+		t.Fatalf("...")
+	}
+
+	if b, err = op.Do(context.Background(), a); err != nil {
+		t.Fatalf("Expected AddSV{} to work correctly. Err: %v", err)
+	}
+	assert.Equal(t, expectedType, datatypes.TypeOf(b))
+	assert.True(t, expectedShape.Eq(b.Shape()))
+	correct := []float64{1, 2, 3, 4, 5, 6}
+	assert.Equal(t, correct, b.Data())
+
+	// PreallocDo
+	b = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{-100, -100, -100, -100, -100, -100}))
+	if b, err = op.PreallocDo(context.Background(), b, a); err != nil {
+		t.Fatalf("Expected AddSV{} to work correctly. Err: %v", err)
+	}
+	assert.Equal(t, expectedType, datatypes.TypeOf(b))
+	assert.True(t, expectedShape.Eq(b.Shape()))
+	assert.Equal(t, correct, b.Data())
+}

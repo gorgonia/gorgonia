@@ -10,24 +10,28 @@ import (
 	"gorgonia.org/shapes"
 )
 
-func typecheck(op ops.Op, a, b values.Value) (retType hm.Type, err error) {
+func typecheck(op ops.Op, vs ...values.Value) (retType hm.Type, err error) {
 	childrenTypes := hm.BorrowTypes(3)
 	defer hm.ReturnTypes(childrenTypes)
 	childrenTypes = childrenTypes[:0]
 
-	childrenTypes = append(childrenTypes, datatypes.TypeOf(a), datatypes.TypeOf(b))
+	ts := make([]hm.Type, len(vs))
+	for i := range vs {
+		ts[i] = datatypes.TypeOf(vs[i])
+	}
+	childrenTypes = append(childrenTypes, ts...)
 
 	childrenTypes = append(childrenTypes, hm.TypeVariable('z'))
 	return types.Infer(op.Type(), childrenTypes...)
 }
 
-func shapecheck(op ops.Op, a, b values.Value) (retVal shapes.Shape, err error) {
+func shapecheck(op ops.Op, vs ...values.Value) (retVal shapes.Shape, err error) {
 	s := op.ShapeExpr()
-	if s, err = shapes.InferApp(s, a.Shape()); err != nil {
-		return nil, errors.Wrapf(err, "Unable to infer %v on a. Last inferred shape: %v", op, s)
+	for i, v := range vs {
+		if s, err = shapes.InferApp(s, v.Shape()); err != nil {
+			return nil, errors.Wrapf(err, "Unable to infer %v on %dth value. Last inferred shape: %v", op, i, s)
+		}
 	}
-	if s, err = shapes.InferApp(s, b.Shape()); err != nil {
-		return nil, errors.Wrapf(err, "Unable to infer %v on b. Last inferred shape: %v", op, s)
-	}
+
 	return shapes.ToShape(s)
 }

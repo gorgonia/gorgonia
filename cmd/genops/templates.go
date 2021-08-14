@@ -254,7 +254,7 @@ const arithOpTestRaw = `{{ define "varExpected" }}
 {{- $VV := ( printf "%vVV" .Name ) -}}
 {{- $VS := ( printf "%vVS" .Name ) -}}
 {{- $SV := ( printf "%vSV" .Name ) -}}
-func Test{{$VV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
+func Test_{{$VV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 	op := {{$VV}}{ {{if .IsCmpRetTrue}}{{.Name}}Op{retSame: true}, binopVV{} {{end}} }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
@@ -303,7 +303,7 @@ func Test{{$VV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 
 }
 
-func Test{{$VS}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
+func Test_{{$VS}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 	op := {{$VS}}{ {{if .IsCmpRetTrue}}{{.Name}}Op{retSame: true}, binopVS{} {{end}} }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
@@ -343,7 +343,7 @@ func Test{{$VS}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 	}
 }
 
-func Test{{$SV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
+func Test_{{$SV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 	op := {{$SV}}{ {{if .IsCmpRetTrue}}{{.Name}}Op{retSame: true}, binopSV{} {{end}}  }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
@@ -420,6 +420,46 @@ func (op {{.Name}}Op) PreallocDo(ctx context.Context, prealloc values.Value, vs 
 
 `
 
+const unopTestRaw = `func Test_{{.Name}}(t *testing.T){
+	op := {{.Name}}Op{}
+	// basic test
+	assert.Equal(t, 1, op.Arity())
+
+	// Do
+	var a, b values.Value
+	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking({{.Input}}))
+
+	var expectedType hm.Type
+	var expectedShape shapes.Shape
+	var err error
+
+	if expectedType, err = typecheck(op, a); err != nil {
+		t.Fatalf("{{.Name}}Op failed to typecheck. Err: %v", err)
+	}
+
+	if expectedShape, err = shapecheck(op, a); err != nil {
+		t.Fatalf("{{.Name}}Op failed to shapecheck. Err: %v", err)
+	}
+
+	if b, err = op.Do(context.Background(), a); err != nil {
+		t.Fatalf("Expected {{.Name}}Op{} to work correctly. Err: %v", err)
+	}
+	assert.Equal(t, expectedType, datatypes.TypeOf(b))
+	assert.True(t, expectedShape.Eq(b.Shape()))
+	correct := {{.Correct}}
+	assert.Equal(t, correct, b.Data())
+
+	// PreallocDo
+	b = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{-100, -100, -100, -100, -100, -100}))
+	if b, err = op.PreallocDo(context.Background(), b, a); err != nil {
+		t.Fatalf("Expected {{.Name}}Op{} to work correctly. Err: %v", err)
+	}
+	assert.Equal(t, expectedType, datatypes.TypeOf(b))
+	assert.True(t, expectedShape.Eq(b.Shape()))
+	assert.Equal(t, correct, b.Data())
+}
+`
+
 var (
 	arithMetaTmpl   *template.Template
 	arithOpTmpl     *template.Template
@@ -428,6 +468,7 @@ var (
 	binSymDiffTmpl  *template.Template
 	arithOpTestTmpl *template.Template
 	unopTmpl        *template.Template
+	unopTestTmpl    *template.Template
 )
 
 func init() {
@@ -438,4 +479,5 @@ func init() {
 	binSymDiffTmpl = template.Must(template.New("binsymdiff").Funcs(funcmap).Parse(binSymDiffRaw))
 	arithOpTestTmpl = template.Must(template.New("binopTest").Funcs(funcmap).Parse(arithOpTestRaw))
 	unopTmpl = template.Must(template.New("unary op").Funcs(funcmap).Parse(unopTmplRaw))
+	unopTestTmpl = template.Must(template.New("unary op test").Funcs(funcmap).Parse(unopTestRaw))
 }

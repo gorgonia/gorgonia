@@ -244,10 +244,10 @@ var cmpTestInputSame = binopTestInput{
 var unops = []op{
 	{"abs", "Abs", "elementwise absolute value", "|·|", false},
 	{"sign", "Sign", "elementwise sign", "Sign", false},
-	//	{"ceil", "Ceil", "elementwise ceil", "⌈·⌉", false},
+	//{"ceil", "Ceil", "elementwise ceil", "⌈·⌉", false},
 	//{"floor", "Floor", "elementwise floor", "⌊·⌋", false},
 
-	// {"sin", "Sin", "elementwise sine", "Sin", true},
+	//{"sin", "Sin", "elementwise sine", "Sin", true},
 	//{"cos", "Cos", "elementwise cos", "Cos", true},
 	{"exp", "Exp", "elementwise exp", "Exp", true},
 	{"ln", "Log", "elementwise ln", "Ln", true},
@@ -265,4 +265,57 @@ var unops = []op{
 	// activation functions... perhaps move them to NN
 	{"cube", "Cube", "elementwise cube", "³", true},
 	{"tanh", "Tanh", "elementwise tanh", "tanh", true},
+}
+
+type unoptest struct {
+	Input   string
+	Correct string
+}
+
+type unoptestWithOp struct {
+	op
+	unoptest
+}
+
+var unopTests = []unoptest{
+	// abs
+	{"[]float64{-1,-2,-3,4,5,6}", "[]float64{1,2,3,4,5,6}"},
+
+	//sign
+	{"[]float64{-1,-2,-3,4,5,6}", "[]float64{-1,-1,-1,1,1,1}"},
+
+	// ceil
+	// floor
+	// sin
+	// cos
+
+	// exp
+	{"[]float64{1,2,3,4,5,6}", "[]float64{math.Exp(1), math.Exp(2), math.Exp(3), math.Exp(4), math.Exp(5), math.Exp(6)}"},
+
+	// ln
+	{"[]float64{1,2,3,4,5,6}", "[]float64{math.Log(1), math.Log(2), math.Log(3), math.Log(4), math.Log(5), math.Log(6)}"},
+
+	// log2
+	{"[]float64{1,2,3,4,5,6}", "[]float64{math.Log2(1), math.Log2(2), math.Log2(3), math.Log2(4), math.Log2(5), math.Log2(6)}"},
+
+	// neg
+	{"[]float64{-1,-2,-3,4,5,6}", "[]float64{1,2,3,-4,-5,-6}"},
+
+	// square
+	{"[]float64{-1,-2,-3,4,5,6}", "[]float64{1*1,2*2,3*3,4*4,5*5,6*6}"},
+
+	// sqrt
+	{"[]float64{1,2,3,4,5,6}", "[]float64{math.Sqrt(1), math.Sqrt(2), math.Sqrt(3), math.Sqrt(4), math.Sqrt(5), math.Sqrt(6)}"},
+
+	// inv
+	{"[]float64{-1,-2,-3,4,5,6}", "[]float64{1/-1,1.0/-2.0,1.0/-3.0,1.0/4.0,1.0/5.0,1.0/6.0}"},
+
+	// invsqrt
+	{"[]float64{1,2,3,4,5,6}", "[]float64{1/math.Sqrt(1),1/math.Sqrt(2),1/math.Sqrt(3),1/math.Sqrt(4),1/math.Sqrt(5),1/math.Sqrt(6)}"},
+
+	// cube
+	{"[]float64{-1,-2,-3,4,5,6}", "[]float64{-1,-2*-2*-2,-3*-3*-3,4*4*4,5*5*5,6*6*6}"},
+
+	// tanh
+	{"[]float64{-1,-2,-3,4,5,6}", "[]float64{math.Tanh(-1),math.Tanh(-2),math.Tanh(-3),math.Tanh(4),math.Tanh(5),math.Tanh(6)}"},
 }
