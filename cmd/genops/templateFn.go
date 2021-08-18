@@ -7,4 +7,5 @@ import (
 
 var funcmap = template.FuncMap{
 	"lower": strings.ToLower,
+	"title": strings.Title,
 }

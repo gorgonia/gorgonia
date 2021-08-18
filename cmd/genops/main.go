@@ -188,6 +188,60 @@ func generateUnOps() error {
 	return nil
 }
 
+func generateBinOpAPI() (err error) {
+
+	type apiwrap struct {
+		op
+		IsCmp bool
+	}
+
+	filename := "api_generated.go"
+	filenameTest := "api_generated_test.go"
+	p := path.Join(stdopsloc, filename)
+	pt := path.Join(stdopsloc, filenameTest)
+	f, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	g, err := os.OpenFile(pt, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(f, "package stdops\n\n%v\n\n", genmsg)
+	fmt.Fprintf(g, "package stdops\n\n%v\n\n", genmsg)
+	for _, o := range ariths {
+		if err := binopAPITmpl.Execute(f, apiwrap{o, false}); err != nil {
+			return errors.Wrapf(err, "Unable to execute binopAPITmpl for %v", o.Name)
+		}
+
+		if err := binopAPITestTmpl.Execute(g, apiwrap{o, false}); err != nil {
+			return errors.Wrapf(err, "Unable to execute binopAPITestTmpl for %v", o.Name)
+		}
+	}
+	for _, o := range cmps {
+		if err := binopAPITmpl.Execute(f, apiwrap{o, true}); err != nil {
+			return errors.Wrapf(err, "Unable to execute binopAPITmpl for %v", o.Name)
+		}
+
+		if err := binopAPITestTmpl.Execute(g, apiwrap{o, true}); err != nil {
+			return errors.Wrapf(err, "Unable to execute binopAPITestTmpl for %v", o.Name)
+		}
+	}
+
+	if err := f.Close(); err != nil {
+		return errors.Wrapf(err, "Unable to close %v", p)
+	}
+	if err := g.Close(); err != nil {
+		return errors.Wrapf(err, "Unable to close %v", pt)
+	}
+
+	if err := goimports(p); err != nil {
+		return errors.Wrapf(err, "Unable to goimports %v", p)
+	}
+	return goimports(pt)
+}
+
 func finishStubs() error {
 	if err := stubsFile.Close(); err != nil {
 		return err
@@ -204,6 +258,9 @@ func main() {
 		log.Fatal(err)
 	}
 	if err := generateUnOps(); err != nil {
+		log.Fatal(err)
+	}
+	if err := generateBinOpAPI(); err != nil {
 		log.Fatal(err)
 	}
 }

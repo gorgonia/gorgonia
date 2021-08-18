@@ -465,15 +465,129 @@ const unopTestRaw = `func Test_{{.Name}}(t *testing.T){
 }
 `
 
+const binopAPIRaw = `{{- $cmp := "" -}}
+{{- $vv := "" -}}
+{{- $vs := "" -}}
+{{- $sv := "" -}}
+{{- if .IsCmp -}}
+{{- $cmp = ", retSame bool" -}}
+{{- $vv = (printf "%vVV{%vOp{retSame: retSame}, binopVV{}}" .Name .Name ) -}}
+{{- $vs = (printf "%vVS{%vOp{retSame: retSame}, binopVS{}}" .Name .Name ) -}}
+{{- $sv = (printf "%vSV{%vOp{retSame: retSame}, binopSV{}}" .Name .Name ) -}}
+{{- else -}}
+{{- $cmp = ""}}
+{{- $vv = (printf "%vVV{}" .Name ) -}}
+{{- $vs = (printf "%vVS{}" .Name ) -}}
+{{- $sv = (printf "%vSV{}" .Name ) -}}
+{{- end -}}
+
+// {{.Name | title}} creates an ops.Op that is correct to the shape of the given operands.
+func {{.Name | title}}(a, b ops.Operand {{$cmp}}) ops.Op {
+	aScalar := a.Shape().IsScalar()
+	bScalar := b.Shape().IsScalar()
+
+	switch {
+	default:
+		fallthrough
+	case !aScalar && !bScalar:
+		return {{$vv}}
+	case !aScalar && bScalar:
+		return {{$vs}}
+	case aScalar && !bScalar:
+		return {{$sv}}
+	}
+}
+
+`
+
+const binopAPITestRaw = `{{- $retSameFalse := "" -}}
+{{- $retSameTrue := "" -}}
+{{- $cmptrue := "" -}}
+{{- $cmpfalse := "" -}}
+{{- if .IsCmp -}}
+{{- $retSameFalse = ", false" -}}
+{{- $retSameTrue = ", true" -}}
+{{- $cmptrue = "retSame: true" -}}
+{{- $cmpfalse = "retSame: false" -}}
+{{- end -}}
+
+func Test{{.Name | title}}(t *testing.T){
+	assert := assert.New(t)
+
+	var op, expected ops.Op
+
+	// test vv
+	a := tensor.New(tensor.WithShape(2,3), tensor.Of(tensor.Float64))
+	b := tensor.New(tensor.WithShape(2,3), tensor.Of(tensor.Float64))
+	op = {{.Name | title}}(a, b {{$retSameFalse}})
+	expected = {{.Name}}VV{ {{.Name}}Op{ {{$cmpfalse}} }, binopVV{} }
+	assert.Equal(op, expected)
+
+
+{{ if .IsCmp }}
+	// test vv but retSame = true
+	op = {{.Name | title}}(a, b {{$retSameTrue}})
+	expected = {{.Name}}VV{ {{.Name}}Op{ {{$cmptrue}} }, binopVV{} }
+	assert.Equal(op, expected)
+{{ end }}
+
+	// test vs
+	b = tensor.New(tensor.WithShape(), tensor.Of(tensor.Float64))
+	op = {{.Name | title}}(a, b {{$retSameFalse}})
+	expected = {{.Name}}VS{ {{.Name}}Op{ {{$cmpfalse}} }, binopVS{} }
+	assert.Equal(op, expected)
+
+
+{{ if .IsCmp }}
+	// test vs but retSame = true
+	op = {{.Name | title}}(a, b {{$retSameTrue}})
+	expected = {{.Name}}VS{ {{.Name}}Op{ {{$cmptrue}} }, binopVS{} }
+	assert.Equal(op, expected)
+{{ end }}
+
+
+	// test sv
+	op = {{.Name | title}}(b, a {{$retSameFalse}})
+	expected = {{.Name}}SV{ {{.Name}}Op{ {{$cmpfalse}} }, binopSV{} }
+	assert.Equal(op, expected)
+
+{{ if .IsCmp }}
+	// test sv but retSame = true
+	op = {{.Name | title}}(b, a  {{$retSameTrue}})
+	expected = {{.Name}}SV{ {{.Name}}Op{ {{$cmptrue}} }, binopSV{} }
+	assert.Equal(op, expected)
+{{ end }}
+
+
+	// test ss
+	a = tensor.New(tensor.WithShape(), tensor.Of(tensor.Float64))
+	op = {{.Name | title}}(a, b {{$retSameFalse}})
+	expected = {{.Name}}VV{ {{.Name}}Op{ {{$cmpfalse}} }, binopVV{} }
+	assert.Equal(op, expected)
+
+
+{{ if .IsCmp }}
+	// test ss but retSame = true
+	op = {{.Name | title}}(a, b {{$retSameTrue}})
+	expected = {{.Name}}VV{ {{.Name}}Op{ {{$cmptrue}} }, binopVV{} }
+	assert.Equal(op, expected)
+{{ end }}
+
+}
+
+`
+
 var (
-	arithMetaTmpl   *template.Template
-	arithOpTmpl     *template.Template
-	cmpMetaTmpl     *template.Template
-	cmpOpTmpl       *template.Template
-	binSymDiffTmpl  *template.Template
-	arithOpTestTmpl *template.Template
-	unopTmpl        *template.Template
-	unopTestTmpl    *template.Template
+	arithMetaTmpl    *template.Template
+	arithOpTmpl      *template.Template
+	cmpMetaTmpl      *template.Template
+	cmpOpTmpl        *template.Template
+	binSymDiffTmpl   *template.Template
+	arithOpTestTmpl  *template.Template
+	unopTmpl         *template.Template
+	unopTestTmpl     *template.Template
+	binopAPITmpl     *template.Template
+	binopAPITestTmpl *template.Template
 )
 
 func init() {
@@ -485,4 +599,6 @@ func init() {
 	arithOpTestTmpl = template.Must(template.New("binopTest").Funcs(funcmap).Parse(arithOpTestRaw))
 	unopTmpl = template.Must(template.New("unary op").Funcs(funcmap).Parse(unopTmplRaw))
 	unopTestTmpl = template.Must(template.New("unary op test").Funcs(funcmap).Parse(unopTestRaw))
+	binopAPITmpl = template.Must(template.New("api").Funcs(funcmap).Parse(binopAPIRaw))
+	binopAPITestTmpl = template.Must(template.New("api test").Funcs(funcmap).Parse(binopAPITestRaw))
 }

@@ -54,6 +54,11 @@ type AnalyzableOp interface {
 	CallsExtern() bool
 }
 
+// Operand represents an operand that an Op operates on. In short, it's a gorgonia.Tensor.
+type Operand interface {
+	Shape() shapes.Shape
+}
+
 /*
 // SDOp is any Op that supports symbolic differentiation
 type SDOp interface {
