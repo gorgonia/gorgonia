@@ -123,7 +123,7 @@ type VecDot struct{ binop }
 // String implements fmt.Stringer.
 func (op VecDot) String() string { return "·" }
 
-// Type informs the type of the MatMul: Vector a → Vector a → a
+// Type informs the type of the VecDot: Vector a → Vector a → a
 func (op VecDot) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	v := types.MakeTensorType(1, a) // Vector a
@@ -140,7 +140,7 @@ func (op VecDot) ShapeExpr() shapes.Expr {
 	)
 }
 
-// Do performs the matrix-vector multiplication.
+// Do performs the inner product operation.
 func (op VecDot) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
 		return nil, err
@@ -156,7 +156,7 @@ func (op VecDot) Do(ctx context.Context, vs ...values.Value) (values.Value, erro
 	return retVal, err
 }
 
-// PreallocDo performs the matrix-vector multiplication with a preallocated value.
+// PreallocDo performs the inner product operation with a preallocated value.
 // PreallocDo allows MatMul to implement ops.PreallocDo
 func (op VecDot) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if err := handleCtx(ctx); err != nil {
@@ -166,6 +166,68 @@ func (op VecDot) PreallocDo(ctx context.Context, prealloc values.Value, vs ...va
 	b := vs[1].(tensor.Tensor)
 	ctx2, task := trace.NewTask(ctx, op.String())
 	ret, err := tensor.Inner(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
+	retVal, _ := values.AnyToScalar(ret)
+	task.End()
+	return retVal, err
+}
+
+// Outer is an op that represents outer product operations.
+// Note that this op is not the higher order "outer" that one may be familiar with
+// from vector languages like APL.
+type Outer struct{ binop }
+
+// String implements fmt.Stringer.
+func (op Outer) String() string { return "⊗" }
+
+// Type informs the type of Outer: Tensor-n a → Tensor-n a → Matrix a
+func (op Outer) Type() hm.Type {
+	any := hm.TypeVariable('d')
+	a := hm.TypeVariable('a')
+	t := types.MakeDependent(any, a)
+	m := types.MakeTensorType(2, a)
+	return hm.NewFnType(t, t, m)
+}
+
+// ShapeExpr informs the shape operations of Outer: a → b → (Π a, Π b).
+func (op Outer) ShapeExpr() shapes.Expr {
+	a := shapes.Var('a')
+	b := shapes.Var('b')
+	return shapes.MakeArrow(
+		a,
+		b,
+		shapes.Abstract{
+			shapes.UnaryOp{shapes.Prod, a},
+			shapes.UnaryOp{shapes.Prod, b},
+		},
+	)
+}
+
+// Do performs the outer product operation.
+func (op Outer) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
+	if err := handleCtx(ctx); err != nil {
+		return nil, err
+	}
+
+	a := vs[0]
+	b := vs[1]
+	ctx2, task := trace.NewTask(ctx, op.String())
+	ret, err := tensor.Outer(a, b, tensor.WithContext(ctx2))
+	retVal, _ := values.AnyToScalar(ret)
+	task.End()
+
+	return retVal, err
+}
+
+// PreallocDo performs the outer product operation with a preallocated value.
+// PreallocDo allows MatMul to implement ops.PreallocDo
+func (op Outer) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
+	if err := handleCtx(ctx); err != nil {
+		return nil, err
+	}
+	a := vs[0].(tensor.Tensor)
+	b := vs[1].(tensor.Tensor)
+	ctx2, task := trace.NewTask(ctx, op.String())
+	ret, err := tensor.Outer(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
 	retVal, _ := values.AnyToScalar(ret)
 	task.End()
 	return retVal, err
