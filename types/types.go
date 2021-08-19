@@ -89,10 +89,14 @@ func (t TensorType) Format(state fmt.State, c rune) {
 	if state.Flag('#') {
 		fmt.Fprintf(state, "Tensor-%d %#v", t.Dims, t.Of)
 	} else {
-		switch t.Dims {
-		case 1:
+		switch {
+		case t.Dims < 0:
+			fmt.Fprintf(state, "Tensor-n(#%d) %v", -t.Dims, t.Of) // negative numbers are "variables" for dims. THIS IS A HACK.
+		case t.Dims == 0:
+			fmt.Fprintf(state, "%v", t.Of)
+		case t.Dims == 1:
 			fmt.Fprintf(state, "Vector %v", t.Of)
-		case 2:
+		case t.Dims == 2:
 			fmt.Fprintf(state, "Matrix %v", t.Of)
 		default:
 			fmt.Fprintf(state, "Tensor-%d %v", t.Dims, t.Of)
@@ -132,9 +136,19 @@ func (t TensorType) FreeTypeVar() hm.TypeVarSet {
 func (t TensorType) Eq(other hm.Type) bool {
 	switch ot := other.(type) {
 	case TensorType:
+		if t.Dims < 0 || ot.Dims < 0 {
+			return t.Of.Eq(ot.Of)
+		}
 		return t.Of.Eq(ot.Of) && t.Dims == ot.Dims
 	case *TensorType:
+		if t.Dims < 0 || ot.Dims < 0 {
+			return t.Of.Eq(ot.Of)
+		}
 		return t.Of.Eq(ot.Of) && t.Dims == ot.Dims
 	}
+	if t.Dims == 0 {
+		return t.Of.Eq(other)
+	}
+
 	return false
 }
