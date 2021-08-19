@@ -181,9 +181,9 @@ func (op Outer) String() string { return "⊗" }
 
 // Type informs the type of Outer: Tensor-n a → Tensor-n a → Matrix a
 func (op Outer) Type() hm.Type {
-	any := hm.TypeVariable('d')
+
 	a := hm.TypeVariable('a')
-	t := types.MakeDependent(any, a)
+	t := types.MakeTensorType(-1, a)
 	m := types.MakeTensorType(2, a)
 	return hm.NewFnType(t, t, m)
 }
@@ -211,8 +211,8 @@ func (op Outer) Do(ctx context.Context, vs ...values.Value) (values.Value, error
 	a := vs[0]
 	b := vs[1]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	ret, err := tensor.Outer(a, b, tensor.WithContext(ctx2))
-	retVal, _ := values.AnyToScalar(ret)
+	retVal, err := tensor.Outer(a, b, tensor.WithContext(ctx2))
+
 	task.End()
 
 	return retVal, err
@@ -227,8 +227,7 @@ func (op Outer) PreallocDo(ctx context.Context, prealloc values.Value, vs ...val
 	a := vs[0].(tensor.Tensor)
 	b := vs[1].(tensor.Tensor)
 	ctx2, task := trace.NewTask(ctx, op.String())
-	ret, err := tensor.Outer(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
-	retVal, _ := values.AnyToScalar(ret)
+	retVal, err := tensor.Outer(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
 	task.End()
 	return retVal, err
 }
