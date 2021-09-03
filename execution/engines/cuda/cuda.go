@@ -55,7 +55,7 @@ type Engine struct {
 }
 
 // New creates and initializes the engine. This is to be used when then engine is standalone.
-// It will reserve 80% of your GPU memory if no hints are provided.
+// It will reserve 80% of your GPU memory if `hint` <= 0 are provided.
 // This function will panic if there are any CUDA errors.
 //
 // You will need to manually call `.Run()`
