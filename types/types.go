@@ -131,8 +131,8 @@ func (t TensorType) FreeTypeVar() hm.TypeVarSet {
 	return t.Of.FreeTypeVar()
 }
 
-// Eq is the equality function of this type. The type of Tensor has to be the same, and for now, only the dimensions are compared.
-// Shape may be compared in the future for tighter type inference. Satisfies the hm.Type interface.
+// Eq is the equality function of this type.
+// Eq allows TensorType to satisfy the hm.Type interface.
 func (t TensorType) Eq(other hm.Type) bool {
 	switch ot := other.(type) {
 	case TensorType:
