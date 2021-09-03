@@ -5,6 +5,7 @@ import (
 	"runtime/trace"
 
 	"github.com/chewxy/hm"
+	gcontext "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
@@ -35,7 +36,7 @@ func (op MatMul) ShapeExpr() shapes.Expr {
 
 // Do performs the matrix multiplication.
 func (op MatMul) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
-	if err := handleCtx(ctx); err != nil {
+	if err := gcontext.Handle(ctx); err != nil {
 		return nil, err
 	}
 
@@ -50,7 +51,7 @@ func (op MatMul) Do(ctx context.Context, vs ...values.Value) (values.Value, erro
 // PreallocDo performs the matrix multiplication with a preallocated value.
 // PreallocDo allows MatMul to implement ops.PreallocDo
 func (op MatMul) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
-	if err := handleCtx(ctx); err != nil {
+	if err := gcontext.Handle(ctx); err != nil {
 		return nil, err
 	}
 	a := vs[0].(tensor.Tensor)
@@ -91,7 +92,7 @@ func (op MatVecMul) ShapeExpr() shapes.Expr {
 
 // Do performs the matrix-vector multiplication.
 func (op MatVecMul) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
-	if err := handleCtx(ctx); err != nil {
+	if err := gcontext.Handle(ctx); err != nil {
 		return nil, err
 	}
 
@@ -106,7 +107,7 @@ func (op MatVecMul) Do(ctx context.Context, vs ...values.Value) (values.Value, e
 // PreallocDo performs the matrix-vector multiplication with a preallocated value.
 // PreallocDo allows MatMul to implement ops.PreallocDo
 func (op MatVecMul) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
-	if err := handleCtx(ctx); err != nil {
+	if err := gcontext.Handle(ctx); err != nil {
 		return nil, err
 	}
 	a := vs[0].(tensor.Tensor)
@@ -142,7 +143,7 @@ func (op VecDot) ShapeExpr() shapes.Expr {
 
 // Do performs the inner product operation.
 func (op VecDot) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
-	if err := handleCtx(ctx); err != nil {
+	if err := gcontext.Handle(ctx); err != nil {
 		return nil, err
 	}
 
@@ -159,7 +160,7 @@ func (op VecDot) Do(ctx context.Context, vs ...values.Value) (values.Value, erro
 // PreallocDo performs the inner product operation with a preallocated value.
 // PreallocDo allows MatMul to implement ops.PreallocDo
 func (op VecDot) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
-	if err := handleCtx(ctx); err != nil {
+	if err := gcontext.Handle(ctx); err != nil {
 		return nil, err
 	}
 	a := vs[0].(tensor.Tensor)
@@ -204,7 +205,7 @@ func (op Outer) ShapeExpr() shapes.Expr {
 
 // Do performs the outer product operation.
 func (op Outer) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
-	if err := handleCtx(ctx); err != nil {
+	if err := gcontext.Handle(ctx); err != nil {
 		return nil, err
 	}
 
@@ -221,7 +222,7 @@ func (op Outer) Do(ctx context.Context, vs ...values.Value) (values.Value, error
 // PreallocDo performs the outer product operation with a preallocated value.
 // PreallocDo allows MatMul to implement ops.PreallocDo
 func (op Outer) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
-	if err := handleCtx(ctx); err != nil {
+	if err := gcontext.Handle(ctx); err != nil {
 		return nil, err
 	}
 	a := vs[0].(tensor.Tensor)

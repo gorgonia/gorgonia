@@ -4,6 +4,7 @@ import (
 	"context"
 	"runtime/trace"
 
+	gcontext "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 )
@@ -18,7 +19,7 @@ func (op invSqrtOp) String() string { return "1/√·" }
 
 // Do performs elementwise 1/√x.
 func (op invSqrtOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
-	if err := handleCtx(ctx); err != nil {
+	if err := gcontext.Handle(ctx); err != nil {
 		return nil, err
 	}
 
@@ -32,7 +33,7 @@ func (op invSqrtOp) Do(ctx context.Context, vs ...values.Value) (retVal values.V
 // PreallocDo performs elementwise 1/√x but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
 func (op invSqrtOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
-	if err := handleCtx(ctx); err != nil {
+	if err := gcontext.Handle(ctx); err != nil {
 		return nil, err
 	}
 

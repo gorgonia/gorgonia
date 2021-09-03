@@ -4,6 +4,7 @@ import (
 	"context"
 	"runtime/trace"
 
+	gcontext "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 )
@@ -18,7 +19,7 @@ func (op negOp) String() string { return "Neg" }
 
 // Do performs elementwise negation.
 func (op negOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
-	if err := handleCtx(ctx); err != nil {
+	if err := gcontext.Handle(ctx); err != nil {
 		return nil, err
 	}
 
@@ -32,7 +33,7 @@ func (op negOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value
 // PreallocDo performs elementwise negation but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
 func (op negOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
-	if err := handleCtx(ctx); err != nil {
+	if err := gcontext.Handle(ctx); err != nil {
 		return nil, err
 	}
 

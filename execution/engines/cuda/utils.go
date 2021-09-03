@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
-	gerrors "gorgonia.org/gorgonia/internal/errors"
 )
 
 func getDenseTensor(t tensor.Tensor) (tensor.DenseTensor, error) {

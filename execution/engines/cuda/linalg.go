@@ -44,7 +44,7 @@ func (e *Engine) checkThreeFloat(a, b, ret tensor.Tensor) (ad, bd, retVal *tenso
 }
 
 // MatVecMul performs matrix vector multiplication
-func (e *Engine) MatVecMul(a, b, prealloc tensor.Tensor) (err error) {
+func (e *Engine) MatVecMul(ctx context.Context, a, b, prealloc tensor.Tensor) (err error) {
 	var ad, bd, pd *tensor.Dense
 	if ad, bd, pd, err = e.checkThreeFloat(a, b, prealloc); err != nil {
 		return errors.Wrapf(err, "MatVecMul failed pre check")

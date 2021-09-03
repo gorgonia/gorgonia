@@ -1,5 +1,7 @@
 package cuda
 
+import "C"
+
 import (
 	"fmt"
 	"unsafe"
