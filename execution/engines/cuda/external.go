@@ -6,10 +6,10 @@ import (
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
-	"gorgonia.org/internal/debug"
 	cublas "gorgonia.org/cu/blas"
 	cudnn "gorgonia.org/cu/dnn"
 	"gorgonia.org/gorgonia/internal/allocator"
+	"gorgonia.org/internal/debug"
 )
 
 // this file implements all the methods that are required to fulil the External interface
