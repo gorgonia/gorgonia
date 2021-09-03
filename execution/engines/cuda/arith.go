@@ -1,13 +1,10 @@
 package cuda
 
 import (
-	"context"
 	"unsafe"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
-	gctx "gorgonia.org/gorgonia/internal/context"
-	gtu "gorgonia.org/gorgonia/internal/tensorutils"
 	"gorgonia.org/internal/debug"
 	"gorgonia.org/tensor"
 )
@@ -16,43 +13,17 @@ import (
 
 // Add implements tensor.Adder. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Add(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName2(a, b, "add")
+	name := constructBinName2(a, b, "add")
 
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for Add")
 	}
 
-	var reuse tensor.DenseTensor
-	var safe, toReuse bool
-	var ctx context.Context
-	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to handle funcOpts")
-	}
-
-	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
-	}
-
 	var mem, memB cu.DevicePtr
 	var size int64
-
-	switch {
-	case toReuse:
-		mem = cu.DevicePtr(reuse.Uintptr())
-		memA := cu.DevicePtr(a.Uintptr())
-		memSize := int64(a.MemSize())
-		e.memcpy(mem, memA, memSize)
-
-		size = int64(logicalSize(reuse.Shape()))
-		retVal = reuse
-	case !safe:
-		mem = cu.DevicePtr(a.Uintptr())
-		retVal = a
-		size = int64(logicalSize(a.Shape()))
-	default:
-		return nil, errors.New("Impossible state: A reuse tensor must be passed in, or the operation must be unsafe. Incr and safe operations are not supported")
+	if mem, size, retVal, err = e.binopMem(a, opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to perform Add")
 	}
-
 	memB = cu.DevicePtr(b.Uintptr())
 
 	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
@@ -65,7 +36,7 @@ func (e *Engine) Add(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 
 // AddScalar implements tensor.Adder. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) AddScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName1(a, leftTensor, "add")
+	name := constructBinName1(a, leftTensor, "add")
 
 	var bMem tensor.Memory
 	var ok bool
@@ -77,36 +48,11 @@ func (e *Engine) AddScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		return nil, errors.Wrap(err, "Basic checks failed for AddScalar")
 	}
 
-	var reuse tensor.DenseTensor
-	var safe, toReuse bool
-	var ctx context.Context
-	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to handle funcOpts")
-	}
-	if err = gctx.Handle(ctx); err != nil {
-		return nil, err
-	}
-
 	var mem, memB cu.DevicePtr
 	var size int64
-
-	switch {
-	case toReuse:
-		mem = cu.DevicePtr(reuse.Uintptr())
-		memA := cu.DevicePtr(a.Uintptr())
-		memSize := int64(a.MemSize())
-		e.memcpy(mem, memA, memSize)
-
-		size = int64(logicalSize(reuse.Shape()))
-		retVal = reuse
-	case !safe:
-		mem = cu.DevicePtr(a.Uintptr())
-		retVal = a
-		size = int64(logicalSize(a.Shape()))
-	default:
-		return nil, errors.New("Impossible state: A reuse tensor must be passed in, or the operation must be unsafe. Incr and safe operations are not supported")
+	if mem, size, retVal, err = e.binopMem(a, opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to perform Add")
 	}
-
 	memB = cu.DevicePtr(bMem.Uintptr())
 	if !leftTensor {
 		mem, memB = memB, mem
@@ -122,43 +68,17 @@ func (e *Engine) AddScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 
 // Sub implements tensor.Suber. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Sub(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName2(a, b, "sub")
+	name := constructBinName2(a, b, "sub")
 
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for Sub")
 	}
 
-	var reuse tensor.DenseTensor
-	var safe, toReuse bool
-	var ctx context.Context
-	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to handle funcOpts")
-	}
-
-	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
-	}
-
 	var mem, memB cu.DevicePtr
 	var size int64
-
-	switch {
-	case toReuse:
-		mem = cu.DevicePtr(reuse.Uintptr())
-		memA := cu.DevicePtr(a.Uintptr())
-		memSize := int64(a.MemSize())
-		e.memcpy(mem, memA, memSize)
-
-		size = int64(logicalSize(reuse.Shape()))
-		retVal = reuse
-	case !safe:
-		mem = cu.DevicePtr(a.Uintptr())
-		retVal = a
-		size = int64(logicalSize(a.Shape()))
-	default:
-		return nil, errors.New("Impossible state: A reuse tensor must be passed in, or the operation must be unsafe. Incr and safe operations are not supported")
+	if mem, size, retVal, err = e.binopMem(a, opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to perform Sub")
 	}
-
 	memB = cu.DevicePtr(b.Uintptr())
 
 	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
@@ -171,7 +91,7 @@ func (e *Engine) Sub(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 
 // SubScalar implements tensor.Suber. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) SubScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName1(a, leftTensor, "sub")
+	name := constructBinName1(a, leftTensor, "sub")
 
 	var bMem tensor.Memory
 	var ok bool
@@ -183,36 +103,11 @@ func (e *Engine) SubScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		return nil, errors.Wrap(err, "Basic checks failed for SubScalar")
 	}
 
-	var reuse tensor.DenseTensor
-	var safe, toReuse bool
-	var ctx context.Context
-	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to handle funcOpts")
-	}
-	if err = gctx.Handle(ctx); err != nil {
-		return nil, err
-	}
-
 	var mem, memB cu.DevicePtr
 	var size int64
-
-	switch {
-	case toReuse:
-		mem = cu.DevicePtr(reuse.Uintptr())
-		memA := cu.DevicePtr(a.Uintptr())
-		memSize := int64(a.MemSize())
-		e.memcpy(mem, memA, memSize)
-
-		size = int64(logicalSize(reuse.Shape()))
-		retVal = reuse
-	case !safe:
-		mem = cu.DevicePtr(a.Uintptr())
-		retVal = a
-		size = int64(logicalSize(a.Shape()))
-	default:
-		return nil, errors.New("Impossible state: A reuse tensor must be passed in, or the operation must be unsafe. Incr and safe operations are not supported")
+	if mem, size, retVal, err = e.binopMem(a, opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to perform Sub")
 	}
-
 	memB = cu.DevicePtr(bMem.Uintptr())
 	if !leftTensor {
 		mem, memB = memB, mem
@@ -228,43 +123,17 @@ func (e *Engine) SubScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 
 // Mul implements tensor.Muler. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Mul(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName2(a, b, "mul")
+	name := constructBinName2(a, b, "mul")
 
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for Mul")
 	}
 
-	var reuse tensor.DenseTensor
-	var safe, toReuse bool
-	var ctx context.Context
-	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to handle funcOpts")
-	}
-
-	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
-	}
-
 	var mem, memB cu.DevicePtr
 	var size int64
-
-	switch {
-	case toReuse:
-		mem = cu.DevicePtr(reuse.Uintptr())
-		memA := cu.DevicePtr(a.Uintptr())
-		memSize := int64(a.MemSize())
-		e.memcpy(mem, memA, memSize)
-
-		size = int64(logicalSize(reuse.Shape()))
-		retVal = reuse
-	case !safe:
-		mem = cu.DevicePtr(a.Uintptr())
-		retVal = a
-		size = int64(logicalSize(a.Shape()))
-	default:
-		return nil, errors.New("Impossible state: A reuse tensor must be passed in, or the operation must be unsafe. Incr and safe operations are not supported")
+	if mem, size, retVal, err = e.binopMem(a, opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to perform Mul")
 	}
-
 	memB = cu.DevicePtr(b.Uintptr())
 
 	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
@@ -277,7 +146,7 @@ func (e *Engine) Mul(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 
 // MulScalar implements tensor.Muler. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) MulScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName1(a, leftTensor, "mul")
+	name := constructBinName1(a, leftTensor, "mul")
 
 	var bMem tensor.Memory
 	var ok bool
@@ -289,36 +158,11 @@ func (e *Engine) MulScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		return nil, errors.Wrap(err, "Basic checks failed for MulScalar")
 	}
 
-	var reuse tensor.DenseTensor
-	var safe, toReuse bool
-	var ctx context.Context
-	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to handle funcOpts")
-	}
-	if err = gctx.Handle(ctx); err != nil {
-		return nil, err
-	}
-
 	var mem, memB cu.DevicePtr
 	var size int64
-
-	switch {
-	case toReuse:
-		mem = cu.DevicePtr(reuse.Uintptr())
-		memA := cu.DevicePtr(a.Uintptr())
-		memSize := int64(a.MemSize())
-		e.memcpy(mem, memA, memSize)
-
-		size = int64(logicalSize(reuse.Shape()))
-		retVal = reuse
-	case !safe:
-		mem = cu.DevicePtr(a.Uintptr())
-		retVal = a
-		size = int64(logicalSize(a.Shape()))
-	default:
-		return nil, errors.New("Impossible state: A reuse tensor must be passed in, or the operation must be unsafe. Incr and safe operations are not supported")
+	if mem, size, retVal, err = e.binopMem(a, opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to perform Mul")
 	}
-
 	memB = cu.DevicePtr(bMem.Uintptr())
 	if !leftTensor {
 		mem, memB = memB, mem
@@ -334,43 +178,17 @@ func (e *Engine) MulScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 
 // Div implements tensor.Diver. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Div(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName2(a, b, "div")
+	name := constructBinName2(a, b, "div")
 
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for Div")
 	}
 
-	var reuse tensor.DenseTensor
-	var safe, toReuse bool
-	var ctx context.Context
-	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to handle funcOpts")
-	}
-
-	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
-	}
-
 	var mem, memB cu.DevicePtr
 	var size int64
-
-	switch {
-	case toReuse:
-		mem = cu.DevicePtr(reuse.Uintptr())
-		memA := cu.DevicePtr(a.Uintptr())
-		memSize := int64(a.MemSize())
-		e.memcpy(mem, memA, memSize)
-
-		size = int64(logicalSize(reuse.Shape()))
-		retVal = reuse
-	case !safe:
-		mem = cu.DevicePtr(a.Uintptr())
-		retVal = a
-		size = int64(logicalSize(a.Shape()))
-	default:
-		return nil, errors.New("Impossible state: A reuse tensor must be passed in, or the operation must be unsafe. Incr and safe operations are not supported")
+	if mem, size, retVal, err = e.binopMem(a, opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to perform Div")
 	}
-
 	memB = cu.DevicePtr(b.Uintptr())
 
 	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
@@ -383,7 +201,7 @@ func (e *Engine) Div(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 
 // DivScalar implements tensor.Diver. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) DivScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName1(a, leftTensor, "div")
+	name := constructBinName1(a, leftTensor, "div")
 
 	var bMem tensor.Memory
 	var ok bool
@@ -395,36 +213,11 @@ func (e *Engine) DivScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		return nil, errors.Wrap(err, "Basic checks failed for DivScalar")
 	}
 
-	var reuse tensor.DenseTensor
-	var safe, toReuse bool
-	var ctx context.Context
-	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to handle funcOpts")
-	}
-	if err = gctx.Handle(ctx); err != nil {
-		return nil, err
-	}
-
 	var mem, memB cu.DevicePtr
 	var size int64
-
-	switch {
-	case toReuse:
-		mem = cu.DevicePtr(reuse.Uintptr())
-		memA := cu.DevicePtr(a.Uintptr())
-		memSize := int64(a.MemSize())
-		e.memcpy(mem, memA, memSize)
-
-		size = int64(logicalSize(reuse.Shape()))
-		retVal = reuse
-	case !safe:
-		mem = cu.DevicePtr(a.Uintptr())
-		retVal = a
-		size = int64(logicalSize(a.Shape()))
-	default:
-		return nil, errors.New("Impossible state: A reuse tensor must be passed in, or the operation must be unsafe. Incr and safe operations are not supported")
+	if mem, size, retVal, err = e.binopMem(a, opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to perform Div")
 	}
-
 	memB = cu.DevicePtr(bMem.Uintptr())
 	if !leftTensor {
 		mem, memB = memB, mem
@@ -440,43 +233,17 @@ func (e *Engine) DivScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 
 // Pow implements tensor.Power. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Pow(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName2(a, b, "pow")
+	name := constructBinName2(a, b, "pow")
 
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for Pow")
 	}
 
-	var reuse tensor.DenseTensor
-	var safe, toReuse bool
-	var ctx context.Context
-	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to handle funcOpts")
-	}
-
-	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
-	}
-
 	var mem, memB cu.DevicePtr
 	var size int64
-
-	switch {
-	case toReuse:
-		mem = cu.DevicePtr(reuse.Uintptr())
-		memA := cu.DevicePtr(a.Uintptr())
-		memSize := int64(a.MemSize())
-		e.memcpy(mem, memA, memSize)
-
-		size = int64(logicalSize(reuse.Shape()))
-		retVal = reuse
-	case !safe:
-		mem = cu.DevicePtr(a.Uintptr())
-		retVal = a
-		size = int64(logicalSize(a.Shape()))
-	default:
-		return nil, errors.New("Impossible state: A reuse tensor must be passed in, or the operation must be unsafe. Incr and safe operations are not supported")
+	if mem, size, retVal, err = e.binopMem(a, opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to perform Pow")
 	}
-
 	memB = cu.DevicePtr(b.Uintptr())
 
 	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
@@ -489,7 +256,7 @@ func (e *Engine) Pow(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 
 // PowScalar implements tensor.Power. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) PowScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName1(a, leftTensor, "pow")
+	name := constructBinName1(a, leftTensor, "pow")
 
 	var bMem tensor.Memory
 	var ok bool
@@ -501,36 +268,11 @@ func (e *Engine) PowScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		return nil, errors.Wrap(err, "Basic checks failed for PowScalar")
 	}
 
-	var reuse tensor.DenseTensor
-	var safe, toReuse bool
-	var ctx context.Context
-	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to handle funcOpts")
-	}
-	if err = gctx.Handle(ctx); err != nil {
-		return nil, err
-	}
-
 	var mem, memB cu.DevicePtr
 	var size int64
-
-	switch {
-	case toReuse:
-		mem = cu.DevicePtr(reuse.Uintptr())
-		memA := cu.DevicePtr(a.Uintptr())
-		memSize := int64(a.MemSize())
-		e.memcpy(mem, memA, memSize)
-
-		size = int64(logicalSize(reuse.Shape()))
-		retVal = reuse
-	case !safe:
-		mem = cu.DevicePtr(a.Uintptr())
-		retVal = a
-		size = int64(logicalSize(a.Shape()))
-	default:
-		return nil, errors.New("Impossible state: A reuse tensor must be passed in, or the operation must be unsafe. Incr and safe operations are not supported")
+	if mem, size, retVal, err = e.binopMem(a, opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to perform Pow")
 	}
-
 	memB = cu.DevicePtr(bMem.Uintptr())
 	if !leftTensor {
 		mem, memB = memB, mem
@@ -546,43 +288,17 @@ func (e *Engine) PowScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 
 // Mod implements tensor.Moder. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Mod(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName2(a, b, "mod")
+	name := constructBinName2(a, b, "mod")
 
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for Mod")
 	}
 
-	var reuse tensor.DenseTensor
-	var safe, toReuse bool
-	var ctx context.Context
-	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to handle funcOpts")
-	}
-
-	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
-	}
-
 	var mem, memB cu.DevicePtr
 	var size int64
-
-	switch {
-	case toReuse:
-		mem = cu.DevicePtr(reuse.Uintptr())
-		memA := cu.DevicePtr(a.Uintptr())
-		memSize := int64(a.MemSize())
-		e.memcpy(mem, memA, memSize)
-
-		size = int64(logicalSize(reuse.Shape()))
-		retVal = reuse
-	case !safe:
-		mem = cu.DevicePtr(a.Uintptr())
-		retVal = a
-		size = int64(logicalSize(a.Shape()))
-	default:
-		return nil, errors.New("Impossible state: A reuse tensor must be passed in, or the operation must be unsafe. Incr and safe operations are not supported")
+	if mem, size, retVal, err = e.binopMem(a, opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to perform Mod")
 	}
-
 	memB = cu.DevicePtr(b.Uintptr())
 
 	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
@@ -595,7 +311,7 @@ func (e *Engine) Mod(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 
 // ModScalar implements tensor.Moder. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) ModScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName1(a, leftTensor, "mod")
+	name := constructBinName1(a, leftTensor, "mod")
 
 	var bMem tensor.Memory
 	var ok bool
@@ -607,36 +323,11 @@ func (e *Engine) ModScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		return nil, errors.Wrap(err, "Basic checks failed for ModScalar")
 	}
 
-	var reuse tensor.DenseTensor
-	var safe, toReuse bool
-	var ctx context.Context
-	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to handle funcOpts")
-	}
-	if err = gctx.Handle(ctx); err != nil {
-		return nil, err
-	}
-
 	var mem, memB cu.DevicePtr
 	var size int64
-
-	switch {
-	case toReuse:
-		mem = cu.DevicePtr(reuse.Uintptr())
-		memA := cu.DevicePtr(a.Uintptr())
-		memSize := int64(a.MemSize())
-		e.memcpy(mem, memA, memSize)
-
-		size = int64(logicalSize(reuse.Shape()))
-		retVal = reuse
-	case !safe:
-		mem = cu.DevicePtr(a.Uintptr())
-		retVal = a
-		size = int64(logicalSize(a.Shape()))
-	default:
-		return nil, errors.New("Impossible state: A reuse tensor must be passed in, or the operation must be unsafe. Incr and safe operations are not supported")
+	if mem, size, retVal, err = e.binopMem(a, opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to perform Mod")
 	}
-
 	memB = cu.DevicePtr(bMem.Uintptr())
 	if !leftTensor {
 		mem, memB = memB, mem

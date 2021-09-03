@@ -69,7 +69,7 @@ func logicalSize(s shapes.Shape) int {
 }
 
 // constructName2 constructs the built-in CUDA kernel name for an operation.
-func constructName2(a, b tensor.Tensor, fn string) (name string) {
+func constructBinName2(a, b tensor.Tensor, fn string) (name string) {
 	dt := a.Dtype()
 	as := a.Shape()
 	bs := b.Shape()
@@ -87,7 +87,7 @@ func constructName2(a, b tensor.Tensor, fn string) (name string) {
 }
 
 // constructName1 constructs the built-in CUDA kernel name for an operation (for those with an explicit scalar passed in).
-func constructName1(a tensor.Tensor, leftTensor bool, fn string) (name string) {
+func constructBinName1(a tensor.Tensor, leftTensor bool, fn string) (name string) {
 	dt := a.Dtype()
 	if leftTensor {
 		name = fmt.Sprintf("%v.%s_vs_f%d", elemBinOpMod, fn, int(dt.Size()*8))
