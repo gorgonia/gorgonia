@@ -7,53 +7,11 @@ import (
 	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
+	gtu "gorgonia.org/gorgonia/internal/tensorutils"
 )
 
-func getDenseTensor(t tensor.Tensor) (tensor.DenseTensor, error) {
-	switch tt := t.(type) {
-	case tensor.DenseTensor:
-		return tt, nil
-	case tensor.Densor:
-		return tt.Dense(), nil
-	default:
-		return nil, errors.Errorf("Tensor %T is not a DenseTensor", t)
-	}
-}
-
-func handleFuncOpts(expShape tensor.Shape, expType tensor.Dtype, o tensor.DataOrder, strict bool, opts ...tensor.FuncOpt) (reuse tensor.DenseTensor, safe, toReuse, incr, same bool, err error) {
-	fo := tensor.ParseFuncOpts(opts...)
-
-	reuseT, incr := fo.IncrReuse()
-	safe = fo.Safe()
-	same = fo.Same()
-	toReuse = reuseT != nil
-
-	if toReuse {
-		if reuse, err = getDenseTensor(reuseT); err != nil {
-			err = errors.Wrapf(err, "Expected a tensor.DenseTensor")
-			return
-		}
-
-		if (strict || same) && reuse.Dtype() != expType {
-			err = errors.Errorf(gerrors.TypeMismatch, expType, reuse.Dtype())
-			err = errors.Wrapf(err, "Cannot use reuse")
-			return
-		}
-
-		if reuse.DataSize() != expShape.TotalSize() && !expShape.IsScalar() {
-			err = errors.Errorf(gerrors.ShapeMismatch, reuse.Shape(), expShape)
-			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch - reuse.len() %v, expShape.TotalSize() %v", reuse.DataSize(), expShape.TotalSize())
-			return
-		}
-
-		if !incr && reuse != nil {
-			// reuse.setDataOrder(o)
-			// err = reuse.reshape(expShape...)
-		}
-
-	}
-	return
-}
+// used to import gtu so goimports can know how to import gtu elsewhere in the package.
+var _ = gtu.HandleFuncOpts
 
 func binaryCheck(a, b tensor.Tensor) (err error) {
 	at := a.Dtype()

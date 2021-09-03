@@ -7,7 +7,7 @@ import (
 	"runtime/trace"
 
 	"github.com/chewxy/hm"
-	gcontext "gorgonia.org/gorgonia/internal/context"
+	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
@@ -24,7 +24,7 @@ func (op elEqOp) String() string { return "=" }
 
 // Do performs elementwise equal-to.
 func (op elEqOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
-	if err := gcontext.Handle(ctx); err != nil {
+	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
@@ -45,7 +45,7 @@ func (op elEqOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Valu
 // PreallocDo performs elementwise equal-to but with a preallocated return value.
 // PreallocDo allows elEq to implement ops.PreallocOp.
 func (op elEqOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
-	if err := gcontext.Handle(ctx); err != nil {
+	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 

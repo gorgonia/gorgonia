@@ -1,10 +1,13 @@
 package cuda
 
 import (
+	"context"
 	"unsafe"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
+	gctx "gorgonia.org/gorgonia/internal/context"
+	gtu "gorgonia.org/gorgonia/internal/tensorutils"
 	"gorgonia.org/internal/debug"
 	"gorgonia.org/tensor"
 )
@@ -25,8 +28,13 @@ func (e *Engine) Lt(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (r
 
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
-	if reuse, safe, toReuse, _, _, err = handleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
+	var ctx context.Context
+	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+
+	if err := gctx.Handle(ctx); err != nil {
+		return nil, err
 	}
 
 	var mem, memB cu.DevicePtr
@@ -83,8 +91,12 @@ func (e *Engine) LtScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
-	if reuse, safe, toReuse, _, _, err = handleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
+	var ctx context.Context
+	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+	if err = gctx.Handle(ctx); err != nil {
+		return nil, err
 	}
 
 	var mem, memB cu.DevicePtr
@@ -140,8 +152,13 @@ func (e *Engine) Lte(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
-	if reuse, safe, toReuse, _, _, err = handleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
+	var ctx context.Context
+	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+
+	if err := gctx.Handle(ctx); err != nil {
+		return nil, err
 	}
 
 	var mem, memB cu.DevicePtr
@@ -198,8 +215,12 @@ func (e *Engine) LteScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
-	if reuse, safe, toReuse, _, _, err = handleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
+	var ctx context.Context
+	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+	if err = gctx.Handle(ctx); err != nil {
+		return nil, err
 	}
 
 	var mem, memB cu.DevicePtr
@@ -255,8 +276,13 @@ func (e *Engine) Gt(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (r
 
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
-	if reuse, safe, toReuse, _, _, err = handleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
+	var ctx context.Context
+	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+
+	if err := gctx.Handle(ctx); err != nil {
+		return nil, err
 	}
 
 	var mem, memB cu.DevicePtr
@@ -313,8 +339,12 @@ func (e *Engine) GtScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
-	if reuse, safe, toReuse, _, _, err = handleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
+	var ctx context.Context
+	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+	if err = gctx.Handle(ctx); err != nil {
+		return nil, err
 	}
 
 	var mem, memB cu.DevicePtr
@@ -370,8 +400,13 @@ func (e *Engine) Gte(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
-	if reuse, safe, toReuse, _, _, err = handleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
+	var ctx context.Context
+	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+
+	if err := gctx.Handle(ctx); err != nil {
+		return nil, err
 	}
 
 	var mem, memB cu.DevicePtr
@@ -428,8 +463,12 @@ func (e *Engine) GteScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
-	if reuse, safe, toReuse, _, _, err = handleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
+	var ctx context.Context
+	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+	if err = gctx.Handle(ctx); err != nil {
+		return nil, err
 	}
 
 	var mem, memB cu.DevicePtr
@@ -485,8 +524,13 @@ func (e *Engine) ElEq(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) 
 
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
-	if reuse, safe, toReuse, _, _, err = handleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
+	var ctx context.Context
+	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+
+	if err := gctx.Handle(ctx); err != nil {
+		return nil, err
 	}
 
 	var mem, memB cu.DevicePtr
@@ -543,8 +587,12 @@ func (e *Engine) EqScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
-	if reuse, safe, toReuse, _, _, err = handleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
+	var ctx context.Context
+	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+	if err = gctx.Handle(ctx); err != nil {
+		return nil, err
 	}
 
 	var mem, memB cu.DevicePtr
@@ -600,8 +648,13 @@ func (e *Engine) ElNe(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) 
 
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
-	if reuse, safe, toReuse, _, _, err = handleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
+	var ctx context.Context
+	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+
+	if err := gctx.Handle(ctx); err != nil {
+		return nil, err
 	}
 
 	var mem, memB cu.DevicePtr
@@ -658,8 +711,12 @@ func (e *Engine) NeScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
-	if reuse, safe, toReuse, _, _, err = handleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
+	var ctx context.Context
+	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+	if err = gctx.Handle(ctx); err != nil {
+		return nil, err
 	}
 
 	var mem, memB cu.DevicePtr

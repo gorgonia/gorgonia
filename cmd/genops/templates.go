@@ -42,7 +42,7 @@ type {{.Name}}SV struct { {{.Name}}Op ; binopSV }
 {{end}}
 
 {{- define "Do" -}}
-	if err := gcontext.Handle(ctx); err != nil {
+	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
@@ -55,7 +55,7 @@ type {{.Name}}SV struct { {{.Name}}Op ; binopSV }
 	return retVal, err
 {{- end -}}
 {{- define "PreallocDo" -}}
-if err := gcontext.Handle(ctx); err != nil {
+if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
@@ -113,7 +113,7 @@ type {{.Name}}SV struct { {{.Name}}Op; binopSV }
 {{end}}
 
 {{- define "Do" -}}
-	if err := gcontext.Handle(ctx); err != nil {
+	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
@@ -131,7 +131,7 @@ type {{.Name}}SV struct { {{.Name}}Op; binopSV }
 	return retVal, err
 {{- end -}}
 {{- define "PreallocDo" -}}
-if err := gcontext.Handle(ctx); err != nil {
+if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
@@ -393,7 +393,7 @@ func (op {{.Name}}Op) String() string {return "{{.Symbol}}" }
 
 // Do performs {{.CommentOp}}.
 func (op {{.Name}}Op) Do(ctx context.Context, vs ...values.Value)(retVal values.Value, err error){
-if err := gcontext.Handle(ctx); err != nil {
+if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
@@ -407,7 +407,7 @@ if err := gcontext.Handle(ctx); err != nil {
 // PreallocDo performs {{.CommentOp}} but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
 func (op {{.Name}}Op) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
-	if err := gcontext.Handle(ctx); err != nil {
+	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 

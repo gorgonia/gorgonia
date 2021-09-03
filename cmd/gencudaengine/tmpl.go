@@ -16,8 +16,13 @@ func (e *Engine) {{.Method}}(a tensor.Tensor, b tensor.Tensor, opts ...tensor.Fu
 
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
-	if reuse, safe, toReuse, _, _, err = handleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
+	var ctx context.Context
+	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+
+	if err:= gctx.Handle(ctx); err != nil{
+		return nil, err
 	}
 
 	var mem, memB cu.DevicePtr
@@ -74,8 +79,12 @@ func (e *Engine) {{.ScalarMethod}}Scalar(a tensor.Tensor, b interface{}, leftTen
 
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
-	if reuse, safe, toReuse, _, _, err = handleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
+	var ctx context.Context
+	if ctx, reuse, safe, toReuse, _, _, err = gtu.HandleFuncOpts(a.Shape(), a.Dtype(), a.DataOrder(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+	if err = gctx.Handle(ctx); err != nil{
+		return nil, err
 	}
 
 	var mem, memB cu.DevicePtr
@@ -102,7 +111,7 @@ func (e *Engine) {{.ScalarMethod}}Scalar(a tensor.Tensor, b interface{}, leftTen
 	if !leftTensor {
 		mem, memB = memB, mem
 	}
-	
+
 	fn := e.f[name]
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
 	args := []unsafe.Pointer{

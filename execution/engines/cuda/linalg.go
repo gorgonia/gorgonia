@@ -1,8 +1,11 @@
 package cuda
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/blas"
+	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/tensor"
 )
 
@@ -45,6 +48,11 @@ func (e *Engine) checkThreeFloat(a, b, ret tensor.Tensor) (ad, bd, retVal *tenso
 
 // MatVecMul performs matrix vector multiplication
 func (e *Engine) MatVecMul(ctx context.Context, a, b, prealloc tensor.Tensor) (err error) {
+	if err := gctx.Handle(ctx); err != nil {
+		return err
+	}
+
+	// check all three are dense float tensors
 	var ad, bd, pd *tensor.Dense
 	if ad, bd, pd, err = e.checkThreeFloat(a, b, prealloc); err != nil {
 		return errors.Wrapf(err, "MatVecMul failed pre check")
@@ -104,7 +112,11 @@ func (e *Engine) MatVecMul(ctx context.Context, a, b, prealloc tensor.Tensor) (e
 }
 
 // MatMul performs matrix multiplication
-func (e *Engine) MatMul(a, b, prealloc tensor.Tensor) (err error) {
+func (e *Engine) MatMul(ctx context.Context, a, b, prealloc tensor.Tensor) (err error) {
+	if err := gctx.Handle(ctx); err != nil {
+		return err
+	}
+
 	var ad, bd, pd *tensor.Dense
 	if ad, bd, pd, err = e.checkThreeFloat(a, b, prealloc); err != nil {
 		return errors.Wrapf(err, "MatVecMul failed pre check")
@@ -226,7 +238,11 @@ func (e *Engine) MatMul(a, b, prealloc tensor.Tensor) (err error) {
 }
 
 // Outer performs outer product (kronecker) multiplication
-func (e *Engine) Outer(a, b, prealloc tensor.Tensor) (err error) {
+func (e *Engine) Outer(ctx context.Context, a, b, prealloc tensor.Tensor) (err error) {
+	if err := gctx.Handle(ctx); err != nil {
+		return err
+	}
+
 	var ad, bd, pd *tensor.Dense
 	if ad, bd, pd, err = e.checkThreeFloat(a, b, prealloc); err != nil {
 		return errors.Wrapf(err, "MatVecMul failed pre check")
@@ -249,7 +265,7 @@ func (e *Engine) Outer(a, b, prealloc tensor.Tensor) (err error) {
 			return err
 		}
 
-		if err = e.MatMul(a, b, prealloc); err != nil {
+		if err = e.MatMul(ctx, a, b, prealloc); err != nil {
 			return err
 		}
 

@@ -1,4 +1,4 @@
-package gcontext // import "gorgonia.org/gorgonia/internal/context"
+package gctx // import "gorgonia.org/gorgonia/internal/context"
 
 import (
 	"context"
