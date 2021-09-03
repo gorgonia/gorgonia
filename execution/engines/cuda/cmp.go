@@ -18,10 +18,6 @@ import (
 func (e *Engine) Lt(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName2(a, b, "lt")
 
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Lt(). The tensor engine does not have the function %q", name)
-	}
-
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for Lt")
 	}
@@ -58,26 +54,18 @@ func (e *Engine) Lt(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (r
 	}
 
 	memB = cu.DevicePtr(b.Uintptr())
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Lt - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // LtScalar implements tensor.Lter. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) LtScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName1(a, leftTensor, "lt")
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform LtScalar(). The tensor engine does not have the function %q", name)
-	}
 
 	var bMem tensor.Memory
 	var ok bool
@@ -124,27 +112,17 @@ func (e *Engine) LtScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 		mem, memB = memB, mem
 	}
 
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Lt - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // Lte implements tensor.Lteer. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Lte(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName2(a, b, "lte")
-
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Lte(). The tensor engine does not have the function %q", name)
-	}
 
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for Lte")
@@ -182,26 +160,18 @@ func (e *Engine) Lte(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 	}
 
 	memB = cu.DevicePtr(b.Uintptr())
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Lte - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // LteScalar implements tensor.Lteer. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) LteScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName1(a, leftTensor, "lte")
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform LteScalar(). The tensor engine does not have the function %q", name)
-	}
 
 	var bMem tensor.Memory
 	var ok bool
@@ -248,27 +218,17 @@ func (e *Engine) LteScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		mem, memB = memB, mem
 	}
 
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Lte - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // Gt implements tensor.Gter. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Gt(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName2(a, b, "gt")
-
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Gt(). The tensor engine does not have the function %q", name)
-	}
 
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for Gt")
@@ -306,26 +266,18 @@ func (e *Engine) Gt(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (r
 	}
 
 	memB = cu.DevicePtr(b.Uintptr())
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Gt - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // GtScalar implements tensor.Gter. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) GtScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName1(a, leftTensor, "gt")
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform GtScalar(). The tensor engine does not have the function %q", name)
-	}
 
 	var bMem tensor.Memory
 	var ok bool
@@ -372,27 +324,17 @@ func (e *Engine) GtScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 		mem, memB = memB, mem
 	}
 
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Gt - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // Gte implements tensor.Gteer. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Gte(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName2(a, b, "gte")
-
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Gte(). The tensor engine does not have the function %q", name)
-	}
 
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for Gte")
@@ -430,26 +372,18 @@ func (e *Engine) Gte(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 	}
 
 	memB = cu.DevicePtr(b.Uintptr())
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Gte - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // GteScalar implements tensor.Gteer. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) GteScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName1(a, leftTensor, "gte")
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform GteScalar(). The tensor engine does not have the function %q", name)
-	}
 
 	var bMem tensor.Memory
 	var ok bool
@@ -496,27 +430,17 @@ func (e *Engine) GteScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		mem, memB = memB, mem
 	}
 
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Gte - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // ElEq implements tensor.ElEqer. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) ElEq(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName2(a, b, "eq")
-
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform ElEq(). The tensor engine does not have the function %q", name)
-	}
 
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for ElEq")
@@ -554,26 +478,18 @@ func (e *Engine) ElEq(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) 
 	}
 
 	memB = cu.DevicePtr(b.Uintptr())
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.ElEq - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // EqScalar implements tensor.ElEqer. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) EqScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName1(a, leftTensor, "eq")
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform EqScalar(). The tensor engine does not have the function %q", name)
-	}
 
 	var bMem tensor.Memory
 	var ok bool
@@ -620,27 +536,17 @@ func (e *Engine) EqScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 		mem, memB = memB, mem
 	}
 
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Eq - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // ElNe implements tensor.ElNeer. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) ElNe(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName2(a, b, "ne")
-
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform ElNe(). The tensor engine does not have the function %q", name)
-	}
 
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for ElNe")
@@ -678,26 +584,18 @@ func (e *Engine) ElNe(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) 
 	}
 
 	memB = cu.DevicePtr(b.Uintptr())
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.ElNe - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // NeScalar implements tensor.ElNeer. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) NeScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName1(a, leftTensor, "ne")
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform NeScalar(). The tensor engine does not have the function %q", name)
-	}
 
 	var bMem tensor.Memory
 	var ok bool
@@ -744,16 +642,10 @@ func (e *Engine) NeScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 		mem, memB = memB, mem
 	}
 
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Ne - CUDA LaunchAndSync failed.")
+	}
 	return
 }

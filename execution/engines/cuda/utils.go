@@ -5,9 +5,9 @@ import (
 
 	"github.com/pkg/errors"
 	gerrors "gorgonia.org/gorgonia/internal/errors"
+	gtu "gorgonia.org/gorgonia/internal/tensorutils"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
-	gtu "gorgonia.org/gorgonia/internal/tensorutils"
 )
 
 // used to import gtu so goimports can know how to import gtu elsewhere in the package.
@@ -68,6 +68,7 @@ func logicalSize(s shapes.Shape) int {
 	return s.TotalSize()
 }
 
+// constructName2 constructs the built-in CUDA kernel name for an operation.
 func constructName2(a, b tensor.Tensor, fn string) (name string) {
 	dt := a.Dtype()
 	as := a.Shape()
@@ -85,6 +86,7 @@ func constructName2(a, b tensor.Tensor, fn string) (name string) {
 	return
 }
 
+// constructName1 constructs the built-in CUDA kernel name for an operation (for those with an explicit scalar passed in).
 func constructName1(a tensor.Tensor, leftTensor bool, fn string) (name string) {
 	dt := a.Dtype()
 	if leftTensor {

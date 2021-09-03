@@ -18,10 +18,6 @@ import (
 func (e *Engine) Add(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName2(a, b, "add")
 
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Add(). The tensor engine does not have the function %q", name)
-	}
-
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for Add")
 	}
@@ -58,26 +54,18 @@ func (e *Engine) Add(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 	}
 
 	memB = cu.DevicePtr(b.Uintptr())
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Add - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // AddScalar implements tensor.Adder. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) AddScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName1(a, leftTensor, "add")
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform AddScalar(). The tensor engine does not have the function %q", name)
-	}
 
 	var bMem tensor.Memory
 	var ok bool
@@ -124,27 +112,17 @@ func (e *Engine) AddScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		mem, memB = memB, mem
 	}
 
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Add - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // Sub implements tensor.Suber. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Sub(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName2(a, b, "sub")
-
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Sub(). The tensor engine does not have the function %q", name)
-	}
 
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for Sub")
@@ -182,26 +160,18 @@ func (e *Engine) Sub(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 	}
 
 	memB = cu.DevicePtr(b.Uintptr())
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Sub - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // SubScalar implements tensor.Suber. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) SubScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName1(a, leftTensor, "sub")
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform SubScalar(). The tensor engine does not have the function %q", name)
-	}
 
 	var bMem tensor.Memory
 	var ok bool
@@ -248,27 +218,17 @@ func (e *Engine) SubScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		mem, memB = memB, mem
 	}
 
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Sub - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // Mul implements tensor.Muler. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Mul(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName2(a, b, "mul")
-
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Mul(). The tensor engine does not have the function %q", name)
-	}
 
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for Mul")
@@ -306,26 +266,18 @@ func (e *Engine) Mul(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 	}
 
 	memB = cu.DevicePtr(b.Uintptr())
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Mul - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // MulScalar implements tensor.Muler. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) MulScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName1(a, leftTensor, "mul")
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform MulScalar(). The tensor engine does not have the function %q", name)
-	}
 
 	var bMem tensor.Memory
 	var ok bool
@@ -372,27 +324,17 @@ func (e *Engine) MulScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		mem, memB = memB, mem
 	}
 
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Mul - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // Div implements tensor.Diver. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Div(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName2(a, b, "div")
-
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Div(). The tensor engine does not have the function %q", name)
-	}
 
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for Div")
@@ -430,26 +372,18 @@ func (e *Engine) Div(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 	}
 
 	memB = cu.DevicePtr(b.Uintptr())
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Div - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // DivScalar implements tensor.Diver. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) DivScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName1(a, leftTensor, "div")
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform DivScalar(). The tensor engine does not have the function %q", name)
-	}
 
 	var bMem tensor.Memory
 	var ok bool
@@ -496,27 +430,17 @@ func (e *Engine) DivScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		mem, memB = memB, mem
 	}
 
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Div - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // Pow implements tensor.Power. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Pow(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName2(a, b, "pow")
-
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Pow(). The tensor engine does not have the function %q", name)
-	}
 
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for Pow")
@@ -554,26 +478,18 @@ func (e *Engine) Pow(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 	}
 
 	memB = cu.DevicePtr(b.Uintptr())
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Pow - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // PowScalar implements tensor.Power. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) PowScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName1(a, leftTensor, "pow")
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform PowScalar(). The tensor engine does not have the function %q", name)
-	}
 
 	var bMem tensor.Memory
 	var ok bool
@@ -620,27 +536,17 @@ func (e *Engine) PowScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		mem, memB = memB, mem
 	}
 
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Pow - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // Mod implements tensor.Moder. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Mod(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName2(a, b, "mod")
-
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Mod(). The tensor engine does not have the function %q", name)
-	}
 
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for Mod")
@@ -678,26 +584,18 @@ func (e *Engine) Mod(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 	}
 
 	memB = cu.DevicePtr(b.Uintptr())
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Mod - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // ModScalar implements tensor.Moder. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) ModScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName1(a, leftTensor, "mod")
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform ModScalar(). The tensor engine does not have the function %q", name)
-	}
 
 	var bMem tensor.Memory
 	var ok bool
@@ -744,16 +642,10 @@ func (e *Engine) ModScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		mem, memB = memB, mem
 	}
 
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Mod - CUDA LaunchAndSync failed.")
+	}
 	return
 }

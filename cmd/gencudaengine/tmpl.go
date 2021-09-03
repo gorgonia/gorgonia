@@ -6,10 +6,6 @@ const binopRaw = `// {{.Method}} implements tensor.{{.Method}}er. It does not su
 func (e *Engine) {{.Method}}(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName2(a, b, "{{.ScalarMethod | lower}}")
 
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform {{.Method}}(). The tensor engine does not have the function %q", name)
-	}
-
 	if err = binaryCheck(a, b); err != nil {
 		return nil, errors.Wrap(err, "Basic checks failed for {{.Method}}")
 	}
@@ -46,26 +42,18 @@ func (e *Engine) {{.Method}}(a tensor.Tensor, b tensor.Tensor, opts ...tensor.Fu
 	}
 
 	memB = cu.DevicePtr(b.Uintptr())
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err !=nil{
+		err = errors.Wrap(err, "Unable to perform engine.{{.Method}} - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 
 // {{.ScalarMethod}}Scalar implements tensor.{{.Method}}er. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) {{.ScalarMethod}}Scalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
 	name := constructName1(a, leftTensor, "{{.ScalarMethod | lower}}")
-	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform {{.ScalarMethod}}Scalar(). The tensor engine does not have the function %q", name)
-	}
 
 	var bMem tensor.Memory
 	var ok bool
@@ -112,17 +100,11 @@ func (e *Engine) {{.ScalarMethod}}Scalar(a tensor.Tensor, b interface{}, leftTen
 		mem, memB = memB, mem
 	}
 
-	fn := e.f[name]
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&mem),
-		unsafe.Pointer(&memB),
-		unsafe.Pointer(&size),
-	}
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil{
+		err = errors.Wrap(err, "Unable to perform engine.{{.ScalarMethod}} - CUDA LaunchAndSync failed.")
+	}
 	return
 }
 `

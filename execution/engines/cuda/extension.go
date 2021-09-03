@@ -2,10 +2,12 @@ package cuda
 
 import (
 	"fmt"
+	"unsafe"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
 	cudalib "gorgonia.org/gorgonia/cuda"
+	"gorgonia.org/internal/debug"
 )
 
 // this file relates to code that allows you to extend Engine
@@ -52,5 +54,21 @@ func (e *Engine) LoadCUDAFunc(moduleName, data string, funcs []string) (err erro
 	}
 	e.m[moduleName] = mod
 	e.f = fns
+	return nil
+}
+
+// Call launches a known kernel that takes at least one argument.
+// The argument's size must be known.
+func (e *Engine) Call(fnName string, size int, args ...unsafe.Pointer) error {
+	if !e.HasFunc(fnName) {
+		return errors.Errorf("The engine does not have the function %q", fnName)
+	}
+
+	fn := e.f[fnName]
+	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(size)
+
+	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	debug.Logf("args: %v", args)
+	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return nil
 }
