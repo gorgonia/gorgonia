@@ -67,7 +67,7 @@ func (op matmul) PreallocDo(ctx context.Context, prealloc values.Value, vs ...va
 	}
 	a := vs[0].(tensor.Tensor)
 	b := vs[1].(tensor.Tensor)
-	return tensor.MatMul(a, b, tensor.WithReuse(prealloc))
+	return tensor.MatMul(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx))
 }
 
 func MatMul(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {

@@ -1,6 +1,7 @@
 package exprgraph_test
 
 import (
+	"context"
 	"fmt"
 
 	"gorgonia.org/gorgonia/exprgraph"
@@ -32,12 +33,12 @@ func (e *FwdEngine) Lift(a exprgraph.Tensor) exprgraph.Tensor {
 	panic("Unreachable")
 }
 
-func (e *FwdEngine) MatMul(a, b, c tensor.Tensor) error {
+func (e *FwdEngine) MatMul(ctx context.Context, a, b, c tensor.Tensor) error {
 	adv := a.(*dual.Dual)
 	bdv := b.(*dual.Dual)
 	cdv := c.(*dual.Dual)
 
-	if err := e.StdEng.MatMul(adv.Value, bdv.Value, cdv.Value); err != nil {
+	if err := e.StdEng.MatMul(ctx, adv.Value, bdv.Value, cdv.Value); err != nil {
 		return err
 	}
 
@@ -49,7 +50,7 @@ func (e *FwdEngine) MatMul(a, b, c tensor.Tensor) error {
 	}
 
 	// dA = C×B'
-	if err := e.StdEng.MatMul(cdv.Value, bdv.Value, advd); err != nil {
+	if err := e.StdEng.MatMul(ctx, cdv.Value, bdv.Value, advd); err != nil {
 		return err
 	}
 
@@ -58,7 +59,7 @@ func (e *FwdEngine) MatMul(a, b, c tensor.Tensor) error {
 	}
 
 	// dB = A'×C
-	if err := e.StdEng.MatMul(adv.Value, cdv.Value, bdvd); err != nil {
+	if err := e.StdEng.MatMul(ctx, adv.Value, cdv.Value, bdvd); err != nil {
 		return err
 	}
 
