@@ -25,6 +25,7 @@ extern "C" { UNARYOP(ln, f64, double, log) }
 extern "C" { UNARYOP(log2, f64, double, log2) }
 extern "C" { UNARYOP(sqrt, f64, double, sqrt) }
 extern "C" { UNARYOP(tanh, f64, double, tanh) }
+extern "C" { UNARYOP(cbrt, f64, double, cbrt) }
 extern "C" { UNARYOP(log1p, f64, double, log1p) }
 extern "C" { UNARYOP(expm1, f64, double, expm1) }
 
@@ -71,7 +72,7 @@ extern "C" {
 		THREADID
 		CHECKSIZE
 		A[idx] = 1.0/A[idx];
-	}	
+	}
 }
 
 extern "C" {
@@ -101,7 +102,15 @@ extern "C" {
 		}
 		// alternative sigmoid function:
 		// A[idx] = 1 / (1 + pow(M_E, (double)(-1 * A[idx])));
-	}	
+	}
+}
+
+extern "C" {
+	__global__ void invsqrt_f64(double* A, int size) {
+		THREADID
+		CHECKSIZE
+		A[idx] = 1.0/sqrt(A[idx]);
+	}
 }
 
 /* FLOAT32 */
@@ -113,6 +122,7 @@ extern "C" { UNARYOP(ln, f32, float, logf) }
 extern "C" { UNARYOP(log2, f32, float, log2f) }
 extern "C" { UNARYOP(sqrt, f32, float, sqrtf) }
 extern "C" { UNARYOP(tanh, f32, float, tanhf) }
+extern "C" { UNARYOP(cbrt, f32, float, cbrtf) }
 extern "C" { UNARYOP(log1p, f32, float, log1pf) }
 extern "C" { UNARYOP(expm1, f32, float, expm1f) }
 
@@ -159,7 +169,7 @@ extern "C" {
 		THREADID
 		CHECKSIZE
 		A[idx] = 1.0f/A[idx];
-	}	
+	}
 }
 
 extern "C" {
@@ -189,5 +199,13 @@ extern "C" {
 		}
 		// alternative sigmoid function:
 		// A[idx] = 1 / (1 + powf((float)(M_E), (-1 * A[idx])));
-	}	
+	}
+}
+
+extern "C" {
+	__global__ void invsqrt_f32(float* A, int size) {
+		THREADID
+		CHECKSIZE
+		A[idx] = 1.0/sqrtf(A[idx]);
+	}
 }
