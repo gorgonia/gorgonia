@@ -96,3 +96,9 @@ func constructBinName1(a tensor.Tensor, leftTensor bool, fn string) (name string
 	}
 	return
 }
+
+// constructUnOpName constructs the built in CUDA kernel name for a unary operation.
+func constructUnOpName(a tensor.Tensor, fn string) (name string) {
+	dt := a.Dtype()
+	return fmt.Sprintf("%v.%v_f%d", elemUnaryOpMod, fn, int(dt.Size()*8))
+}

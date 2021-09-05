@@ -50,6 +50,40 @@ var cmps = []binOp{
 	{"ElNe", "Ne"},
 }
 
+type unaryOp struct {
+	Method     string
+	KernelName string
+}
+
+var unops = []unaryOp{
+	{"Neg", "neg"},
+	{"Inv", "inverse"},
+	{"Square", "square"},
+	{"Cube", "cube"},
+	{"Exp", "exp"},
+	{"Tanh", "tanh"},
+	{"Log", "ln"},
+	{"Log2", "log2"},
+	{"Log10", "log10"},
+	{"Sqrt", "sqrt"},
+	{"Cbrt", "cbrt"},
+	{"InvSqrt", "invsqrt"},
+	{"Sign", "sign"},
+	{"Log1p", "log1p"},
+	{"Expm1", "expm1"},
+	{"Cos", "cos"},
+	{"Sin", "sin"},
+
+	// undiff
+	{"Abs", "abs"},
+	{"Ceil", "ceil"},
+	{"Floor", "floor"},
+
+	// other "activation" functions
+	{"Softplus", "softplus"},
+	{"Sigmoid", "sigmoid"},
+}
+
 func init() {
 	gopath = os.Getenv("GOPATH")
 	if gopath == "" {
@@ -101,7 +135,23 @@ func generateCmps() {
 	}
 }
 
+func generateUnOps() {
+	p := path.Join(cudaengloc, unaryOut)
+	f, _ := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	fmt.Fprintf(f, "package cuda\n\n%v\n\n", genmsg)
+
+	for _, op := range unops {
+		unopTmpl.Execute(f, op)
+	}
+	f.Close()
+	cmd := exec.Command("goimports", "-w", p)
+	if err := cmd.Run(); err != nil {
+		log.Fatalf("Go imports failed with %v for %q", err, p)
+	}
+}
+
 func main() {
 	generateAriths()
 	generateCmps()
+	generateUnOps()
 }

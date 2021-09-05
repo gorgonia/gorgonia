@@ -10,7 +10,9 @@ import (
 	"gorgonia.org/tensor"
 )
 
-func (e *Engine) binopMem(a tensor.Tensor, opts ...tensor.FuncOpt) (mem cu.DevicePtr, size int64, retVal tensor.Tensor, err error) {
+// internal_op_prep.go provides the syntactic abstractions for code that is relevant to extracting a CUDA memory from a tensor.
+
+func (e *Engine) opMem(a tensor.Tensor, opts ...tensor.FuncOpt) (mem cu.DevicePtr, size int64, retVal tensor.Tensor, err error) {
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
 	var ctx context.Context
