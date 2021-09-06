@@ -43,3 +43,6 @@ func (op negOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...val
 	task.End()
 	return retVal, err
 }
+
+// DiffWRT returns {true} for neg
+func (op negOp) DiffWRT(inputs int) []bool { return onetrue }

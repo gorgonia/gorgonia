@@ -43,3 +43,6 @@ func (op invSqrtOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ..
 	task.End()
 	return retVal, err
 }
+
+// DiffWRT returns {true} for invSqrt
+func (op invSqrtOp) DiffWRT(inputs int) []bool { return onetrue }

@@ -43,3 +43,6 @@ func (op log2Op) PreallocDo(ctx context.Context, prealloc values.Value, vs ...va
 	task.End()
 	return retVal, err
 }
+
+// DiffWRT returns {true} for log2
+func (op log2Op) DiffWRT(inputs int) []bool { return onetrue }

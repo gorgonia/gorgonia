@@ -43,3 +43,6 @@ func (op cubeOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...va
 	task.End()
 	return retVal, err
 }
+
+// DiffWRT returns {true} for cube
+func (op cubeOp) DiffWRT(inputs int) []bool { return onetrue }

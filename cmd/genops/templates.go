@@ -418,9 +418,10 @@ func (op {{.Name}}Op) PreallocDo(ctx context.Context, prealloc values.Value, vs 
 	return retVal, err
 }
 
-{{- if not .IsDiff -}}
-// DiffWRT returns {false, false} for {{.Name}}
-func (op {{.Name}}Op) DiffWRT(inputs int) []bool { return onefalse }
+
+{{ if  .IsDiff }}
+// DiffWRT returns {true} for {{.Name}}
+func (op {{.Name}}Op) DiffWRT(inputs int) []bool { return onetrue }
 {{- end -}}
 
 `

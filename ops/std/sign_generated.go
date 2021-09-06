@@ -42,5 +42,4 @@ func (op signOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...va
 	retVal, err = tensor.Sign(a, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
 	task.End()
 	return retVal, err
-}                                           // DiffWRT returns {false, false} for sign
-func (op signOp) DiffWRT(inputs int) []bool { return onefalse }
+}
