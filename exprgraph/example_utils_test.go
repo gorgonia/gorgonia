@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/exprgraph"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/shapes"
@@ -22,6 +23,15 @@ func (NoOp) Error() string { return "NoOp" }
 type GraphEngine interface {
 	tensor.Engine
 	Graph() *exprgraph.Graph
+}
+
+type ADOp interface {
+	ops.Op
+	DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error
+}
+
+type Queueer interface {
+	Q(op ops.Op, inputs []gorgonia.Tensor, output gorgonia.Tensor) error
 }
 
 // matmul is an Op
@@ -68,6 +78,36 @@ func (op matmul) PreallocDo(ctx context.Context, prealloc values.Value, vs ...va
 	a := vs[0].(tensor.Tensor)
 	b := vs[1].(tensor.Tensor)
 	return tensor.MatMul(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx))
+}
+
+func (op matmul) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
+	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2T(output).(*dual.Dual)
+
+	advd := adv.Deriv()
+	bdvd := bdv.Deriv()
+
+	// temporary transpose
+	if err := bdv.Value.T(); err != nil {
+		return err
+	}
+	if err := adv.Value.T(); err != nil {
+		return err
+	}
+	defer bdv.Value.UT()
+	defer adv.Value.UT()
+
+	// dA = C×B'
+	if _, err := op.PreallocDo(ctx, advd, cdv.Value, bdv.Value); err != nil {
+		return err
+	}
+
+	// dB = A'×C
+	if _, err := op.PreallocDo(ctx, bdvd, adv.Value, cdv.Value); err != nil {
+		return err
+	}
+	return nil
 }
 
 func MatMul(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
@@ -126,7 +166,6 @@ func MatMul(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 			return
 		}
 	}
-
 	// do the values stuff
 	at := exprgraph.T2T(a)
 	bt := exprgraph.T2T(b)
@@ -151,6 +190,18 @@ func MatMul(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 	}
 	if retVal == nil {
 		retVal = ct // return not the Node, but the value.
+	}
+
+	// check if engine is backwards (i.e. requires a queue)
+	// if not, return.
+	var q Queueer
+	q, ok = a.Engine().(Queueer)
+	if !ok {
+		q, ok = b.Engine().(Queueer)
+	}
+	if q != nil {
+		// do queue stuff here
+		err = q.Q(op, []gorgonia.Tensor{a, b}, retVal)
 	}
 
 	return
@@ -195,6 +246,21 @@ func (op add) PreallocDo(ctx context.Context, prealloc values.Value, vs ...value
 	a := vs[0].(tensor.Tensor)
 	b := vs[1].(tensor.Tensor)
 	return tensor.Add(a, b, tensor.WithReuse(prealloc))
+}
+
+func (op add) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
+	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
+
+	advd := adv.Deriv()
+	bdvd := bdv.Deriv()
+	if _, err := tensor.Add(advd, 1.0, tensor.UseUnsafe()); err != nil {
+		return err
+	}
+	if _, err := tensor.Add(bdvd, 1.0, tensor.UseUnsafe()); err != nil {
+		return err
+	}
+	return nil
 }
 
 func Add(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
@@ -276,6 +342,18 @@ func Add(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 	}
 	if retVal == nil {
 		retVal = ct // return not the Node, but the value.
+	}
+
+	// check if engine is backwards (i.e. requires a queue)
+	// if not, return.
+	var q Queueer
+	q, ok = a.Engine().(Queueer)
+	if !ok {
+		q, ok = b.Engine().(Queueer)
+	}
+	if q != nil {
+		// do queue stuff here
+		err = q.Q(op, []gorgonia.Tensor{a, b}, retVal)
 	}
 
 	return

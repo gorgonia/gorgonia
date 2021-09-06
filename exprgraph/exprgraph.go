@@ -302,3 +302,13 @@ func (g *Graph) AddChildren(n *Node, children ...*Node) error {
 	}
 	return nil
 }
+
+// Roots returns the roots of a graph.
+func (g *Graph) Roots() (retVal Nodes) {
+	for n, tos := range g.to {
+		if len(tos) == 0 {
+			retVal.ns = append(retVal.ns, g.nodes[n])
+		}
+	}
+	return retVal
+}
