@@ -5,6 +5,7 @@ import (
 	"runtime/trace"
 
 	"github.com/chewxy/hm"
+	"github.com/pkg/errors"
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
@@ -153,7 +154,6 @@ func (op VecDot) Do(ctx context.Context, vs ...values.Value) (values.Value, erro
 	ret, err := tensor.Inner(a, b, tensor.WithContext(ctx2))
 	retVal, _ := values.AnyToScalar(ret)
 	task.End()
-
 	return retVal, err
 }
 
@@ -167,7 +167,11 @@ func (op VecDot) PreallocDo(ctx context.Context, prealloc values.Value, vs ...va
 	b := vs[1].(tensor.Tensor)
 	ctx2, task := trace.NewTask(ctx, op.String())
 	ret, err := tensor.Inner(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
-	retVal, _ := values.AnyToScalar(ret)
+	if err != nil {
+		return nil, errors.Wrap(err, "VecDot.PreallocDo failed")
+	}
+	err = prealloc.SetAt(ret, 0)
+	retVal := prealloc
 	task.End()
 	return retVal, err
 }
