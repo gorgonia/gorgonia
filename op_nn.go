@@ -1245,8 +1245,8 @@ func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal N
 	//		*batchNormDiffOp
 	//		scale bool // indicates whether it's for scale or bool
 	// 	}
-	scaleDiff := NewUniqueNode(WithType(scale.t), WithShape(scale.Shape().Clone()...), WithChildren(Nodes{scale}), In(g), WithOp(constantTensor{scale.Value().(tensor.Tensor)}))
-	biasDiff := NewUniqueNode(WithType(bias.t), WithShape(bias.Shape().Clone()...), WithChildren((Nodes{bias})), In(g), WithOp(constantTensor{bias.Value().(tensor.Tensor)}))
+	scaleDiff := NewUniqueNode(WithType(scale.t), WithShape(scale.Shape().Clone()...), WithChildren(Nodes{scale}), In(g), WithOp(Iop{}))
+	biasDiff := NewUniqueNode(WithType(bias.t), WithShape(bias.Shape().Clone()...), WithChildren((Nodes{bias})), In(g), WithOp(Iop{}))
 
 	return Nodes{ret, scaleDiff, biasDiff}, nil
 }
