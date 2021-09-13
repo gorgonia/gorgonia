@@ -1236,8 +1236,17 @@ func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal N
 	}
 
 	g := scale.g
-	scaleDiff := NewUniqueNode(WithType(scale.t), WithShape(scale.Shape().Clone()...), WithChildren(Nodes{scale}), In(g))
-	biasDiff := NewUniqueNode(WithType(bias.t), WithShape(bias.Shape().Clone()...), WithChildren((Nodes{bias})), In(g))
+
+	// this is the solution to the fact that `ApplyOp` can only return one value
+	//
+	// Ideally we should have a dummy Op for the `scaleDiff` and `biasDiff`, to indicate that it's actually the children of `diff`.
+	// An op that looks something like this:
+	// 	type dummyBatchNormDiffOp {
+	//		*batchNormDiffOp
+	//		scale bool // indicates whether it's for scale or bool
+	// 	}
+	scaleDiff := NewUniqueNode(WithType(scale.t), WithShape(scale.Shape().Clone()...), WithChildren(Nodes{scale}), In(g), WithOp(constantTensor{scale.Value().(tensor.Tensor)}))
+	biasDiff := NewUniqueNode(WithType(bias.t), WithShape(bias.Shape().Clone()...), WithChildren((Nodes{bias})), In(g), WithOp(constantTensor{bias.Value().(tensor.Tensor)}))
 
 	return Nodes{ret, scaleDiff, biasDiff}, nil
 }
@@ -1258,6 +1267,9 @@ func (op *BatchNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Va
 			op.inferF64s(in, out)
 		}
 
+		op.mul64(prealloc, scale)
+		op.add64(prealloc, bias)
+
 	case Float32:
 		if op.training {
 			op.updateStatsF32(in)
@@ -1265,16 +1277,20 @@ func (op *BatchNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Va
 		} else {
 			op.inferF32s(in, out)
 		}
+		op.mul32(prealloc, scale)
+		op.add32(prealloc, bias)
 	default:
 		return nil, nyi("BatchNorm Do", v.Dtype())
 	}
+	/*
+		retVal, err = tensor.Mul(prealloc, scale)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to scale value")
+		}
 
-	retVal, err = tensor.Mul(prealloc, scale)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to scale value")
-	}
-
-	return tensor.Add(retVal, bias)
+		return tensor.Add(retVal, bias)
+	*/
+	return prealloc, nil
 }
 
 // SetTraining configure the op for training mode.
@@ -1720,6 +1736,7 @@ func (op *batchnormDiffOp) f64s(input, inGrad, scale, scaleGrad, bias, biasGrad,
 
 	scaleGradData := scaleGrad.Float64s()
 	biasGradData := biasGrad.Float64s()
+	scaleGrad.Zero()
 
 	if op.training {
 		// Y = (X - E[X]) / σ
@@ -1752,8 +1769,9 @@ func (op *batchnormDiffOp) f64s(input, inGrad, scale, scaleGrad, bias, biasGrad,
 					o := og[offset][i]
 					ig[offset][i] = (o - gradMean - g) * σ
 				}
-				scaleGradData[b] = dotp * σ
-				biasGradData[b] = sum
+				scaleGradData[c] += dotp * σ
+				biasGradData[c] += sum
+
 			}
 		}
 	} else {

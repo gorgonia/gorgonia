@@ -305,3 +305,103 @@ func (op *batchnormDiffOp) f32sOld(input, inGrad, outGrad *tensor.Dense) (err er
 	return nil
 
 }
+
+func (op *BatchNormOp) mul64(prealloc Value, scale Value) error {
+	retVal := prealloc.(*tensor.Dense)
+	s := scale.(*tensor.Dense)
+
+	sTotal := s.Shape().TotalSize()
+	rTotal := retVal.Shape().TotalSize()
+	// e.g.
+	// (1, 3) × (2, 3)... we'll just assume it gets repeated on the outer dim
+	if sTotal < rTotal {
+		sData := s.Float64s()
+		rData := retVal.Float64s()
+
+		n := rTotal / sTotal
+
+		for i := 0; i < n; i++ {
+			start := i * len(sData)
+			end := start + len(sData)
+			it := rData[start:end]
+
+			vecf64.Mul(it, sData)
+		}
+	}
+	return nil
+}
+
+func (op *BatchNormOp) add64(prealloc, bias Value) error {
+	retVal := prealloc.(*tensor.Dense)
+	b := bias.(*tensor.Dense)
+
+	sTotal := b.Shape().TotalSize()
+	rTotal := retVal.Shape().TotalSize()
+	// e.g.
+	// (1, 3) × (2, 3)... we'll just assume it gets repeated on the outer dim
+	if sTotal < rTotal {
+		sData := b.Float64s()
+		rData := retVal.Float64s()
+
+		n := rTotal / sTotal // broadcast the operation n times
+
+		for i := 0; i < n; i++ {
+			start := i * len(sData)
+			end := start + len(sData)
+			it := rData[start:end]
+
+			vecf64.Add(it, sData)
+		}
+	}
+	return nil
+}
+
+func (op *BatchNormOp) mul32(prealloc Value, scale Value) error {
+	retVal := prealloc.(*tensor.Dense)
+	s := scale.(*tensor.Dense)
+
+	sTotal := s.Shape().TotalSize()
+	rTotal := retVal.Shape().TotalSize()
+	// e.g.
+	// (1, 3) × (2, 3)... we'll just assume it gets repeated on the outer dim
+	if sTotal < rTotal {
+		sData := s.Float32s()
+		rData := retVal.Float32s()
+
+		n := rTotal / sTotal
+
+		for i := 0; i < n; i++ {
+			start := i * len(sData)
+			end := start + len(sData)
+			it := rData[start:end]
+
+			vecf32.Mul(it, sData)
+		}
+	}
+	return nil
+}
+
+func (op *BatchNormOp) add32(prealloc, bias Value) error {
+	retVal := prealloc.(*tensor.Dense)
+	b := bias.(*tensor.Dense)
+
+	sTotal := b.Shape().TotalSize()
+	rTotal := retVal.Shape().TotalSize()
+	// e.g.
+	// (1, 3) × (2, 3)... we'll just assume it gets repeated on the outer dim
+	if sTotal < rTotal {
+		sData := b.Float32s()
+		rData := retVal.Float32s()
+
+		n := rTotal / sTotal // broadcast the operation n times
+
+		for i := 0; i < n; i++ {
+			start := i * len(sData)
+			end := start + len(sData)
+			it := rData[start:end]
+
+			vecf32.Add(it, sData)
+		}
+	}
+	return nil
+}
