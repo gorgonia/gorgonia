@@ -1713,6 +1713,9 @@ func (op *batchnormDiffOp) f64s(input, inGrad, scale, scaleGrad, bias, biasGrad,
 		invstdev = op.runningVariance.Float64s()
 	}
 
+	scaleGradData := scaleGrad.Float64s()
+	biasGradData := biasGrad.Float64s()
+
 	if op.training {
 		// Y = (X - E[X]) / σ
 
@@ -1744,6 +1747,8 @@ func (op *batchnormDiffOp) f64s(input, inGrad, scale, scaleGrad, bias, biasGrad,
 					o := og[offset][i]
 					ig[offset][i] = (o - gradMean - g) * σ
 				}
+				scaleGradData[b] = dotp * σ
+				biasGradData[b] = sum
 			}
 		}
 	} else {
@@ -1756,9 +1761,13 @@ func (op *batchnormDiffOp) f64s(input, inGrad, scale, scaleGrad, bias, biasGrad,
 				for i := range x {
 					ig[offset][i] = x[i] * σ
 				}
+
+				scaleGradData[b] = 0
+				biasGradData[b] = 0
 			}
 		}
 	}
+
 }
 
 func (op *batchnormDiffOp) f32s(input, inGrad, scale, scaleGrad, bias, biasGrad, outGrad *tensor.Dense) {
@@ -1787,6 +1796,9 @@ func (op *batchnormDiffOp) f32s(input, inGrad, scale, scaleGrad, bias, biasGrad,
 		mean = op.runningMean.Float32s()
 		invstdev = op.runningVariance.Float32s()
 	}
+
+	scaleGradData := scaleGrad.Float32s()
+	biasGradData := biasGrad.Float32s()
 
 	if op.training {
 		// Y = (X - E[X]) / σ
@@ -1819,6 +1831,9 @@ func (op *batchnormDiffOp) f32s(input, inGrad, scale, scaleGrad, bias, biasGrad,
 					o := og[offset][i]
 					ig[offset][i] = (o - gradMean - g) * σ
 				}
+
+				scaleGradData[b] = dotp * σ
+				biasGradData[b] = sum
 			}
 		}
 	} else {
@@ -1831,6 +1846,8 @@ func (op *batchnormDiffOp) f32s(input, inGrad, scale, scaleGrad, bias, biasGrad,
 				for i := range x {
 					ig[offset][i] = x[i] * σ
 				}
+				scaleGradData[b] = 0
+				biasGradData[b] = 0
 			}
 		}
 	}
