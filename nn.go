@@ -446,13 +446,13 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 		bias = NewTensor(g, dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_β"), WithInit(GlorotN(1.0)))
 	}
 
-	if retVal, err = ApplyOp(op, x); err != nil {
+	if retVal, err = ApplyOp(op, x, scale, bias); err != nil {
 		return nil, nil, nil, nil, err
 	}
-	if retVal, err = Auto(BroadcastHadamardProd, scale, retVal); err != nil {
-		return nil, nil, nil, nil, err
-	}
-	retVal, err = Auto(BroadcastAdd, retVal, bias)
+	//if retVal, err = Auto(BroadcastHadamardProd, scale, retVal); err != nil {
+	//	return nil, nil, nil, nil, err
+	//}
+	//retVal, err = Auto(BroadcastAdd, retVal, bias)
 
 	return retVal, scale, bias, op, err
 }

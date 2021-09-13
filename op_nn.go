@@ -1159,7 +1159,7 @@ func (op *BatchNormOp) Type() hm.Type {
 	}
 
 	t := TensorType{Dims: dims, Of: hm.TypeVariable('a')}
-	return hm.NewFnType(t, t)
+	return hm.NewFnType(t, t, t, t)
 }
 
 // InferShape from the input values
@@ -1218,7 +1218,7 @@ func (op *BatchNormOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) 
 }
 
 // DiffWRT ...
-func (op *BatchNormOp) DiffWRT(inputs int) []bool { return []bool{true} }
+func (op *BatchNormOp) DiffWRT(inputs int) []bool { return []bool{true, true, true} }
 
 // SymDiff ...
 func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
@@ -1234,7 +1234,12 @@ func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal N
 	if ret, err = ApplyOp(diff, input, scale, bias, grad); err != nil {
 		return nil, err
 	}
-	return Nodes{ret}, nil
+
+	g := scale.g
+	scaleDiff := NewUniqueNode(WithType(scale.t), WithShape(scale.Shape().Clone()...), WithChildren(Nodes{scale}), In(g))
+	biasDiff := NewUniqueNode(WithType(bias.t), WithShape(bias.Shape().Clone()...), WithChildren((Nodes{bias})), In(g))
+
+	return Nodes{ret, scaleDiff, biasDiff}, nil
 }
 
 // UsePreallocDo ...
@@ -1614,7 +1619,7 @@ func (op *batchnormDiffOp) Type() hm.Type {
 	}
 
 	t := TensorType{Dims: dims, Of: hm.TypeVariable('a')}
-	return hm.NewFnType(t, t, t)
+	return hm.NewFnType(t, t, t, t, t)
 }
 
 func (op *batchnormDiffOp) InferShape(ns ...DimSizer) (tensor.Shape, error) {
@@ -1652,7 +1657,7 @@ func (op *batchnormDiffOp) String() string {
 
 func (op *batchnormDiffOp) DiffWRT(inputs int) []bool {
 	// god help those who want to  do 2nd order differentiation on batchnorm
-	return []bool{false, false}
+	return []bool{false, false, false, false}
 }
 
 func (op *batchnormDiffOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
