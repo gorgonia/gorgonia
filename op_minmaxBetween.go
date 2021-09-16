@@ -152,19 +152,18 @@ func minmaxSymDiff(a, b *Node, out *Node, grad *Node) (Nodes, error) {
 	if err != nil {
 		return nil, err
 	}
-	WithName("XXMASK")(mask)
-	WithName("XXXGRAD")(grad)
+	WithGroupName(gradClust)(mask)
 
 	gradA, err := HadamardProd(grad, mask)
 	if err != nil {
 		return nil, err
 	}
-	WithName("GRADA")(gradA)
+	WithGroupName(gradClust)(gradA)
 	gradB, err := Sub(grad, gradA)
 	if err != nil {
 		return nil, err
 	}
-	WithName("GRADB")(gradB)
+	WithGroupName(gradClust)(gradB)
 	return Nodes{gradA, gradB}, nil
 }
 
