@@ -10,6 +10,7 @@ import (
 	"github.com/chewxy/math32"
 	rng "github.com/leesper/go_rng"
 	"github.com/pkg/errors"
+	"gonum.org/v1/gonum/blas"
 	"gorgonia.org/tensor"
 	"gorgonia.org/tensor/native"
 	"gorgonia.org/vecf32"
@@ -1664,80 +1665,73 @@ func (op *batchnormDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVa
 
 	return prealloc, err
 }
+func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) (err error) {
+	in := input.Float64s()
+	ig := inGrad.Float64s()
+	og := outGrad.Float64s()
+	tmp := op.tmpSpace.Float64s()
+	out := op.xNorm.Float64s()
+	ssm := op.spatialSumMultiplier.Float64s()
+	nbc := op.numByChans.Float64s()
+	bsm := op.batchSumMultiplier.Float64s()
+	meanTmp := op.runningMean.Float64s()
 
-func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) {
-	s := input.Shape()
-	batches, chans := s[0], s[1]
-	N := s.TotalSize() / (batches * chans)
-
-	in, err := native.SelectF64(input, 1)
-	if err != nil {
-		panic(err)
-	}
-	og, err := native.SelectF64(outGrad, 1)
-	if err != nil {
-		panic(err)
-	}
-	ig, err := native.SelectF64(inGrad, 1)
-	if err != nil {
-		panic(err)
+	if !op.training {
+		copy(ig, og)
+		vecf64.Div(og, tmp)
+		return nil
 	}
 
-	var mean, invstdev []float64
-	if op.training {
-		mean = op.mean.Float64s()
-		invstdev = op.variance.Float64s()
-	} else {
-		mean = op.runningMean.Float64s()
-		invstdev = op.runningVariance.Float64s()
-	}
+	n := input.Shape()[0]
+	channels := input.Shape()[1]
+	nc := n * channels
+	spatialDim := len(in) / nc
 
-	if op.training {
-		// Y = (X - E[X]) / σ
+	// if Y = (X-mean(X))/(sqrt(var(X)+eps)), then
+	//
+	// dE(Y)/dX =
+	//   (dE/dY - mean(dE/dY) - mean(dE/dY ⋅ Y) ⋅ Y)
+	//     ./ sqrt(var(X) + eps)
+	//
+	// where ⋅ and ./ are hadamard product and elementwise division,
+	// respectively, dE/dY is the top diff, and mean/var/sum are all computed
+	// along all dimensions except the channels dimension.  In the above
+	// equation, the operations allow for expansion (i.e. broadcast) along all
+	// dimensions except the channels dimension where required.
 
-		// TODO: speed this up
-		for c := 0; c < chans; c++ {
-			μ := mean[c]
-			σ := invstdev[c]
+	// sum(dE/dY ⋅ Y)
+	copy(ig, out)
+	vecf64.Mul(ig, og)
+	whichblas.Dgemv(blas.NoTrans, nc, spatialDim, 1, ig, spatialDim, ssm, 1, 0, nbc, 1)
+	whichblas.Dgemv(blas.Trans, n, channels, 1, nbc, channels, bsm, 1, 0, meanTmp, 1)
 
-			for b := 0; b < batches; b++ {
-				offset := b*chans + c
+	// reshape (broadcast) the above
+	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, meanTmp, channels, 0, nbc, channels)
+	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, 1, nbc, 1, ssm, spatialDim, 0, ig, spatialDim)
 
-				// sum of the output gradients of the given channel:
-				var sum float64
-				for _, v := range og[offset] {
-					sum += v
-				}
-				gradMean := sum / float64(N)
+	// sum(dE/dY ⋅ Y) ⋅ Y
+	vecf64.Mul(ig, out)
 
-				// dot product of (X - E[x]) and output gradient
-				var dotp float64
-				for i, v := range in[offset] {
-					dotp += (v - μ) * og[offset][i]
-				}
-				k := dotp * σ * σ / float64(N)
+	// sum(dE/dY)-sum(dE/dY ⋅ Y) ⋅ Y
+	whichblas.Dgemv(blas.NoTrans, nc, spatialDim, 1, og, spatialDim, ssm, 1, 0, nbc, 1)
+	whichblas.Dgemv(blas.Trans, n, channels, 1, nbc, channels, bsm, 1, 0, meanTmp, 1)
 
-				x := in[offset]
-				for i := range x {
-					g := (x[i] - μ) * k // gradient of x
-					o := og[offset][i]
-					ig[offset][i] = (o - gradMean - g) * σ
-				}
-			}
-		}
-	} else {
-		// not training
-		for c := 0; c < chans; c++ {
-			σ := invstdev[c]
-			for b := 0; b < batches; b++ {
-				offset := b*chans + c
-				x := og[offset]
-				for i := range x {
-					ig[offset][i] = x[i] * σ
-				}
-			}
-		}
-	}
+	// reshape (broadcast) the above to make
+	// sum(dE/dY)-sum(dE/dY ⋅ Y) ⋅ Y
+	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, meanTmp, channels, 0, nbc, channels)
+	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, 1, nbc, 1, ssm, spatialDim, 1, ig, spatialDim)
+
+	// dE/dY - mean(dE/dY)-mean(dE/dY ⋅ Y) ⋅ Y
+	beta := (-1.0 / float64(nc))
+
+	vecf64.Scale(ig, beta)
+	vecf64.Add(ig, og)
+
+	// note: temp_ still contains sqrt(var(X)+eps), computed during the forward
+	// pass.
+	vecf64.Div(ig, tmp)
+	return nil
+
 }
 
 func (op *batchnormDiffOp) f32s(input, inGrad, outGrad *tensor.Dense) {
