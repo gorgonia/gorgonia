@@ -1149,7 +1149,7 @@ type BatchNormOp struct {
 }
 
 // Arity returns 1
-func (op *BatchNormOp) Arity() int { return 3 }
+func (op *BatchNormOp) Arity() int { return 1 }
 
 // Type ...
 func (op *BatchNormOp) Type() hm.Type {
@@ -1176,15 +1176,13 @@ func (op *BatchNormOp) Do(values ...Value) (retVal Value, err error) {
 	if err := checkArity(op, len(values)); err != nil {
 		return nil, errors.Wrapf(err, "batchNorm Do")
 	}
-	var v, out, scale, bias Value
+	var v, out Value
 	v = values[0]
 	if out, err = CloneValue(v); err != nil {
 		return nil, err
 	}
-	scale = values[1]
-	bias = values[2]
 
-	return op.UsePreallocDo(out, v, scale, bias)
+	return op.UsePreallocDo(out, v)
 }
 
 // ReturnsPtr is true
@@ -1212,8 +1210,7 @@ func (op *BatchNormOp) String() string {
 func (op *BatchNormOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
 	diff := &batchnormDiffOp{op}
 	xdv, ydv := getDV(inputs[0], output)
-	sdv, bdv := getDV(inputs[1], inputs[2])
-	_, err := diff.UsePreallocDo(xdv.d, xdv.Value, sdv.Value, sdv.d, bdv.Value, bdv.Value, ydv.d)
+	_, err := diff.UsePreallocDo(xdv.d, xdv.Value, ydv.d)
 	return err
 }
 
@@ -1226,12 +1223,10 @@ func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal N
 		return
 	}
 	input := inputs[0]
-	scale := inputs[1]
-	bias := inputs[2]
 	diff := &batchnormDiffOp{op}
 
 	var ret *Node
-	if ret, err = ApplyOp(diff, input, scale, bias, grad); err != nil {
+	if ret, err = ApplyOp(diff, input, grad); err != nil {
 		return nil, err
 	}
 	return Nodes{ret}, nil
@@ -1240,8 +1235,6 @@ func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal N
 // UsePreallocDo ...
 func (op *BatchNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
 	v := inputs[0]
-	scale := inputs[1]
-	bias := inputs[2]
 	in := v.(*tensor.Dense)
 	out := prealloc.(*tensor.Dense)
 	switch v.Dtype() {
@@ -1263,13 +1256,7 @@ func (op *BatchNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Va
 	default:
 		return nil, nyi("BatchNorm Do", v.Dtype())
 	}
-
-	retVal, err = tensor.Mul(prealloc, scale)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to scale value")
-	}
-
-	return tensor.Add(retVal, bias)
+	return prealloc, err
 }
 
 // SetTraining configure the op for training mode.
@@ -1605,7 +1592,7 @@ func (op *BatchNormOp) inferF32s(input, output *tensor.Dense) {
 
 type batchnormDiffOp struct{ *BatchNormOp }
 
-func (op *batchnormDiffOp) Arity() int { return 4 }
+func (op *batchnormDiffOp) Arity() int { return 2 }
 
 func (op *batchnormDiffOp) Type() hm.Type {
 	dims := op.dims
@@ -1627,13 +1614,9 @@ func (op *batchnormDiffOp) InferShape(ns ...DimSizer) (tensor.Shape, error) {
 
 func (op *batchnormDiffOp) Do(values ...Value) (Value, error) {
 	input := values[0].(*tensor.Dense)
-	scale := values[1].(*tensor.Dense)
-	bias := values[2].(*tensor.Dense)
-	grad := values[3].(*tensor.Dense)
+	grad := values[1].(*tensor.Dense)
 	inputGrad := input.Clone().(*tensor.Dense)
-	scaleGrad := scale.Clone().(*tensor.Dense)
-	biasGrad := bias.Clone().(*tensor.Dense)
-	return op.UsePreallocDo(inputGrad, input, scale, scaleGrad, bias, biasGrad, grad)
+	return op.UsePreallocDo(inputGrad, input, grad)
 }
 
 // ReturnsPtr is the same exact characteristics of batchnorm
@@ -1667,18 +1650,14 @@ func (op *batchnormDiffOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *No
 
 func (op *batchnormDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
 	input := inputs[0].(*tensor.Dense)
-	scale := inputs[1].(*tensor.Dense)
-	scaleGrad := inputs[2].(*tensor.Dense)
-	bias := inputs[3].(*tensor.Dense)
-	biasGrad := inputs[4].(*tensor.Dense)
 	inGrad := prealloc.(*tensor.Dense)
-	outGrad := inputs[5].(*tensor.Dense)
+	outGrad := inputs[1].(*tensor.Dense)
 
 	switch input.Dtype() {
 	case Float64:
-		op.f64s(input, inGrad, scale, scaleGrad, bias, biasGrad, outGrad)
+		op.f64s(input, inGrad, outGrad)
 	case Float32:
-		op.f32s(input, inGrad, scale, scaleGrad, bias, biasGrad, outGrad)
+		op.f32s(input, inGrad, outGrad)
 	default:
 		return nil, nyi("batchnormDiffOp", "Do")
 	}
@@ -1686,7 +1665,7 @@ func (op *batchnormDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVa
 	return prealloc, err
 }
 
-func (op *batchnormDiffOp) f64s(input, inGrad, scale, scaleGrad, bias, biasGrad, outGrad *tensor.Dense) {
+func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) {
 	s := input.Shape()
 	batches, chans := s[0], s[1]
 	N := s.TotalSize() / (batches * chans)
@@ -1761,7 +1740,7 @@ func (op *batchnormDiffOp) f64s(input, inGrad, scale, scaleGrad, bias, biasGrad,
 	}
 }
 
-func (op *batchnormDiffOp) f32s(input, inGrad, scale, scaleGrad, bias, biasGrad, outGrad *tensor.Dense) {
+func (op *batchnormDiffOp) f32s(input, inGrad, outGrad *tensor.Dense) {
 	s := input.Shape()
 	batches, chans := s[0], s[1]
 	N := s.TotalSize() / (batches * chans)
