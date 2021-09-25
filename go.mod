@@ -18,7 +18,7 @@ require (
 	gopkg.in/cheggaaa/pb.v1 v1.0.27
 	gorgonia.org/cu v0.9.3
 	gorgonia.org/dawson v1.2.0
-	gorgonia.org/tensor v0.9.17
+	gorgonia.org/tensor v0.9.21
 	gorgonia.org/vecf32 v0.9.0
 	gorgonia.org/vecf64 v0.9.0
 )

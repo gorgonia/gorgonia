@@ -448,13 +448,23 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 		return nil, nil, nil, nil, err
 	}
 
+	g := x.Graph()
+	dims := x.Shape().Dims()
+
+	if scale == nil {
+		scale = NewTensor(g, dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_γ"), WithInit(GlorotN(1.0)))
+	}
+	if bias == nil {
+		bias = NewTensor(g, dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_β"), WithInit(GlorotN(1.0)))
+	}
+
 	op = &BatchNormOp{
 		momentum: momentum,
 		epsilon:  epsilon,
 
-		mean:     mean,
-		variance: variance,
-		ma:       ma,
+		runningMean:     mean,
+		runningVariance: variance,
+		ma:              ma,
 
 		meanTmp:              meanTmp,
 		varianceTmp:          varianceTmp,
@@ -467,23 +477,15 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 		training: true,
 		dims:     x.Dims(),
 	}
-	g := x.Graph()
-	dims := x.Shape().Dims()
 
-	if scale == nil {
-		scale = NewTensor(g, dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_γ"), WithInit(GlorotN(1.0)))
-	}
-	if bias == nil {
-		bias = NewTensor(g, dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_β"), WithInit(GlorotN(1.0)))
-	}
-
-	if retVal, err = ApplyOp(op, x); err != nil {
+	if retVal, err = ApplyOp(op, x, scale, bias); err != nil {
 		return nil, nil, nil, nil, err
 	}
-	if retVal, err = Auto(BroadcastHadamardProd, scale, retVal); err != nil {
-		return nil, nil, nil, nil, err
-	}
-	retVal, err = Auto(BroadcastAdd, retVal, bias)
+
+	// if retVal, err = Auto(BroadcastHadamardProd, scale, retVal); err != nil {
+	// 	return nil, nil, nil, nil, err
+	// }
+	// retVal, err = Auto(BroadcastAdd, retVal, bias)
 
 	return retVal, scale, bias, op, err
 }
