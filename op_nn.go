@@ -1516,6 +1516,16 @@ func (op *BatchNormOp) f32s(input, output, scale, bias *tensor.Dense) (err error
 
 	vecf32.Sub(outputF32s, op.cachedMean)
 	vecf32.Div(outputF32s, op.cachedVariance)
+
+	scaleA := scale.Float32s()
+	biasA := bias.Float32s()
+
+	for c := 0; c < channels; c++ {
+		for s := 0; s < n*spatialDim; s++ {
+			outputF32s[c*n+s] = outputF32s[c*n+s]*scaleA[c] + biasA[c]
+		}
+	}
+
 	copy(op.xNorm.Float32s(), outputF32s) // caching
 
 	return nil
@@ -1550,8 +1560,6 @@ func (op *batchnormDiffOp) Do(values ...Value) (Value, error) {
 	bias := values[3].(*tensor.Dense)
 	scaleDiff := values[4].(*tensor.Dense)
 	biasDiff := values[5].(*tensor.Dense)
-
-	biasDiff.Set(0, float32(0.1))
 
 	inputGrad := input.Clone().(*tensor.Dense)
 	return op.UsePreallocDo(inputGrad, input, grad, scale, bias, scaleDiff, biasDiff)
@@ -1603,6 +1611,7 @@ func (op *batchnormDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVa
 	default:
 		return nil, nyi("batchnormDiffOp", "Do")
 	}
+
 	return prealloc, err
 }
 
