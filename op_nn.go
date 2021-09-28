@@ -1215,7 +1215,7 @@ func (op *BatchNormOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) 
 	diff := &batchnormDiffOp{op}
 	xdv, ydv := getDV(inputs[0], output)
 	sdv, bdv := getDV(inputs[1], inputs[2])
-	_, err := diff.UsePreallocDo(xdv.d, xdv.Value, ydv.d, sdv.value, bdv.Value, sdv.d, bdv.d)
+	_, err := diff.UsePreallocDo(xdv.d, xdv.Value, ydv.d, sdv.Value, bdv.Value, sdv.d, bdv.d)
 	return err
 }
 
