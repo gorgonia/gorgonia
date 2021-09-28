@@ -3,7 +3,9 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
+	"log"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/chewxy/hm"
@@ -324,10 +326,12 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 	chanStride := h * w
 	inRowStride := inputStrides[2]
 
+	var wg sync.WaitGroup
 	switch input.Dtype() {
 	case tensor.Float64:
 		imData := input.Data().([]float64)
 		colData := prealloc.Data().([]float64)
+
 		for i := 0; i < b; i++ {
 			imStart := i * batchStrideIm
 			colStart := i * batchStrideCol
@@ -340,8 +344,9 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 			if colEnd >= len(colData) {
 				colEnd = len(colData)
 			}
+			wg.Add(1)
 
-			op.f64s(c, h, w, chanStride, inRowStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd])
+			go op.f64s(c, h, w, chanStride, inRowStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd], &wg)
 		}
 	case tensor.Float32:
 		imData := input.Data().([]float32)
@@ -358,19 +363,19 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 			if colEnd >= len(colData) {
 				colEnd = len(colData)
 			}
+			wg.Add(1)
 
-			op.f32s(c, h, w, chanStride, inRowStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd])
+			go op.f32s(c, h, w, chanStride, inRowStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd], &wg)
 		}
 	default:
 		return nil, errors.Errorf(nyiFail, "im2col", input.Dtype())
 	}
+	wg.Wait()
 	return prealloc, nil
 }
 
-func (op im2colOp) f64s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float64) {
-	colIdx := 0
-	var inputRow int
-	var inputCol int
+func (op im2colOp) f64s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float64, wg *sync.WaitGroup) {
+	var colIdx, inputRow, inputCol int
 	for outputRow := 0; outputRow < retHeight; outputRow++ {
 		for outputCol := 0; outputCol < retWidth; outputCol++ {
 			for ch := 0; ch < chans; ch++ {
@@ -385,23 +390,21 @@ func (op im2colOp) f64s(chans, height, width, chanStride, inRowStride, retHeight
 						inputCol = -op.padW + kernelCol*op.dilationW + outputCol*op.strideW
 						if inputCol < 0 || inputCol >= width {
 							col[colIdx] = 0
-							colIdx++
 						} else {
 							imIdx := chanStride*ch + inputRow*width + inputCol
 							col[colIdx] = im[imIdx]
-							colIdx++
 						}
+						colIdx++
 					}
 				}
 			}
 		}
 	}
+	wg.Done()
 }
 
-func (op im2colOp) f32s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float32) {
-	colIdx := 0
-	var inputRow int
-	var inputCol int
+func (op im2colOp) f32s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float32, wg *sync.WaitGroup) {
+	var colIdx, inputRow, inputCol int
 	for outputRow := 0; outputRow < retHeight; outputRow++ {
 		for outputCol := 0; outputCol < retWidth; outputCol++ {
 			for ch := 0; ch < chans; ch++ {
@@ -416,17 +419,17 @@ func (op im2colOp) f32s(chans, height, width, chanStride, inRowStride, retHeight
 						inputCol = -op.padW + kernelCol*op.dilationW + outputCol*op.strideW
 						if inputCol < 0 || inputCol >= width {
 							col[colIdx] = 0
-							colIdx++
 						} else {
 							imIdx := chanStride*ch + inputRow*width + inputCol
 							col[colIdx] = im[imIdx]
-							colIdx++
 						}
+						colIdx++
 					}
 				}
 			}
 		}
 	}
+	wg.Done()
 }
 
 type col2imOp struct {
@@ -1785,8 +1788,8 @@ func (op *batchnormDiffOp) f64s(input, inGrad, scale, scaleGrad, bias, biasGrad,
 					ig[offset][i] = x[i] * σ
 				}
 
-				scaleGradData[b] = 0
-				biasGradData[b] = 0
+				scaleGradData[c] = 0
+				biasGradData[c] = 0
 			}
 		}
 	}
@@ -1823,6 +1826,8 @@ func (op *batchnormDiffOp) f32s(input, inGrad, scale, scaleGrad, bias, biasGrad,
 	scaleGradData := scaleGrad.Float32s()
 	biasGradData := biasGrad.Float32s()
 
+	log.Printf("s.Shape() %v, scaleGrad.Shape() %v || %v %v", s, scaleGrad.Shape(), batches, chans)
+
 	if op.training {
 		// Y = (X - E[X]) / σ
 
@@ -1855,8 +1860,8 @@ func (op *batchnormDiffOp) f32s(input, inGrad, scale, scaleGrad, bias, biasGrad,
 					ig[offset][i] = (o - gradMean - g) * σ
 				}
 
-				scaleGradData[b] = dotp * σ
-				biasGradData[b] = sum
+				scaleGradData[c] += dotp * σ
+				biasGradData[c] += sum
 			}
 		}
 	} else {
@@ -1869,8 +1874,8 @@ func (op *batchnormDiffOp) f32s(input, inGrad, scale, scaleGrad, bias, biasGrad,
 				for i := range x {
 					ig[offset][i] = x[i] * σ
 				}
-				scaleGradData[b] = 0
-				biasGradData[b] = 0
+				scaleGradData[c] = 0
+				biasGradData[c] = 0
 			}
 		}
 	}
