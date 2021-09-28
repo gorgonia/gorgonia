@@ -3,8 +3,8 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
-	"log"
 	"math"
+	"runtime"
 	"sync"
 	"time"
 
@@ -327,6 +327,7 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 	inRowStride := inputStrides[2]
 
 	var wg sync.WaitGroup
+	workers := make(chan struct{}, runtime.NumCPU())
 	switch input.Dtype() {
 	case tensor.Float64:
 		imData := input.Data().([]float64)
@@ -346,7 +347,7 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 			}
 			wg.Add(1)
 
-			go op.f64s(c, h, w, chanStride, inRowStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd], &wg)
+			go op.f64s(c, h, w, chanStride, inRowStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd], &wg, workers)
 		}
 	case tensor.Float32:
 		imData := input.Data().([]float32)
@@ -365,7 +366,7 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 			}
 			wg.Add(1)
 
-			go op.f32s(c, h, w, chanStride, inRowStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd], &wg)
+			go op.f32s(c, h, w, chanStride, inRowStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd], &wg, workers)
 		}
 	default:
 		return nil, errors.Errorf(nyiFail, "im2col", input.Dtype())
@@ -374,7 +375,8 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 	return prealloc, nil
 }
 
-func (op im2colOp) f64s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float64, wg *sync.WaitGroup) {
+func (op im2colOp) f64s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float64, wg *sync.WaitGroup, workers chan struct{}) {
+	workers <- struct{}{}
 	var colIdx, inputRow, inputCol int
 	for outputRow := 0; outputRow < retHeight; outputRow++ {
 		for outputCol := 0; outputCol < retWidth; outputCol++ {
@@ -400,10 +402,12 @@ func (op im2colOp) f64s(chans, height, width, chanStride, inRowStride, retHeight
 			}
 		}
 	}
+	<-workers
 	wg.Done()
 }
 
-func (op im2colOp) f32s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float32, wg *sync.WaitGroup) {
+func (op im2colOp) f32s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float32, wg *sync.WaitGroup, workers chan struct{}) {
+	workers <- struct{}{}
 	var colIdx, inputRow, inputCol int
 	for outputRow := 0; outputRow < retHeight; outputRow++ {
 		for outputCol := 0; outputCol < retWidth; outputCol++ {
@@ -429,6 +433,7 @@ func (op im2colOp) f32s(chans, height, width, chanStride, inRowStride, retHeight
 			}
 		}
 	}
+	<-workers
 	wg.Done()
 }
 
@@ -1825,8 +1830,6 @@ func (op *batchnormDiffOp) f32s(input, inGrad, scale, scaleGrad, bias, biasGrad,
 
 	scaleGradData := scaleGrad.Float32s()
 	biasGradData := biasGrad.Float32s()
-
-	log.Printf("s.Shape() %v, scaleGrad.Shape() %v || %v %v", s, scaleGrad.Shape(), batches, chans)
 
 	if op.training {
 		// Y = (X - E[X]) / σ
