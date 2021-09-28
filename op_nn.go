@@ -1149,7 +1149,7 @@ type BatchNormOp struct {
 	training bool
 }
 
-// Arity returns 1
+// Arity returns 3
 func (op *BatchNormOp) Arity() int { return 3 }
 
 // Type ...
@@ -1178,15 +1178,15 @@ func (op *BatchNormOp) Do(values ...Value) (retVal Value, err error) {
 		return nil, errors.Wrapf(err, "batchNorm Do")
 	}
 
-	var v, out Value
+	var v, out, scale, bias Value
 	v = values[0]
 	if out, err = CloneValue(v); err != nil {
 		return nil, err
 	}
+	scale = values[1]
+	bias = values[2]
 
-	// TODO: pass the scale and bias
-
-	return op.UsePreallocDo(out, v)
+	return op.UsePreallocDo(out, v, scale, bias)
 }
 
 // ReturnsPtr is true
@@ -1214,7 +1214,8 @@ func (op *BatchNormOp) String() string {
 func (op *BatchNormOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
 	diff := &batchnormDiffOp{op}
 	xdv, ydv := getDV(inputs[0], output)
-	_, err := diff.UsePreallocDo(xdv.d, xdv.Value, ydv.d)
+	sdv, bdv := getDV(inputs[1], inputs[2])
+	_, err := diff.UsePreallocDo(xdv.d, xdv.Value, ydv.d, sdv.value, bdv.Value, sdv.d, bdv.d)
 	return err
 }
 
@@ -1230,12 +1231,11 @@ func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal N
 	scale := inputs[1]
 	bias := inputs[2]
 
-	scaleDiff := scale.Clone().(*Node)
-	scaleDiff.g = input.g
-	biasDiff := bias.Clone().(*Node)
-	biasDiff.g = input.g
-
 	diff := &batchnormDiffOp{op}
+
+	g := scale.g
+	scaleDiff := NewUniqueNode(WithType(scale.t), WithShape(scale.Shape().Clone()...), WithChildren(Nodes{scale}), In(g), WithOp(Iop{}))
+	biasDiff := NewUniqueNode(WithType(bias.t), WithShape(bias.Shape().Clone()...), WithChildren((Nodes{bias})), In(g), WithOp(Iop{}))
 
 	var ret *Node
 	if ret, err = ApplyOp(diff, input, grad, scale, bias, scaleDiff, biasDiff); err != nil {
@@ -1248,11 +1248,13 @@ func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal N
 // UsePreallocDo ...
 func (op *BatchNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
 	v := inputs[0]
+	scale := inputs[1]
+	bias := inputs[2]
 	switch v.Dtype() {
 	case Float64:
-		err = op.f64s(v.(*tensor.Dense), prealloc.(*tensor.Dense))
+		err = op.f64s(v.(*tensor.Dense), prealloc.(*tensor.Dense), scale.(*tensor.Dense), bias.(*tensor.Dense))
 	case Float32:
-		err = op.f32s(v.(*tensor.Dense), prealloc.(*tensor.Dense))
+		err = op.f32s(v.(*tensor.Dense), prealloc.(*tensor.Dense), scale.(*tensor.Dense), bias.(*tensor.Dense))
 	default:
 		return nil, nyi("BatchNorm Do", v.Dtype())
 	}
@@ -1302,7 +1304,7 @@ func (op *BatchNormOp) Reset() error {
 	return nil
 }
 
-func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
+func (op *BatchNormOp) f64s(input, output, scale, bias *tensor.Dense) (err error) {
 	n := input.Shape()[0]
 	channels := input.Shape()[1]
 	nc := channels * n
@@ -1383,7 +1385,7 @@ func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
 	return nil
 }
 
-func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
+func (op *BatchNormOp) f32s(input, output, scale, bias *tensor.Dense) (err error) {
 	n := input.Shape()[0]
 	channels := input.Shape()[1]
 	nc := channels * n
