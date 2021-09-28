@@ -411,7 +411,7 @@ func TestBatchNormAll(t *testing.T) {
 			ExpectedVariance:    []float32{0.10036002, 0.10036002},
 			ExpectedOutputGrad:  []float32{0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666},
 			ExpectedBiasGrad:    []float32{0.5, 0.5},
-			ExpectedScaleGrad:   []float32{6.2584877e-07, 6.2584877e-07},
+			ExpectedScaleGrad:   []float32{6.0190774e-07, 6.0190774e-07},
 			ExpectedEvalResult:  []float32{0.1010063, 0.1041627, 0.1641351, 0.1672915, 0.22726409, 0.2304205},
 		},
 		// {
