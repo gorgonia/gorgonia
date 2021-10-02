@@ -425,11 +425,8 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 	variance := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	ma := tensor.New(tensor.Of(dt), tensor.WithShape(1))
 
-	meanTmp := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
-	varianceTmp := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
-	tmp := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
-	xNorm := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
-	batchSumMultiplier := tensor.New(tensor.Of(dt), tensor.WithShape(batches))
+	saveMean := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	saveVar := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 
 	var uno interface{}
 	switch dt {
@@ -440,11 +437,6 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 	}
 	spatialSumMultiplier := tensor.New(tensor.Of(dt), tensor.WithShape(spatialDim))
 	if err = spatialSumMultiplier.Memset(uno); err != nil {
-		return nil, nil, nil, nil, err
-	}
-
-	numByChans := tensor.New(tensor.Of(dt), tensor.WithShape(channels*batches))
-	if err = batchSumMultiplier.Memset(uno); err != nil {
 		return nil, nil, nil, nil, err
 	}
 
@@ -466,13 +458,8 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 		runningVariance: variance,
 		ma:              ma,
 
-		meanTmp:              meanTmp,
-		varianceTmp:          varianceTmp,
-		tmpSpace:             tmp,
-		xNorm:                xNorm,
-		batchSumMultiplier:   batchSumMultiplier,
-		numByChans:           numByChans,
-		spatialSumMultiplier: spatialSumMultiplier,
+		saveMean:     saveMean,
+		saveVariance: saveVar,
 
 		training: true,
 		dims:     x.Dims(),

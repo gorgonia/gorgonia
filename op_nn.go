@@ -3,16 +3,14 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
-	"log"
-	"math"
 	"time"
 
 	"github.com/chewxy/hm"
+	"github.com/chewxy/math32"
 	rng "github.com/leesper/go_rng"
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/blas"
 	"gorgonia.org/tensor"
-	"gorgonia.org/vecf32"
 	"gorgonia.org/vecf64"
 )
 
@@ -1137,13 +1135,12 @@ type BatchNormOp struct {
 	dims     int     // 2 or 4. defaults to 4
 
 	// learnables
-	runningMean, runningVariance, ma *tensor.Dense
+	runningMean, runningVariance *tensor.Dense
 
-	// scratch space
-	meanTmp, varianceTmp, tmpSpace, xNorm                *tensor.Dense
-	batchSumMultiplier, numByChans, spatialSumMultiplier *tensor.Dense
+	saveMean, saveVariance *tensor.Dense
 
-	cachedMean, cachedVariance []float32
+	// FIXME: delete
+	ma *tensor.Dense
 
 	// training? if training then update movingMean and movingVar
 	training bool
@@ -1288,28 +1285,13 @@ func (op *BatchNormOp) Reset() error {
 		uno = float32(1)
 	}
 
-	if err := op.spatialSumMultiplier.Memset(uno); err != nil {
-		return err
-	}
-
-	if err := op.batchSumMultiplier.Memset(uno); err != nil {
-		return err
-	}
-
-	if err := op.varianceTmp.Memset(uno); err != nil {
-		return err
-	}
-
 	if err := op.runningVariance.Memset(uno); err != nil {
 		return err
 	}
 
 	op.runningMean.Zero()
 	op.ma.Zero()
-	op.meanTmp.Zero()
 
-	op.tmpSpace.Zero()
-	op.numByChans.Zero()
 	return nil
 }
 
@@ -1323,14 +1305,21 @@ func (op *BatchNormOp) f64s(input, output, scale, bias *tensor.Dense) (err error
 	outputF64s := output.Float64s()
 	copy(outputF64s, inputF64s)
 
-	meanTmp := op.meanTmp.Float64s()
+	meanTmp := make([]float64, nc)
 	mean := op.runningMean.Float64s()
-	varianceTmp := op.varianceTmp.Float64s()
+	varianceTmp := make([]float64, nc)
 	variance := op.runningVariance.Float64s()
-	tmp := op.tmpSpace.Float64s()
-	ssm := op.spatialSumMultiplier.Float64s()
-	nbc := op.numByChans.Float64s()
-	bsm := op.batchSumMultiplier.Float64s()
+	tmp := make([]float64, input.Shape().TotalSize())
+	ssm := make([]float64, nc)
+	for i := range ssm {
+		ssm[i] = 1
+	}
+
+	nbc := make([]float64, nc)
+	bsm := make([]float64, nc)
+	for i := range bsm {
+		bsm[i] = 1
+	}
 
 	momentum := op.momentum
 	eps := op.epsilon
@@ -1389,9 +1378,93 @@ func (op *BatchNormOp) f64s(input, output, scale, bias *tensor.Dense) (err error
 	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, varianceTmp, channels, 0, nbc, channels)
 	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, 1, nbc, 1, ssm, spatialDim, 0, tmp, spatialDim)
 	vecf64.Div(outputF64s, tmp)
-	copy(op.xNorm.Float64s(), outputF64s) // caching
 
 	return nil
+}
+
+func (op *BatchNormOp) updateStatsF32(n, channels int, inputT *tensor.Dense) (saveMean []float32, saveVar []float32) {
+	nc := channels * n
+	spatialDim := inputT.Shape().TotalSize() / (nc)
+	momentum := float32(op.momentum)
+
+	inputA := inputT.Float32s()
+
+	printf("n: %v channels: %v nc: %v spatialDim: %v", n, channels, nc, spatialDim)
+
+	op.saveMean.Zero()
+	op.saveVariance.Zero()
+
+	saveMean = op.saveMean.Float32s()
+	saveVar = op.saveVariance.Float32s()
+
+	runningMean := op.runningMean.Float32s()
+	runningVar := op.runningVariance.Float32s()
+
+	// NOTE: this can be parallelized by channel, should we?
+	for c := 0; c < channels; c++ {
+		for s := 0; s < n; s++ {
+			i := s*(n-1) + c
+
+			saveMean[c] += inputA[i]
+		}
+
+		saveMean[c] /= float32(n)
+
+		for s := 0; s < n; s++ {
+			i := s*(n-1) + c
+
+			saveVar[c] += (inputA[i] - saveMean[c]) * (inputA[i] - saveMean[c])
+		}
+
+		runningMean[c] = momentum*saveMean[c] + (1-momentum)*runningMean[c]
+
+		unbiasedVar := saveVar[c] / float32(n-1)
+		runningVar[c] = momentum*unbiasedVar + (1-momentum)*runningVar[c]
+	}
+
+	printf("saveMean: %v Save VaR: %v", saveMean, saveVar)
+	printf("runningMean: %v Running VaR: %v", runningMean, runningVar)
+
+	return saveMean, saveVar
+}
+
+// alpha = scale / sqrt(variance+eps)
+// beta = bias - mean * alpha
+func (op *BatchNormOp) calculateAlphaAndBetaF32(n, channels int, scaleT, biasT *tensor.Dense, saveMean, saveVar []float32) (alpha []float32, beta []float32) {
+	runningMean := op.runningMean.Float32s()
+	runningVar := op.runningVariance.Float32s()
+
+	scale := scaleT.Float32s()
+	bias := biasT.Float32s()
+
+	alpha = make([]float32, channels)
+	beta = make([]float32, channels)
+
+	printf("Scale: %v Bias: %v", scaleT, biasT)
+	printf("runing mean: %v", runningMean)
+	printf("runing var: %v", runningVar)
+
+	for c := 0; c < channels; c++ {
+		var invStd, mean float32
+
+		if op.training {
+			mean = saveMean[c]
+			invStd = 1 / math32.Sqrt(saveVar[c]/float32(n)+float32(op.epsilon))
+		} else {
+			mean = runningMean[c]
+			invStd = 1 / math32.Sqrt(runningVar[c]+float32(op.epsilon))
+		}
+
+		alpha[c] = invStd * scale[c]
+
+		printf("alpha[%v] = %v * %v = %v", c, invStd, scale[c], alpha[c])
+
+		beta[c] = bias[c] - mean*alpha[c]
+
+		printf("beta[%v] = %v - %v * %v = %v", c, bias[c], mean, alpha[c], beta[c])
+	}
+
+	return alpha, beta
 }
 
 func (op *BatchNormOp) f32s(input, output, scale, bias *tensor.Dense) (err error) {
@@ -1400,134 +1473,30 @@ func (op *BatchNormOp) f32s(input, output, scale, bias *tensor.Dense) (err error
 	nc := channels * n
 	spatialDim := input.Shape().TotalSize() / (nc)
 
-	inputF32s := input.Float32s()
-	outputF32s := output.Float32s()
-	copy(outputF32s, inputF32s)
-
-	meanTmp := op.meanTmp.Float32s()
-	mean := op.runningMean.Float32s()
-	varianceTmp := op.varianceTmp.Float32s()
-	variance := op.runningVariance.Float32s()
-	tmp := op.tmpSpace.Float32s()
-	ssm := op.spatialSumMultiplier.Float32s()
-	nbc := op.numByChans.Float32s()
-	bsm := op.batchSumMultiplier.Float32s()
-
-	momentum := float32(op.momentum)
-	eps := float32(op.epsilon)
-
-	if !op.training {
-		// use stored mean/variance estimates
-		scaleFactor := float32(1)
-		if fst := op.ma.Float32s()[0]; fst != 1 {
-			scaleFactor = fst
-		}
-		copy(meanTmp, mean)
-		whichblas.Sscal(len(meanTmp), scaleFactor, meanTmp, 1)
-		copy(varianceTmp, variance)
-		whichblas.Sscal(len(varianceTmp), scaleFactor, varianceTmp, 1)
-	} else {
-		// compute mean
-		alpha := 1.0 / float32(n*spatialDim)
-		whichblas.Sgemv(blas.NoTrans, nc, spatialDim, alpha, inputF32s, spatialDim, ssm, 1, 0, nbc, 1)
-		whichblas.Sgemv(blas.Trans, n, channels, 1, nbc, channels, bsm, 1, 0, meanTmp, 1)
-	}
-
-	// subtract mean
-	copy(tmp, inputF32s)
-
-	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, meanTmp, channels, 0, nbc, channels)
-	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, nc, spatialDim, 1, -1, nbc, 1, ssm, spatialDim, 1, tmp, spatialDim)
-
-	op.cachedMean = make([]float32, len(outputF32s))
-	pos := 0
-	for i := 0; i < len(op.cachedMean)/len(nbc); i++ { // FIXME: broken for 1d
-		for j := 0; j < len(nbc); j++ {
-			v := nbc[j]
-
-			op.cachedMean[pos] = v
-
-			pos++
-		}
-	}
-
-	sumVars := make([]float32, len(varianceTmp))
+	var alpha, beta []float32
 
 	if op.training {
-		// compute variance using var(X) = E(X-EX)²)
-		vecf32.Mul(tmp, tmp) // (X-EX) ^ 2
+		saveMean, saveVar := op.updateStatsF32(n, channels, input)
+		alpha, beta = op.calculateAlphaAndBetaF32(n, channels, scale, bias, saveMean, saveVar)
+	} else {
+		saveMean := make([]float32, channels)
+		saveVar := make([]float32, channels)
 
-		div := (float32(n * spatialDim))
-		if spatialDim == 1 {
-			div = 1.0
-		}
-
-		whichblas.Sgemv(blas.NoTrans, nc, spatialDim, 1.0/div, tmp, spatialDim, ssm, 1, 0, nbc, 1)
-		whichblas.Sgemv(blas.Trans, n, channels, 1.0, nbc, channels, bsm, 1, 0, varianceTmp, 1) // E((X_EX)²)
-
-		// compute and save moving average
-		op.ma.Float32s()[0] *= momentum
-		op.ma.Float32s()[0]++
-
-		// TODO: write axpby for gonum
-		whichblas.Sscal(len(meanTmp), momentum, meanTmp, 1)
-		whichblas.Saxpy(len(meanTmp), 1.0, meanTmp, 1, mean, 1)
-
-		copy(sumVars, varianceTmp)
-
-		// unbiased varianced
-		vecf32.ScaleInv(varianceTmp, float32(n)-float32(spatialDim))
-
-		// alpha*A*x + beta*y
-		// variance = momentum * varianceTmp * spatialDim + (1 -  momentum) * variance
-
-		whichblas.Sgemv(blas.NoTrans, channels, 1, momentum, varianceTmp, 1, bsm, 1, 1-momentum, variance, 1)
-
-		// normalize variance
-		copy(varianceTmp, variance)
+		alpha, beta = op.calculateAlphaAndBetaF32(n, channels, scale, bias, saveMean, saveVar)
 	}
 
-	// output = input * invstd - (mean * invstd)
-	// invstd = vector with shape (2)
-	// nbc = vector with shape (3, 2)
-	// input = matrix with shape(3, 2)
+	printf("alpha: %v beta: %v", alpha, beta)
 
-	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, bsm, 1, varianceTmp, channels, 0, nbc, channels) // nbc is the mean here
-
-	copy(outputF32s, inputF32s)
-
-	vecf32.ScaleInv(nbc, float32(n))
-	vecf32.Trans(nbc, eps)
-	vecf32.Sqrt(nbc)
-
-	op.cachedVariance = make([]float32, len(outputF32s))
-	pos = 0
-	for i := 0; i < len(op.cachedVariance)/len(sumVars); i++ {
-		for j := 0; j < len(sumVars); j++ {
-			sumVar := sumVars[j] / float32(n)
-			if !op.training {
-				sumVar = variance[0]
-			}
-
-			op.cachedVariance[pos] = float32(math.Sqrt(float64(sumVar) + float64(eps)))
-
-			pos++
+	// output = input * alpha + beta
+	outputF32s := output.Float32s()
+	for s := 0; s < n*spatialDim; s++ {
+		for c := 0; c < channels; c++ {
+			i := s*(n*spatialDim-1) + c
+			outputF32s[i] = outputF32s[i]*alpha[c] + beta[c]
 		}
 	}
 
-	vecf32.Sub(outputF32s, op.cachedMean)
-	vecf32.Div(outputF32s, op.cachedVariance)
-
-	scaleA := scale.Float32s()
-	biasA := bias.Float32s()
-
-	for c := 0; c < channels; c++ {
-		for s := 0; s < n*spatialDim; s++ {
-			outputF32s[c*n+s] = outputF32s[c*n+s]*scaleA[c] + biasA[c]
-		}
-	}
-
-	copy(op.xNorm.Float32s(), outputF32s) // caching
+	printf("output: %v", output)
 
 	return nil
 }
@@ -1621,30 +1590,38 @@ func (op *batchnormDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVa
 }
 
 func printf(msg string, args ...interface{}) {
-	log.Printf(msg, args...)
+	// log.Printf(msg, args...)
 }
 
 func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) (err error) {
 	in := input.Float64s()
+
+	n := input.Shape()[0]
+	channels := input.Shape()[1]
+	nc := n * channels
+	spatialDim := len(in) / nc
+
 	ig := inGrad.Float64s()
 	og := outGrad.Float64s()
-	tmp := op.tmpSpace.Float64s()
-	out := op.xNorm.Float64s()
-	ssm := op.spatialSumMultiplier.Float64s()
-	nbc := op.numByChans.Float64s()
-	bsm := op.batchSumMultiplier.Float64s()
-	meanTmp := op.meanTmp.Float64s()
+	tmp := make([]float64, input.Shape().TotalSize())
+	out := make([]float64, input.Shape().TotalSize())
+	ssm := make([]float64, nc)
+	for i := range ssm {
+		ssm[i] = 1
+	}
+
+	nbc := make([]float64, nc)
+	bsm := make([]float64, nc)
+	for i := range bsm {
+		bsm[i] = 1
+	}
+	meanTmp := make([]float64, n)
 
 	if !op.training {
 		copy(ig, og)
 		vecf64.Div(og, tmp)
 		return nil
 	}
-
-	n := input.Shape()[0]
-	channels := input.Shape()[1]
-	nc := n * channels
-	spatialDim := len(in) / nc
 
 	// if Y = (X-mean(X))/(sqrt(var(X)+eps)), then
 	//
@@ -1694,6 +1671,7 @@ func (op *batchnormDiffOp) f64s(input, inGrad, outGrad *tensor.Dense) (err error
 }
 
 func (op *batchnormDiffOp) f32s(input, prealloc, outGrad, scale, bias *tensor.Dense) (err error) {
+	printf("============================== STARTING BN BACKWARDS")
 	in := input.Float32s()
 	bufferA := prealloc.Float32s()
 
@@ -1711,98 +1689,73 @@ func (op *batchnormDiffOp) f32s(input, prealloc, outGrad, scale, bias *tensor.De
 	biasDiff := bufferA[bufferStart:bufferEnd]
 
 	og := outGrad.Float32s()
-	tmp := op.tmpSpace.Float32s()
 
-	// printf("Input: %v", input)
-	// printf("outGrad: %v", outGrad)
-	// printf("inGrad: %v", inGrad)
-	// printf("Running Variance: %v", op.runningVariance)
-	// printf("Running Mean: %v", op.runningMean)
-	// printf("Tmp Space: %v", op.tmpSpace)
-	// printf("Cached mean: %v", op.cachedMean)
-	// printf("Cached variance: %v", op.cachedVariance)
+	mean := op.saveMean.Float32s()
+	variance := op.saveVariance.Float32s()
 
-	if !op.training {
-		copy(ig, og)
-		vecf32.Div(og, tmp)
-		return nil
-	}
+	printf("Input: %v", input)
+	printf("outGrad: %v", outGrad)
+	printf("Running Variance: %v", op.runningVariance)
+	printf("Running Mean: %v", op.runningMean)
+	printf("Cached mean: %v", op.saveMean)
+	printf("Cached variance: %v", op.saveVariance)
 
 	n := input.Shape()[0]
 	channels := input.Shape()[1]
 	nc := n * channels
 	spatialDim := len(in) / nc
 
-	buffer := make([]float32, len(in))
-	copy(buffer, in)
-	vecf32.Sub(buffer, op.cachedMean)
-	vecf32.Mul(buffer, og)
-
 	dySum := make([]float32, channels)
+
 	for c := 0; c < channels; c++ {
+		dotp := float32(0.0)
+
 		for s := 0; s < n*spatialDim; s++ {
-			dySum[c] += og[c*n+s]
-		}
-	}
+			i := s*(n*spatialDim-1) + c
 
-	dotp := make([]float32, channels)
-	for c := 0; c < channels; c++ {
+			dySum[c] += og[i]
+
+			printf("dotp += %v - %v * %v", in[i], mean[c], og[i])
+
+			dotp += (in[i] - mean[c]) * og[i]
+		}
+
+		printf("dysum: %v", dySum)
+
+		printf("dotp: %v", dotp)
+
+		v := math32.Sqrt(variance[c]/float32(n) + float32(op.epsilon))
+		k := dotp / (float32(n) * v * v)
+
+		printf("invstd: %v", 1/v)
+
+		// grad_mean = dySum / N
+		gradMean := dySum[c] / float32(n)
+
+		printf("grad mean: %v", dotp)
+
 		for s := 0; s < n*spatialDim; s++ {
-			dotp[c] += buffer[s*channels+c]
+			i := s*(n*spatialDim-1) + c
+
+			// dx = (x - mean) * k
+			ig[i] = (in[i] - mean[c]) * k
+
+			// dx = (dy - dx - grad_mean) / variance
+			ig[i] = (og[i] - ig[i] - gradMean) / variance[c]
 		}
+
+		scaleDiff[c] = dotp / v
 	}
 
-	// k = dotp / (variance * variance * N)
-	k := make([]float32, len(op.cachedVariance))
-	copy(k, op.cachedVariance)
-	vecf32.Mul(k, k)
-	vecf32.Scale(k, float32(n))
-
-	for c := 0; c < channels; c++ {
-		for s := 0; s < n*spatialDim; s++ {
-			k[c*n+s] = dotp[c] / k[c*n+s]
-		}
-	}
-
-	// dx = (x - mean) * k
-	dx := make([]float32, len(in))
-	copy(dx, in)
-	vecf32.Sub(dx, op.cachedMean) // TODO: this was already done above. optimize
-	vecf32.Mul(dx, k)
-
-	// grad_mean = dySum / N
-	gradMean := make([]float32, len(in))
-	for c := 0; c < channels; c++ {
-		for s := 0; s < n*spatialDim; s++ {
-			gradMean[c*n+s] = dySum[c] / float32(n)
-		}
-	}
-
-	// dx = (dy - dx - grad_mean) / variance
-	vecf32.Scale(dx, -1)              // - dx
-	vecf32.Add(dx, og)                //  + dy
-	vecf32.Sub(dx, gradMean)          // - gradMean
-	vecf32.Div(dx, op.cachedVariance) // / variance
-
-	w := scale.Float32s()
-	for c := 0; c < channels; c++ {
-		for s := 0; s < n*spatialDim; s++ {
-			dx[c*n+s] *= w[c]
-		}
-	}
-
-	copy(ig, dx)
-
-	// scale_grad = dotp / cached_variance
-	for c := 0; c < channels; c++ {
-		scaleDiff[c] = dotp[c] / op.cachedVariance[c]
-	}
-
-	// bias_grad = dySum
 	copy(biasDiff, dySum)
 
-	return nil
+	printf("dx: %v", ig)
+	printf("scale diff: %v", scaleDiff)
+	printf("bias diff: %v", biasDiff)
 
+	printf("============================== END BN BACKWARDS")
+
+	return nil
 }
 
 type globalAveragePoolOp struct{}
