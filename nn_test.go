@@ -397,40 +397,40 @@ func TestBatchNormAll(t *testing.T) {
 		ExpectedTrainResult, ExpectedOutputGrad, ExpectedBiasGrad, ExpectedScaleGrad, ExpectedMean, ExpectedVariance interface{}
 		ExpectedEvalResult                                                                                           interface{}
 	}{
-		// {
-		// 	desc:                "Example1 (1d)",
-		// 	Dtype:               tensor.Float32,
-		// 	X:                   generator(0.5, 0.01),
-		// 	XShape:              tensor.Shape{3, 2},
-		// 	ScaleInit:           generator(0.3, 0.3),
-		// 	ScaleShape:          tensor.Shape{1, 2},
-		// 	BiasInit:            generator(0.2, 0.2),
-		// 	BiasShape:           tensor.Shape{1, 2},
-		// 	ExpectedTrainResult: []float32{-0.16072161, -0.32144323, 0.2, 0.4, 0.5607227, 1.1214454},
-		// 	ExpectedMean:        []float32{0.4680, 0.4770},
-		// 	ExpectedVariance:    []float32{0.10036002, 0.10036002},
-		// 	ExpectedOutputGrad:  []float32{0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666},
-		// 	ExpectedBiasGrad:    []float32{0.5, 0.5},
-		// 	ExpectedScaleGrad:   []float32{6.032143e-07, 6.032143e-07},
-		// 	ExpectedEvalResult:  []float32{0.23030189, 0.46249762, 0.24924053, 0.5003749, 0.26817924, 0.5382523},
-		// },
-		// {
-		// 	desc:                "Example1 (1d)",
-		// 	Dtype:               tensor.Float32,
-		// 	X:                   []float32{-0.1607, -0.3214, 0.2000, 0.4000, 0.5607, 1.1214},
-		// 	XShape:              tensor.Shape{3, 2},
-		// 	ScaleInit:           generator(0.3, 0.3),
-		// 	ScaleShape:          tensor.Shape{1, 2},
-		// 	BiasInit:            generator(0.2, 0.2),
-		// 	BiasShape:           tensor.Shape{1, 2},
-		// 	ExpectedTrainResult: []float32{-0.16072161, -0.32144323, 0.2, 0.4, 0.5607227, 1.1214454},
-		// 	ExpectedMean:        []float32{0.4680, 0.4770},
-		// 	ExpectedVariance:    []float32{0.10036002, 0.10036002},
-		// 	ExpectedOutputGrad:  []float32{0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666},
-		// 	ExpectedBiasGrad:    []float32{0.5, 0.5},
-		// 	ExpectedScaleGrad:   []float32{6.0190774e-07, 6.0190774e-07},
-		// 	ExpectedEvalResult:  []float32{0.23030189, 0.46249762, 0.24924053, 0.5003749, 0.26817924, 0.5382523},
-		// },
+		{
+			desc:                "Example1 (1d)",
+			Dtype:               tensor.Float32,
+			X:                   generator(0.5, 0.01),
+			XShape:              tensor.Shape{3, 2},
+			ScaleInit:           generator(0.3, 0.3),
+			ScaleShape:          tensor.Shape{1, 2},
+			BiasInit:            generator(0.2, 0.2),
+			BiasShape:           tensor.Shape{1, 2},
+			ExpectedTrainResult: []float32{-0.16072161, -0.32144323, 0.2, 0.4, 0.5607227, 1.1214454},
+			ExpectedMean:        []float32{0.4680, 0.4770},
+			ExpectedVariance:    []float32{0.10036002, 0.10036002},
+			ExpectedOutputGrad:  []float32{0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666},
+			ExpectedBiasGrad:    []float32{0.5, 0.5},
+			ExpectedScaleGrad:   []float32{5.9724186e-07, 5.9724186e-07},
+			ExpectedEvalResult:  []float32{0.23030189, 0.46249762, 0.24924053, 0.5003749, 0.26817924, 0.5382523},
+		},
+		{
+			desc:                "Example1 (1d)",
+			Dtype:               tensor.Float32,
+			X:                   []float32{-0.1607, -0.3214, 0.2000, 0.4000, 0.5607, 1.1214},
+			XShape:              tensor.Shape{3, 2},
+			ScaleInit:           generator(0.3, 0.3),
+			ScaleShape:          tensor.Shape{1, 2},
+			BiasInit:            generator(0.2, 0.2),
+			BiasShape:           tensor.Shape{1, 2},
+			ExpectedTrainResult: []float32{-0.1674023, -0.33483633, 0.2, 0.4, 0.5674023, 1.1348363},
+			ExpectedMean:        []float32{0.17999999, 0.35999998},
+			ExpectedVariance:    []float32{0.10036002, 0.10036002},
+			ExpectedOutputGrad:  []float32{0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666},
+			ExpectedBiasGrad:    []float32{0.5, 0.5},
+			ExpectedScaleGrad:   []float32{6.0190774e-07, 6.0190774e-07},
+			ExpectedEvalResult:  []float32{-0.01936099, -0.14229004, 0.2128771, 0.4318339, 0.44511518, 1.0059578},
+		},
 		{
 			desc:                "Example1 (1d)",
 			Dtype:               tensor.Float32,
@@ -445,51 +445,51 @@ func TestBatchNormAll(t *testing.T) {
 			ExpectedVariance:    []float32{0.10144002, 0.10144002, 0.10144002, 0.10144002},
 			ExpectedOutputGrad:  []float32{0.083333336, 0.083333336, 0.083333336, 0.083333336, 0.083333336, 0.083333336, 0.083333336, 0.083333336, 0.083333336, 0.083333336, 0.083333336, 0.083333336},
 			ExpectedBiasGrad:    []float32{0.25, 0.25, 0.25, 0.25},
-			ExpectedScaleGrad:   []float32{3.034152e-07, 3.034152e-07, -1.7029821e-09, -1.7029821e-09},
+			ExpectedScaleGrad:   []float32{3.027529e-07, 3.027529e-07, 0, 0},
 			ExpectedEvalResult:  []float32{0.21318635, 0.42825645, 0.64521015, 0.8640479, 0.25086156, 0.5036068, 0.7582357, 1.0147486, 0.28853667, 0.5789571, 0.87126124, 1.1654494},
 		},
-		// {
-		// 	desc:                "Example2 (1d)",
-		// 	Dtype:               tensor.Float64,
-		// 	XInit:               generator(0.5, 0.01),
-		// 	XShape:              tensor.Shape{3, 2},
-		// 	ScaleInit:           Ones(),
-		// 	ScaleShape:          tensor.Shape{1, 2},
-		// 	BiasInit:            Zeroes(),
-		// 	BiasShape:           tensor.Shape{1, 2},
-		// 	ExpectedTrainResult: []float64{-1.2024072240843036, -1.2024072240843036, 0, 0, 1.2024072240843036, 1.2024072240843036},
-		// 	ExpectedMean:        []float64{0.4680, 0.4770},
-		// 	ExpectedVariance:    []float64{0.10035999999999998, 0.10035999999999998},
-		// 	ExpectedOutputGrad:  []float64{0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666},
-		// 	ExpectedBiasGrad:    []float64{0.468, 0.477},
-		// 	ExpectedScaleGrad:   []float64{0, 0},
-		// 	ExpectedEvalResult:  []float64{0.10100619619026019, 0.10416263982120583, 0.16413506880917292, 0.16729151244011856, 0.22726394142808565, 0.23042038505903129},
-		// },
-		// {
-		// 	desc:                "Example3 (1d)",
-		// 	Dtype:               tensor.Float32,
-		// 	XInit:               generator(0.1, 0.001),
-		// 	XShape:              tensor.Shape{3, 2},
-		// 	ScaleInit:           Ones(),
-		// 	ScaleShape:          tensor.Shape{1, 2},
-		// 	BiasInit:            Zeroes(),
-		// 	BiasShape:           tensor.Shape{1, 2},
-		// 	ExpectedTrainResult: []float32{-0.5619505, -0.56194866, 0, 2.0934333e-06, 0.5619526, 0.5619529},
-		// 	ExpectedMean:        []float32{0.0918, 0.0927},
-		// 	ExpectedVariance:    []float32{0.10000362, 0.10000362},
-		// 	ExpectedOutputGrad:  []float32{0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667},
-		// 	ExpectedBiasGrad:    []float32{0.468, 0.477},
-		// 	ExpectedScaleGrad:   []float32{3.501773e-07, 1.0579824e-06},
-		// 	ExpectedEvalResult:  []float32{0.025928926, 0.02624516, 0.03225304, 0.032569274, 0.038577177, 0.038893387},
-		// },
+		{
+			desc:                "Example2 (1d)",
+			Dtype:               tensor.Float64,
+			X:                   generator(0.5, 0.01),
+			XShape:              tensor.Shape{3, 2},
+			ScaleInit:           generator(0.3, 0.3),
+			ScaleShape:          tensor.Shape{1, 2},
+			BiasInit:            generator(0.2, 0.2),
+			BiasShape:           tensor.Shape{1, 2},
+			ExpectedTrainResult: []float64{},
+			ExpectedMean:        []float64{0.4680, 0.4770},
+			ExpectedVariance:    []float64{0.10035999999999998, 0.10035999999999998},
+			ExpectedOutputGrad:  []float64{0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666},
+			ExpectedBiasGrad:    []float64{0.5, 0.5},
+			ExpectedScaleGrad:   []float64{-2.433484712520345e-18, -2.433484712520345e-18},
+			ExpectedEvalResult:  []float64{0.23030185885707807, 0.46249758389272355, 0.2492405206427519, 0.5003749074640712, 0.2681791824284257, 0.5382522310354189},
+		},
+		{
+			desc:                "Example3 (1d)",
+			Dtype:               tensor.Float32,
+			X:                   generator(0.1, 0.001),
+			XShape:              tensor.Shape{3, 2},
+			ScaleInit:           Ones(),
+			ScaleShape:          tensor.Shape{1, 2},
+			BiasInit:            Zeroes(),
+			BiasShape:           tensor.Shape{1, 2},
+			ExpectedTrainResult: []float32{-0.5619506, -0.5619488, -1.2393139e-07, 1.9713611e-06, 0.5619525, 0.5619527},
+			ExpectedMean:        []float32{0.0918, 0.0927},
+			ExpectedVariance:    []float32{0.10000362, 0.10000362},
+			ExpectedOutputGrad:  []float32{0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667},
+			ExpectedBiasGrad:    []float32{0.5, 0.5},
+			ExpectedScaleGrad:   []float32{3.489054e-07, 1.0467166e-06},
+			ExpectedEvalResult:  []float32{0.025928926, 0.02624516, 0.03225304, 0.032569274, 0.038577177, 0.038893387},
+		},
 		// {
 		// 	desc:                "Example4 (2d)",
 		// 	Dtype:               tensor.Float32,
-		// 	XInit:               generator(0.1, 0.001),
+		// 	X:                   generator(0.1, 0.001),
 		// 	XShape:              tensor.Shape{2, 2, 2, 2},
-		// 	ScaleInit:           Ones(),
+		// 	ScaleInit:           generator(0.3, 0.3),
 		// 	ScaleShape:          tensor.Shape{1, 2, 1, 1},
-		// 	BiasInit:            Zeroes(),
+		// 	BiasInit:            generator(0.2, 0.2),
 		// 	BiasShape:           tensor.Shape{1, 2, 1, 1},
 		// 	ExpectedTrainResult: []float32{-1.0536097, -0.8620441, -0.67047983, -0.47891417, -1.0536081, -0.86204386, -0.6704782, -0.47891262, 0.47891274, 0.670477, 0.86204267, 1.0536083, 0.47891405, 0.6704782, 0.86204386, 1.0536095},
 		// 	ExpectedMean:        []float32{0.094950005, 0.09855},
@@ -625,6 +625,8 @@ func TestBatchNormStacked(t *testing.T) {
 	testCases := []struct {
 		desc string
 
+		Epochs int
+
 		Dtype tensor.Dtype
 
 		XInit  InitWFn
@@ -642,6 +644,7 @@ func TestBatchNormStacked(t *testing.T) {
 		{
 			desc:                "Example (1d)",
 			Dtype:               tensor.Float32,
+			Epochs:              1,
 			XInit:               generator(0.5, 0.01),
 			XShape:              tensor.Shape{3, 2},
 			ScaleInit:           generator(0.3, 0.3),
@@ -653,8 +656,8 @@ func TestBatchNormStacked(t *testing.T) {
 			ExpectedVariance:    []float32{0.21710846, 0.56843376},
 			ExpectedOutputGrad:  []float32{0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666},
 			ExpectedBiasGrad:    []float32{0.5, 0.5},
-			ExpectedScaleGrad:   []float32{3.1378207e-08, -2.3488038e-09},
-			ExpectedEvalResult:  []float32{0.23238584, 0.4815679, 0.24457917, 0.5117109, 0.25677252, 0.54185396},
+			ExpectedScaleGrad:   []float32{1.6863456e-08, -8.432093e-09},
+			ExpectedEvalResult:  []float32{0.17899714, 0.43467712, 0.18991473, 0.46596923, 0.20083237, 0.49726143},
 		},
 	}
 	for _, tC := range testCases {
@@ -697,12 +700,28 @@ func TestBatchNormStacked(t *testing.T) {
 
 			m := NewTapeMachine(g, BindDualValues(x, scale1, bias1, scale2, bias2), TraceExec(), WithInfWatch())
 
-			err = m.RunAll()
-			c.NoError(err)
+			optim := NewAdamSolver(WithLearnRate(0.05))
+			// optim := NewRMSPropSolver(WithLearnRate(0.05))
 
-			// m.Reset()
+			for i := 0; i < tC.Epochs; i++ {
+				log.Printf("-------- STEP %v", i+1)
+				op1.SetTraining()
+				op2.SetTraining()
 
-			// err = m.RunAll()
+				err = m.RunAll()
+				c.NoError(err)
+
+				err = optim.Step(NodesToValueGrads(Nodes{
+					scale1,
+					bias1,
+					scale2,
+					bias2,
+				}))
+				c.NoError(err)
+
+				m.Reset()
+			}
+
 			c.NoError(err)
 
 			c.NoError(m.Close())

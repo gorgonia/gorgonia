@@ -423,7 +423,6 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 
 	mean := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	variance := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
-	ma := tensor.New(tensor.Of(dt), tensor.WithShape(1))
 
 	saveMean := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	saveVar := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
@@ -456,7 +455,6 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 
 		runningMean:     mean,
 		runningVariance: variance,
-		ma:              ma,
 
 		saveMean:     saveMean,
 		saveVariance: saveVar,
