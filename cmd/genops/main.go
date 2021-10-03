@@ -191,7 +191,6 @@ func generateUnOps() error {
 }
 
 func generateBinOpAPI() (err error) {
-
 	type apiwrap struct {
 		op
 		IsCmp bool
@@ -232,7 +231,7 @@ func generateBinOpAPI() (err error) {
 	}
 
 	if err := f.Close(); err != nil {
-		return errors.Wrapf(err, "Unable to close %v", p)
+		return errors.Wrapf(err, "Unable to close %v", p)g
 	}
 	if err := g.Close(); err != nil {
 		return errors.Wrapf(err, "Unable to close %v", pt)

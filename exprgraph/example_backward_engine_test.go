@@ -109,6 +109,7 @@ func (e *BwdEngine) Q(op ops.Op, inputs []gorgonia.Tensor, output gorgonia.Tenso
 }
 
 func (e *BwdEngine) Backwards(ctx context.Context) error {
+	// TODO: pickup custom gradients
 	for _, ad := range e.q {
 		if err := ad.do(ctx); err != nil {
 			return err
