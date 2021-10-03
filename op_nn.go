@@ -1403,7 +1403,7 @@ func (op *BatchNormOp) updateStatsF32(n, channels int, inputT *tensor.Dense) (sa
 	// NOTE: this can be parallelized by channel, should we?
 	for c := 0; c < channels; c++ {
 		for s := 0; s < n; s++ {
-			i := s*(n-1) + c
+			i := s*channels + c
 
 			saveMean[c] += inputA[i]
 		}
@@ -1411,7 +1411,7 @@ func (op *BatchNormOp) updateStatsF32(n, channels int, inputT *tensor.Dense) (sa
 		saveMean[c] /= float32(n)
 
 		for s := 0; s < n; s++ {
-			i := s*(n-1) + c
+			i := s*channels + c
 
 			saveVar[c] += (inputA[i] - saveMean[c]) * (inputA[i] - saveMean[c])
 		}
@@ -1422,8 +1422,8 @@ func (op *BatchNormOp) updateStatsF32(n, channels int, inputT *tensor.Dense) (sa
 		runningVar[c] = momentum*unbiasedVar + (1-momentum)*runningVar[c]
 	}
 
-	printf("saveMean: %v Save VaR: %v", saveMean, saveVar)
-	printf("runningMean: %v Running VaR: %v", runningMean, runningVar)
+	printf("saveMean: %v saveVar: %v", saveMean, saveVar)
+	printf("runningMean: %v runningVaR: %v", runningMean, runningVar)
 
 	return saveMean, saveVar
 }
@@ -1491,7 +1491,7 @@ func (op *BatchNormOp) f32s(input, output, scale, bias *tensor.Dense) (err error
 	outputF32s := output.Float32s()
 	for s := 0; s < n*spatialDim; s++ {
 		for c := 0; c < channels; c++ {
-			i := s*(n*spatialDim-1) + c
+			i := s*channels + c
 			outputF32s[i] = outputF32s[i]*alpha[c] + beta[c]
 		}
 	}
@@ -1711,7 +1711,7 @@ func (op *batchnormDiffOp) f32s(input, prealloc, outGrad, scale, bias *tensor.De
 		dotp := float32(0.0)
 
 		for s := 0; s < n*spatialDim; s++ {
-			i := s*(n*spatialDim-1) + c
+			i := s*channels + c
 
 			dySum[c] += og[i]
 
@@ -1735,13 +1735,13 @@ func (op *batchnormDiffOp) f32s(input, prealloc, outGrad, scale, bias *tensor.De
 		printf("grad mean: %v", dotp)
 
 		for s := 0; s < n*spatialDim; s++ {
-			i := s*(n*spatialDim-1) + c
+			i := s*channels + c
 
 			// dx = (x - mean) * k
 			ig[i] = (in[i] - mean[c]) * k
 
 			// dx = (dy - dx - grad_mean) / variance
-			ig[i] = (og[i] - ig[i] - gradMean) / variance[c]
+			ig[i] = (og[i] - ig[i] - gradMean) / v
 		}
 
 		scaleDiff[c] = dotp / v
