@@ -109,7 +109,7 @@ func Example_iop() {
 		return
 	}
 
-	m := NewTapeMachine(g)
+	m := NewTapeMachine(g, BindDualValues(x, y, z))
 	if err := m.RunAll(); err != nil {
 		fmt.Println(err)
 		return

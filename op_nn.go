@@ -1225,32 +1225,19 @@ func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal N
 	scale := inputs[1]
 	bias := inputs[2]
 
-	diff := &batchnormDiffOp{op}
+	g := input.Graph()
 
-	var ret *Node
-	if ret, err = ApplyOp(diff, input, grad, scale, bias); err != nil {
+	diff := &batchnormDiffOp{op}
+	scaleDiff := NewUniqueNode(WithType(scale.Type()), WithShape(scale.Shape().Clone()...), WithChildren(Nodes{scale}), In(g), WithOp(Iop{}))
+
+	biasDiff := NewUniqueNode(WithType(bias.Type()), WithShape(bias.Shape().Clone()...), WithChildren(Nodes{bias}), In(g), WithOp(Iop{}))
+
+	var dy *Node
+	if dy, err = ApplyOp(diff, input, grad, scale, bias, scaleDiff, biasDiff); err != nil {
 		return nil, err
 	}
 
-	bufferStart := 0
-	bufferEnd := ret.Shape()[0] - 2
-
-	ig := Must(Reshape(Must(Slice(ret, S(bufferStart, bufferEnd))), input.Shape()))
-
-	bufferStart = bufferEnd
-	bufferEnd += 1
-
-	learnableShape := append(tensor.Shape{1}, ret.Shape()[1:]...)
-
-	sd := Must(Reshape(Must(Slice(ret, S(bufferStart, bufferEnd))), learnableShape))
-
-	log.Printf("sd: %v", sd.Shape())
-
-	bufferStart = bufferEnd
-	bufferEnd += 1
-	bd := Must(Reshape(Must(Slice(ret, S(bufferStart, bufferEnd))), learnableShape))
-
-	return Nodes{ig, sd, bd}, nil
+	return Nodes{dy, scaleDiff, biasDiff}, nil
 }
 
 // UsePreallocDo ...
@@ -1297,13 +1284,9 @@ func (op *BatchNormOp) Reset() error {
 }
 
 func (op *BatchNormOp) updateStatsF64(n, channels int, inputT *tensor.Dense) (saveMean []float64, saveVar []float64) {
-	nc := channels * n
-	spatialDim := inputT.Shape().TotalSize() / (nc)
 	momentum := float64(op.momentum)
 
 	inputA := inputT.Float64s()
-
-	printf("n: %v channels: %v nc: %v spatialDim: %v", n, channels, nc, spatialDim)
 
 	op.saveMean.Zero()
 	op.saveVariance.Zero()
@@ -1336,9 +1319,6 @@ func (op *BatchNormOp) updateStatsF64(n, channels int, inputT *tensor.Dense) (sa
 		runningVar[c] = (momentum*unbiasedVar + (1-momentum)*runningVar[c])
 	}
 
-	printf("saveMean: %v saveVar: %v", saveMean, saveVar)
-	printf("runningMean: %v runningVaR: %v", runningMean, runningVar)
-
 	return saveMean, saveVar
 }
 
@@ -1354,10 +1334,6 @@ func (op *BatchNormOp) calculateAlphaAndBetaF64(n, channels int, scaleT, biasT *
 	alpha = make([]float64, channels)
 	beta = make([]float64, channels)
 
-	printf("Scale: %v Bias: %v", scaleT, biasT)
-	printf("runing mean: %v", runningMean)
-	printf("runing var: %v", runningVar)
-
 	for c := 0; c < channels; c++ {
 		var invStd, mean float64
 
@@ -1370,12 +1346,7 @@ func (op *BatchNormOp) calculateAlphaAndBetaF64(n, channels int, scaleT, biasT *
 		}
 
 		alpha[c] = invStd * scale[c]
-
-		printf("alpha[%v] = %v * %v = %v", c, invStd, scale[c], alpha[c])
-
 		beta[c] = bias[c] - mean*alpha[c]
-
-		printf("beta[%v] = %v - %v * %v = %v", c, bias[c], mean, alpha[c], beta[c])
 	}
 
 	return alpha, beta
@@ -1399,33 +1370,22 @@ func (op *BatchNormOp) f64s(input, output, scale, bias *tensor.Dense) (err error
 		alpha, beta = op.calculateAlphaAndBetaF64(n, channels, scale, bias, saveMean, saveVar)
 	}
 
-	printf("alpha: %v beta: %v", alpha, beta)
-
 	// output = input * alpha + beta
 	outputF64s := output.Float64s()
 	for s := 0; s < n*spatialDim; s++ {
 		for c := 0; c < channels; c++ {
 			i := s*channels + c
-			log.Printf("i %v", i)
-			log.Printf("output[%v] = %v * %v + %v", i, outputF64s[i], alpha[c], beta[c])
 
 			outputF64s[i] = outputF64s[i]*alpha[c] + beta[c]
 		}
 	}
 
-	printf("output: %v", output)
-
 	return nil
 }
 
 func (op *BatchNormOp) updateStatsF32(n, channels int, inputT *tensor.Dense) (saveMean []float32, saveVar []float32) {
-	nc := channels * n
-	spatialDim := inputT.Shape().TotalSize() / (nc)
 	momentum := float32(op.momentum)
-
 	inputA := inputT.Float32s()
-
-	printf("n: %v channels: %v nc: %v spatialDim: %v", n, channels, nc, spatialDim)
 
 	op.saveMean.Zero()
 	op.saveVariance.Zero()
@@ -1458,9 +1418,6 @@ func (op *BatchNormOp) updateStatsF32(n, channels int, inputT *tensor.Dense) (sa
 		runningVar[c] = (momentum*unbiasedVar + (1-momentum)*runningVar[c])
 	}
 
-	printf("saveMean: %v saveVar: %v", saveMean, saveVar)
-	printf("runningMean: %v runningVaR: %v", runningMean, runningVar)
-
 	return saveMean, saveVar
 }
 
@@ -1476,10 +1433,6 @@ func (op *BatchNormOp) calculateAlphaAndBetaF32(n, channels int, scaleT, biasT *
 	alpha = make([]float32, channels)
 	beta = make([]float32, channels)
 
-	printf("Scale: %v Bias: %v", scaleT, biasT)
-	printf("runing mean: %v", runningMean)
-	printf("runing var: %v", runningVar)
-
 	for c := 0; c < channels; c++ {
 		var invStd, mean float32
 
@@ -1492,12 +1445,7 @@ func (op *BatchNormOp) calculateAlphaAndBetaF32(n, channels int, scaleT, biasT *
 		}
 
 		alpha[c] = invStd * scale[c]
-
-		printf("alpha[%v] = %v * %v = %v", c, invStd, scale[c], alpha[c])
-
 		beta[c] = bias[c] - mean*alpha[c]
-
-		printf("beta[%v] = %v - %v * %v = %v", c, bias[c], mean, alpha[c], beta[c])
 	}
 
 	return alpha, beta
@@ -1521,28 +1469,22 @@ func (op *BatchNormOp) f32s(input, output, scale, bias *tensor.Dense) (err error
 		alpha, beta = op.calculateAlphaAndBetaF32(n, channels, scale, bias, saveMean, saveVar)
 	}
 
-	printf("alpha: %v beta: %v", alpha, beta)
-
 	// output = input * alpha + beta
 	outputF32s := output.Float32s()
 	for s := 0; s < n*spatialDim; s++ {
 		for c := 0; c < channels; c++ {
 			i := s*channels + c
-			log.Printf("i %v", i)
-			log.Printf("output[%v] = %v * %v + %v", i, outputF32s[i], alpha[c], beta[c])
 
 			outputF32s[i] = outputF32s[i]*alpha[c] + beta[c]
 		}
 	}
-
-	printf("output: %v", output)
 
 	return nil
 }
 
 type batchnormDiffOp struct{ *BatchNormOp }
 
-func (op *batchnormDiffOp) Arity() int { return 4 }
+func (op *batchnormDiffOp) Arity() int { return 6 }
 
 func (op *batchnormDiffOp) Type() hm.Type {
 	dims := op.dims
@@ -1551,7 +1493,7 @@ func (op *batchnormDiffOp) Type() hm.Type {
 	}
 
 	t := TensorType{Dims: dims, Of: hm.TypeVariable('a')}
-	return hm.NewFnType(t, t, t, t, t)
+	return hm.NewFnType(t, t, t, t, t, t, t)
 }
 
 func (op *batchnormDiffOp) InferShape(ns ...DimSizer) (tensor.Shape, error) {
@@ -1559,11 +1501,9 @@ func (op *batchnormDiffOp) InferShape(ns ...DimSizer) (tensor.Shape, error) {
 		return nil, errors.Wrapf(err, "batchNorm")
 	}
 
-	originalShape := ns[0].(tensor.Shape)
+	originalShape := ns[0].(tensor.Shape).Clone()
 
-	sh := tensor.Shape{originalShape[0] + 2, tensor.Shape(originalShape[1:]).TotalSize()}
-
-	return sh, nil
+	return originalShape, nil
 }
 
 func (op *batchnormDiffOp) Do(values ...Value) (Value, error) {
@@ -1571,18 +1511,19 @@ func (op *batchnormDiffOp) Do(values ...Value) (Value, error) {
 	grad := values[1].(*tensor.Dense)
 	scale := values[2].(*tensor.Dense)
 	bias := values[3].(*tensor.Dense)
+	scaleDiff := values[4].(*tensor.Dense)
+	biasDiff := values[5].(*tensor.Dense)
 
-	log.Printf("input shape: %v", input.Shape())
+	dy, err := CloneValue(input)
+	if err != nil {
+		return nil, err
+	}
 
-	// Note: this buffer will hold the input gradient, scale diff and bias diff
-	buffer := tensor.New(
-		tensor.Of(input.Dtype()),
-		tensor.WithShape(input.Shape()[0]+2, tensor.Shape(input.Shape()[1:]).TotalSize()),
-	)
+	v, err := op.UsePreallocDo(dy, input, grad, scale, bias, scaleDiff, biasDiff)
 
-	log.Printf("buffer shape: %v", buffer.Shape())
+	log.Printf("bias diff: %v", biasDiff)
 
-	return op.UsePreallocDo(buffer, input, grad, scale, bias)
+	return v, err
 }
 
 // ReturnsPtr is the same exact characteristics of batchnorm
@@ -1620,12 +1561,14 @@ func (op *batchnormDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVa
 	outGrad := inputs[1].(*tensor.Dense)
 	scale := inputs[2].(*tensor.Dense)
 	bias := inputs[3].(*tensor.Dense)
+	scaleDiff := inputs[4].(*tensor.Dense)
+	biasDiff := inputs[5].(*tensor.Dense)
 
 	switch input.Dtype() {
 	case Float64:
-		err = op.f64s(input, buffer, outGrad, scale, bias)
+		err = op.f64s(input, buffer, outGrad, scale, bias, scaleDiff, biasDiff)
 	case Float32:
-		err = op.f32s(input, buffer, outGrad, scale, bias)
+		err = op.f32s(input, buffer, outGrad, scale, bias, scaleDiff, biasDiff)
 	default:
 		return nil, nyi("batchnormDiffOp", "Do")
 	}
@@ -1633,39 +1576,16 @@ func (op *batchnormDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVa
 	return prealloc, err
 }
 
-func printf(msg string, args ...interface{}) {
-	log.Printf(msg, args...)
-}
-
-func (op *batchnormDiffOp) f64s(input, prealloc, outGrad, scale, bias *tensor.Dense) (err error) {
-	printf("============================== STARTING BN BACKWARDS")
+func (op *batchnormDiffOp) f64s(input, prealloc, outGrad, scale, bias, scaleDiffT, biasDiffT *tensor.Dense) (err error) {
 	in := input.Float64s()
-	bufferA := prealloc.Float64s()
-
-	size := tensor.Shape(prealloc.Shape()[1:]).TotalSize()
-	bufferStart := 0
-	bufferEnd := (prealloc.Shape()[0] - 2) * size
-	ig := bufferA[bufferStart:bufferEnd]
-
-	bufferStart = bufferEnd
-	bufferEnd += size
-	scaleDiff := bufferA[bufferStart:bufferEnd]
-
-	bufferStart = bufferEnd
-	bufferEnd += size
-	biasDiff := bufferA[bufferStart:bufferEnd]
+	ig := prealloc.Float64s()
 
 	dy := outGrad.Float64s()
+	scaleDiff := scaleDiffT.Float64s()
+	biasDiff := biasDiffT.Float64s()
 
 	mean := op.saveMean.Float64s()
 	variance := op.saveVariance.Float64s()
-
-	printf("Input: %v", input)
-	printf("outGrad: %v", outGrad)
-	printf("Running Variance: %v", op.runningVariance)
-	printf("Running Mean: %v", op.runningMean)
-	printf("Cached mean: %v", op.saveMean)
-	printf("Cached variance: %v", op.saveVariance)
 
 	n := input.Shape()[0]
 	channels := input.Shape()[1]
@@ -1683,25 +1603,15 @@ func (op *batchnormDiffOp) f64s(input, prealloc, outGrad, scale, bias *tensor.De
 			dySum[c] += dy[i]
 
 			partialDotp := (float64(in[i]) - float64(mean[c])) * float64(dy[i])
-			printf("dotp += %v - %v * %v = %v", in[i], mean[c], dy[i], partialDotp)
 
 			dotp += partialDotp
 		}
 
-		printf("dysum: %v", dySum)
-		printf("dotp: %v", dotp)
-
 		invstd := 1 / math.Sqrt(float64(variance[c])/float64(n)+float64(op.epsilon))
 		k := float64(dotp*invstd*invstd) / float64(n)
 
-		log.Printf("k = %v * %v * %v / %v = %v", dotp, invstd, invstd, n, k)
-
-		printf("invstd: %v", invstd)
-
 		// grad_mean = dySum / N
 		gradMean := dySum[c] / float64(n)
-
-		printf("grad mean: %v", dotp)
 
 		for s := 0; s < n*spatialDim; s++ {
 			i := s*channels + c
@@ -1718,44 +1628,19 @@ func (op *batchnormDiffOp) f64s(input, prealloc, outGrad, scale, bias *tensor.De
 
 	copy(biasDiff, dySum)
 
-	printf("dx: %v", ig)
-	printf("scale diff: %v", scaleDiff)
-	printf("bias diff: %v", biasDiff)
-
-	printf("============================== END BN BACKWARDS")
-
 	return nil
 }
 
-func (op *batchnormDiffOp) f32s(input, prealloc, outGrad, scale, bias *tensor.Dense) (err error) {
-	printf("============================== STARTING BN BACKWARDS")
+func (op *batchnormDiffOp) f32s(input, prealloc, outGrad, scale, bias, scaleDiffT, biasDiffT *tensor.Dense) (err error) {
 	in := input.Float32s()
-	bufferA := prealloc.Float32s()
-
-	size := tensor.Shape(prealloc.Shape()[1:]).TotalSize()
-	bufferStart := 0
-	bufferEnd := (prealloc.Shape()[0] - 2) * size
-	ig := bufferA[bufferStart:bufferEnd]
-
-	bufferStart = bufferEnd
-	bufferEnd += size
-	scaleDiff := bufferA[bufferStart:bufferEnd]
-
-	bufferStart = bufferEnd
-	bufferEnd += size
-	biasDiff := bufferA[bufferStart:bufferEnd]
+	ig := prealloc.Float32s()
 
 	dy := outGrad.Float32s()
+	scaleDiff := scaleDiffT.Float32s()
+	biasDiff := biasDiffT.Data().([]float32)
 
 	mean := op.saveMean.Float32s()
 	variance := op.saveVariance.Float32s()
-
-	printf("Input: %v", input)
-	printf("outGrad: %v", outGrad)
-	printf("Running Variance: %v", op.runningVariance)
-	printf("Running Mean: %v", op.runningMean)
-	printf("Cached mean: %v", op.saveMean)
-	printf("Cached variance: %v", op.saveVariance)
 
 	n := input.Shape()[0]
 	channels := input.Shape()[1]
@@ -1773,25 +1658,15 @@ func (op *batchnormDiffOp) f32s(input, prealloc, outGrad, scale, bias *tensor.De
 			dySum[c] += dy[i]
 
 			partialDotp := (float64(in[i]) - float64(mean[c])) * float64(dy[i])
-			printf("dotp += %v - %v * %v = %v", in[i], mean[c], dy[i], partialDotp)
 
 			dotp += partialDotp
 		}
 
-		printf("dysum: %v", dySum)
-		printf("dotp: %v", dotp)
-
 		invstd := 1 / math.Sqrt(float64(variance[c])/float64(n)+float64(op.epsilon))
 		k := float32(float64(dotp*invstd*invstd) / float64(n))
 
-		log.Printf("k = %v * %v * %v / %v = %v", dotp, invstd, invstd, n, k)
-
-		printf("invstd: %v", invstd)
-
 		// grad_mean = dySum / N
 		gradMean := dySum[c] / float32(n)
-
-		printf("grad mean: %v", dotp)
 
 		for s := 0; s < n*spatialDim; s++ {
 			i := s*channels + c
@@ -1807,12 +1682,6 @@ func (op *batchnormDiffOp) f32s(input, prealloc, outGrad, scale, bias *tensor.De
 	}
 
 	copy(biasDiff, dySum)
-
-	printf("dx: %v", ig)
-	printf("scale diff: %v", scaleDiff)
-	printf("bias diff: %v", biasDiff)
-
-	printf("============================== END BN BACKWARDS")
 
 	return nil
 }
