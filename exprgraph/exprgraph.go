@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/exprgraph/internal/uid"
+	"gorgonia.org/gorgonia/internal/encoding"
 	"gorgonia.org/tensor"
 )
 
@@ -35,9 +36,10 @@ const (
 //  }
 type Graph struct {
 	tensor.Engine
-	nodes map[int64]*Node
-	from  map[int64]map[int64]graph.WeightedEdge
-	to    map[int64]map[int64]graph.WeightedEdge
+	nodes  map[int64]*Node
+	from   map[int64]map[int64]graph.WeightedEdge
+	to     map[int64]map[int64]graph.WeightedEdge
+	groups map[int64]encoding.Groups
 
 	self, absent float64
 
@@ -106,6 +108,7 @@ func NewGraph(e tensor.Engine) *Graph {
 		nodes:  make(map[int64]*Node),
 		from:   make(map[int64]map[int64]graph.WeightedEdge),
 		to:     make(map[int64]map[int64]graph.WeightedEdge),
+		groups: make(map[int64]encoding.Groups),
 
 		self:   Self,
 		absent: Absent,
@@ -312,3 +315,6 @@ func (g *Graph) Roots() (retVal Nodes) {
 	}
 	return retVal
 }
+
+// SetGroup sets the group of the given node.
+func (g *Graph) SetGroup(n *Node, group encoding.Group) { g.groups[n.id].Upsert(group) }
