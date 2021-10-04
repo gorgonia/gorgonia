@@ -74,6 +74,10 @@ func (g *Graph) IDOf(t Tensor) (NodeID, error) {
 func (g *Graph) NodeOf(t Tensor) *Node { return g.find(t) }
 
 func (g *Graph) find(t Tensor) *Node {
+	if n, ok := t.(*Node); ok {
+		return n
+	}
+
 	// search backwards because it's more probable that you're using newer created nodes
 	for _, n := range g.nodes {
 		// this little trick here (to inspect the internal structure - i.e g.nodes[i].Tensor == t)
@@ -317,4 +321,13 @@ func (g *Graph) Roots() (retVal Nodes) {
 }
 
 // SetGroup sets the group of the given node.
-func (g *Graph) SetGroup(n *Node, group encoding.Group) { g.groups[n.id].Upsert(group) }
+func (g *Graph) SetGroup(t Tensor, group encoding.Group) {
+	n := g.find(t)
+	g.groups[n.id] = g.groups[n.id].Upsert(group)
+}
+
+// GroupsOf returns the groups that a tensor belongs to.
+func (g *Graph) GroupsOf(t Tensor) encoding.Groups {
+	n := g.find(t)
+	return g.groups[n.id]
+}

@@ -6,15 +6,15 @@ func TestGroups(t *testing.T) {
 	var g Groups
 	g1 := NewGroup("g1")
 	g2 := NewGroup("g2")
-	g.Upsert(g1)
+	g = g.Upsert(g1)
 	if len(g) != 1 {
 		t.Fail()
 	}
-	g.Upsert(g1)
+	g = g.Upsert(g1)
 	if len(g) != 1 {
 		t.Fail()
 	}
-	g.Upsert(g2)
+	g = g.Upsert(g2)
 	if len(g) != 2 {
 		t.Fail()
 	}

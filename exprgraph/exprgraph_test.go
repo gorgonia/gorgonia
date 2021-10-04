@@ -6,6 +6,7 @@ import (
 
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/gorgonia/exprgraph/internal/uid"
+	"gorgonia.org/gorgonia/internal/encoding"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
 )
@@ -29,6 +30,7 @@ func TestNewGraph(t *testing.T) {
 				nodes:   make(map[int64]*Node),
 				from:    make(map[int64]map[int64]graph.WeightedEdge),
 				to:      make(map[int64]map[int64]graph.WeightedEdge),
+				groups:  make(map[int64]encoding.Groups),
 				self:    Self,
 				absent:  Absent,
 				nodeIDs: uid.NewSet(),

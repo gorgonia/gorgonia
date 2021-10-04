@@ -28,19 +28,19 @@ type Grouper interface {
 type Groups []Group
 
 // Upsert the GroupID in the groups
-func (g *Groups) Upsert(grp Group) {
-	for i := 0; i < len(*g); i++ {
-		if (*g)[i].ID == grp.ID {
-			return
+func (g Groups) Upsert(grp Group) Groups {
+	for i := 0; i < len(g); i++ {
+		if g[i].ID == grp.ID {
+			return g
 		}
 	}
-	*g = append(*g, grp)
+	return append(g, grp)
 }
 
 // Have returns true if GroupID is in groups
-func (g *Groups) Have(grp Group) bool {
-	for i := 0; i < len(*g); i++ {
-		if (*g)[i].ID == grp.ID {
+func (g Groups) Have(grp Group) bool {
+	for i := 0; i < len(g); i++ {
+		if g[i].ID == grp.ID {
 			return true
 		}
 	}
