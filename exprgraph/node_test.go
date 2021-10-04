@@ -122,7 +122,7 @@ func TestCons(t *testing.T) {
 	}
 }
 
-func TestNode_GetName(t *testing.T) {
+func TestNode_Name(t *testing.T) {
 	type fields struct {
 		Tensor Tensor
 		id     int64
@@ -151,8 +151,8 @@ func TestNode_GetName(t *testing.T) {
 				name:   tt.fields.name,
 				Op:     tt.fields.Op,
 			}
-			if got := n.GetName(); got != tt.want {
-				t.Errorf("Node.GetName() = %v, want %v", got, tt.want)
+			if got := n.Name(); got != tt.want {
+				t.Errorf("Node.Name() = %v, want %v", got, tt.want)
 			}
 		})
 	}
