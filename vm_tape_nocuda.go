@@ -100,6 +100,12 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 		if err = node.bindCopy(v); err != nil {
 			return errors.Wrapf(err, "TraceExec failed to bind copy")
 		}
+		// Iop is special
+		if node.op == (Iop{}) {
+			v = node.Value()
+			m.cpumem[dest] = v
+		}
+
 	} else {
 		node.bind(v)
 	}
