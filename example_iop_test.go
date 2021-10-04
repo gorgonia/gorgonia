@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hash"
 	"hash/fnv"
+	"io/ioutil"
 
 	"github.com/chewxy/hm"
 	. "gorgonia.org/gorgonia"
@@ -88,6 +89,7 @@ func (op MyNewDiffOp) Do(values ...Value) (Value, error) {
 	}
 	return retVal, err
 }
+func (op MyNewDiffOp) String() string { return "XXXDiff" }
 
 func Example_iop() {
 	g := NewGraph()
@@ -129,6 +131,7 @@ func Example_iop() {
 		}
 		return true
 	}
+	ioutil.WriteFile("xxx.dot", []byte(g.ToDot()), 0644)
 	fmt.Printf("%v", all1000(yGrad.Data().([]float64)))
 
 	// Output:

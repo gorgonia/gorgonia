@@ -155,6 +155,8 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 				continue
 			}
 
+			// TODO: Iop{} not supported by CUDA yet
+
 			if src.boundTo != nil {
 				dv := dvUnit(src.boundTo)
 				cudaLogf("dv.d 0x%x v 0x%x | writeTo: %v", dv.d.Uintptr(), v.Uintptr(), instr.writeTo)

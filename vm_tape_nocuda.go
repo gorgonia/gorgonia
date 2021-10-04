@@ -111,7 +111,19 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 				continue
 			}
 
-			if src.boundTo != nil {
+			switch {
+			case node.op == (Iop{}):
+				// we'll need to put a closure into the closure queue
+				closure := func() error {
+					dv := dvUnit(src.boundTo)
+					add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
+					if _, err := add.UnsafeDo(dv.d, v); err != nil {
+						return err
+					}
+					return nil
+				}
+				m.closureQueue = append(m.closureQueue, closure)
+			default:
 				dv := dvUnit(src.boundTo)
 
 				add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
@@ -123,6 +135,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 					return err
 				}
 			}
+
 		}
 
 	}
