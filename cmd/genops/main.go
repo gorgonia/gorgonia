@@ -231,7 +231,7 @@ func generateBinOpAPI() (err error) {
 	}
 
 	if err := f.Close(); err != nil {
-		return errors.Wrapf(err, "Unable to close %v", p)g
+		return errors.Wrapf(err, "Unable to close %v", p)
 	}
 	if err := g.Close(); err != nil {
 		return errors.Wrapf(err, "Unable to close %v", pt)

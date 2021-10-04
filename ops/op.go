@@ -71,10 +71,11 @@ type SDOp interface {
 	// SymDiff symbolically differentiates the op
 	SymDiff(inputs gorgonia.Tensors, output, grad gorgonia.Tensor) (retVal gorgonia.Tensors, err error)
 }
-*/
 
-// ADOp is any Op that supports automatic differentiation. TODO
+
+// ADOp is any Op that supports automatic differentiation
 type ADOp interface {
 	Op
-	DoDiff() // TODO
+	DoDiff(ctx context.Context, inputs []datatypes.Tensor, output datatypes.Tensor) error
 }
+*/

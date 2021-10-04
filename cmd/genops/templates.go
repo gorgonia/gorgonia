@@ -217,7 +217,8 @@ func (op {{.Name}}SV) String() string { return "·{{.Symbol}}" }
 `
 
 const binSymDiffRaw = `{{ if .IsDiff }}
-func (op {{.Name}}Op)SymDiff(inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error){ panic("not implemented" )}
+// SymDiff performs the symbolic differentiation of {{.Name}}.
+func (op {{.Name}}Op)SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error){ panic("not implemented" )}
 {{ end }}
 
 `
