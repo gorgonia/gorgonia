@@ -654,6 +654,15 @@ func Mish(a *Node) (retVal *Node, err error) {
 	return HadamardProd(a, tsp)
 }
 
+func MinBetween(a, b *Node) (retVal *Node, err error){
+	op:= minBetween{}
+	return ApplyOp(op, a, b)
+}
+func MaxBetween(a, b *Node)(retVal *Node, err error){
+	op:=maxBetween{}
+	return ApplyOp(op,a,b)
+}
+
 // Private functions
 
 func containsDuplicate(slice []int) bool {
