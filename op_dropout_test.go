@@ -13,17 +13,18 @@ import (
 
 func TestDropoutAll(t *testing.T) {
 	var tests = []struct {
-		dt           tensor.Dtype
-		prob         float64
-		rand         []float64
-		expected     interface{}
-		expectedGrad interface{}
+		dt                tensor.Dtype
+		prob              float64
+		rand              []float64
+		expected          interface{}
+		expectedGrad      interface{}
+		expectedInputGrad interface{}
 	}{
-		{Float64, 0.0, []float64{0.0, 0.2, 0.5, 0.8, 1.0}, []float64{1.0, 1.0, 1.0, 1.0, 1.0}, []float64{0.2, 0.2, 0.2, 0.2, 0.2}},
-		{Float64, 0.2, []float64{0.0, 0.2, 0.5, 0.8, 1.0}, []float64{1.25, 1.25, 1.25, 0.0, 0.0}, []float64{0.2, 0.2, 0.2, 0.2, 0.2}},
-		{Float64, 0.5, []float64{0.0, 0.2, 0.5, 0.8, 1.0}, []float64{2.0, 2.0, 0.0, 0.0, 0.0}, []float64{0.2, 0.2, 0.2, 0.2, 0.2}},
-		{Float32, 0.2, []float64{0.0, 0.2, 0.5, 0.8, 1.0}, []float32{1.25, 1.25, 1.25, 0.0, 0.0}, []float32{0.2, 0.2, 0.2, 0.2, 0.2}},
-		{Float32, 0.5, []float64{0.0, 0.2, 0.5, 0.8, 1.0}, []float32{2.0, 2.0, 0.0, 0.0, 0.0}, []float32{0.2, 0.2, 0.2, 0.2, 0.2}},
+		{Float64, 0.0, []float64{0.0, 0.2, 0.5, 0.8, 1.0}, []float64{1.0, 1.0, 1.0, 1.0, 1.0}, []float64{0.2, 0.2, 0.2, 0.2, 0.2}, []float64{0, 0, 0, 0, 0}},
+		{Float64, 0.2, []float64{0.0, 0.2, 0.5, 0.8, 1.0}, []float64{1.25, 1.25, 1.25, 0.0, 0.0}, []float64{0.2, 0.2, 0.2, 0.2, 0.2}, []float64{1, 1, 1, 0.0, 0.0}},
+		{Float64, 0.5, []float64{0.0, 0.2, 0.5, 0.8, 1.0}, []float64{2.0, 2.0, 0.0, 0.0, 0.0}, []float64{0.2, 0.2, 0.2, 0.2, 0.2}, []float64{0.4, 0.4, 0, 0, 0}},
+		{Float32, 0.2, []float64{0.0, 0.2, 0.5, 0.8, 1.0}, []float32{1.25, 1.25, 1.25, 0.0, 0.0}, []float32{0.2, 0.2, 0.2, 0.2, 0.2}, []float32{1, 1, 1, 0, 0}},
+		{Float32, 0.5, []float64{0.0, 0.2, 0.5, 0.8, 1.0}, []float32{2.0, 2.0, 0.0, 0.0, 0.0}, []float32{0.2, 0.2, 0.2, 0.2, 0.2}, []float32{0.4, 0.4, 0, 0, 0}},
 	}
 
 	for _, tt := range tests {
@@ -57,8 +58,11 @@ func TestDropoutAll(t *testing.T) {
 
 			yGrad, err := y.Grad()
 			require.NoError(t, err)
-
 			assert.Equal(t, tt.expectedGrad, yGrad.Data())
+
+			xGrad, err := x.Grad()
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedInputGrad, xGrad.Data())
 		})
 	}
 }
