@@ -3,12 +3,10 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
-	"log"
 	"math"
 	"time"
 
 	"github.com/chewxy/hm"
-	"github.com/chewxy/math32"
 	rng "github.com/leesper/go_rng"
 	"github.com/pkg/errors"
 	"gorgonia.org/tensor"
@@ -1283,7 +1281,7 @@ func (op *BatchNormOp) Reset() error {
 	return nil
 }
 
-func (op *BatchNormOp) updateStatsF64(n, channels int, inputT *tensor.Dense) (saveMean []float64, saveVar []float64) {
+func (op *BatchNormOp) updateStatsF64(batchSize, channels, spatialDim int, inputT *tensor.Dense) (saveMean []float64, saveVar []float64) {
 	momentum := float64(op.momentum)
 
 	inputA := inputT.Float64s()
@@ -1296,27 +1294,57 @@ func (op *BatchNormOp) updateStatsF64(n, channels int, inputT *tensor.Dense) (sa
 
 	runningMean := op.runningMean.Float64s()
 	runningVar := op.runningVariance.Float64s()
+	n := spatialDim * batchSize
 
 	// NOTE: this can be parallelized by channel, should we?
-	for c := 0; c < channels; c++ {
-		for s := 0; s < n; s++ {
-			i := s*channels + c
+	if spatialDim == 1 { // image size = 1
+		for c := 0; c < channels; c++ {
+			for s := 0; s < batchSize; s++ {
+				i := s*channels + c
 
-			saveMean[c] += inputA[i]
+				saveMean[c] += inputA[i]
+			}
+
+			saveMean[c] /= float64(n)
+
+			for s := 0; s < batchSize; s++ {
+				i := s*channels + c
+
+				saveVar[c] += (inputA[i] - saveMean[c]) * (inputA[i] - saveMean[c])
+			}
+
+			runningMean[c] = (momentum*saveMean[c] + (1-momentum)*runningMean[c])
+
+			unbiasedVar := saveVar[c] / float64(n-1)
+			runningVar[c] = (momentum*unbiasedVar + (1-momentum)*runningVar[c])
 		}
+	} else { // image size > 1
+		for c := 0; c < channels; c++ {
+			for s := 0; s < batchSize; s++ {
+				for d := 0; d < spatialDim; d++ {
+					i := s*channels*spatialDim + c*spatialDim + d
 
-		saveMean[c] /= float64(n)
+					saveMean[c] += inputA[i]
+				}
+			}
 
-		for s := 0; s < n; s++ {
-			i := s*channels + c
+			saveMean[c] /= float64(n)
 
-			saveVar[c] += (inputA[i] - saveMean[c]) * (inputA[i] - saveMean[c])
+			for s := 0; s < batchSize; s++ {
+				for d := 0; d < spatialDim; d++ {
+					i := s*channels*spatialDim + c*spatialDim + d
+
+					x := inputA[i]
+
+					saveVar[c] += (x - saveMean[c]) * (x - saveMean[c])
+				}
+			}
+
+			runningMean[c] = (momentum*saveMean[c] + (1-momentum)*runningMean[c])
+
+			unbiasedVar := saveVar[c] / float64(n-1)
+			runningVar[c] = (momentum*unbiasedVar + (1-momentum)*runningVar[c])
 		}
-
-		runningMean[c] = (momentum*saveMean[c] + (1-momentum)*runningMean[c])
-
-		unbiasedVar := saveVar[c] / float64(n-1)
-		runningVar[c] = (momentum*unbiasedVar + (1-momentum)*runningVar[c])
 	}
 
 	return saveMean, saveVar
@@ -1324,9 +1352,10 @@ func (op *BatchNormOp) updateStatsF64(n, channels int, inputT *tensor.Dense) (sa
 
 // alpha = scale / sqrt(variance+eps)
 // beta = bias - mean * alpha
-func (op *BatchNormOp) calculateAlphaAndBetaF64(n, channels int, scaleT, biasT *tensor.Dense, saveMean, saveVar []float64) (alpha []float64, beta []float64) {
+func (op *BatchNormOp) calculateAlphaAndBetaF64(batchSize, channels, spatialDim int, scaleT, biasT *tensor.Dense, saveMean, saveVar []float64) (alpha []float64, beta []float64) {
 	runningMean := op.runningMean.Float64s()
 	runningVar := op.runningVariance.Float64s()
+	n := spatialDim * batchSize
 
 	scale := scaleT.Float64s()
 	bias := biasT.Float64s()
@@ -1353,38 +1382,52 @@ func (op *BatchNormOp) calculateAlphaAndBetaF64(n, channels int, scaleT, biasT *
 }
 
 func (op *BatchNormOp) f64s(input, output, scale, bias *tensor.Dense) (err error) {
-	n := input.Shape()[0]
+	batchSize := input.Shape()[0]
 	channels := input.Shape()[1]
-	nc := channels * n
-	spatialDim := input.Shape().TotalSize() / (nc)
+	nc := channels * batchSize
+	spatialDim := input.Shape().TotalSize() / nc
 
 	var alpha, beta []float64
 
 	if op.training {
-		saveMean, saveVar := op.updateStatsF64(n, channels, input)
-		alpha, beta = op.calculateAlphaAndBetaF64(n, channels, scale, bias, saveMean, saveVar)
+		saveMean, saveVar := op.updateStatsF64(batchSize, channels, spatialDim, input)
+		alpha, beta = op.calculateAlphaAndBetaF64(batchSize, channels, spatialDim, scale, bias, saveMean, saveVar)
 	} else {
 		saveMean := make([]float64, channels)
 		saveVar := make([]float64, channels)
 
-		alpha, beta = op.calculateAlphaAndBetaF64(n, channels, scale, bias, saveMean, saveVar)
+		alpha, beta = op.calculateAlphaAndBetaF64(batchSize, channels, spatialDim, scale, bias, saveMean, saveVar)
 	}
 
 	// output = input * alpha + beta
 	outputF64s := output.Float64s()
-	for s := 0; s < n*spatialDim; s++ {
-		for c := 0; c < channels; c++ {
-			i := s*channels + c
 
-			outputF64s[i] = outputF64s[i]*alpha[c] + beta[c]
+	if spatialDim == 1 {
+		for s := 0; s < batchSize; s++ {
+			for c := 0; c < channels; c++ {
+				i := s*channels + c
+
+				outputF64s[i] = outputF64s[i]*alpha[c] + beta[c]
+			}
+		}
+	} else {
+		for c := 0; c < channels; c++ {
+			for s := 0; s < batchSize; s++ {
+				for d := 0; d < spatialDim; d++ {
+					i := s*channels*spatialDim + c*spatialDim + d
+
+					outputF64s[i] = outputF64s[i]*alpha[c] + beta[c]
+				}
+			}
 		}
 	}
 
 	return nil
 }
 
-func (op *BatchNormOp) updateStatsF32(n, channels int, inputT *tensor.Dense) (saveMean []float32, saveVar []float32) {
-	momentum := float32(op.momentum)
+func (op *BatchNormOp) updateStatsF32(batchSize, channels, spatialDim int, inputT *tensor.Dense) (saveMean []float32, saveVar []float32) {
+	momentum := float64(op.momentum)
+
 	inputA := inputT.Float32s()
 
 	op.saveMean.Zero()
@@ -1395,27 +1438,57 @@ func (op *BatchNormOp) updateStatsF32(n, channels int, inputT *tensor.Dense) (sa
 
 	runningMean := op.runningMean.Float32s()
 	runningVar := op.runningVariance.Float32s()
+	n := spatialDim * batchSize
 
 	// NOTE: this can be parallelized by channel, should we?
-	for c := 0; c < channels; c++ {
-		for s := 0; s < n; s++ {
-			i := s*channels + c
+	if spatialDim == 1 { // image size = 1
+		for c := 0; c < channels; c++ {
+			for s := 0; s < batchSize; s++ {
+				i := s*channels + c
 
-			saveMean[c] += inputA[i]
+				saveMean[c] += inputA[i]
+			}
+
+			saveMean[c] /= float32(n)
+
+			for s := 0; s < batchSize; s++ {
+				i := s*channels + c
+
+				saveVar[c] += (inputA[i] - saveMean[c]) * (inputA[i] - saveMean[c])
+			}
+
+			runningMean[c] = float32(momentum*float64(saveMean[c]) + (1-momentum)*float64(runningMean[c]))
+
+			unbiasedVar := float64(saveVar[c]) / float64(n-1)
+			runningVar[c] = float32(momentum*unbiasedVar + (1-momentum)*float64(runningVar[c]))
 		}
+	} else { // image size > 1
+		for c := 0; c < channels; c++ {
+			for s := 0; s < batchSize; s++ {
+				for d := 0; d < spatialDim; d++ {
+					i := s*channels*spatialDim + c*spatialDim + d
 
-		saveMean[c] /= float32(n)
+					saveMean[c] += inputA[i]
+				}
+			}
 
-		for s := 0; s < n; s++ {
-			i := s*channels + c
+			saveMean[c] /= float32(n)
 
-			saveVar[c] += (inputA[i] - saveMean[c]) * (inputA[i] - saveMean[c])
+			for s := 0; s < batchSize; s++ {
+				for d := 0; d < spatialDim; d++ {
+					i := s*channels*spatialDim + c*spatialDim + d
+
+					x := inputA[i]
+
+					saveVar[c] += (x - saveMean[c]) * (x - saveMean[c])
+				}
+			}
+
+			runningMean[c] = float32(momentum*float64(saveMean[c]) + (1-momentum)*float64(runningMean[c]))
+
+			unbiasedVar := float64(saveVar[c]) / float64(n-1)
+			runningVar[c] = float32(momentum*unbiasedVar + (1-momentum)*float64(runningVar[c]))
 		}
-
-		runningMean[c] = (momentum*saveMean[c] + (1-momentum)*runningMean[c])
-
-		unbiasedVar := saveVar[c] / float32(n-1)
-		runningVar[c] = (momentum*unbiasedVar + (1-momentum)*runningVar[c])
 	}
 
 	return saveMean, saveVar
@@ -1423,9 +1496,11 @@ func (op *BatchNormOp) updateStatsF32(n, channels int, inputT *tensor.Dense) (sa
 
 // alpha = scale / sqrt(variance+eps)
 // beta = bias - mean * alpha
-func (op *BatchNormOp) calculateAlphaAndBetaF32(n, channels int, scaleT, biasT *tensor.Dense, saveMean, saveVar []float32) (alpha []float32, beta []float32) {
+func (op *BatchNormOp) calculateAlphaAndBetaF32(batchSize, channels, spatialDim int, scaleT, biasT *tensor.Dense, saveMean, saveVar []float32) (alpha []float32, beta []float32) {
 	runningMean := op.runningMean.Float32s()
 	runningVar := op.runningVariance.Float32s()
+
+	n := spatialDim * batchSize
 
 	scale := scaleT.Float32s()
 	bias := biasT.Float32s()
@@ -1434,48 +1509,61 @@ func (op *BatchNormOp) calculateAlphaAndBetaF32(n, channels int, scaleT, biasT *
 	beta = make([]float32, channels)
 
 	for c := 0; c < channels; c++ {
-		var invStd, mean float32
+		var invStd, mean float64
 
 		if op.training {
-			mean = saveMean[c]
-			invStd = 1 / math32.Sqrt(saveVar[c]/float32(n)+float32(op.epsilon))
+			mean = float64(saveMean[c])
+			invStd = 1 / math.Sqrt(float64(saveVar[c]/float32(n)+float32(op.epsilon)))
 		} else {
-			mean = runningMean[c]
-			invStd = 1 / math32.Sqrt(runningVar[c]+float32(op.epsilon))
+			mean = float64(runningMean[c])
+			invStd = 1 / math.Sqrt(float64(runningVar[c])+float64(op.epsilon))
 		}
 
-		alpha[c] = invStd * scale[c]
-		beta[c] = bias[c] - mean*alpha[c]
+		alpha[c] = float32(invStd * float64(scale[c]))
+		beta[c] = float32(float64(bias[c]) - mean*float64(alpha[c]))
 	}
 
 	return alpha, beta
 }
 
 func (op *BatchNormOp) f32s(input, output, scale, bias *tensor.Dense) (err error) {
-	n := input.Shape()[0]
+	batchSize := input.Shape()[0]
 	channels := input.Shape()[1]
-	nc := channels * n
-	spatialDim := input.Shape().TotalSize() / (nc)
+	nc := channels * batchSize
+	spatialDim := input.Shape().TotalSize() / nc
 
 	var alpha, beta []float32
 
 	if op.training {
-		saveMean, saveVar := op.updateStatsF32(n, channels, input)
-		alpha, beta = op.calculateAlphaAndBetaF32(n, channels, scale, bias, saveMean, saveVar)
+		saveMean, saveVar := op.updateStatsF32(batchSize, channels, spatialDim, input)
+		alpha, beta = op.calculateAlphaAndBetaF32(batchSize, channels, spatialDim, scale, bias, saveMean, saveVar)
 	} else {
 		saveMean := make([]float32, channels)
 		saveVar := make([]float32, channels)
 
-		alpha, beta = op.calculateAlphaAndBetaF32(n, channels, scale, bias, saveMean, saveVar)
+		alpha, beta = op.calculateAlphaAndBetaF32(batchSize, channels, spatialDim, scale, bias, saveMean, saveVar)
 	}
 
 	// output = input * alpha + beta
 	outputF32s := output.Float32s()
-	for s := 0; s < n*spatialDim; s++ {
-		for c := 0; c < channels; c++ {
-			i := s*channels + c
 
-			outputF32s[i] = outputF32s[i]*alpha[c] + beta[c]
+	if spatialDim == 1 {
+		for s := 0; s < batchSize; s++ {
+			for c := 0; c < channels; c++ {
+				i := s*channels + c
+
+				outputF32s[i] = outputF32s[i]*alpha[c] + beta[c]
+			}
+		}
+	} else {
+		for c := 0; c < channels; c++ {
+			for s := 0; s < batchSize; s++ {
+				for d := 0; d < spatialDim; d++ {
+					i := s*channels*spatialDim + c*spatialDim + d
+
+					outputF32s[i] = outputF32s[i]*alpha[c] + beta[c]
+				}
+			}
 		}
 	}
 
@@ -1520,8 +1608,6 @@ func (op *batchnormDiffOp) Do(values ...Value) (Value, error) {
 	}
 
 	v, err := op.UsePreallocDo(dy, input, grad, scale, bias, scaleDiff, biasDiff)
-
-	log.Printf("bias diff: %v", biasDiff)
 
 	return v, err
 }
@@ -1587,43 +1673,79 @@ func (op *batchnormDiffOp) f64s(input, prealloc, outGrad, scale, bias, scaleDiff
 	mean := op.saveMean.Float64s()
 	variance := op.saveVariance.Float64s()
 
-	n := input.Shape()[0]
+	batchSize := input.Shape()[0]
 	channels := input.Shape()[1]
-	nc := n * channels
+	nc := batchSize * channels
 	spatialDim := len(in) / nc
+	n := batchSize * spatialDim
 
 	dySum := make([]float64, channels)
 
-	for c := 0; c < channels; c++ {
-		dotp := float64(0.0)
+	if spatialDim == 1 {
+		for c := 0; c < channels; c++ {
+			dotp := float64(0.0)
 
-		for s := 0; s < n*spatialDim; s++ {
-			i := s*channels + c
+			for s := 0; s < n; s++ {
+				i := s*channels + c
 
-			dySum[c] += dy[i]
+				dySum[c] += dy[i]
+				partialDotp := (float64(in[i]) - float64(mean[c])) * float64(dy[i])
+				dotp += partialDotp
+			}
 
-			partialDotp := (float64(in[i]) - float64(mean[c])) * float64(dy[i])
+			invstd := 1 / math.Sqrt(float64(variance[c])/float64(n)+float64(op.epsilon))
+			k := float64(dotp*invstd*invstd) / float64(n)
 
-			dotp += partialDotp
+			// grad_mean = dySum / N
+			gradMean := dySum[c] / float64(n)
+
+			for s := 0; s < n; s++ {
+				i := s*channels + c
+
+				// dx = (x - mean) * k
+				ig[i] = ((in[i] - mean[c]) * k)
+
+				// dx = (dy - dx - grad_mean) / variance
+				ig[i] = (float64(dy[i]-ig[i]-gradMean) * invstd)
+			}
+
+			scaleDiff[c] = (dotp * invstd)
 		}
+	} else {
+		for c := 0; c < channels; c++ {
+			dotp := float64(0.0)
 
-		invstd := 1 / math.Sqrt(float64(variance[c])/float64(n)+float64(op.epsilon))
-		k := float64(dotp*invstd*invstd) / float64(n)
+			for s := 0; s < batchSize; s++ {
+				for d := 0; d < spatialDim; d++ {
+					i := s*channels*spatialDim + c*spatialDim + d
 
-		// grad_mean = dySum / N
-		gradMean := dySum[c] / float64(n)
+					dySum[c] += dy[i]
 
-		for s := 0; s < n*spatialDim; s++ {
-			i := s*channels + c
+					partialDotp := (float64(in[i])*dy[i] - float64(mean[c])*float64(dy[i]))
+					dotp += partialDotp
+				}
+			}
 
-			// dx = (x - mean) * k
-			ig[i] = ((in[i] - mean[c]) * k)
+			invstd := 1 / math.Sqrt(float64(variance[c])/float64(n)+float64(op.epsilon))
+			k := float64(dotp*invstd*invstd) / float64(batchSize)
 
-			// dx = (dy - dx - grad_mean) / variance
-			ig[i] = (float64(dy[i]-ig[i]-gradMean) * invstd)
+			// grad_mean = dySum / N
+			gradMean := dySum[c] / float64(n)
+
+			for s := 0; s < batchSize; s++ {
+				for d := 0; d < spatialDim; d++ {
+					i := s*channels*spatialDim + c*spatialDim + d
+
+					// dx = (x - mean) * k
+					ig[i] = (in[i]*k - mean[c]*k)
+
+					// dx = (dy - dx - grad_mean) / variance
+					ig[i] = (float64(dy[i]*invstd - ig[i]*invstd - gradMean*invstd))
+				}
+			}
+
+			scaleDiff[c] = (dotp * invstd)
 		}
-
-		scaleDiff[c] = (dotp * invstd)
 	}
 
 	copy(biasDiff, dySum)
@@ -1637,48 +1759,84 @@ func (op *batchnormDiffOp) f32s(input, prealloc, outGrad, scale, bias, scaleDiff
 
 	dy := outGrad.Float32s()
 	scaleDiff := scaleDiffT.Float32s()
-	biasDiff := biasDiffT.Data().([]float32)
+	biasDiff := biasDiffT.Float32s()
 
 	mean := op.saveMean.Float32s()
 	variance := op.saveVariance.Float32s()
 
-	n := input.Shape()[0]
+	batchSize := input.Shape()[0]
 	channels := input.Shape()[1]
-	nc := n * channels
+	nc := batchSize * channels
 	spatialDim := len(in) / nc
+	n := batchSize * spatialDim
 
 	dySum := make([]float32, channels)
 
-	for c := 0; c < channels; c++ {
-		dotp := float64(0.0)
+	if spatialDim == 1 {
+		for c := 0; c < channels; c++ {
+			dotp := float64(0.0)
 
-		for s := 0; s < n*spatialDim; s++ {
-			i := s*channels + c
+			for s := 0; s < batchSize; s++ {
+				i := s*channels + c
 
-			dySum[c] += dy[i]
+				dySum[c] += dy[i]
+				partialDotp := (float64(in[i])*float64(dy[i]) - float64(mean[c])*float64(dy[i]))
+				dotp += partialDotp
+			}
 
-			partialDotp := (float64(in[i]) - float64(mean[c])) * float64(dy[i])
+			invstd := 1 / math.Sqrt(float64(variance[c])/float64(batchSize)+float64(op.epsilon))
+			k := float64(dotp*invstd*invstd) / float64(batchSize)
 
-			dotp += partialDotp
+			// grad_mean = dySum / N
+			gradMean := dySum[c] / float32(batchSize)
+
+			for s := 0; s < n; s++ {
+				i := s*channels + c
+
+				// dx = (x - mean) * k
+				ig[i] = float32(float64(in[i]-mean[c]) * k)
+
+				// dx = (dy - dx - grad_mean) / variance
+				ig[i] = float32(float64(dy[i]-ig[i]-gradMean) * invstd)
+			}
+
+			scaleDiff[c] = float32(dotp * invstd)
 		}
+	} else {
+		for c := 0; c < channels; c++ {
+			dotp := float64(0.0)
 
-		invstd := 1 / math.Sqrt(float64(variance[c])/float64(n)+float64(op.epsilon))
-		k := float32(float64(dotp*invstd*invstd) / float64(n))
+			for s := 0; s < batchSize; s++ {
+				for d := 0; d < spatialDim; d++ {
+					i := s*channels*spatialDim + c*spatialDim + d
 
-		// grad_mean = dySum / N
-		gradMean := dySum[c] / float32(n)
+					dySum[c] += dy[i]
 
-		for s := 0; s < n*spatialDim; s++ {
-			i := s*channels + c
+					partialDotp := (float64(in[i]) - float64(mean[c])) * float64(dy[i])
+					dotp += partialDotp
+				}
+			}
 
-			// dx = (x - mean) * k
-			ig[i] = ((in[i] - mean[c]) * k)
+			invstd := 1 / math.Sqrt(float64(variance[c])/float64(n)+float64(op.epsilon))
+			k := float64(dotp*invstd*invstd) / float64(batchSize)
 
-			// dx = (dy - dx - grad_mean) / variance
-			ig[i] = float32(float64(dy[i]-ig[i]-gradMean) * invstd)
+			// grad_mean = dySum / N
+			gradMean := float64(dySum[c]) / float64(n)
+
+			for s := 0; s < batchSize; s++ {
+				for d := 0; d < spatialDim; d++ {
+					i := s*channels*spatialDim + c*spatialDim + d
+
+					// dx = (x - mean) * k
+					ig[i] = float32((float64(in[i]) - float64(mean[c])) * k)
+
+					// dx = (dy - dx - grad_mean) / variance
+					ig[i] = float32((float64(dy[i]) - float64(ig[i]) - gradMean) * invstd)
+				}
+			}
+
+			scaleDiff[c] = float32(dotp * invstd)
 		}
-
-		scaleDiff[c] = float32(dotp * invstd)
 	}
 
 	copy(biasDiff, dySum)
