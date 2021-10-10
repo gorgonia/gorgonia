@@ -2,7 +2,6 @@ package gorgonia
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"testing"
 
@@ -232,8 +231,8 @@ func TestMaxPool(t *testing.T) {
 			output, err := tcase.PoolFunc(input, tcase.kernelSize, tcase.pad, tcase.stride)
 			c.NoError(err)
 
-			log.Printf("output shape: %v", output.Shape())
-			log.Printf("input shape: %v", input.Shape())
+			t.Logf("%v output shape: %v", tcase.desc, output.Shape())
+			t.Logf("%v input shape: %v", tcase.desc, input.Shape())
 
 			y := NewTensor(g, output.Dtype(), output.Dims(), WithShape(output.Shape()...), WithInit(Ones()))
 
@@ -255,9 +254,9 @@ func TestMaxPool(t *testing.T) {
 			c.NoError(vm.RunAll())
 			c.NoError(vm.Close())
 
-			log.Printf("input %v", input.Value())
-			log.Printf("result: %v", output.Value())
-			log.Printf("cost: %v", cost.Value())
+			t.Logf("%v input %v", tcase.desc, input.Value())
+			t.Logf("%v result: %v", tcase.desc, output.Value())
+			t.Logf("%v cost: %v", tcase.desc, cost.Value())
 
 			c.Equal(tcase.expectedOutput, output.Value().Data())
 			c.Equal(tcase.expectedShape, output.Shape())
@@ -497,8 +496,6 @@ func TestBatchNormAll(t *testing.T) {
 
 			x := NewTensor(g, tC.Dtype, tC.XShape.Dims(), WithShape(tC.XShape...), initOpt, WithName("x"))
 
-			log.Printf("input: %v", x.Value())
-
 			scale := NewTensor(g, tC.Dtype, tC.ScaleShape.Dims(), WithShape(tC.ScaleShape...), WithInit(tC.ScaleInit), WithName("scale"))
 			bias := NewTensor(g, tC.Dtype, tC.BiasShape.Dims(), WithShape(tC.BiasShape...), WithInit(tC.BiasInit), WithName("bias"))
 
@@ -524,33 +521,31 @@ func TestBatchNormAll(t *testing.T) {
 
 			c.NoError(m.Close())
 
-			log.Printf("running mean: %v", op.runningMean)
-			log.Printf("running var: %v", op.runningVariance)
-			log.Printf("output: %v", y.Value())
-
-			log.Printf("output grad: %v", y.Deriv().Value())
-			log.Printf("scale grad: %v", scale.Deriv().Value())
-			log.Printf("bias grad: %v", bias.Deriv().Value())
-			log.Printf("input grad: %v", x.Deriv().Value())
+			// for visual inspection
+			t.Logf("%v input:\n%v", tC.desc, x.Value())
+			t.Logf("%v running mean: %v", tC.desc, op.runningMean)
+			t.Logf("%v running var: %v", tC.desc, op.runningVariance)
+			t.Logf("%v output:\n%v", tC.desc, y.Value())
+			t.Logf("%v output grad:\n%v", tC.desc, y.Deriv().Value())
+			t.Logf("%v scale grad: %v", tC.desc, scale.Deriv().Value())
+			t.Logf("%v bias grad: %v", tC.desc, bias.Deriv().Value())
+			t.Logf("%v input grad:\n%v", tC.desc, x.Deriv().Value())
 
 			c.True(dawson.AllClose(tC.ExpectedMean, op.runningMean.Data()), "Mean doesn't match:\ngot=%#v expected=%#v", op.runningMean.Data(), tC.ExpectedMean)
 			c.True(dawson.AllClose(tC.ExpectedVariance, op.runningVariance.Data()), "Var doesn't match:\ngot=%#v expected=%#v", op.runningVariance.Data(), tC.ExpectedVariance)
-
 			c.True(dawson.AllClose(tC.ExpectedTrainResult, yVal.Data()), "Wrong Output\ngot=%#v\nexpected=%#v", yVal.Data(), tC.ExpectedTrainResult)
 
 			c.True(dawson.AllClose(tC.ExpectedOutputGrad, y.Deriv().Value().Data()), "Output Grad doesn't match:\ngot=%#v expected=%#v", y.Deriv().Value().Data(), tC.ExpectedOutputGrad)
 			c.True(dawson.AllClose(tC.ExpectedBiasGrad, bias.Deriv().Value().Data()), "Bias Grad doesn't match:\ngot=%#v expected=%#v", bias.Deriv().Value().Data(), tC.ExpectedBiasGrad)
 			c.True(dawson.AllClose(tC.ExpectedScaleGrad, scale.Deriv().Value().Data()), "Scale Grad doens't match:\ngot=%#v expected=%#v", scale.Deriv().Value().Data(), tC.ExpectedScaleGrad)
 
-			log.Printf("-------- Switching to Eval Mode --------")
+			t.Logf("-------- Switching to Eval Mode --------")
 
 			m2 := NewTapeMachine(g, TraceExec(), WithInfWatch(), EvalMode())
 
 			err = m2.RunAll()
 			c.NoError(err)
-
 			c.NoError(m2.Close())
-
 			c.True(dawson.AllClose(tC.ExpectedEvalResult, yVal.Data()), "Output doesn't match\ngot=%#v\nexpected=%#v", yVal.Data(), tC.ExpectedEvalResult)
 		})
 
@@ -651,7 +646,7 @@ func TestBatchNormStacked(t *testing.T) {
 
 			x := NewTensor(g, tC.Dtype, tC.XShape.Dims(), WithShape(tC.XShape...), WithInit(tC.XInit), WithName("x"))
 
-			log.Printf("input: %v", x.Value())
+			t.Logf("%v input:\n%v", tC.desc, x.Value())
 
 			scale1 := NewTensor(g, tC.Dtype, tC.ScaleShape.Dims(), WithShape(tC.ScaleShape...), WithInit(tC.ScaleInit), WithName("scale1"))
 			bias1 := NewTensor(g, tC.Dtype, tC.BiasShape.Dims(), WithShape(tC.BiasShape...), WithInit(tC.BiasInit), WithName("bias1"))
@@ -685,7 +680,7 @@ func TestBatchNormStacked(t *testing.T) {
 			// optim := NewRMSPropSolver(WithLearnRate(0.05))
 
 			for i := 0; i < tC.Epochs; i++ {
-				log.Printf("-------- STEP %v", i+1)
+				t.Logf("-------- STEP %v", i+1)
 				op1.SetTraining(true)
 				op2.SetTraining(true)
 
@@ -708,23 +703,21 @@ func TestBatchNormStacked(t *testing.T) {
 
 			c.NoError(m.Close())
 
-			log.Printf("running mean: %v", op2.runningMean)
-			log.Printf("running var: %v", op2.runningVariance)
-
-			log.Printf("y1: %v", y1.Value())
-			log.Printf("output: %v", y2.Value())
-
-			log.Printf("output grad: %v", y2.Deriv().Value())
-			log.Printf("scale grad: %v", scale2.Deriv().Value())
-			log.Printf("bias grad: %v", bias2.Deriv().Value())
-			log.Printf("input grad: %v", x.Deriv().Value())
+			t.Logf("%v running mean: %v", tC.desc, op2.runningMean)
+			t.Logf("%v running var: %v", tC.desc, op2.runningVariance)
+			t.Logf("%v y1:\n%v", tC.desc, y1.Value())
+			t.Logf("%v output:\n%v", tC.desc, y2.Value())
+			t.Logf("%v output grad:\n%v", tC.desc, y2.Deriv().Value())
+			t.Logf("%v scale grad: %v", tC.desc, scale2.Deriv().Value())
+			t.Logf("%v bias grad: %v", tC.desc, bias2.Deriv().Value())
+			t.Logf("%v input grad:\n%v", tC.desc, x.Deriv().Value())
 
 			c.True(dawson.AllClose(tC.ExpectedMean, op2.runningMean.Data()), "Mean doesn't match:\ngot=%#v expected=%#v", op2.runningMean.Data(), tC.ExpectedMean)
 			c.True(dawson.AllClose(tC.ExpectedVariance, op2.runningVariance.Data()), "Var doesn't match:\ngot=%#v expected=%#v", op2.runningVariance.Data(), tC.ExpectedVariance)
 
 			c.True(dawson.AllClose(tC.ExpectedTrainResult, yVal.Data()), "Wrong Output\ngot=%#v\nexpected=%#v", yVal.Data(), tC.ExpectedTrainResult)
 
-			log.Printf("-------- Switching to Eval Mode --------")
+			t.Logf("-------- Switching to Eval Mode --------")
 
 			m2 := NewTapeMachine(g, TraceExec(), WithInfWatch(), EvalMode())
 
