@@ -41,6 +41,20 @@ const (
 // VMOpt is a VM creation option
 type VMOpt func(m VM)
 
+// EvalMode enables the eval mode for the VM and graph
+func EvalMode() VMOpt {
+	return func(m VM) {
+		switch v := m.(type) {
+		case *lispMachine:
+			v.evalMode = true
+		case *tapeMachine:
+			v.evalMode = true
+		default:
+			panic(nyi("EvalMode", v))
+		}
+	}
+}
+
 // WithLogger creates a VM with the supplied logger. If the logger is nil, a default logger, writing to os.stderr will be created.
 func WithLogger(logger *log.Logger) VMOpt {
 	f := func(m VM) {

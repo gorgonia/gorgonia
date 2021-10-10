@@ -37,6 +37,7 @@ type lispMachine struct {
 
 	runFlags     byte // supposed to go into state stuff.  Placed here for better compacting of struct
 	checkedRoots bool // supposed to go into state stuff.
+	evalMode     bool
 }
 
 // NewLispMachine creates a VM that executes the graph as it is traversed. Depending on the VMOpts passed in
@@ -62,6 +63,10 @@ func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 
 	for _, n := range g.AllNodes() {
 		setEngine(n.boundTo, m.Engine)
+
+		if op, ok := n.op.(TrainModeOp); ok {
+			op.SetTraining(!m.evalMode)
+		}
 	}
 
 	runtime.SetFinalizer(m, finalizeLispMachine)
