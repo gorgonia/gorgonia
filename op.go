@@ -129,6 +129,11 @@ type ReductionOp interface {
 	IsReduction() bool
 }
 
+// A TrainModeOp is an Op that supports modes to enable/disable training
+type TrainModeOp interface {
+	SetTraining(isTraining bool) error
+}
+
 // IncrDoer increments the toIncr with the result of doing
 type IncrDoer interface {
 	IncrDo(toIncr Value, inputs ...Value) error

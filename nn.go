@@ -2,7 +2,9 @@ package gorgonia
 
 import (
 	"fmt"
+	"time"
 
+	rng "github.com/leesper/go_rng"
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/internal/encoding"
 	"gorgonia.org/tensor"
@@ -65,44 +67,11 @@ func BinaryXent(output, target *Node) (retVal *Node, err error) {
 // It uses randomly zeroes out a *Tensor with a probability drawn from
 // a uniform distribution
 func Dropout(x *Node, dropProb float64) (retVal *Node, err error) {
-	return dropout(x, dropProb, UniformRandomNode)
-}
+	rand := rng.NewUniformGenerator(time.Now().UnixNano())
 
-type dropoutRandFn func(g *ExprGraph, dt tensor.Dtype, low, high float64, shape ...int) *Node
+	op := newDropoutOp(dropProb, func() float64 { return rand.Float64Range(0, 1) })
 
-func dropout(x *Node, dropProb float64, randFn dropoutRandFn) (retVal *Node, err error) {
-	if dropProb == 0.0 {
-		return x, nil
-	}
-	keepProb := 1.0 - dropProb
-
-	var dt tensor.Dtype
-	if dt, err = dtypeOf(x.t); err != nil {
-		return nil, errors.Wrap(err, dtypeOfFail)
-	}
-
-	var pr Value
-	switch dt {
-	case Float64:
-		pr, _ = anyToScalar(keepProb)
-	case Float32:
-		pr, _ = anyToScalar(float32(keepProb))
-	default:
-		return nil, errors.Errorf(nyiTypeFail, "Dropout()", dt)
-	}
-
-	p := NewConstant(pr)
-
-	m := randFn(x.g, dt, 0, 1, x.shape...)
-	if retVal, err = Lt(m, p, true); err != nil {
-		return nil, errors.Wrap(err, "Greater Than failed")
-	}
-
-	if retVal, err = HadamardProd(x, retVal); err != nil {
-		return nil, errors.Wrap(err, mulFail)
-	}
-
-	return HadamardDiv(retVal, p)
+	return ApplyOp(op, x)
 }
 
 // LeakyRelu returns a node whose underlying value is:
