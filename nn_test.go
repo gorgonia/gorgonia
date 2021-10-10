@@ -544,9 +544,7 @@ func TestBatchNormAll(t *testing.T) {
 
 			log.Printf("-------- Switching to Eval Mode --------")
 
-			op.SetTraining(false)
-
-			m2 := NewTapeMachine(g, TraceExec(), WithInfWatch())
+			m2 := NewTapeMachine(g, TraceExec(), WithInfWatch(), EvalMode())
 
 			err = m2.RunAll()
 			c.NoError(err)
@@ -728,10 +726,7 @@ func TestBatchNormStacked(t *testing.T) {
 
 			log.Printf("-------- Switching to Eval Mode --------")
 
-			op1.SetTraining(false)
-			op2.SetTraining(false)
-
-			m2 := NewTapeMachine(g, TraceExec(), WithInfWatch())
+			m2 := NewTapeMachine(g, TraceExec(), WithInfWatch(), EvalMode())
 
 			err = m2.RunAll()
 			c.NoError(err)
