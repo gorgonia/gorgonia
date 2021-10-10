@@ -1,7 +1,6 @@
 package gorgonia
 
 import (
-	"log"
 	"math"
 	"runtime"
 	"testing"
