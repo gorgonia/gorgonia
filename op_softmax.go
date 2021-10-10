@@ -19,6 +19,7 @@ type softmaxOp struct {
 	isLog bool
 }
 
+// FIXME: this implementation is being used for now. We need to fix it
 func newSoftmaxOp(inputShape tensor.Shape, axes ...int) *softmaxOp {
 	axis := -1
 	if len(axes) > 0 {
