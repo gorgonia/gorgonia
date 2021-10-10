@@ -36,6 +36,7 @@ type tapeMachine struct {
 	logFlags    byte
 
 	runFlags byte //  spare2: trace(copy values and put into nodes)
+	evalMode bool
 }
 
 // NewTapeMachine creates a VM that compiles a graph into a prog.
@@ -69,6 +70,10 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 	m.init()
 	for _, n := range m.p.g.AllNodes() {
 		setEngine(n.boundTo, m.Engine)
+
+		if op, ok := n.op.(TrainModeOp); ok {
+			op.SetTraining(!m.evalMode)
+		}
 	}
 
 	runtime.SetFinalizer(m, finalizeTapeMachine) // a "defer" to deinitialize CUDA stuff (if using CUDA build)

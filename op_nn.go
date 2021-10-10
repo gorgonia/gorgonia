@@ -1178,6 +1178,7 @@ func (op *BatchNormOp) Do(values ...Value) (retVal Value, err error) {
 	if out, err = CloneValue(v); err != nil {
 		return nil, err
 	}
+
 	return op.UsePreallocDo(out, v)
 }
 
@@ -1243,11 +1244,16 @@ func (op *BatchNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Va
 }
 
 // SetTraining configure the op for training mode.
-// A call to this function implicitly calls the Reset() method
-func (op *BatchNormOp) SetTraining() { op.Reset(); op.training = true }
+// A call to this function with `true` implicitly calls the Reset() method
+func (op *BatchNormOp) SetTraining(isTraining bool) error {
+	if isTraining {
+		op.Reset()
+	}
 
-// SetTesting configure the op for testing mode
-func (op *BatchNormOp) SetTesting() { op.training = false }
+	op.training = isTraining
+
+	return nil
+}
 
 // Reset the operator by zeroing the internals scratch spaces
 func (op *BatchNormOp) Reset() error {
