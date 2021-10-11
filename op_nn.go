@@ -1256,6 +1256,41 @@ func (op *BatchNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Va
 	return prealloc, err
 }
 
+// Stats returns the running mean and running variance
+func (op *BatchNormOp) Stats() (runningMean tensor.Tensor, runningVariance tensor.Tensor) {
+	return op.runningMean, op.runningVariance
+}
+
+// SetStats sets the running mean and running variance. The given values are copied
+func (op *BatchNormOp) SetStats(runningMean tensor.Tensor, runningVariance tensor.Tensor) error {
+	if !runningMean.Shape().Eq(op.runningMean.Shape()) {
+		return fmt.Errorf("invalid runningMean shape %v. Expected: %v", runningMean.Shape(), op.runningMean.Shape())
+	}
+
+	if runningMean.Dtype() != op.runningMean.Dtype() {
+		return fmt.Errorf("invalid runningMean type %v. Expected: %v", runningMean.Dtype(), op.runningMean.Dtype())
+	}
+
+	if !runningVariance.Shape().Eq(op.runningVariance.Shape()) {
+		return fmt.Errorf("invalid runningVariance shape %v. Expected: %v", runningMean.Shape(), op.runningMean.Shape())
+	}
+
+	if runningVariance.Dtype() != op.runningVariance.Dtype() {
+		return fmt.Errorf("invalid runningVariance type %v. Expected: %v", runningMean.Dtype(), op.runningMean.Dtype())
+	}
+
+	switch op.runningMean.Dtype() {
+	case Float32:
+		copy(op.runningMean.Data().([]float32), runningMean.Data().([]float32))
+		copy(op.runningVariance.Data().([]float32), runningVariance.Data().([]float32))
+	case Float64:
+		copy(op.runningMean.Data().([]float64), runningMean.Data().([]float64))
+		copy(op.runningVariance.Data().([]float64), runningVariance.Data().([]float64))
+	}
+
+	return nil
+}
+
 // SetTraining configure the op for training mode.
 // A call to this function with `true` implicitly calls the Reset() method
 func (op *BatchNormOp) SetTraining(isTraining bool) error {

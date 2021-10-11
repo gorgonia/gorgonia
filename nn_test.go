@@ -265,6 +265,57 @@ func TestMaxPool(t *testing.T) {
 	}
 }
 
+var (
+	bnSetStatsCases = []struct {
+		Dtype       tensor.Dtype
+		Init        InitWFn
+		Shape       tensor.Shape
+		expectedErr string
+	}{
+		{Float32, RangedFromWithStep(0.0, 0.1), tensor.Shape{2, 2}, "invalid runningMean shape (2, 2). Expected: (2)"},
+		{Float64, RangedFromWithStep(0.0, 0.1), tensor.Shape{2}, "invalid runningMean type float64. Expected: float32"},
+		{Float32, RangedFromWithStep(0.0, 0.1), tensor.Shape{2}, ""},
+	}
+)
+
+func TestBatchNormSetStats(t *testing.T) {
+	g := NewGraph()
+	x := NewTensor(g, Float32, 2, WithShape(2, 2), WithInit(Zeroes()), WithName("x"))
+
+	_, _, _, op, _ := BatchNorm(x, nil, nil, 0.9, 1e-5)
+
+	for i, tC := range bnSetStatsCases {
+		t.Run(fmt.Sprintf("Example %d (%v)", i+1, tC.Dtype), func(t *testing.T) {
+			c := assert.New(t)
+
+			backing := tC.Init(tC.Dtype, tC.Shape...)
+
+			err := op.SetStats(
+				tensor.New(
+					tensor.Of(tC.Dtype),
+					tensor.WithShape(tC.Shape...),
+					tensor.WithBacking(backing),
+				),
+				tensor.New(
+					tensor.Of(tC.Dtype),
+					tensor.WithShape(tC.Shape...),
+					tensor.WithBacking(backing),
+				),
+			)
+
+			if tC.expectedErr == "" {
+				c.NoError(err)
+
+				m, v := op.Stats()
+				c.EqualValues(backing, m.Data())
+				c.EqualValues(backing, v.Data())
+			} else {
+				c.EqualError(err, tC.expectedErr)
+			}
+		})
+	}
+}
+
 func TestBatchNormAll(t *testing.T) {
 	for i, tC := range bnAllCases {
 		t.Run(fmt.Sprintf("#%d %v", i+1, tC.desc), func(t *testing.T) {
@@ -334,8 +385,10 @@ func TestBatchNormAll(t *testing.T) {
 			t.Logf("%v bias grad: %v", tC.desc, bias.Deriv().Value())
 			t.Logf("%v input grad:\n%v", tC.desc, x.Deriv().Value())
 
-			c.True(dawson.AllClose(tC.ExpectedMean, op.runningMean.Data()), "Mean doesn't match:\ngot=%#v expected=%#v", op.runningMean.Data(), tC.ExpectedMean)
-			c.True(dawson.AllClose(tC.ExpectedVariance, op.runningVariance.Data()), "Var doesn't match:\ngot=%#v expected=%#v", op.runningVariance.Data(), tC.ExpectedVariance)
+			runningMean, runningVariance := op.Stats()
+
+			c.True(dawson.AllClose(tC.ExpectedMean, runningMean.Data()), "Mean doesn't match:\ngot=%#v expected=%#v", op.runningMean.Data(), tC.ExpectedMean)
+			c.True(dawson.AllClose(tC.ExpectedVariance, runningVariance.Data()), "Var doesn't match:\ngot=%#v expected=%#v", op.runningVariance.Data(), tC.ExpectedVariance)
 			c.True(dawson.AllClose(tC.ExpectedTrainResult, yVal.Data()), "Wrong Output\ngot=%#v\nexpected=%#v", yVal.Data(), tC.ExpectedTrainResult)
 
 			c.True(dawson.AllClose(tC.ExpectedOutputGrad, y.Deriv().Value().Data()), "Output Grad doesn't match:\ngot=%#v expected=%#v", y.Deriv().Value().Data(), tC.ExpectedOutputGrad)
