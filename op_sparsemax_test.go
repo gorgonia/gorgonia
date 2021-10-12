@@ -1,7 +1,6 @@
 package gorgonia
 
 import (
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,6 +8,7 @@ import (
 )
 
 var testCasesSparseMaxDo = []struct {
+	desc     string
 	size     tensor.Shape
 	input    interface{}
 	weights  interface{}
@@ -16,12 +16,15 @@ var testCasesSparseMaxDo = []struct {
 	axis     int
 }{
 	{
+		"SparseMax Case 1",
 		tensor.Shape{2, 3}, []float64{-2.1714, 0.0000, 0.0000, -0.4233, 0.0000, -1.2849}, []float64{0.3, 0.0, 1.0, 0.7, 0.0, 1.0}, []float64{0.17428999999999994, 0.8257099999999999, 1, 0}, -1,
 	},
 	{
+		"SparseMax Case 2",
 		tensor.Shape{3, 3}, []float32{-3.1437, -0.5651, 0.0000, -0.7925, 0.0000, -0.5319, -0.0313, -1.1569, 0.0000}, []float32{0, 0.21744996, 0.78255, 0, 0.76594996, 0.23404998, 0.48434997, 0, 0.51565}, []float32{1, 0, 0, 0.45735168, 0.5426483, 0, 0.64763314, 0, 0.3523669}, -1,
 	},
 	{
+		"SparseMax Case 3",
 		tensor.Shape{6, 2},
 		[]float32{-1.0000, -1.0000, 1.0000, 1.0000, -0.9998, -0.9998, 0.9998, 0.9998, 0.9945, 0.9945, -0.9945, -0.9945},
 		[]float32{0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5}, []float32{0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667, 0.16666667},
@@ -69,9 +72,9 @@ func TestSparsemaxFull(t *testing.T) {
 		c.Equal(expected.Data(), out.Value().(*tensor.Dense).Data(), "output is not equal to expected value for case %d", i)
 
 		outGrad, _ := out.Grad()
-		log.Printf("output grad: %v", outGrad)
+		t.Logf("%v output grad:\n%v", testCase.desc, outGrad)
 
 		inpGrad, _ := inp.Grad()
-		log.Printf("input grad: %v", inpGrad)
+		t.Logf("%v input grad: %v", testCase.desc, inpGrad)
 	}
 }

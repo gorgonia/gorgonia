@@ -15,6 +15,4 @@ require (
 	gorgonia.org/cu v0.9.4
 	gorgonia.org/dawson v1.2.0
 	gorgonia.org/tensor v0.9.21
-	gorgonia.org/vecf32 v0.9.0
-	gorgonia.org/vecf64 v0.9.0
 )

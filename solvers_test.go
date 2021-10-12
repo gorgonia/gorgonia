@@ -1,7 +1,6 @@
 package gorgonia
 
 import (
-	"log"
 	"math"
 	"runtime"
 	"testing"
@@ -482,7 +481,7 @@ func TestBarzilaiBorweinSolver(t *testing.T) {
 		iterations++
 	}
 
-	log.Printf("Found minimum cost at iteration %d. arch=%s", iterations, runtime.GOARCH)
+	t.Logf("Found minimum cost at iteration %d. arch=%s", iterations, runtime.GOARCH)
 
 	assert.InDelta(0, costFloat, costThreshold)
 }

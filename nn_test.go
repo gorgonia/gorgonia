@@ -1,8 +1,7 @@
 package gorgonia
 
 import (
-	"io/ioutil"
-	"log"
+	"fmt"
 	"math/rand"
 	"testing"
 
@@ -232,8 +231,8 @@ func TestMaxPool(t *testing.T) {
 			output, err := tcase.PoolFunc(input, tcase.kernelSize, tcase.pad, tcase.stride)
 			c.NoError(err)
 
-			log.Printf("output shape: %v", output.Shape())
-			log.Printf("input shape: %v", input.Shape())
+			t.Logf("%v output shape: %v", tcase.desc, output.Shape())
+			t.Logf("%v input shape: %v", tcase.desc, input.Shape())
 
 			y := NewTensor(g, output.Dtype(), output.Dims(), WithShape(output.Shape()...), WithInit(Ones()))
 
@@ -255,9 +254,9 @@ func TestMaxPool(t *testing.T) {
 			c.NoError(vm.RunAll())
 			c.NoError(vm.Close())
 
-			log.Printf("input %v", input.Value())
-			log.Printf("result: %v", output.Value())
-			log.Printf("cost: %v", cost.Value())
+			t.Logf("%v input %v", tcase.desc, input.Value())
+			t.Logf("%v result: %v", tcase.desc, output.Value())
+			t.Logf("%v cost: %v", tcase.desc, cost.Value())
 
 			c.Equal(tcase.expectedOutput, output.Value().Data())
 			c.Equal(tcase.expectedShape, output.Shape())
@@ -266,91 +265,91 @@ func TestMaxPool(t *testing.T) {
 	}
 }
 
-func TestBatchNorm1d(t *testing.T) {
-	generator := func(start float64, increment float64) InitWFn {
-		return func(dt tensor.Dtype, s ...int) interface{} {
-			totalSize := tensor.Shape(s).TotalSize()
-
-			if dt == tensor.Float32 {
-				result := make([]float32, totalSize)
-
-				for i := 0; i < totalSize; i++ {
-					result[i] = float32(start)
-					start += increment
-				}
-
-				return result
-			}
-
-			result := make([]float64, totalSize)
-
-			for i := 0; i < totalSize; i++ {
-				result[i] = start
-				start += increment
-			}
-
-			return result
-		}
-	}
-
-	testCases := []struct {
-		desc  string
-		Dtype tensor.Dtype
-
-		XInit  InitWFn
-		XShape tensor.Shape
-
-		ScaleInit  InitWFn
-		ScaleShape tensor.Shape
-
-		BiasInit  InitWFn
-		BiasShape tensor.Shape
-
-		ExpectedResult interface{}
+var (
+	bnSetStatsCases = []struct {
+		Dtype       tensor.Dtype
+		Init        InitWFn
+		Shape       tensor.Shape
+		expectedErr string
 	}{
-		{
-			desc:           "Example1",
-			Dtype:          tensor.Float64,
-			XInit:          generator(0.5, 0.01),
-			XShape:         tensor.Shape{3, 2},
-			ScaleInit:      Ones(),
-			ScaleShape:     tensor.Shape{3, 1},
-			BiasInit:       Zeroes(),
-			BiasShape:      tensor.Shape{3, 1},
-			ExpectedResult: []float64{-1.2024072240843036, -1.2024072240843036, 0, 0, 1.2024072240843036, 1.2024072240843036},
-		},
-		{
-			desc:           "Example2",
-			Dtype:          tensor.Float64,
-			XInit:          generator(0.5, 0.01),
-			XShape:         tensor.Shape{3, 2},
-			ScaleInit:      Ones(),
-			ScaleShape:     tensor.Shape{3, 2},
-			BiasInit:       Zeroes(),
-			BiasShape:      tensor.Shape{3, 2},
-			ExpectedResult: []float64{-1.2024072240843036, -1.2024072240843036, 0, 0, 1.2024072240843036, 1.2024072240843036},
-		},
-		{
-			desc:           "Example3",
-			Dtype:          tensor.Float32,
-			XInit:          generator(0.1, 0.001),
-			XShape:         tensor.Shape{3, 2},
-			ScaleInit:      Ones(),
-			ScaleShape:     tensor.Shape{3, 2},
-			BiasInit:       Zeroes(),
-			BiasShape:      tensor.Shape{3, 2},
-			ExpectedResult: []float32{-0.5619547, -0.56195074, -4.1868648e-06, 0, 0.5619484, 0.56195074},
-		},
+		{Float32, RangedFromWithStep(0.0, 0.1), tensor.Shape{2, 2}, "invalid runningMean shape (2, 2). Expected: (2)"},
+		{Float64, RangedFromWithStep(0.0, 0.1), tensor.Shape{2}, "invalid runningMean type float64. Expected: float32"},
+		{Float32, RangedFromWithStep(0.0, 0.1), tensor.Shape{2}, ""},
 	}
-	for _, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
+)
+
+func TestBatchNormSetStats(t *testing.T) {
+	g := NewGraph()
+	x := NewTensor(g, Float32, 2, WithShape(2, 2), WithInit(Zeroes()), WithName("x"))
+
+	_, _, _, op, _ := BatchNorm(x, nil, nil, 0.9, 1e-5)
+
+	for i, tC := range bnSetStatsCases {
+		t.Run(fmt.Sprintf("Example %d (%v)", i+1, tC.Dtype), func(t *testing.T) {
+			c := assert.New(t)
+
+			backing := tC.Init(tC.Dtype, tC.Shape...)
+
+			err := op.SetStats(
+				tensor.New(
+					tensor.Of(tC.Dtype),
+					tensor.WithShape(tC.Shape...),
+					tensor.WithBacking(backing),
+				),
+				tensor.New(
+					tensor.Of(tC.Dtype),
+					tensor.WithShape(tC.Shape...),
+					tensor.WithBacking(backing),
+				),
+			)
+
+			if tC.expectedErr == "" {
+				c.NoError(err)
+
+				m, v := op.Stats()
+				c.EqualValues(backing, m.Data())
+				c.EqualValues(backing, v.Data())
+			} else {
+				c.EqualError(err, tC.expectedErr)
+			}
+		})
+	}
+}
+
+func TestBatchNormAll(t *testing.T) {
+	for i, tC := range bnAllCases {
+		t.Run(fmt.Sprintf("#%d %v", i+1, tC.desc), func(t *testing.T) {
 			rand.Seed(0)
 
 			c := require.New(t)
 
 			g := NewGraph()
 
-			x := NewTensor(g, tC.Dtype, tC.XShape.Dims(), WithShape(tC.XShape...), WithInit(tC.XInit), WithName("x"))
+			var initOpt NodeConsOpt
+
+			switch v := tC.X.(type) {
+			case []float32:
+				initOpt = WithValue(
+					tensor.New(
+						tensor.Of(tensor.Float32),
+						tensor.WithShape(tC.XShape...),
+						tensor.WithBacking(v),
+					),
+				)
+			case []float64:
+				initOpt = WithValue(
+					tensor.New(
+						tensor.Of(tensor.Float32),
+						tensor.WithShape(tC.XShape...),
+						tensor.WithBacking(v),
+					),
+				)
+			case InitWFn:
+				initOpt = WithInit(v)
+			}
+
+			x := NewTensor(g, tC.Dtype, tC.XShape.Dims(), WithShape(tC.XShape...), initOpt, WithName("x"))
+
 			scale := NewTensor(g, tC.Dtype, tC.ScaleShape.Dims(), WithShape(tC.ScaleShape...), WithInit(tC.ScaleInit), WithName("scale"))
 			bias := NewTensor(g, tC.Dtype, tC.BiasShape.Dims(), WithShape(tC.BiasShape...), WithInit(tC.BiasInit), WithName("bias"))
 
@@ -369,199 +368,140 @@ func TestBatchNorm1d(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			m := NewTapeMachine(g, BindDualValues(x, scale, bias), TraceExec())
+			m := NewTapeMachine(g, BindDualValues(x, scale, bias), TraceExec(), WithInfWatch())
 
 			err = m.RunAll()
 			c.NoError(err)
 
 			c.NoError(m.Close())
 
-			c.Equal(tC.ExpectedResult, yVal.Data())
+			// for visual inspection
+			t.Logf("%v input:\n%v", tC.desc, x.Value())
+			t.Logf("%v running mean: %v", tC.desc, op.runningMean)
+			t.Logf("%v running var: %v", tC.desc, op.runningVariance)
+			t.Logf("%v output:\n%v", tC.desc, y.Value())
+			t.Logf("%v output grad:\n%v", tC.desc, y.Deriv().Value())
+			t.Logf("%v scale grad: %v", tC.desc, scale.Deriv().Value())
+			t.Logf("%v bias grad: %v", tC.desc, bias.Deriv().Value())
+			t.Logf("%v input grad:\n%v", tC.desc, x.Deriv().Value())
+
+			runningMean, runningVariance := op.Stats()
+
+			c.True(dawson.AllClose(tC.ExpectedMean, runningMean.Data()), "Mean doesn't match:\ngot=%#v expected=%#v", op.runningMean.Data(), tC.ExpectedMean)
+			c.True(dawson.AllClose(tC.ExpectedVariance, runningVariance.Data()), "Var doesn't match:\ngot=%#v expected=%#v", op.runningVariance.Data(), tC.ExpectedVariance)
+			c.True(dawson.AllClose(tC.ExpectedTrainResult, yVal.Data()), "Wrong Output\ngot=%#v\nexpected=%#v", yVal.Data(), tC.ExpectedTrainResult)
+
+			c.True(dawson.AllClose(tC.ExpectedOutputGrad, y.Deriv().Value().Data()), "Output Grad doesn't match:\ngot=%#v expected=%#v", y.Deriv().Value().Data(), tC.ExpectedOutputGrad)
+			c.True(dawson.AllClose(tC.ExpectedBiasGrad, bias.Deriv().Value().Data()), "Bias Grad doesn't match:\ngot=%#v expected=%#v", bias.Deriv().Value().Data(), tC.ExpectedBiasGrad)
+			c.True(dawson.AllClose(tC.ExpectedScaleGrad, scale.Deriv().Value().Data()), "Scale Grad doens't match:\ngot=%#v expected=%#v", scale.Deriv().Value().Data(), tC.ExpectedScaleGrad)
+
+			t.Logf("-------- Switching to Eval Mode --------")
+
+			m2 := NewTapeMachine(g, TraceExec(), WithInfWatch(), EvalMode())
+
+			err = m2.RunAll()
+			c.NoError(err)
+			c.NoError(m2.Close())
+			c.True(dawson.AllClose(tC.ExpectedEvalResult, yVal.Data()), "Output doesn't match\ngot=%#v\nexpected=%#v", yVal.Data(), tC.ExpectedEvalResult)
+		})
+
+	}
+}
+
+func TestBatchNormStacked(t *testing.T) {
+	for _, tC := range bnstackedCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			rand.Seed(0)
+
+			c := require.New(t)
+
+			g := NewGraph()
+
+			x := NewTensor(g, tC.Dtype, tC.XShape.Dims(), WithShape(tC.XShape...), WithInit(tC.XInit), WithName("x"))
+
+			t.Logf("%v input:\n%v", tC.desc, x.Value())
+
+			scale1 := NewTensor(g, tC.Dtype, tC.ScaleShape.Dims(), WithShape(tC.ScaleShape...), WithInit(tC.ScaleInit), WithName("scale1"))
+			bias1 := NewTensor(g, tC.Dtype, tC.BiasShape.Dims(), WithShape(tC.BiasShape...), WithInit(tC.BiasInit), WithName("bias1"))
+
+			y1, _, _, op1, err := BatchNorm(x, scale1, bias1, 0.9, 1e-5)
+			c.NoError(err)
+
+			op1.SetTraining(true)
+
+			scale2 := NewTensor(g, tC.Dtype, tC.ScaleShape.Dims(), WithShape(tC.ScaleShape...), WithInit(tC.ScaleInit), WithName("scale2"))
+			bias2 := NewTensor(g, tC.Dtype, tC.BiasShape.Dims(), WithShape(tC.BiasShape...), WithInit(tC.BiasInit), WithName("bias2"))
+
+			y2, _, _, op2, err := BatchNorm(y1, scale2, bias2, 0.9, 1e-5)
+			c.NoError(err)
+
+			op2.SetTraining(true)
+
+			var yVal, scaleVal Value
+			Read(y2, &yVal)
+			Read(scale2, &scaleVal)
+
+			cost := Must(Mean(y2))
+
+			if _, err := Grad(cost, x, scale1, bias1, scale2, bias2); err != nil {
+				t.Fatal(err)
+			}
+
+			m := NewTapeMachine(g, BindDualValues(x, scale1, bias1, scale2, bias2), TraceExec(), WithInfWatch())
+
+			optim := NewAdamSolver(WithLearnRate(0.05))
+			// optim := NewRMSPropSolver(WithLearnRate(0.05))
+
+			for i := 0; i < tC.Epochs; i++ {
+				t.Logf("-------- STEP %v", i+1)
+				op1.SetTraining(true)
+				op2.SetTraining(true)
+
+				err = m.RunAll()
+				c.NoError(err)
+
+				err = optim.Step(NodesToValueGrads(Nodes{
+					scale1,
+					bias1,
+					scale2,
+					bias2,
+				}))
+				c.NoError(err)
+
+				m.Reset()
+
+			}
+
+			c.NoError(err)
+
+			c.NoError(m.Close())
+
+			t.Logf("%v running mean: %v", tC.desc, op2.runningMean)
+			t.Logf("%v running var: %v", tC.desc, op2.runningVariance)
+			t.Logf("%v y1:\n%v", tC.desc, y1.Value())
+			t.Logf("%v output:\n%v", tC.desc, y2.Value())
+			t.Logf("%v output grad:\n%v", tC.desc, y2.Deriv().Value())
+			t.Logf("%v scale grad: %v", tC.desc, scale2.Deriv().Value())
+			t.Logf("%v bias grad: %v", tC.desc, bias2.Deriv().Value())
+			t.Logf("%v input grad:\n%v", tC.desc, x.Deriv().Value())
+
+			c.True(dawson.AllClose(tC.ExpectedMean, op2.runningMean.Data()), "Mean doesn't match:\ngot=%#v expected=%#v", op2.runningMean.Data(), tC.ExpectedMean)
+			c.True(dawson.AllClose(tC.ExpectedVariance, op2.runningVariance.Data()), "Var doesn't match:\ngot=%#v expected=%#v", op2.runningVariance.Data(), tC.ExpectedVariance)
+
+			c.True(dawson.AllClose(tC.ExpectedTrainResult, yVal.Data()), "Wrong Output\ngot=%#v\nexpected=%#v", yVal.Data(), tC.ExpectedTrainResult)
+
+			t.Logf("-------- Switching to Eval Mode --------")
+
+			m2 := NewTapeMachine(g, TraceExec(), WithInfWatch(), EvalMode())
+
+			err = m2.RunAll()
+			c.NoError(err)
+
+			c.NoError(m2.Close())
+
+			c.True(dawson.AllClose(tC.ExpectedEvalResult, yVal.Data()), "Output doesn't match\ngot=%#v\nexpected=%#v", yVal.Data(), tC.ExpectedEvalResult)
 		})
 	}
-}
-
-func TestBatchNorm_F64(t *testing.T) {
-	g := NewGraph()
-	x := NewTensor(g, Float64, 4, WithShape(5, 2, 3, 4), WithInit(Gaussian(0, 1)), WithName("x"))
-	scale := NewTensor(g, Float64, 4, WithShape(5, 2, 3, 4), WithInit(Ones()), WithName("scale"))
-	bias := NewTensor(g, Float64, 4, WithShape(5, 2, 3, 4), WithInit(Zeroes()), WithName("bias"))
-	y, _, _, _, err := BatchNorm(x, scale, bias, 0.9, 1e-5)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var yVal Value
-	Read(y, &yVal)
-
-	cost, _ := Mean(y)
-
-	if _, err := Grad(cost, x); err != nil {
-		t.Fatal(err)
-	}
-
-	m := NewTapeMachine(g, BindDualValues(x), TraceExec())
-	if err := m.RunAll(); err != nil {
-		t.Fatal(err)
-	}
-	m.Close()
-
-	shape := x.Shape()
-	n, c, h, w := shape[0], shape[1], shape[2], shape[3]
-
-	yVT := yVal.(*tensor.Dense)
-	for j := 0; j < c; j++ {
-		var sum, variance float64
-		for i := 0; i < n; i++ {
-			for k := 0; k < h; k++ {
-				for l := 0; l < w; l++ {
-					at, err := yVT.At(i, j, k, l)
-					if err != nil {
-						t.Fatal(err)
-					}
-					atf := at.(float64)
-					sum += atf
-					variance += atf * atf
-				}
-			}
-		}
-		sum /= float64(h * w * n)
-		variance /= float64(h * w * n)
-
-		if !dawson.ToleranceF64(sum, 0, 0.00001) {
-			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
-		}
-
-		if !dawson.ToleranceF64(variance, 1, 0.0001) {
-			t.Errorf("channel %d: Expected variance to be near 1. Got %v", j, variance)
-		}
-	}
-
-	m = NewTapeMachine(g, BindDualValues(x), EvalMode())
-	if err := m.RunAll(); err != nil {
-		t.Fatal(err)
-	}
-	m.Close()
-	yVT = yVal.(*tensor.Dense)
-	for j := 0; j < c; j++ {
-		var sum, variance float64
-		for i := 0; i < n; i++ {
-			for k := 0; k < h; k++ {
-				for l := 0; l < w; l++ {
-					at, err := yVT.At(i, j, k, l)
-					if err != nil {
-						t.Fatal(err)
-					}
-					atf := at.(float64)
-					sum += atf
-					variance += atf * atf
-				}
-			}
-		}
-		sum /= float64(h * w * n)
-		variance /= float64(h * w * n)
-
-		if !dawson.ToleranceF64(sum, 0, 0.00001) {
-			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
-		}
-
-		if !dawson.ToleranceF64(variance, 0.9833, 0.0001) {
-			t.Errorf("channel %d: Expected variance to be near 0.98. Got %v", j, variance)
-		}
-	}
-
-}
-
-func TestBatchNorm_F32(t *testing.T) {
-	g := NewGraph()
-	x := NewTensor(g, Float32, 4, WithShape(5, 2, 3, 4), WithInit(Gaussian(0, 1)))
-	scale := NewTensor(g, Float32, 4, WithShape(5, 2, 3, 4), WithInit(Ones()), WithName("scale"))
-	bias := NewTensor(g, Float32, 4, WithShape(5, 2, 3, 4), WithInit(Zeroes()), WithName("bias"))
-	y, _, _, _, err := BatchNorm(x, scale, bias, 0.9, 1e-5)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var yVal Value
-	Read(y, &yVal)
-
-	cost, _ := Mean(y)
-
-	if _, err := Grad(cost, x); err != nil {
-		ioutil.WriteFile("foo.dot", []byte(g.ToDot()), 0644)
-		t.Fatal(err)
-	}
-
-	m := NewTapeMachine(g, BindDualValues(x))
-	if err := m.RunAll(); err != nil {
-		t.Fatal(err)
-	}
-	m.Close()
-
-	shape := x.Shape()
-	n, c, h, w := shape[0], shape[1], shape[2], shape[3]
-
-	yVT := yVal.(*tensor.Dense)
-	for j := 0; j < c; j++ {
-		var sum, variance float32
-		for i := 0; i < n; i++ {
-			for k := 0; k < h; k++ {
-				for l := 0; l < w; l++ {
-					at, err := yVT.At(i, j, k, l)
-					if err != nil {
-						t.Fatal(err)
-					}
-					atf := at.(float32)
-					sum += atf
-					variance += atf * atf
-				}
-			}
-		}
-		sum /= float32(h * w * n)
-		variance /= float32(h * w * n)
-
-		if !dawson.ToleranceF32(sum, 0, 0.001) {
-			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
-		}
-
-		if !dawson.ToleranceF32(variance, 1, 0.001) {
-			t.Errorf("channel %d: Expected variance to be near 1. Got %v", j, variance)
-		}
-	}
-
-	m = NewTapeMachine(g, BindDualValues(x), EvalMode())
-	if err := m.RunAll(); err != nil {
-		t.Fatal(err)
-	}
-	m.Close()
-	yVT = yVal.(*tensor.Dense)
-	for j := 0; j < c; j++ {
-		var sum, variance float32
-		for i := 0; i < n; i++ {
-			for k := 0; k < h; k++ {
-				for l := 0; l < w; l++ {
-					at, err := yVT.At(i, j, k, l)
-					if err != nil {
-						t.Fatal(err)
-					}
-					atf := at.(float32)
-					sum += atf
-					variance += atf * atf
-				}
-			}
-		}
-		sum /= float32(h * w * n)
-		variance /= float32(h * w * n)
-
-		if !dawson.ToleranceF32(sum, 0, 0.001) {
-			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
-		}
-
-		if !dawson.ToleranceF32(variance, 0.9833, 0.001) {
-			t.Errorf("channel %d: Expected variance to be near 0.98. Got %v", j, variance)
-		}
-	}
-
 }
 
 func TestLeakyRelu(t *testing.T) {

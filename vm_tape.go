@@ -26,14 +26,15 @@ type tapeMachine struct {
 	pc int
 
 	// operational stuff
-	bindNodesDV Nodes // nodes that require binding of DV
-	watchNodes  Nodes
-	watchRegs   []register
-	logger      *log.Logger
-	buf         *bytes.Buffer
-	valueFmt    string
-	tabcount    int
-	logFlags    byte
+	bindNodesDV  Nodes // nodes that require binding of DV
+	watchNodes   Nodes
+	watchRegs    []register
+	logger       *log.Logger
+	buf          *bytes.Buffer
+	valueFmt     string
+	tabcount     int
+	logFlags     byte
+	closureQueue []func() error
 
 	runFlags byte //  spare2: trace(copy values and put into nodes)
 	evalMode bool
@@ -231,6 +232,11 @@ func (m *tapeMachine) RunAll() (err error) {
 			err := m.ExternMetadata.DoWork()
 			if err != nil {
 				return err
+			}
+			for _, closure := range m.closureQueue {
+				if err := closure(); err != nil {
+					return err
+				}
 			}
 			return nil
 		}
