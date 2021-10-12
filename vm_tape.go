@@ -244,9 +244,16 @@ func (m *tapeMachine) RunAll() (err error) {
 }
 
 func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("LAST INSTR %v", m.pc)
+			panic(r)
+		}
+	}()
 	for ; m.pc < len(m.p.instructions); m.pc++ {
 		instr := m.p.instructions[m.pc]
 		m.logf("PC %d", m.pc)
+
 		if err := instr.exec(m); err != nil {
 			var errNode *Node
 		outer:

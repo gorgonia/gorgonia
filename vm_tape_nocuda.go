@@ -88,7 +88,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	m.enterLogScope()
 	m.watchedLogf(m.valueFmt, v)
 	m.leaveLogScope()
-	// TODO: type and shape checks
+	// TODO: type and sohape checks
 
 	// Write
 	setEngine(v, m.Engine)
