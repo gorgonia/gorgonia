@@ -1,7 +1,6 @@
 package gorgonia
 
 import (
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -121,8 +120,8 @@ func TestByIndicesOpFull(t *testing.T) {
 			output, err := ByIndices(input, indices, tcase.axis)
 			c.NoError(err)
 
-			log.Printf("output shape: %v", output.Shape())
-			log.Printf("input shape: %v", input.Shape())
+			t.Logf("%v output shape: %v", tcase.desc, output.Shape())
+			t.Logf("%v input shape: %v", tcase.desc, input.Shape())
 
 			y := NewTensor(g, tensor.Float64, tcase.input.Shape().Dims(), WithName("target"), WithShape(tcase.input.Shape()...), WithValue(tcase.input))
 
@@ -144,9 +143,9 @@ func TestByIndicesOpFull(t *testing.T) {
 			c.NoError(vm.RunAll())
 			c.NoError(vm.Close())
 
-			log.Printf("input %v", input.Value())
-			log.Printf("result: %v", output.Value())
-			log.Printf("cost: %v", cost.Value())
+			t.Logf("%v input %v", tcase.desc, input.Value())
+			t.Logf("%v result: %v", tcase.desc, output.Value())
+			t.Logf("%v cost: %v", tcase.desc, cost.Value())
 
 			c.Equal(tcase.expectedOutput, output.Value().Data())
 			c.Equal(tcase.expectedShape, output.Shape())

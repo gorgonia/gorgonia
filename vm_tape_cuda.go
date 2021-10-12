@@ -144,6 +144,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 		if err = node.bindCopy(v); err != nil {
 			return errors.Wrapf(err, "TraceExec failed to bind copy")
 		}
+		// TODO: Iop{} is not supported yet
 	} else {
 		node.bind(v)
 	}
@@ -154,6 +155,8 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 			if len(m.bindNodesDV) > 0 && !m.bindNodesDV.Contains(src) {
 				continue
 			}
+
+			// TODO: Iop{} not supported by CUDA yet
 
 			if src.boundTo != nil {
 				dv := dvUnit(src.boundTo)
