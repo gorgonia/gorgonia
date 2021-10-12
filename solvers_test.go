@@ -431,7 +431,7 @@ func TestAdamSolverPrecision(t *testing.T) {
 				vm.Reset()
 			}
 
-			c.Equal(tC.expectedOutput, weights.Value().Data())
+			c.True(dawson.AllClose(tC.expectedOutput, weights.Value().Data()))
 		})
 	}
 }

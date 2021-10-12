@@ -1082,7 +1082,7 @@ func TestAuto(t *testing.T) {
 			desc:        "Example 0",
 			shapeA:      tensor.Shape{12},
 			shapeB:      tensor.Shape{1, 11},
-			expectedErr: "shapes (12) and (1, 11) should have the same dimensions",
+			expectedErr: "Auto failed to find broadcastable pattern: shapes (12) and (1, 11) should have the same dimensions",
 		},
 		{
 			desc:          "Example 1",
