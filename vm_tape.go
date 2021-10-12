@@ -227,7 +227,7 @@ func (m *tapeMachine) RunAll() (err error) {
 				syncChan <- struct{}{}
 			}
 		case err := <-errChan:
-			return errors.Wrapf(err, "PC: %d", m.pc)
+			return err
 		case <-doneChan:
 			err := m.ExternMetadata.DoWork()
 			if err != nil {
@@ -248,7 +248,21 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 		instr := m.p.instructions[m.pc]
 		m.logf("PC %d", m.pc)
 		if err := instr.exec(m); err != nil {
-			err = errors.Wrapf(err, "PC %d. Failed to execute instruction %v", m.pc, instr)
+			var errNode *Node
+		outer:
+			for n, frag := range m.p.m {
+				for _, in := range frag {
+					if in == instr {
+						errNode = n
+						break outer
+					}
+				}
+			}
+			err = vmContextualError{
+				error: errors.Wrapf(err, "PC %d. Failed to execute instruction %v", m.pc, instr),
+				instr: m.pc,
+				node:  errNode,
+			}
 			errChan <- err
 			return
 		}
