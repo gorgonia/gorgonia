@@ -120,6 +120,9 @@ func TestByIndicesOpFull(t *testing.T) {
 			output, err := ByIndices(input, indices, tcase.axis)
 			c.NoError(err)
 
+			t.Logf("%v output shape: %v", tcase.desc, output.Shape())
+			t.Logf("%v input shape: %v", tcase.desc, input.Shape())
+
 			y := NewTensor(g, tensor.Float64, tcase.input.Shape().Dims(), WithName("target"), WithShape(tcase.input.Shape()...), WithValue(tcase.input))
 
 			cost := Must(Mean(Must((Sub(output, y))))) // MSE
@@ -139,6 +142,10 @@ func TestByIndicesOpFull(t *testing.T) {
 
 			c.NoError(vm.RunAll())
 			c.NoError(vm.Close())
+
+			t.Logf("%v input %v", tcase.desc, input.Value())
+			t.Logf("%v result: %v", tcase.desc, output.Value())
+			t.Logf("%v cost: %v", tcase.desc, cost.Value())
 
 			c.Equal(tcase.expectedOutput, output.Value().Data())
 			c.Equal(tcase.expectedShape, output.Shape())

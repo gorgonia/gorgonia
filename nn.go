@@ -392,13 +392,9 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 
 	mean := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	variance := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
-	ma := tensor.New(tensor.Of(dt), tensor.WithShape(1))
 
-	meanTmp := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
-	varianceTmp := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
-	tmp := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
-	xNorm := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
-	batchSumMultiplier := tensor.New(tensor.Of(dt), tensor.WithShape(batches))
+	saveMean := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	saveVar := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 
 	var uno interface{}
 	switch dt {
@@ -412,30 +408,6 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 		return nil, nil, nil, nil, err
 	}
 
-	numByChans := tensor.New(tensor.Of(dt), tensor.WithShape(channels*batches))
-	if err = batchSumMultiplier.Memset(uno); err != nil {
-		return nil, nil, nil, nil, err
-	}
-
-	op = &BatchNormOp{
-		momentum: momentum,
-		epsilon:  epsilon,
-
-		mean:     mean,
-		variance: variance,
-		ma:       ma,
-
-		runningMean:          meanTmp,
-		runningVariance:      varianceTmp,
-		tmpSpace:             tmp,
-		xNorm:                xNorm,
-		batchSumMultiplier:   batchSumMultiplier,
-		numByChans:           numByChans,
-		spatialSumMultiplier: spatialSumMultiplier,
-
-		training: true,
-		dims:     x.Dims(),
-	}
 	g := x.Graph()
 	dims := x.Shape().Dims()
 
@@ -446,13 +418,23 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 		bias = NewTensor(g, dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_β"), WithInit(GlorotN(1.0)))
 	}
 
+	op = &BatchNormOp{
+		momentum: momentum,
+		epsilon:  epsilon,
+
+		runningMean:     mean,
+		runningVariance: variance,
+
+		saveMean:     saveMean,
+		saveVariance: saveVar,
+
+		training: true,
+		dims:     x.Dims(),
+	}
+
 	if retVal, err = ApplyOp(op, x, scale, bias); err != nil {
 		return nil, nil, nil, nil, err
 	}
-	//if retVal, err = Auto(BroadcastHadamardProd, scale, retVal); err != nil {
-	//	return nil, nil, nil, nil, err
-	//}
-	//retVal, err = Auto(BroadcastAdd, retVal, bias)
 
 	return retVal, scale, bias, op, err
 }

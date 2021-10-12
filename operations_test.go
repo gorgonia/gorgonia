@@ -773,6 +773,7 @@ func TestTensordot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("SHAPE a %v b %v c %v tensordot %v", a.Shape(), b.Shape(), c.Shape(), tensordot.Shape())
 
 	dtensordot, err := Backpropagate(Nodes{tensordot}, Nodes{c}, Nodes{a, b})
 
@@ -823,6 +824,7 @@ func TestTensordot(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	t.Logf("TensorDot %v | %v", tensordot.Value().Shape(), tensordot.Type())
 	correctScalarlike = []float64{11}
 	assert.Equal(correctScalarlike, tensordot.Value().Data())
 

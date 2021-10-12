@@ -60,6 +60,9 @@ func TestAvgPoolOp(t *testing.T) {
 			output, err := tcase.PoolFunc(input, tcase.kernelSize, tcase.pad, tcase.stride)
 			c.NoError(err)
 
+			t.Logf("%v output shape: %v", tcase.desc, output.Shape())
+			t.Logf("%v input shape: %v", tcase.desc, input.Shape())
+
 			y := NewTensor(g, output.Dtype(), output.Dims(), WithShape(output.Shape()...), WithInit(Ones()))
 
 			cost := Must(Mean(Must((Sub(output, y))))) // MSE
@@ -79,6 +82,10 @@ func TestAvgPoolOp(t *testing.T) {
 
 			c.NoError(vm.RunAll())
 			c.NoError(vm.Close())
+
+			t.Logf("%v input:\n%v", tcase.desc, input.Value())
+			t.Logf("%v result:\n%v", tcase.desc, output.Value())
+			t.Logf("%v cost: %v", tcase.desc, cost.Value())
 
 			c.Equal(tcase.expectedOutput, output.Value().Data())
 			c.Equal(tcase.expectedShape, output.Shape())

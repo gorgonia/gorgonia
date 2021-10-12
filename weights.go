@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"fmt"
 	"math"
 	"reflect"
 	"time"
@@ -47,6 +48,86 @@ func RangedFrom(start int) InitWFn {
 	f := func(dt tensor.Dtype, s ...int) interface{} {
 		size := tensor.Shape(s).TotalSize()
 		return tensor.Range(dt, start, start+size)
+	}
+	return f
+}
+
+// RangedFromWithStep creates an InitWFn that populates a value starting with the provided start, and incrementing the number for each element by the provided increment.
+func RangedFromWithStep(start, increment interface{}) InitWFn {
+	f := func(dt tensor.Dtype, s ...int) interface{} {
+		totalSize := tensor.Shape(s).TotalSize()
+
+		switch dt {
+		case tensor.Float64:
+			// for convenience
+			var st, incr float64
+			switch s := start.(type) {
+			case float64:
+				st = s
+			case int:
+				st = float64(s)
+			default:
+				panic(fmt.Sprintf("Cannot use `start`(%v of %T) in RangedFromWithStep in a Float64 tensor", start, start))
+			}
+			switch i := increment.(type) {
+			case float64:
+				incr = i
+			case int:
+				incr = float64(i)
+			default:
+				panic(fmt.Sprintf("Cannot use `increment`(%v of %T) in RangedFromWithStep in a Float64 tensor", increment, increment))
+			}
+
+			result := make([]float64, totalSize)
+			for i := 0; i < totalSize; i++ {
+				result[i] = st
+				st += incr
+			}
+			return result
+		case tensor.Float32:
+			// for convenience, because when you write literals with decimal point in Go it will be converted to float64
+			var st, incr float32
+			switch s := start.(type) {
+			case float32:
+				st = s
+			case float64:
+				st = float32(s)
+			case int:
+				st = float32(s)
+			default:
+				panic(fmt.Sprintf("Cannot use `start`(%v of %T) in RangedFromWithStep in a Float32 tensor", start, start))
+			}
+
+			switch i := increment.(type) {
+			case float32:
+				incr = i
+			case float64:
+				incr = float32(i)
+			case int:
+				incr = float32(i)
+			default:
+				panic(fmt.Sprintf("Cannot use `increment`(%v of %T) in RangedFromWithStep in a Float32 tensor", increment, increment))
+			}
+
+			result := make([]float32, totalSize)
+			for i := 0; i < totalSize; i++ {
+				result[i] = st
+				st += incr
+			}
+			return result
+		case tensor.Int:
+			st := start.(int)
+			incr := increment.(int)
+			result := make([]int, totalSize)
+			for i := 0; i < totalSize; i++ {
+				result[i] = st
+				st += incr
+			}
+			return result
+		default:
+			panic(fmt.Sprintf("Dtype %v not yet supported for RangedFromWithStep. Please put a pull request in to support this function", dt))
+		}
+
 	}
 	return f
 }
