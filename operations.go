@@ -178,52 +178,6 @@ func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
 
 // more complex unaries
 
-// SoftMax implements the softmax operation. The softmax operation is a stable operation.
-func SoftMax(x *Node, axes ...int) (ret *Node, err error) {
-	xShape := x.Shape()
-	axis := xShape.Dims() - 1 // default: last dim
-	if x.IsColVec() || (x.IsVector() && !x.IsRowVec()) {
-		axis = 0
-	}
-
-	if len(axes) > 0 {
-		if axes[0] >= axis+1 || axes[0] < 0 {
-			return nil, errors.Errorf("Cannot perform SoftMax on axis %d. Input has shape %v", axes[0], x.Shape())
-		}
-
-		axis = axes[0]
-	}
-
-	var exp, sum *Node
-	if exp, err = Exp(x); err != nil {
-		return nil, err
-	}
-
-	if sum, err = Sum(exp, axis); err != nil {
-		return nil, err
-	}
-
-	if sum.IsScalar() {
-		return HadamardDiv(exp, sum)
-	}
-
-	ss := sum.Shape()
-	diff := exp.Shape().Dims() - ss.Dims()
-
-	if diff > 0 {
-		newShape := tensor.Shape(tensor.BorrowInts(ss.Dims() + diff))
-		copy(newShape, ss)
-		copy(newShape[axis+1:], newShape[axis:])
-		newShape[axis] = 1
-
-		if sum, err = Reshape(sum, newShape); err != nil {
-			return nil, err
-		}
-	}
-
-	return BroadcastHadamardDiv(exp, sum, nil, []byte{byte(axis)})
-}
-
 // LogSumExp performs addition in the log domain
 func LogSumExp(a *Node, axis int) (retVal *Node, err error) {
 	var max, exp, sum, logSum *Node
