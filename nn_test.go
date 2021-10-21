@@ -353,8 +353,18 @@ func TestBatchNormAll(t *testing.T) {
 			scale := NewTensor(g, tC.Dtype, tC.ScaleShape.Dims(), WithShape(tC.ScaleShape...), WithInit(tC.ScaleInit), WithName("scale"))
 			bias := NewTensor(g, tC.Dtype, tC.BiasShape.Dims(), WithShape(tC.BiasShape...), WithInit(tC.BiasInit), WithName("bias"))
 
+			fcWeight := NewTensor(g, tC.Dtype, 2, WithShape(tC.XShape[0], tensor.Shape(tC.XShape[1:]).TotalSize()), WithInit(tC.ScaleInit), WithName("fcWeight"))
+
 			y, _, _, op, err := BatchNorm(x, scale, bias, 0.9, 1e-5)
 			c.NoError(err)
+
+			if y.Dims() > 2 {
+				y = Must(Reshape(y, fcWeight.Shape()))
+			}
+
+			wT := Must(Transpose(fcWeight, 1, 0))
+
+			y = Must(Mul(y, wT))
 
 			op.SetTraining(true)
 
@@ -387,6 +397,9 @@ func TestBatchNormAll(t *testing.T) {
 
 			runningMean, runningVariance := op.Stats()
 
+			c.NotNil(runningMean)
+			c.NotNil(runningVariance)
+
 			c.True(dawson.AllClose(tC.ExpectedMean, runningMean.Data()), "Mean doesn't match:\ngot=%#v expected=%#v", op.runningMean.Data(), tC.ExpectedMean)
 			c.True(dawson.AllClose(tC.ExpectedVariance, runningVariance.Data()), "Var doesn't match:\ngot=%#v expected=%#v", op.runningVariance.Data(), tC.ExpectedVariance)
 			c.True(dawson.AllClose(tC.ExpectedTrainResult, yVal.Data()), "Wrong Output\ngot=%#v\nexpected=%#v", yVal.Data(), tC.ExpectedTrainResult)
@@ -394,6 +407,7 @@ func TestBatchNormAll(t *testing.T) {
 			c.True(dawson.AllClose(tC.ExpectedOutputGrad, y.Deriv().Value().Data()), "Output Grad doesn't match:\ngot=%#v expected=%#v", y.Deriv().Value().Data(), tC.ExpectedOutputGrad)
 			c.True(dawson.AllClose(tC.ExpectedBiasGrad, bias.Deriv().Value().Data()), "Bias Grad doesn't match:\ngot=%#v expected=%#v", bias.Deriv().Value().Data(), tC.ExpectedBiasGrad)
 			c.True(dawson.AllClose(tC.ExpectedScaleGrad, scale.Deriv().Value().Data()), "Scale Grad doens't match:\ngot=%#v expected=%#v", scale.Deriv().Value().Data(), tC.ExpectedScaleGrad)
+			c.True(dawson.AllClose(tC.ExpectedInputGrad, x.Deriv().Value().Data()), "Input Grad doesn't match:\ngot=%#v expected=%#v", x.Deriv().Value().Data(), tC.ExpectedInputGrad)
 
 			t.Logf("-------- Switching to Eval Mode --------")
 
@@ -402,6 +416,10 @@ func TestBatchNormAll(t *testing.T) {
 			err = m2.RunAll()
 			c.NoError(err)
 			c.NoError(m2.Close())
+
+			t.Logf("%v input grad:\n%v", tC.desc, x.Deriv().Value())
+			t.Logf("%v bias grad: %v", tC.desc, bias.Deriv().Value())
+
 			c.True(dawson.AllClose(tC.ExpectedEvalResult, yVal.Data()), "Output doesn't match\ngot=%#v\nexpected=%#v", yVal.Data(), tC.ExpectedEvalResult)
 		})
 
