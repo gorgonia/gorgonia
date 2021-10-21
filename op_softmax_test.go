@@ -1,7 +1,9 @@
 package gorgonia
 
 import (
+	"fmt"
 	"io/ioutil"
+	"log"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -27,6 +29,61 @@ var testCasesSoftMaxDo = []struct {
 	},
 }
 
+func TestSoftMaxFull(t *testing.T) {
+	testCases := []struct {
+		Dtype    tensor.Dtype
+		XInit    InitWFn
+		XShape   tensor.Shape
+		Expected tensor.Tensor
+	}{
+		{
+			Dtype:  tensor.Float64,
+			XInit:  RangedFromWithStep(0.0, 0.01),
+			XShape: tensor.Shape{2, 3},
+		},
+	}
+	for i, tC := range testCases {
+		t.Run(fmt.Sprintf("#%d %v", i+1, tC.XShape), func(t *testing.T) {
+			c := assert.New(t)
+
+			g := NewGraph()
+
+			x := NewTensor(g, tC.Dtype, 2, WithShape(tC.XShape...), WithInit(tC.XInit), WithName("x"))
+			w := NewTensor(g, tC.Dtype, 2, WithShape(tC.XShape...), WithInit(RangedFromWithStep(-0.05, 0.03)), WithName("w"))
+
+			optim := NewAdamSolver(WithLearnRate(0.1))
+
+			wT := Must(Transpose(w, 1, 0))
+
+			log.Printf("wT: %v", wT.Shape())
+
+			output := Must(Mul(x, wT))
+
+			var fcVal Value
+			Read(output, &fcVal)
+
+			output = Must(SoftMax(output))
+
+			cost := Must(Mean(output))
+
+			_, err := Grad(cost, x, w)
+			c.NoError(err)
+
+			vm := NewTapeMachine(g, BindDualValues(w))
+			c.NoError(vm.RunAll())
+
+			log.Printf("dx: %v", x.Deriv().Value())
+
+			c.NoError(optim.Step(NodesToValueGrads(Nodes{w})))
+
+			log.Printf("output: %v", output.Value())
+			log.Printf("FC Val: %v", fcVal)
+			log.Printf("cost: %v", cost.Value())
+			log.Printf("w: %v", w.Value())
+		})
+	}
+}
+
 func TestSoftmaxDo(t *testing.T) {
 	assert := assert.New(t)
 
@@ -35,43 +92,46 @@ func TestSoftmaxDo(t *testing.T) {
 		op := newSoftmaxOp(tt.Shape())
 
 		out, err := op.Do(tt)
+
+		log.Printf("out: %v", out)
+
 		assert.NoError(err, "failed test case: %d", i)
-		assert.True(floatsEqual64(out.Data().([]float64), testCase.expected))
+		assert.InDeltaSlice(testCase.expected, out.Data().([]float64), 1e-7)
 	}
 }
 
-func TestSoftmaxKernel(t *testing.T) {
-	// this test is used for migrating to a new algorithm for softmax
-	assert := assert.New(t)
-	a := tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{-0.1, 0.3, -1.1, 2.7, 3.14, 0.1}))
-	op := newSoftmaxOp(a.Shape())
-	op.axis = 0
-	b0, _ := op.Do(a)
-	op.axis = 1
-	b1, _ := op.Do(a)
+// func TestSoftmaxKernel(t *testing.T) {
+// 	// this test is used for migrating to a new algorithm for softmax
+// 	assert := assert.New(t)
+// 	a := tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{-0.1, 0.3, -1.1, 2.7, 3.14, 0.1}))
+// 	op := newSoftmaxOp(a.Shape())
+// 	op.axis = 0
+// 	b0, _ := op.Do(a)
+// 	op.axis = 1
+// 	b1, _ := op.Do(a)
 
-	// across axis 0
-	out := make([]float64, 6)
-	op.do(tensor.Shape{2, 3}, 0, a.Data().([]float64), out)
-	assert.True(floatsEqual64(out, b0.Data().([]float64)))
-	t.Logf("\n%v\n%v", out, b0.Data())
+// 	// across axis 0
+// 	out := make([]float64, 6)
+// 	op.do(tensor.Shape{2, 3}, 0, a.Data().([]float64), out)
+// 	assert.True(floatsEqual64(out, b0.Data().([]float64)))
+// 	t.Logf("\n%v\n%v", out, b0.Data())
 
-	// acros axis 1
-	out = make([]float64, 6)
-	op.do(tensor.Shape{2, 3}, 1, a.Data().([]float64), out)
-	assert.True(floatsEqual64(out, b1.Data().([]float64)))
-	/*
-		// super large
-		a = tensor.New(tensor.WithShape(10, 1024, 2048, 30), tensor.WithBacking(Uniform64(-1, 1, 10, 1024, 2048, 30)))
-		op = newSoftmaxOp(a.Shape())
-		op.axis = 0
-		b, _ := op.Do(a)
+// 	// acros axis 1
+// 	out = make([]float64, 6)
+// 	op.do(tensor.Shape{2, 3}, 1, a.Data().([]float64), out)
+// 	assert.True(floatsEqual64(out, b1.Data().([]float64)))
+// 	/*
+// 		// super large
+// 		a = tensor.New(tensor.WithShape(10, 1024, 2048, 30), tensor.WithBacking(Uniform64(-1, 1, 10, 1024, 2048, 30)))
+// 		op = newSoftmaxOp(a.Shape())
+// 		op.axis = 0
+// 		b, _ := op.Do(a)
 
-		out = make([]float64, 10*1024*2048*30)
-		op.doF64s(tensor.Shape{10, 1024, 2048, 30}, 0, a.Data().([]float64), out)
-		assert.True(floatsEqual64(out, b.Data().([]float64)))
-	*/
-}
+// 		out = make([]float64, 10*1024*2048*30)
+// 		op.doF64s(tensor.Shape{10, 1024, 2048, 30}, 0, a.Data().([]float64), out)
+// 		assert.True(floatsEqual64(out, b.Data().([]float64)))
+// 	*/
+// }
 
 func oldsoftmax(a *Node, axes ...int) (retVal *Node, err error) {
 	aShape := a.Shape()
@@ -180,47 +240,47 @@ func BenchmarkSoftmaxLargeOldAxis0(b *testing.B) {
 	_ = v
 }
 
-func BenchmarkSoftmaxLargeNewAxis0(b *testing.B) {
-	b.StopTimer()
-	a := tensor.New(tensor.WithShape(10, 1024, 2048, 30), tensor.WithBacking(Uniform64(-1, 1, 10, 1024, 2048, 30)))
-	op := newSoftmaxOp(a.Shape())
-	op.axis = 0
-	out := make([]float64, len(a.Data().([]float64)))
+// func BenchmarkSoftmaxLargeNewAxis0(b *testing.B) {
+// 	b.StopTimer()
+// 	a := tensor.New(tensor.WithShape(10, 1024, 2048, 30), tensor.WithBacking(Uniform64(-1, 1, 10, 1024, 2048, 30)))
+// 	op := newSoftmaxOp(a.Shape())
+// 	op.axis = 0
+// 	out := make([]float64, len(a.Data().([]float64)))
 
-	b.ResetTimer()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		op.do(a.Shape(), 0, a.Data().([]float64), out)
-	}
+// 	b.ResetTimer()
+// 	b.StartTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		op.do(a.Shape(), 0, a.Data().([]float64), out)
+// 	}
 
-}
+// }
 
-func BenchmarkSoftmaxMedOldAxis0(b *testing.B) {
-	b.StopTimer()
-	a := tensor.New(tensor.WithShape(1200, 2500), tensor.WithBacking(Uniform64(-1, 1, 1200, 2500)))
-	op := newSoftmaxOp(a.Shape())
-	op.axis = 0
-	var v Value
+// func BenchmarkSoftmaxMedOldAxis0(b *testing.B) {
+// 	b.StopTimer()
+// 	a := tensor.New(tensor.WithShape(1200, 2500), tensor.WithBacking(Uniform64(-1, 1, 1200, 2500)))
+// 	op := newSoftmaxOp(a.Shape())
+// 	op.axis = 0
+// 	var v Value
 
-	b.ResetTimer()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		v, _ = op.Do(a)
-	}
-	_ = v
-}
+// 	b.ResetTimer()
+// 	b.StartTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		v, _ = op.Do(a)
+// 	}
+// 	_ = v
+// }
 
-func BenchmarkSoftmaxMedNewAxis0(b *testing.B) {
-	b.StopTimer()
-	a := tensor.New(tensor.WithShape(1200, 2500), tensor.WithBacking(Uniform64(-1, 1, 1200, 2500)))
-	op := newSoftmaxOp(a.Shape())
-	op.axis = 0
-	out := make([]float64, len(a.Data().([]float64)))
+// func BenchmarkSoftmaxMedNewAxis0(b *testing.B) {
+// 	b.StopTimer()
+// 	a := tensor.New(tensor.WithShape(1200, 2500), tensor.WithBacking(Uniform64(-1, 1, 1200, 2500)))
+// 	op := newSoftmaxOp(a.Shape())
+// 	op.axis = 0
+// 	out := make([]float64, len(a.Data().([]float64)))
 
-	b.ResetTimer()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		op.do(a.Shape(), 0, a.Data().([]float64), out)
-	}
+// 	b.ResetTimer()
+// 	b.StartTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		op.do(a.Shape(), 0, a.Data().([]float64), out)
+// 	}
 
-}
+// }
