@@ -45,7 +45,7 @@ func TestCTCLossDo(t *testing.T) {
 			),
 		},
 		{
-			Dtype:              Float64,
+			Dtype:              Float32,
 			reduction:          ReductionSum,
 			logProbsInit:       RangedFromWithStep(0.0, 0.01),
 			logProbsShape:      tensor.Shape{4, 4, 4},
@@ -57,7 +57,7 @@ func TestCTCLossDo(t *testing.T) {
 			targetLenghtsShape: tensor.Shape{4},
 			expectedOutput: tensor.New(
 				tensor.WithShape(1),
-				tensor.WithBacking([]float64{-11.42994390291084}),
+				tensor.WithBacking([]float32{-11.429942}),
 			),
 		},
 	}

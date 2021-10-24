@@ -3,10 +3,10 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
-	"log"
 	"math"
 
 	"github.com/chewxy/hm"
+	"github.com/chewxy/math32"
 	"gorgonia.org/tensor"
 )
 
@@ -82,10 +82,7 @@ func (op *ctcLossOp) getPrimeTarget(targets []int, offset, stride, idx int) int 
 	return targets[offset+stride*div]
 }
 
-// func (op *ctcLossOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
-// }
-
-func (op *ctcLossOp) Do(inputs ...Value) (retVal Value, err error) {
+func (op *ctcLossOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
 	if err := checkArity(op, len(inputs)); err != nil {
 		return nil, err
 	}
@@ -106,8 +103,23 @@ func (op *ctcLossOp) Do(inputs ...Value) (retVal Value, err error) {
 		return nil, fmt.Errorf("invalid type %v for inputLenghts. it should be Int", targetLenghtsT.Dtype())
 	}
 
+	var err error
+
+	switch logProbsT.Dtype() {
+	case Float64:
+		err = op.f64s(logProbsT, prealloc.(*tensor.Dense), targetsT, inputLengthsT, targetLenghtsT)
+	case Float32:
+		err = op.f32s(logProbsT, prealloc.(*tensor.Dense), targetsT, inputLengthsT, targetLenghtsT)
+	default:
+		return nil, nyi("CTCLoss Do", logProbsT.Dtype())
+	}
+
+	return prealloc, err
+}
+
+func (op *ctcLossOp) f64s(logProbsT, prealloc, targetsT, inputLengthsT, targetLengthsT *tensor.Dense) error {
 	targets := targetsT.Ints()
-	targetLengths := targetLenghtsT.Ints()
+	targetLengths := targetLengthsT.Ints()
 	inputLengths := inputLengthsT.Ints()
 
 	inputSize := logProbsT.Shape()[0] // rows
@@ -142,21 +154,13 @@ func (op *ctcLossOp) Do(inputs ...Value) (retVal Value, err error) {
 		targetStride = targetsT.Strides()[1]
 	}
 
-	log.Printf("target stride: %v max target lenght: %v num labels: %v ", targetStride, maxTargetLength, numLabels)
-
 	maxInputLenght := logProbsT.Shape()[0]
 	for i := 0; i < batchSize; i++ {
 		if inputLengths[i] > maxInputLenght {
-			return nil, fmt.Errorf("expected inputLenghts to have value at most %v, but got %v", maxInputLenght, inputLengths[i])
+			return fmt.Errorf("expected inputLenghts to have value at most %v, but got %v", maxInputLenght, inputLengths[i])
 		}
 	}
-
-	var negInf float64
-	// if logProbsT.Dtype() == Float32 {
-	// 	negInf = math32.Inf(-1)
-	// } else {
-	negInf = math.Inf(-1)
-	// }
+	negInf := math.Inf(-1)
 
 	logAlphaWidth := 2*maxTargetLength + 1
 	logAlpha := tensor.New(
@@ -168,11 +172,11 @@ func (op *ctcLossOp) Do(inputs ...Value) (retVal Value, err error) {
 
 	logAlphaView, err := logAlpha.Narrow(1, 0, 1)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := logAlphaView.Memset(negInf); err != nil {
-		return nil, err
+		return err
 	}
 
 	negLogLikelihood := tensor.New(
@@ -182,19 +186,12 @@ func (op *ctcLossOp) Do(inputs ...Value) (retVal Value, err error) {
 
 	lpp, err := tensor.Transpose(logProbsT, 1, 0, 2)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	log.Printf("log alpha: %v", logAlpha)
-	log.Printf("lp: %v", logProbsT)
-	log.Printf("lpp: %v", lpp)
 
 	logAlphaA := logAlpha.Float64s()
 	lppA := lpp.(*tensor.Dense).Float64s()
 	negLogLikelihoodA := negLogLikelihood.Float64s()
-
-	_ = logAlphaA
-	_ = lppA
 
 	// this can be paralellized
 	for b := 0; b < batchSize; b++ {
@@ -202,9 +199,6 @@ func (op *ctcLossOp) Do(inputs ...Value) (retVal Value, err error) {
 		targetLength := targetLengths[b]
 		targetWidth := 2*targetLength + 1
 		targetsOffset := targetBatchOffsets[b]
-
-		_ = inputLength
-		_ = targetLength
 
 		initialIndex := b * spatialDim
 		finalIndex := (b + 1) * spatialDim
@@ -214,16 +208,11 @@ func (op *ctcLossOp) Do(inputs ...Value) (retVal Value, err error) {
 		finalLogAlphaIndex := (b + 1) * logAlphaSpatialDim
 		logAlphaSection := logAlphaA[initialLogAlphaIndex:finalLogAlphaIndex]
 
-		_ = lppSection
-		_ = logAlphaSection
-
 		logAlphaSection[0] = lppSection[0]
 
 		if targetLength > 0 {
 			logAlphaSection[1] = lppSection[op.getPrimeTarget(targets, targetsOffset, targetStride, 1)]
 		}
-
-		log.Printf("------- input lenght: %v spatialDim: %v alpha sptialdim: %v max target l: %v target l: %v s: %v", inputLength, spatialDim, logAlphaSpatialDim, maxTargetLength, targetLength, 2*targetLength+1)
 
 		for t := 1; t < inputLength; t++ {
 			for s := 0; s < targetWidth; s++ {
@@ -280,10 +269,6 @@ func (op *ctcLossOp) Do(inputs ...Value) (retVal Value, err error) {
 		}
 	}
 
-	log.Printf("log alpha:\n%v", logAlpha)
-	log.Printf("neg log likelihood:\n%v", negLogLikelihood)
-	log.Printf("target lenghts: %v", targetLengths)
-
 	loss := 0.0
 
 	for i, v := range targetLengths {
@@ -302,10 +287,193 @@ func (op *ctcLossOp) Do(inputs ...Value) (retVal Value, err error) {
 		loss /= float64(len(targetLengths))
 	}
 
-	log.Printf("loss: %v", loss)
+	prealloc.SetAt(loss, 0)
 
-	return tensor.New(
+	return nil
+}
+
+func (op *ctcLossOp) f32s(logProbsT, prealloc, targetsT, inputLengthsT, targetLengthsT *tensor.Dense) error {
+	targets := targetsT.Ints()
+	targetLengths := targetLengthsT.Ints()
+	inputLengths := inputLengthsT.Ints()
+
+	inputSize := logProbsT.Shape()[0] // rows
+	batchSize := logProbsT.Shape()[1] // blocks
+	numLabels := logProbsT.Shape()[2] // columns
+	spatialDim := inputSize * numLabels
+
+	maxTargetLength := 0
+	targetStride := 0
+
+	targetBatchOffsets := make([]int, batchSize)
+	if targetsT.Dims() == 1 {
+		pos := 0
+		for i := 0; i < batchSize; i++ {
+			targetBatchOffsets[i] = pos
+			pos += targetLengths[i]
+			if maxTargetLength < targetLengths[i] {
+				maxTargetLength = targetLengths[i]
+			}
+		}
+
+		targetStride = targetsT.Strides()[0]
+	} else {
+		batchStride := targetsT.Strides()[0]
+		for i := 0; i < batchSize; i++ {
+			targetBatchOffsets[i] = i * batchStride
+			if maxTargetLength < targetLengths[i] {
+				maxTargetLength = targetLengths[i]
+			}
+		}
+
+		targetStride = targetsT.Strides()[1]
+	}
+
+	maxInputLenght := logProbsT.Shape()[0]
+	for i := 0; i < batchSize; i++ {
+		if inputLengths[i] > maxInputLenght {
+			return fmt.Errorf("expected inputLenghts to have value at most %v, but got %v", maxInputLenght, inputLengths[i])
+		}
+	}
+	negInf := math32.Inf(-1)
+
+	logAlphaWidth := 2*maxTargetLength + 1
+	logAlpha := tensor.New(
+		tensor.Of(logProbsT.Dtype()),
+		tensor.WithShape(batchSize, logProbsT.Shape()[0], logAlphaWidth),
+	)
+
+	logAlphaSpatialDim := tensor.Shape(logAlpha.Shape()[1:]).TotalSize()
+
+	logAlphaView, err := logAlpha.Narrow(1, 0, 1)
+	if err != nil {
+		return err
+	}
+
+	if err := logAlphaView.Memset(negInf); err != nil {
+		return err
+	}
+
+	negLogLikelihood := tensor.New(
+		tensor.Of(logProbsT.Dtype()),
+		tensor.WithShape(batchSize),
+	)
+
+	lpp, err := tensor.Transpose(logProbsT, 1, 0, 2)
+	if err != nil {
+		return err
+	}
+
+	logAlphaA := logAlpha.Float32s()
+	lppA := lpp.(*tensor.Dense).Float32s()
+	negLogLikelihoodA := negLogLikelihood.Float32s()
+
+	// this can be paralellized
+	for b := 0; b < batchSize; b++ {
+		inputLength := inputLengths[b]
+		targetLength := targetLengths[b]
+		targetWidth := 2*targetLength + 1
+		targetsOffset := targetBatchOffsets[b]
+
+		initialIndex := b * spatialDim
+		finalIndex := (b + 1) * spatialDim
+		lppSection := lppA[initialIndex:finalIndex]
+
+		initialLogAlphaIndex := b * logAlphaSpatialDim
+		finalLogAlphaIndex := (b + 1) * logAlphaSpatialDim
+		logAlphaSection := logAlphaA[initialLogAlphaIndex:finalLogAlphaIndex]
+
+		logAlphaSection[0] = lppSection[0]
+
+		if targetLength > 0 {
+			logAlphaSection[1] = lppSection[op.getPrimeTarget(targets, targetsOffset, targetStride, 1)]
+		}
+
+		for t := 1; t < inputLength; t++ {
+			for s := 0; s < targetWidth; s++ {
+				currentTargetPrime := op.getPrimeTarget(targets, targetsOffset, targetStride, s)
+
+				i := (t-1)*(targetWidth) + s
+				la1 := logAlphaSection[i]
+
+				lamax := la1
+				var la2, la3 float32
+
+				if s > 0 {
+					la2 = logAlphaSection[i-1]
+					if la2 > lamax {
+						lamax = la2
+					}
+				} else {
+					la2 = negInf
+				}
+
+				if s > 1 && op.getPrimeTarget(targets, targetsOffset, targetStride, s-2) != currentTargetPrime {
+					la3 = logAlphaSection[i-2]
+					if la3 > lamax {
+						lamax = la3
+					}
+				} else {
+					la3 = negInf
+				}
+
+				if lamax == negInf {
+					lamax = 0
+				}
+
+				logAlphaSection[t*targetWidth+s] = math32.Log(math32.Exp(la1-lamax)+math32.Exp(la2-lamax)+math32.Exp(la3-lamax)) + lamax + lppSection[t*numLabels+currentTargetPrime]
+			}
+		}
+
+		if targetLength == 0 {
+			negLogLikelihoodA[b] = logAlphaSection[(inputLength-1)*targetWidth]
+		} else {
+			l1 := logAlphaSection[(inputLength-1)*targetWidth+targetLength*2]
+			l2 := logAlphaSection[(inputLength-1)*targetWidth+targetLength*2-1]
+			max := l1
+			if l2 > max {
+				max = l2
+			}
+
+			if max == negInf {
+				max = 0
+			}
+
+			logLikelihood := math32.Log(math32.Exp(l1-max)+math32.Exp(l2-max)) + max
+			negLogLikelihoodA[b] = -logLikelihood
+		}
+	}
+
+	loss := float32(0.0)
+
+	for i, v := range targetLengths {
+		if op.reduction == ReductionSum {
+			loss += negLogLikelihoodA[i]
+		} else {
+			if v < 1 {
+				v = 1
+			}
+
+			loss += negLogLikelihoodA[i] / float32(v)
+		}
+	}
+
+	if op.reduction == ReductionMean {
+		loss /= float32(len(targetLengths))
+	}
+
+	prealloc.SetAt(loss, 0)
+
+	return nil
+}
+
+func (op *ctcLossOp) Do(inputs ...Value) (retVal Value, err error) {
+	logProbsT := inputs[0].(*tensor.Dense)
+
+	prealloc := tensor.New(
+		tensor.Of(logProbsT.Dtype()),
 		tensor.WithShape(1),
-		tensor.WithBacking([]float64{loss}),
-	), nil
+	)
+
+	return op.UsePreallocDo(prealloc, inputs...)
 }
