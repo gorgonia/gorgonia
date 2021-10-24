@@ -1153,6 +1153,8 @@ func TestSliceBNConcat(t *testing.T) {
 		XInit             InitWFn
 		XShape            tensor.Shape
 		WeightsInit       InitWFn
+		ExpectedScale     []float64
+		ExpectedScaleGrad []float64
 		ExpectedOutput    []float64
 		ExpectedInputGrad []float64
 	}{
@@ -1160,6 +1162,8 @@ func TestSliceBNConcat(t *testing.T) {
 			XInit:             RangedFromWithStep(0.1, 2),
 			XShape:            tensor.Shape{4, 2, 2, 2},
 			WeightsInit:       RangedFromWithStep(-0.05, 3),
+			ExpectedScale:     []float64{-0.05, 2.95},
+			ExpectedScaleGrad: []float64{3.6115753308647314, 3.611575330864615},
 			ExpectedOutput:    []float64{17.605945678258838, 27.882593114861223, 389.7811912407563, 936.3045438041536, 17.605945678259026, 27.882593114861688, 389.78119124075647, 936.3045438041542},
 			ExpectedInputGrad: []float64{0.004972459049631834, 0.0007851252852762937, -0.003402208479079247, -0.007589542243434793, -0.29337508392827627, -0.046322391831299575, 0.2007303002656771, 0.44778299236265373, 0.007589542243434797, 0.0034022084790792566, -0.0007851252852762831, -0.004972459049631828, -0.4477829923626526, -0.20073030026567584, 0.046322391831300797, 0.2933750839282775, 0.004972459049631834, 0.0007851252852762937, -0.003402208479079247, -0.007589542243434793, -0.29337508392827627, -0.046322391831299575, 0.2007303002656771, 0.44778299236265373, 0.007589542243434797, 0.0034022084790792566, -0.0007851252852762831, -0.004972459049631828, -0.4477829923626526, -0.20073030026567584, 0.046322391831300797, 0.2933750839282775},
 		},
@@ -1173,8 +1177,8 @@ func TestSliceBNConcat(t *testing.T) {
 
 			input := NewTensor(g, Float64, tC.XShape.Dims(), WithShape(tC.XShape...), WithInit(tC.XInit), WithName("x"))
 
-			scale := NewTensor(g, Float64, 4, WithShape(1, 8, 1, 1), WithInit(tC.WeightsInit), WithName("scale"))
-			bias := NewTensor(g, Float64, 4, WithShape(1, 8, 1, 1), WithInit(tC.WeightsInit), WithName("bias"))
+			scale := NewTensor(g, Float64, 4, WithShape(1, 2, 1, 1), WithInit(tC.WeightsInit), WithName("scale"))
+			bias := NewTensor(g, Float64, 4, WithShape(1, 2, 1, 1), WithInit(tC.WeightsInit), WithName("bias"))
 
 			sl1 := Must(Slice(input, S(2, 4)))
 			w1 := NewTensor(g, Float64, 2, WithShape(2, 8), WithInit(tC.WeightsInit), WithName("w1"))
@@ -1201,13 +1205,18 @@ func TestSliceBNConcat(t *testing.T) {
 
 			cost := Must(Mean(y))
 
-			Grad(cost, input)
+			Grad(cost, input, scale)
 
-			vm := NewTapeMachine(g)
+			vm := NewTapeMachine(g) //, TraceExec())
 			c.NoError(vm.RunAll())
 
 			t.Logf("y: %v", y.Value())
 			t.Logf("dx: %v", input.Deriv().Value())
+			t.Logf("scale: %v", scale.Value())
+			t.Logf("dScale: %v", scale.Deriv().Value())
+
+			c.InDeltaSlice(tC.ExpectedScale, scale.Value().Data(), 1e-5, "expected: %v\ngot: %#v", tC.ExpectedScale, scale.Value().Data())
+			c.InDeltaSlice(tC.ExpectedScaleGrad, scale.Deriv().Value().Data(), 1e-5, "expected: %v\ngot: %#v", tC.ExpectedScaleGrad, scale.Deriv().Value().Data())
 
 			c.InDeltaSlice(tC.ExpectedOutput, y.Value().Data(), 1e-5, "expected: %v\ngot: %#v", tC.ExpectedOutput, y.Value().Data())
 			c.InDeltaSlice(tC.ExpectedInputGrad, input.Deriv().Value().Data(), 1e-5, "expected: %#v\ngot: %#v", tC.ExpectedInputGrad, input.Deriv().Value().Data())
