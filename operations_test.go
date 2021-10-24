@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"fmt"
 	"io/ioutil"
 	"runtime"
 	"testing"
@@ -1143,6 +1144,73 @@ func TestAuto(t *testing.T) {
 			out, err = Auto(BroadcastHadamardProd, b, a)
 			c.NoError(err)
 			c.Equal(tC.expectedShape, out.Shape())
+		})
+	}
+}
+
+func TestSliceBNConcat(t *testing.T) {
+	testCases := []struct {
+		XInit             InitWFn
+		XShape            tensor.Shape
+		WeightsInit       InitWFn
+		ExpectedOutput    []float64
+		ExpectedInputGrad []float64
+	}{
+		{
+			XInit:             RangedFromWithStep(0.1, 2),
+			XShape:            tensor.Shape{4, 2, 2, 2},
+			WeightsInit:       RangedFromWithStep(-0.05, 3),
+			ExpectedOutput:    []float64{17.605945678258838, 27.882593114861223, 389.7811912407563, 936.3045438041536, 17.605945678259026, 27.882593114861688, 389.78119124075647, 936.3045438041542},
+			ExpectedInputGrad: []float64{0.004972459049631834, 0.0007851252852762937, -0.003402208479079247, -0.007589542243434793, -0.29337508392827627, -0.046322391831299575, 0.2007303002656771, 0.44778299236265373, 0.007589542243434797, 0.0034022084790792566, -0.0007851252852762831, -0.004972459049631828, -0.4477829923626526, -0.20073030026567584, 0.046322391831300797, 0.2933750839282775, 0.004972459049631834, 0.0007851252852762937, -0.003402208479079247, -0.007589542243434793, -0.29337508392827627, -0.046322391831299575, 0.2007303002656771, 0.44778299236265373, 0.007589542243434797, 0.0034022084790792566, -0.0007851252852762831, -0.004972459049631828, -0.4477829923626526, -0.20073030026567584, 0.046322391831300797, 0.2933750839282775},
+		},
+	}
+
+	for i, tC := range testCases {
+		t.Run(fmt.Sprintf("#%d %v", i+1, tC.XShape), func(t *testing.T) {
+			c := require.New(t)
+
+			g := NewGraph()
+
+			input := NewTensor(g, Float64, tC.XShape.Dims(), WithShape(tC.XShape...), WithInit(tC.XInit), WithName("x"))
+
+			scale := NewTensor(g, Float64, 4, WithShape(1, 8, 1, 1), WithInit(tC.WeightsInit), WithName("scale"))
+			bias := NewTensor(g, Float64, 4, WithShape(1, 8, 1, 1), WithInit(tC.WeightsInit), WithName("bias"))
+
+			sl1 := Must(Slice(input, S(2, 4)))
+			w1 := NewTensor(g, Float64, 2, WithShape(2, 8), WithInit(tC.WeightsInit), WithName("w1"))
+
+			sl2 := Must(Slice(input, S(0, 2)))
+			w2 := NewTensor(g, Float64, 2, WithShape(2, 8), WithInit(tC.WeightsInit), WithName("w2"))
+
+			slShape := tensor.Shape{sl1.Shape()[0], tensor.Shape(sl1.Shape()[1:]).TotalSize()}
+
+			bn1, _, _, _, err := BatchNorm(sl1, scale, bias, 0.1, 1e-5)
+			c.NoError(err)
+
+			bn1 = Must(Reshape(bn1, slShape))
+
+			y1 := Must(Mul(bn1, Must(Transpose(w1, 1, 0))))
+
+			bn2, _, _, _, err := BatchNorm(sl2, scale, bias, 0.1, 1e-5)
+			c.NoError(err)
+			bn2 = Must(Reshape(bn2, slShape))
+
+			y2 := Must(Mul(bn2, Must(Transpose(w2, 1, 0))))
+
+			y := Must(Concat(0, y1, y2))
+
+			cost := Must(Mean(y))
+
+			Grad(cost, input)
+
+			vm := NewTapeMachine(g)
+			c.NoError(vm.RunAll())
+
+			t.Logf("y: %v", y.Value())
+			t.Logf("dx: %v", input.Deriv().Value())
+
+			c.InDeltaSlice(tC.ExpectedOutput, y.Value().Data(), 1e-5, "expected: %v\ngot: %#v", tC.ExpectedOutput, y.Value().Data())
+			c.InDeltaSlice(tC.ExpectedInputGrad, input.Deriv().Value().Data(), 1e-5, "expected: %#v\ngot: %#v", tC.ExpectedInputGrad, input.Deriv().Value().Data())
 		})
 	}
 }
