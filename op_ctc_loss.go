@@ -202,8 +202,7 @@ func (op *ctcLossOp) f64s(logProbsT, prealloc, targetsT, inputLengthsT, targetLe
 	lppA := lpp.(*tensor.Dense).Float64s()
 	negLogLikelihoodA := negLogLikelihood.Float64s()
 
-	// this can be paralellized
-	for b := 0; b < batchSize; b++ {
+	runInParallel(0, batchSize, func(b int) {
 		inputLength := inputLengths[b]
 		targetLength := targetLengths[b]
 		targetWidth := 2*targetLength + 1
@@ -276,7 +275,7 @@ func (op *ctcLossOp) f64s(logProbsT, prealloc, targetsT, inputLengthsT, targetLe
 			logLikelihood := math.Log(math.Exp(l1-max)+math.Exp(l2-max)) + max
 			negLogLikelihoodA[b] = -logLikelihood
 		}
-	}
+	})
 
 	loss := 0.0
 
@@ -379,8 +378,7 @@ func (op *ctcLossOp) f32s(logProbsT, prealloc, targetsT, inputLengthsT, targetLe
 	lppA := lpp.(*tensor.Dense).Float32s()
 	negLogLikelihoodA := negLogLikelihood.Float32s()
 
-	// this can be paralellized
-	for b := 0; b < batchSize; b++ {
+	runInParallel(0, batchSize, func(b int) {
 		inputLength := inputLengths[b]
 		targetLength := targetLengths[b]
 		targetWidth := 2*targetLength + 1
@@ -453,7 +451,7 @@ func (op *ctcLossOp) f32s(logProbsT, prealloc, targetsT, inputLengthsT, targetLe
 			logLikelihood := math32.Log(math32.Exp(l1-max)+math32.Exp(l2-max)) + max
 			negLogLikelihoodA[b] = -logLikelihood
 		}
-	}
+	})
 
 	loss := float32(0.0)
 
@@ -644,7 +642,7 @@ func (op *ctcLossDiffOp) f64s(logProbsT, targetsT, inputLengthsT, targetLengthsT
 	lpp := lppT.(*tensor.Dense).Float64s()
 
 	// this can be parallelized
-	for b := 0; b < batchSize; b++ {
+	runInParallel(0, batchSize, func(b int) {
 		inputLength := inputLengths[b]
 		targetLength := targetLengths[b]
 		targetsOffset := targetBatchOffsets[b]
@@ -655,7 +653,7 @@ func (op *ctcLossDiffOp) f64s(logProbsT, targetsT, inputLengthsT, targetLengthsT
 		lppSection := lpp[initialIndex:finalIndex]
 		gradSlice, err := gradT.Slice(S(b))
 		if err != nil {
-			return err
+			panic(err)
 		}
 
 		nll := negLogLikelihood[b]
@@ -740,7 +738,7 @@ func (op *ctcLossDiffOp) f64s(logProbsT, targetsT, inputLengthsT, targetLengthsT
 				}
 			}
 		}
-	}
+	})
 
 	gradT.UT()
 
@@ -813,7 +811,7 @@ func (op *ctcLossDiffOp) f32s(logProbsT, targetsT, inputLengthsT, targetLengthsT
 	lpp := lppT.(*tensor.Dense).Float32s()
 
 	// this can be parallelized
-	for b := 0; b < batchSize; b++ {
+	runInParallel(0, batchSize, func(b int) {
 		inputLength := inputLengths[b]
 		targetLength := targetLengths[b]
 		targetsOffset := targetBatchOffsets[b]
@@ -824,7 +822,7 @@ func (op *ctcLossDiffOp) f32s(logProbsT, targetsT, inputLengthsT, targetLengthsT
 		lppSection := lpp[initialIndex:finalIndex]
 		gradSlice, err := gradT.Slice(S(b))
 		if err != nil {
-			return err
+			panic(err)
 		}
 
 		nll := negLogLikelihood[b]
@@ -909,7 +907,7 @@ func (op *ctcLossDiffOp) f32s(logProbsT, targetsT, inputLengthsT, targetLengthsT
 				}
 			}
 		}
-	}
+	})
 
 	gradT.UT()
 
