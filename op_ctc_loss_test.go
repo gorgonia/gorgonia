@@ -120,3 +120,104 @@ func TestCTCLossDo(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkCTCLossForward(b *testing.B) {
+	testCases := []struct {
+		Dtype tensor.Dtype
+
+		reduction Reduction
+
+		logProbsInit  InitWFn
+		logProbsShape tensor.Shape
+
+		targetsInit  InitWFn
+		targetsShape tensor.Shape
+
+		inputLengthsInit  InitWFn
+		inputLengthsShape tensor.Shape
+
+		targetLengthsInit  InitWFn
+		targetLengthsShape tensor.Shape
+	}{
+		{
+			Dtype:              Float64,
+			reduction:          ReductionMean,
+			logProbsInit:       RangedFromWithStep(0.0, 0.01),
+			logProbsShape:      tensor.Shape{4, 4, 4},
+			targetsInit:        RangedFromWithStep(2, 0),
+			targetsShape:       tensor.Shape{4, 4},
+			inputLengthsInit:   RangedFromWithStep(4, 0),
+			inputLengthsShape:  tensor.Shape{4},
+			targetLengthsInit:  RangedFromWithStep(2, 0),
+			targetLengthsShape: tensor.Shape{4},
+		},
+		{
+			Dtype:              Float64,
+			reduction:          ReductionMean,
+			logProbsInit:       RangedFromWithStep(0.0, 0.01),
+			logProbsShape:      tensor.Shape{4, 1024, 4},
+			targetsInit:        RangedFromWithStep(2, 0),
+			targetsShape:       tensor.Shape{1024, 4},
+			inputLengthsInit:   RangedFromWithStep(4, 0),
+			inputLengthsShape:  tensor.Shape{1024},
+			targetLengthsInit:  RangedFromWithStep(2, 0),
+			targetLengthsShape: tensor.Shape{1024},
+		},
+		{
+			Dtype:              Float64,
+			reduction:          ReductionMean,
+			logProbsInit:       RangedFromWithStep(0.0, 0.01),
+			logProbsShape:      tensor.Shape{4, 1024, 1024},
+			targetsInit:        RangedFromWithStep(2, 0),
+			targetsShape:       tensor.Shape{1024, 4},
+			inputLengthsInit:   RangedFromWithStep(4, 0),
+			inputLengthsShape:  tensor.Shape{1024},
+			targetLengthsInit:  RangedFromWithStep(2, 0),
+			targetLengthsShape: tensor.Shape{1024},
+		},
+		{
+			Dtype:              Float64,
+			reduction:          ReductionMean,
+			logProbsInit:       RangedFromWithStep(0.0, 0.01),
+			logProbsShape:      tensor.Shape{4, 2048, 8},
+			targetsInit:        RangedFromWithStep(2, 0),
+			targetsShape:       tensor.Shape{2048, 4},
+			inputLengthsInit:   RangedFromWithStep(4, 0),
+			inputLengthsShape:  tensor.Shape{2048},
+			targetLengthsInit:  RangedFromWithStep(2, 0),
+			targetLengthsShape: tensor.Shape{2048},
+		},
+	}
+
+	for i, tC := range testCases {
+		op := newCTCLossOp(tC.Dtype, tC.targetsShape.Dims(), ReductionSum)
+
+		logsProbs := tensor.New(
+			tensor.WithShape(tC.logProbsShape...),
+			tensor.WithBacking(tC.logProbsInit(op.dtype, tC.logProbsShape...)),
+		)
+		targets := tensor.New(
+			tensor.WithShape(tC.targetsShape...),
+			tensor.WithBacking(tC.targetsInit(Int, tC.targetsShape...)),
+		)
+		inputLengths := tensor.New(
+			tensor.WithShape(tC.inputLengthsShape...),
+			tensor.WithBacking(tC.inputLengthsInit(Int, tC.inputLengthsShape...)),
+		)
+		targetLengths := tensor.New(
+			tensor.WithShape(tC.targetLengthsShape...),
+			tensor.WithBacking(tC.targetLengthsInit(Int, tC.targetLengthsShape...)),
+		)
+
+		b.Run(fmt.Sprintf("Benchmark #%v %v (%v)", i+1, tC.Dtype, tC.logProbsShape), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_, err := op.Do(logsProbs, targets, inputLengths, targetLengths)
+				b.StopTimer()
+				if err != nil {
+					panic(err)
+				}
+				b.StartTimer()
+			}
+		})
+	}
+}
