@@ -1205,7 +1205,8 @@ func TestSliceBNConcat(t *testing.T) {
 
 			cost := Must(Mean(y))
 
-			Grad(cost, input, scale)
+			_, err = Grad(cost, input, scale)
+			c.NoError(err)
 
 			vm := NewTapeMachine(g) //, TraceExec())
 			c.NoError(vm.RunAll())

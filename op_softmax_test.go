@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -55,7 +54,7 @@ func TestSoftMaxFull(t *testing.T) {
 
 			wT := Must(Transpose(w, 1, 0))
 
-			log.Printf("wT: %v", wT.Shape())
+			t.Logf("wT: %v", wT.Shape())
 
 			output := Must(Mul(x, wT))
 
@@ -72,14 +71,14 @@ func TestSoftMaxFull(t *testing.T) {
 			vm := NewTapeMachine(g, BindDualValues(w))
 			c.NoError(vm.RunAll())
 
-			log.Printf("dx: %v", x.Deriv().Value())
+			t.Logf("dx: %v", x.Deriv().Value())
 
 			c.NoError(optim.Step(NodesToValueGrads(Nodes{w})))
 
-			log.Printf("output: %v", output.Value())
-			log.Printf("FC Val: %v", fcVal)
-			log.Printf("cost: %v", cost.Value())
-			log.Printf("w: %v", w.Value())
+			t.Logf("output: %v", output.Value())
+			t.Logf("FC Val: %v", fcVal)
+			t.Logf("cost: %v", cost.Value())
+			t.Logf("w: %v", w.Value())
 		})
 	}
 }
@@ -93,7 +92,7 @@ func TestSoftmaxDo(t *testing.T) {
 
 		out, err := op.Do(tt)
 
-		log.Printf("out: %v", out)
+		t.Logf("out: %v", out)
 
 		assert.NoError(err, "failed test case: %d", i)
 		assert.InDeltaSlice(testCase.expected, out.Data().([]float64), 1e-7)

@@ -436,6 +436,12 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 		return nil, nil, nil, nil, err
 	}
 
+	if retVal, err = Auto(BroadcastHadamardProd, scale, retVal); err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	retVal, err = Auto(BroadcastAdd, retVal, bias)
+
 	return retVal, scale, bias, op, err
 }
 
