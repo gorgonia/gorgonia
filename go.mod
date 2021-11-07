@@ -18,4 +18,5 @@ require (
 	gorgonia.org/cu v0.9.4
 	gorgonia.org/dawson v1.2.0
 	gorgonia.org/tensor v0.9.22-0.20211018175907-3039f42ea573
+	gorgonia.org/vecf64 v0.9.0 // indirect
 )
