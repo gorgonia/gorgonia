@@ -96,7 +96,7 @@ jobs:
     - name: Test without tags
       if: matrix.tags == 'none'
       run: |
-        go test {{if .WithRace}}-race{{end}} -timeout 20m
+        go test {{if .WithRace}}-race{{end}} -timeout 30m
     - name: Build with tag 
       if: matrix.tags != 'none'
       run: |
@@ -104,6 +104,6 @@ jobs:
     - name: Test with tag
       if: matrix.tags != 'none'
       run: |
-        go test {{if .WithRace}}-race{{end}} -timeout 20m -tags=${{"{{"}} matrix.tags {{"}}"}}
+        go test {{if .WithRace}}-race{{end}} -timeout 30m -tags=${{"{{"}} matrix.tags {{"}}"}}
 {{- end }}
 `
