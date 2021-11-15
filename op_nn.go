@@ -1209,12 +1209,12 @@ func (op *BatchNormOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) 
 	diff := &batchnormDiffOp{op}
 	xdv, ydv := getDV(inputs[0], output)
 	sdv, bdv := getDV(inputs[1], inputs[2])
-	_, err := diff.UsePreallocDo(xdv.d, xdv.Value, ydv.d, sdv.Value, bdv.Value, sdv.d, bdv.d)
+	_, err := diff.UsePreallocDo(xdv.d, xdv.Value, ydv.d, sdv.Value, bdv.Value)
 	return err
 }
 
 // DiffWRT ...
-func (op *BatchNormOp) DiffWRT(inputs int) []bool { return []bool{true, true, true} }
+func (op *BatchNormOp) DiffWRT(inputs int) []bool { return []bool{true, false, false} }
 
 // SymDiff ...
 func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
@@ -1225,19 +1225,14 @@ func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal N
 	scale := inputs[1]
 	bias := inputs[2]
 
-	g := input.Graph()
-
 	diff := &batchnormDiffOp{op}
-	scaleDiff := NewUniqueNode(WithType(scale.Type()), WithShape(scale.Shape().Clone()...), WithChildren(Nodes{scale}), In(g), WithOp(Iop{}))
-
-	biasDiff := NewUniqueNode(WithType(bias.Type()), WithShape(bias.Shape().Clone()...), WithChildren(Nodes{bias}), In(g), WithOp(Iop{}))
 
 	var dy *Node
-	if dy, err = ApplyOp(diff, input, grad, scale, bias, scaleDiff, biasDiff); err != nil {
+	if dy, err = ApplyOp(diff, input, grad, scale, bias); err != nil {
 		return nil, err
 	}
 
-	return Nodes{dy, scaleDiff, biasDiff}, nil
+	return Nodes{dy, nil, nil}, nil
 }
 
 // UsePreallocDo ...
@@ -1400,9 +1395,6 @@ func (op *BatchNormOp) calculateAlphaAndBetaF64(batchSize, channels, spatialDim 
 	runningVar := op.runningVariance.Float64s()
 	n := spatialDim * batchSize
 
-	scale := scaleT.Float64s()
-	bias := biasT.Float64s()
-
 	alpha = make([]float64, channels)
 	beta = make([]float64, channels)
 
@@ -1417,8 +1409,8 @@ func (op *BatchNormOp) calculateAlphaAndBetaF64(batchSize, channels, spatialDim 
 			invStd = 1 / math.Sqrt(runningVar[c]+float64(op.epsilon))
 		}
 
-		alpha[c] = invStd * scale[c]
-		beta[c] = bias[c] - mean*alpha[c]
+		alpha[c] = invStd
+		beta[c] = -(mean * alpha[c])
 	}
 
 	return alpha, beta
@@ -1545,9 +1537,6 @@ func (op *BatchNormOp) calculateAlphaAndBetaF32(batchSize, channels, spatialDim 
 
 	n := spatialDim * batchSize
 
-	scale := scaleT.Float32s()
-	bias := biasT.Float32s()
-
 	alpha = make([]float32, channels)
 	beta = make([]float32, channels)
 
@@ -1562,8 +1551,8 @@ func (op *BatchNormOp) calculateAlphaAndBetaF32(batchSize, channels, spatialDim 
 			invStd = 1 / math32.Sqrt(runningVar[c]+float32(op.epsilon))
 		}
 
-		alpha[c] = (invStd * scale[c])
-		beta[c] = (bias[c] - mean*alpha[c])
+		alpha[c] = (invStd)
+		beta[c] = -(mean * alpha[c])
 	}
 
 	return alpha, beta
@@ -1615,7 +1604,7 @@ func (op *BatchNormOp) f32s(input, output, scale, bias *tensor.Dense) (err error
 
 type batchnormDiffOp struct{ *BatchNormOp }
 
-func (op *batchnormDiffOp) Arity() int { return 6 }
+func (op *batchnormDiffOp) Arity() int { return 4 }
 
 func (op *batchnormDiffOp) Type() hm.Type {
 	dims := op.dims
@@ -1624,7 +1613,7 @@ func (op *batchnormDiffOp) Type() hm.Type {
 	}
 
 	t := TensorType{Dims: dims, Of: hm.TypeVariable('a')}
-	return hm.NewFnType(t, t, t, t, t, t, t)
+	return hm.NewFnType(t, t, t, t, t)
 }
 
 func (op *batchnormDiffOp) InferShape(ns ...DimSizer) (tensor.Shape, error) {
@@ -1642,15 +1631,13 @@ func (op *batchnormDiffOp) Do(values ...Value) (Value, error) {
 	grad := values[1].(*tensor.Dense)
 	scale := values[2].(*tensor.Dense)
 	bias := values[3].(*tensor.Dense)
-	scaleDiff := values[4].(*tensor.Dense)
-	biasDiff := values[5].(*tensor.Dense)
 
 	dy, err := CloneValue(input)
 	if err != nil {
 		return nil, err
 	}
 
-	v, err := op.UsePreallocDo(dy, input, grad, scale, bias, scaleDiff, biasDiff)
+	v, err := op.UsePreallocDo(dy, input, grad, scale, bias)
 
 	return v, err
 }
@@ -1671,7 +1658,7 @@ func (op *batchnormDiffOp) String() string {
 
 func (op *batchnormDiffOp) DiffWRT(inputs int) []bool {
 	// god help those who want to  do 2nd order differentiation on batchnorm
-	return []bool{false, false, false, false, false, false}
+	return []bool{false, false, false, false}
 }
 
 func (op *batchnormDiffOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
@@ -1690,16 +1677,14 @@ func (op *batchnormDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVa
 	outGrad := inputs[1].(*tensor.Dense)
 	scale := inputs[2].(*tensor.Dense)
 	bias := inputs[3].(*tensor.Dense)
-	scaleDiff := inputs[4].(*tensor.Dense)
-	biasDiff := inputs[5].(*tensor.Dense)
 
 	// log.Printf("out grad: %v", outGrad)
 
 	switch input.Dtype() {
 	case Float64:
-		err = op.f64s(input, buffer, outGrad, scale, bias, scaleDiff, biasDiff)
+		err = op.f64s(input, buffer, outGrad, scale, bias)
 	case Float32:
-		err = op.f32s(input, buffer, outGrad, scale, bias, scaleDiff, biasDiff)
+		err = op.f32s(input, buffer, outGrad, scale, bias)
 	default:
 		return nil, nyi("batchnormDiffOp", "Do")
 	}
@@ -1707,16 +1692,11 @@ func (op *batchnormDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVa
 	return prealloc, err
 }
 
-func (op *batchnormDiffOp) f64s(input, prealloc, outGrad, scaleT, biasT, scaleDiffT, biasDiffT *tensor.Dense) (err error) {
+func (op *batchnormDiffOp) f64s(input, prealloc, outGrad, scaleT, biasT *tensor.Dense) (err error) {
 	in := input.Float64s()
 	ig := prealloc.Float64s()
 
 	dy := outGrad.Float64s()
-
-	scale := scaleT.Float64s()
-
-	scaleDiff := scaleDiffT.Float64s()
-	biasDiff := biasDiffT.Float64s()
 
 	saveMean := op.saveMean.Float64s()
 	saveVariance := op.saveVariance.Float64s()
@@ -1764,21 +1744,15 @@ func (op *batchnormDiffOp) f64s(input, prealloc, outGrad, scaleT, biasT, scaleDi
 					ig[i] = ((in[i] - mean) * k)
 
 					// dx = (dy - dx - grad_mean) / variance
-					ig[i] = (float64(dy[i]-ig[i]-gradMean) * invstd * scale[c])
+					ig[i] = (float64(dy[i]-ig[i]-gradMean) * invstd)
 				}
-
-				scaleDiff[c] = (dotp * invstd)
 			} else {
 				for s := 0; s < n; s++ {
 					i := s*channels + c
 
-					ig[i] = dy[i] * invstd * scale[c]
+					ig[i] = dy[i] * invstd
 				}
-
-				scaleDiff[c] = (dotp * invstd)
 			}
-
-			biasDiff[c] = sum
 		}
 	} else {
 		for c := 0; c < channels; c++ {
@@ -1811,7 +1785,7 @@ func (op *batchnormDiffOp) f64s(input, prealloc, outGrad, scaleT, biasT, scaleDi
 						ig[i] = (in[i] - saveMean[c]) * k
 
 						// dx = (dy - dx - grad_mean) / variance
-						ig[i] = (dy[i] - gradMean - ig[i]) * invstd * scale[c]
+						ig[i] = (dy[i] - gradMean - ig[i]) * invstd
 					}
 				}
 			} else {
@@ -1819,29 +1793,21 @@ func (op *batchnormDiffOp) f64s(input, prealloc, outGrad, scaleT, biasT, scaleDi
 					for d := 0; d < spatialDim; d++ {
 						i := s*channels*spatialDim + c*spatialDim + d
 
-						ig[i] = dy[i] * invstd * scale[c]
+						ig[i] = dy[i] * invstd
 					}
 				}
 			}
-
-			scaleDiff[c] = (dotp * invstd)
-			biasDiff[c] = sum
 		}
 	}
 
 	return nil
 }
 
-func (op *batchnormDiffOp) f32s(input, prealloc, outGrad, scaleT, biasT, scaleDiffT, biasDiffT *tensor.Dense) (err error) {
+func (op *batchnormDiffOp) f32s(input, prealloc, outGrad, scaleT, biasT *tensor.Dense) (err error) {
 	in := input.Float32s()
 	ig := prealloc.Float32s()
 
 	dy := outGrad.Float32s()
-
-	scale := scaleT.Float32s()
-
-	scaleDiff := scaleDiffT.Float32s()
-	biasDiff := biasDiffT.Float32s()
 
 	saveMean := op.saveMean.Float32s()
 	saveVariance := op.saveVariance.Float32s()
@@ -1889,21 +1855,15 @@ func (op *batchnormDiffOp) f32s(input, prealloc, outGrad, scaleT, biasT, scaleDi
 					ig[i] = ((in[i] - mean) * k)
 
 					// dx = (dy - dx - grad_mean) / variance
-					ig[i] = (dy[i] - ig[i] - gradMean) * invstd * scale[c]
+					ig[i] = (dy[i] - ig[i] - gradMean) * invstd
 				}
-
-				scaleDiff[c] = (dotp * invstd)
 			} else {
 				for s := 0; s < n; s++ {
 					i := s*channels + c
 
-					ig[i] = dy[i] * invstd * scale[c]
+					ig[i] = dy[i] * invstd
 				}
-
-				scaleDiff[c] = (dotp * invstd)
 			}
-
-			biasDiff[c] = sum
 		}
 	} else {
 		for c := 0; c < channels; c++ {
@@ -1936,7 +1896,7 @@ func (op *batchnormDiffOp) f32s(input, prealloc, outGrad, scaleT, biasT, scaleDi
 						ig[i] = (in[i] - saveMean[c]) * k
 
 						// dx = (dy - dx - grad_mean) / variance
-						ig[i] = (dy[i] - gradMean - ig[i]) * invstd * scale[c]
+						ig[i] = (dy[i] - gradMean - ig[i]) * invstd
 					}
 				}
 			} else {
@@ -1944,13 +1904,10 @@ func (op *batchnormDiffOp) f32s(input, prealloc, outGrad, scaleT, biasT, scaleDi
 					for d := 0; d < spatialDim; d++ {
 						i := s*channels*spatialDim + c*spatialDim + d
 
-						ig[i] = dy[i] * invstd * scale[c]
+						ig[i] = dy[i] * invstd
 					}
 				}
 			}
-
-			scaleDiff[c] = (dotp * invstd)
-			biasDiff[c] = sum
 		}
 	}
 
