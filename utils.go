@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math"
+	"sync"
 
 	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
@@ -309,4 +310,19 @@ func scalarEquiv(s tensor.Shape) bool {
 	}
 
 	return prod == 1
+}
+
+func runInParallel(from, to int, cb func(i int)) {
+	wg := sync.WaitGroup{}
+
+	for i := from; i < to; i++ {
+		wg.Add(1)
+
+		go func(i int) {
+			cb(i)
+			wg.Done()
+		}(i)
+	}
+
+	wg.Wait()
 }
