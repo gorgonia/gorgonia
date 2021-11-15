@@ -131,7 +131,6 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 				m.closureQueue = append(m.closureQueue, closure)
 			default:
 				dv := dvUnit(src.boundTo)
-
 				add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
 
 				if d, err := add.UnsafeDo(dv.d, v); err == nil {

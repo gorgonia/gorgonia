@@ -1073,7 +1073,19 @@ func (op concatOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes
 		if retVal[i], err = ApplyOp(s, grad); err != nil {
 			return
 		}
+
+		// keep dims
+		if end-start == 1 {
+			shp := retVal[i].Shape().Clone()
+			shp = append(shp, -1)
+			copy(shp[op.axis+1:], shp[op.axis:])
+			shp[op.axis] = 1
+			if retVal[i], err = Reshape(retVal[i], shp); err != nil {
+				return nil, err
+			}
+		}
 		start = end
+
 	}
 	return
 }
