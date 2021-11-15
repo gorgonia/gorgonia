@@ -1234,7 +1234,8 @@ func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal N
 	scale := inputs[1]
 	bias := inputs[2]
 
-  var dy *Node
+	diff := &batchnormDiffOp{op}
+	var dy *Node
 	if dy, err = ApplyOp(diff, input, grad, scale, bias); err != nil {
 		return nil, err
 	}
