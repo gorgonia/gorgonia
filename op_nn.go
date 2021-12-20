@@ -24,6 +24,8 @@ var (
 	_ Op   = &BatchNormOp{}
 	_ Op   = &batchnormDiffOp{}
 	_ Op   = &globalAveragePoolOp{}
+
+	_ UsePreallocDoer = im2colOp{}
 )
 
 /*
@@ -209,6 +211,13 @@ func (op im2colOp) Do(inputs ...Value) (retVal Value, err error) {
 	prealloc := tensor.New(tensor.Of(im.Dtype()), tensor.WithShape(retShape...))
 
 	return op.do(prealloc, im)
+}
+
+func (op im2colOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
+	if err := checkArity(op, len(inputs)); err != nil {
+		return nil, err
+	}
+	return op.do(prealloc, inputs[0])
 }
 
 func (op im2colOp) ReturnsPtr() bool     { return false }

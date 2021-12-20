@@ -24,7 +24,7 @@ var (
 	compileDev        = false
 	shapeInferenceDev = false
 	typeSystemDev     = false
-	symdiffDev        = true
+	symdiffDev        = false
 	autodiffDev       = false
 	machineDev        = false
 	stabilizationDev  = false

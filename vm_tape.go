@@ -246,7 +246,7 @@ func (m *tapeMachine) RunAll() (err error) {
 func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	defer func() {
 		if r := recover(); r != nil {
-			errNode := m.getErrNode(m.p.instructions[m.pc])
+			errNode := m.nodeFromInstr(m.p.instructions[m.pc])
 			err := vmContextualError{
 				error: errors.Errorf("%v", r),
 				instr: m.pc,
@@ -261,7 +261,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 		m.logf("PC %d", m.pc)
 
 		if err := instr.exec(m); err != nil {
-			errNode := m.getErrNode(instr)
+			errNode := m.nodeFromInstr(instr)
 			err = vmContextualError{
 				error: errors.Wrapf(err, "PC %d. Failed to execute instruction %v", m.pc, instr),
 				instr: m.pc,
@@ -318,19 +318,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	doneChan <- struct{}{}
 }
 
-func (m *tapeMachine) getErrNode(instr tapeInstr) *Node {
-	var errNode *Node
-outer:
-	for n, frag := range m.p.m {
-		for _, in := range frag {
-			if in == instr {
-				errNode = n
-				break outer
-			}
-		}
-	}
-	return errNode
-}
+func (m *tapeMachine) nodeFromInstr(instr tapeInstr) *Node { return m.p.r[instr.ID()] }
 
 func (m *tapeMachine) getValue(r register) Value {
 	switch r.device {
@@ -379,7 +367,13 @@ func (m *tapeMachine) watchedLogf(format string, attrs ...interface{}) {
 
 	// TODO: Work on watched nodes
 	if !watched {
-
+		n := m.nodeFromInstr(instr)
+		for _, watch := range m.watchNodes {
+			if watch == n {
+				watched = true
+				break
+			}
+		}
 	}
 
 	if watched {
@@ -449,6 +443,7 @@ type program struct {
 	g            *ExprGraph         // original dag
 	df           *dataflow          // dataflow analysis
 	m            map[*Node]fragment // store which nodes create which instructions
+	r            map[int64]*Node    // reverse of m, storing the instruction ID
 	sorted       Nodes
 }
 

@@ -29,7 +29,8 @@ func ExampleConv2d() {
 	runtime.UnlockOSThread()
 
 	fmt.Printf("%1.1f", y.Value())
-	// output:
+
+	// Output:
 	// ⎡ 54.0   72.0⎤
 	// ⎢144.0  162.0⎥
 	// ⎣234.0  252.0⎦
