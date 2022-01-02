@@ -57,3 +57,11 @@ func (ns nodeIDs) Contains(a NodeID) bool {
 	}
 	return false
 }
+
+func NodesFromIDs(g *Graph, ns []int64) *Nodes {
+	nodes := make([]*Node, 0, len(ns))
+	for _, id := range ns {
+		nodes = append(nodes, g.nodes[id])
+	}
+	return NodesFromOrdered(nodes)
+}

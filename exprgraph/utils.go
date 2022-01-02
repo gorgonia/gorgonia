@@ -50,3 +50,12 @@ func consFmtStr(a fmt.State, c rune) string {
 	retVal = retVal + string(c)
 	return retVal
 }
+
+func in(l []int64, want int64) bool {
+	for _, v := range l {
+		if v == want {
+			return true
+		}
+	}
+	return false
+}

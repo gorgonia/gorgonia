@@ -28,8 +28,8 @@ func TestNewGraph(t *testing.T) {
 			&Graph{
 				Engine:  &tensor.StdEng{},
 				nodes:   make(map[int64]*Node),
-				from:    make(map[int64]map[int64]graph.WeightedEdge),
-				to:      make(map[int64]map[int64]graph.WeightedEdge),
+				from:    make(map[int64][]int64),
+				to:      make(map[int64][]int64),
 				groups:  make(map[int64]encoding.Groups),
 				self:    Self,
 				absent:  Absent,
@@ -50,8 +50,8 @@ func TestGraph_Node(t *testing.T) {
 	type fields struct {
 		Engine  tensor.Engine
 		nodes   map[int64]*Node
-		from    map[int64]map[int64]graph.WeightedEdge
-		to      map[int64]map[int64]graph.WeightedEdge
+		from    map[int64][]int64
+		to      map[int64][]int64
 		self    float64
 		absent  float64
 		nodeIDs uid.Set
@@ -113,8 +113,8 @@ func TestGraph_AddChildren(t *testing.T) {
 	type fields struct {
 		Engine  tensor.Engine
 		nodes   map[int64]*Node
-		from    map[int64]map[int64]graph.WeightedEdge
-		to      map[int64]map[int64]graph.WeightedEdge
+		from    map[int64][]int64
+		to      map[int64][]int64
 		self    float64
 		absent  float64
 		nodeIDs uid.Set
@@ -196,8 +196,8 @@ func TestGraph_AddChildren(t *testing.T) {
 						id: 1,
 					},
 				},
-				from: make(map[int64]map[int64]graph.WeightedEdge),
-				to:   make(map[int64]map[int64]graph.WeightedEdge),
+				from: make(map[int64][]int64),
+				to:   make(map[int64][]int64),
 			},
 			args{
 				n: &Node{
@@ -246,8 +246,8 @@ func TestGraph_NameOf(t *testing.T) {
 	type fields struct {
 		Engine  tensor.Engine
 		nodes   map[int64]*Node
-		from    map[int64]map[int64]graph.WeightedEdge
-		to      map[int64]map[int64]graph.WeightedEdge
+		from    map[int64][]int64
+		to      map[int64][]int64
 		self    float64
 		absent  float64
 		nodeIDs uid.Set
@@ -356,8 +356,8 @@ func TestGraph_IDOf(t *testing.T) {
 	type fields struct {
 		Engine  tensor.Engine
 		nodes   map[int64]*Node
-		from    map[int64]map[int64]graph.WeightedEdge
-		to      map[int64]map[int64]graph.WeightedEdge
+		from    map[int64][]int64
+		to      map[int64][]int64
 		self    float64
 		absent  float64
 		nodeIDs uid.Set
@@ -467,8 +467,8 @@ func TestGraph_NodeOf(t *testing.T) {
 	type fields struct {
 		Engine  tensor.Engine
 		nodes   map[int64]*Node
-		from    map[int64]map[int64]graph.WeightedEdge
-		to      map[int64]map[int64]graph.WeightedEdge
+		from    map[int64][]int64
+		to      map[int64][]int64
 		self    float64
 		absent  float64
 		nodeIDs uid.Set
@@ -556,12 +556,12 @@ func TestGraph_NodeOf(t *testing.T) {
 	}
 }
 
-func TestGraph_setWeightedEdge(t *testing.T) {
+func TestGraph_createEdge(t *testing.T) {
 	type fields struct {
 		Engine  tensor.Engine
 		nodes   map[int64]*Node
-		from    map[int64]map[int64]graph.WeightedEdge
-		to      map[int64]map[int64]graph.WeightedEdge
+		from    map[int64][]int64
+		to      map[int64][]int64
 		self    float64
 		absent  float64
 		nodeIDs uid.Set
@@ -577,27 +577,9 @@ func TestGraph_setWeightedEdge(t *testing.T) {
 	}{
 		{
 			"self node",
-			fields{},
-			args{
-				e: WeightedEdge{
-					F: &Node{
-						id: 0,
-					},
-					T: &Node{
-						id: 0,
-					},
-				},
-			},
-			true,
-		},
-		{
-			"from node not found",
 			fields{
-				nodes: map[int64]*Node{
-					1: {
-						id: 1,
-					},
-				},
+				from: make(map[int64][]int64),
+				to:   make(map[int64][]int64),
 			},
 			args{
 				e: WeightedEdge{
@@ -605,33 +587,61 @@ func TestGraph_setWeightedEdge(t *testing.T) {
 						id: 0,
 					},
 					T: &Node{
-						id: 1,
+						id: 0,
 					},
 				},
 			},
 			true,
 		},
-		{
-			"to node not found",
-			fields{
-				nodes: map[int64]*Node{
-					0: {
-						id: 0,
+		// these tests are commented out because they are no longer pertinent (createEdge does not check for node existence.)
+		/*
+			{
+				"from node not found",
+				fields{
+					nodes: map[int64]*Node{
+						1: {
+							id: 1,
+						},
+					},
+					from: make(map[int64][]int64),
+					to:   make(map[int64][]int64),
+				},
+				args{
+					e: WeightedEdge{
+						F: &Node{
+							id: 0,
+						},
+						T: &Node{
+							id: 1,
+						},
 					},
 				},
+				true,
 			},
-			args{
-				e: WeightedEdge{
-					F: &Node{
-						id: 0,
+			{
+				"to node not found",
+				fields{
+					nodes: map[int64]*Node{
+						0: {
+							id: 0,
+						},
 					},
-					T: &Node{
-						id: 1,
+					from: make(map[int64][]int64),
+					to:   make(map[int64][]int64),
+				},
+				args{
+					e: WeightedEdge{
+						F: &Node{
+							id: 0,
+						},
+						T: &Node{
+							id: 1,
+						},
 					},
 				},
+				true,
 			},
-			true,
-		},
+		*/
 		{
 			"ok, overriding existing links",
 			fields{
@@ -643,12 +653,8 @@ func TestGraph_setWeightedEdge(t *testing.T) {
 						id: 1,
 					},
 				},
-				from: map[int64]map[int64]graph.WeightedEdge{
-					0: make(map[int64]graph.WeightedEdge),
-				},
-				to: map[int64]map[int64]graph.WeightedEdge{
-					1: make(map[int64]graph.WeightedEdge),
-				},
+				from: make(map[int64][]int64),
+				to:   make(map[int64][]int64),
 			},
 			args{
 				e: WeightedEdge{
@@ -673,8 +679,8 @@ func TestGraph_setWeightedEdge(t *testing.T) {
 						id: 1,
 					},
 				},
-				from: make(map[int64]map[int64]graph.WeightedEdge, 0),
-				to:   make(map[int64]map[int64]graph.WeightedEdge, 0),
+				from: make(map[int64][]int64, 0),
+				to:   make(map[int64][]int64, 0),
 			},
 			args{
 				e: WeightedEdge{
@@ -701,7 +707,7 @@ func TestGraph_setWeightedEdge(t *testing.T) {
 				absent:  tt.fields.absent,
 				nodeIDs: tt.fields.nodeIDs,
 			}
-			if err := g.setWeightedEdge(tt.args.e); (err != nil) != tt.wantErr {
+			if err := g.createEdge(tt.args.e.From().(*Node), tt.args.e.To().(*Node)); (err != nil) != tt.wantErr {
 				t.Errorf("Graph.setWeightedEdge() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -712,8 +718,8 @@ func TestGraph_Graph(t *testing.T) {
 	type fields struct {
 		Engine  tensor.Engine
 		nodes   map[int64]*Node
-		from    map[int64]map[int64]graph.WeightedEdge
-		to      map[int64]map[int64]graph.WeightedEdge
+		from    map[int64][]int64
+		to      map[int64][]int64
 		self    float64
 		absent  float64
 		nodeIDs uid.Set
@@ -752,8 +758,8 @@ func TestGraph_Nodes(t *testing.T) {
 	type fields struct {
 		Engine  tensor.Engine
 		nodes   map[int64]*Node
-		from    map[int64]map[int64]graph.WeightedEdge
-		to      map[int64]map[int64]graph.WeightedEdge
+		from    map[int64][]int64
+		to      map[int64][]int64
 		self    float64
 		absent  float64
 		nodeIDs uid.Set
@@ -792,8 +798,8 @@ func TestGraph_From(t *testing.T) {
 	type fields struct {
 		Engine  tensor.Engine
 		nodes   map[int64]*Node
-		from    map[int64]map[int64]graph.WeightedEdge
-		to      map[int64]map[int64]graph.WeightedEdge
+		from    map[int64][]int64
+		to      map[int64][]int64
 		self    float64
 		absent  float64
 		nodeIDs uid.Set
@@ -839,8 +845,8 @@ func TestGraph_HasEdgeBetween(t *testing.T) {
 	type fields struct {
 		Engine  tensor.Engine
 		nodes   map[int64]*Node
-		from    map[int64]map[int64]graph.WeightedEdge
-		to      map[int64]map[int64]graph.WeightedEdge
+		from    map[int64][]int64
+		to      map[int64][]int64
 		self    float64
 		absent  float64
 		nodeIDs uid.Set
@@ -858,10 +864,11 @@ func TestGraph_HasEdgeBetween(t *testing.T) {
 		{
 			"link between x and y",
 			fields{
-				from: map[int64]map[int64]graph.WeightedEdge{
-					0: {
-						1: &WeightedEdge{},
-					},
+				from: map[int64][]int64{
+					0: {1},
+				},
+				to: map[int64][]int64{
+					1: {0},
 				},
 			},
 			args{
@@ -873,10 +880,11 @@ func TestGraph_HasEdgeBetween(t *testing.T) {
 		{
 			"link between y and x",
 			fields{
-				from: map[int64]map[int64]graph.WeightedEdge{
-					0: {
-						1: &WeightedEdge{},
-					},
+				from: map[int64][]int64{
+					0: {1},
+				},
+				to: map[int64][]int64{
+					1: {0},
 				},
 			},
 			args{
@@ -888,10 +896,11 @@ func TestGraph_HasEdgeBetween(t *testing.T) {
 		{
 			"no link between y and x",
 			fields{
-				from: map[int64]map[int64]graph.WeightedEdge{
-					0: {
-						1: &WeightedEdge{},
-					},
+				from: map[int64][]int64{
+					0: {1},
+				},
+				to: map[int64][]int64{
+					1: {0},
 				},
 			},
 			args{
@@ -924,8 +933,8 @@ func TestGraph_HasEdgeFromTo(t *testing.T) {
 	type fields struct {
 		Engine  tensor.Engine
 		nodes   map[int64]*Node
-		from    map[int64]map[int64]graph.WeightedEdge
-		to      map[int64]map[int64]graph.WeightedEdge
+		from    map[int64][]int64
+		to      map[int64][]int64
 		self    float64
 		absent  float64
 		nodeIDs uid.Set
@@ -943,10 +952,11 @@ func TestGraph_HasEdgeFromTo(t *testing.T) {
 		{
 			"link between x and y",
 			fields{
-				from: map[int64]map[int64]graph.WeightedEdge{
-					0: {
-						1: &WeightedEdge{},
-					},
+				from: map[int64][]int64{
+					0: {1},
+				},
+				to: map[int64][]int64{
+					1: {0},
 				},
 			},
 			args{
@@ -958,10 +968,11 @@ func TestGraph_HasEdgeFromTo(t *testing.T) {
 		{
 			"link between y and x",
 			fields{
-				from: map[int64]map[int64]graph.WeightedEdge{
-					0: {
-						1: &WeightedEdge{},
-					},
+				from: map[int64][]int64{
+					0: {1},
+				},
+				to: map[int64][]int64{
+					1: {0},
 				},
 			},
 			args{
@@ -973,10 +984,10 @@ func TestGraph_HasEdgeFromTo(t *testing.T) {
 		{
 			"no link between y and x",
 			fields{
-				from: map[int64]map[int64]graph.WeightedEdge{
-					0: {
-						1: &WeightedEdge{},
-					},
+				from: map[int64][]int64{
+					// 0: {
+					// 	1: &WeightedEdge{},
+					// },
 				},
 			},
 			args{
@@ -1008,8 +1019,8 @@ func TestGraph_AddNode(t *testing.T) {
 	type fields struct {
 		Engine  tensor.Engine
 		nodes   map[int64]*Node
-		from    map[int64]map[int64]graph.WeightedEdge
-		to      map[int64]map[int64]graph.WeightedEdge
+		from    map[int64][]int64
+		to      map[int64][]int64
 		self    float64
 		absent  float64
 		nodeIDs uid.Set
@@ -1115,8 +1126,8 @@ func TestGraph_Edge(t *testing.T) {
 	type fields struct {
 		Engine  tensor.Engine
 		nodes   map[int64]*Node
-		from    map[int64]map[int64]graph.WeightedEdge
-		to      map[int64]map[int64]graph.WeightedEdge
+		from    map[int64][]int64
+		to      map[int64][]int64
 		self    float64
 		absent  float64
 		nodeIDs uid.Set
@@ -1134,23 +1145,27 @@ func TestGraph_Edge(t *testing.T) {
 		{
 			"simple",
 			fields{
-				from: map[int64]map[int64]graph.WeightedEdge{
-					0: {
-						1: &WeightedEdge{},
-					},
+				from: map[int64][]int64{
+					0: {1},
+				},
+				to: map[int64][]int64{
+					1: {0},
 				},
 			},
 			args{
 				0, 1,
 			},
-			&WeightedEdge{},
+			&WeightedEdge{
+				F: (*Node)(nil),
+				T: (*Node)(nil),
+			},
 		},
 		{
 			"no link",
 			fields{
-				from: map[int64]map[int64]graph.WeightedEdge{
+				from: map[int64][]int64{
 					0: {
-						1: &WeightedEdge{},
+						//1: &WeightedEdge{},
 					},
 				},
 			},
@@ -1173,7 +1188,7 @@ func TestGraph_Edge(t *testing.T) {
 				nodeIDs: tt.fields.nodeIDs,
 			}
 			if got := g.Edge(tt.args.uid, tt.args.vid); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Graph.Edge() = %v, want %v", got, tt.want)
+				t.Errorf("Graph.Edge() = %#v, want %#v", got, tt.want)
 			}
 		})
 	}
@@ -1183,8 +1198,8 @@ func TestGraph_To(t *testing.T) {
 	type fields struct {
 		Engine  tensor.Engine
 		nodes   map[int64]*Node
-		from    map[int64]map[int64]graph.WeightedEdge
-		to      map[int64]map[int64]graph.WeightedEdge
+		from    map[int64][]int64
+		to      map[int64][]int64
 		self    float64
 		absent  float64
 		nodeIDs uid.Set
@@ -1201,7 +1216,7 @@ func TestGraph_To(t *testing.T) {
 		{
 			"nil graph",
 			fields{
-				to: map[int64]map[int64]graph.WeightedEdge{},
+				to: map[int64][]int64{},
 			},
 			args{
 				0,

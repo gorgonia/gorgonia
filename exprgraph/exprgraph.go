@@ -2,7 +2,6 @@ package exprgraph
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
@@ -26,19 +25,33 @@ const (
 )
 
 // Graph is a representation of an expression graph.
-// The graph is a directed weighted graph.
-// The lighter the link, the lefter the operand.
-// For example a graph to represent c = a (op) b
-// is represented as:
-//  digraph {
-//      c -> a [weight 0]
-//      c -> b [weight 1]
-//  }
+// For example, if a graph were to represent the following expression:
+// 	c = a (OP) b
+// then the graph would look like this:
+// 	c → a
+//	c → b
+//
+// Internally, the graph is destructured into several smaller data structures, to aid with
+// ease of retrieval.
+//
+// The `nodes` map is a container holding all the Nodes and mapping them to their ID.
+//
+// The `from` map maps an ID to a list of IDs. So the example above will look like this:
+// 	from: map[int64][]int64 {
+//		c.ID(): []int64{a.ID(), b.ID()}
+//	}
+// The slice index represents the order of things (i.e. `a` comes before `b`)
+//
+// The `to` map maps an ID to a list of IDs that came from it. So the example above will look like this:
+//	to: map[int64][]int64{
+//		a.ID(): []int64{c.ID()},
+//		b.ID(): []int64{c.ID()},
+//	}
 type Graph struct {
 	tensor.Engine
 	nodes  map[int64]*Node
-	from   map[int64]map[int64]graph.WeightedEdge
-	to     map[int64]map[int64]graph.WeightedEdge
+	from   map[int64][]int64 // from node to list of nodes. The key is the `from`.
+	to     map[int64][]int64 // to node from a a list of nodes. The key is the `to`
 	groups map[int64]encoding.Groups
 
 	self, absent float64
@@ -46,7 +59,7 @@ type Graph struct {
 	nodeIDs uid.Set
 }
 
-// Graph returns itself
+// Graph returns itself.
 func (g *Graph) Graph() *Graph { return g }
 
 // NameOf returns the name of the given Tensor.
@@ -110,8 +123,8 @@ func NewGraph(e tensor.Engine) *Graph {
 	return &Graph{
 		Engine: e,
 		nodes:  make(map[int64]*Node),
-		from:   make(map[int64]map[int64]graph.WeightedEdge),
-		to:     make(map[int64]map[int64]graph.WeightedEdge),
+		from:   make(map[int64][]int64),
+		to:     make(map[int64][]int64),
 		groups: make(map[int64]encoding.Groups),
 
 		self:   Self,
@@ -146,27 +159,19 @@ func (g *Graph) From(id int64) graph.Nodes {
 	if len(g.from[id]) == 0 {
 		return graph.Empty
 	}
-	edges := g.from[id]
-	es := make(byWeight, 0, len(edges))
-	for _, e := range edges {
-		es = append(es, e)
-	}
-	sort.Sort(es)
-	ns := make([]*Node, 0, len(es))
-	for _, e := range es {
-		ns = append(ns, g.nodes[e.To().ID()])
-	}
-	return NodesFromOrdered(ns)
-
+	return NodesFromIDs(g, g.from[id])
 }
 
 // HasEdgeBetween returns whether an edge exists between x and y.
 func (g *Graph) HasEdgeBetween(xid, yid int64) bool {
-	if _, ok := g.from[xid][yid]; ok {
+	if in(g.from[xid], yid) {
 		return true
 	}
-	_, ok := g.from[yid][xid]
-	return ok
+
+	if in(g.to[xid], yid) {
+		return true
+	}
+	return false
 }
 
 // Edge returns an edge object, if an edge exists. Nil otherwise.
@@ -177,19 +182,23 @@ func (g *Graph) Edge(uid, vid int64) graph.Edge {
 // WeightedEdge returns the weighted edge from u to v if such an edge exists and nil otherwise.
 // The node v must be directly reachable from u as defined by the From method.
 func (g *Graph) WeightedEdge(uid, vid int64) graph.WeightedEdge {
-	edge, ok := g.from[uid][vid]
-	if !ok {
-		return nil
+	for i, v := range g.from[uid] {
+		if v == vid {
+			n := g.nodes[uid]
+			child := g.nodes[vid]
+			return &WeightedEdge{
+				F: n,
+				T: child,
+				W: float64(i), // the weight of the child is the order of the children into the Op
+			}
+		}
 	}
-	return edge
+	return nil
 }
 
 // HasEdgeFromTo returns whether a directed edge between x and y.
 func (g *Graph) HasEdgeFromTo(uid, vid int64) bool {
-	if _, ok := g.from[uid][vid]; !ok {
-		return false
-	}
-	return true
+	return in(g.from[uid], vid)
 }
 
 // To returns all the nodes that can reach the given id.
@@ -197,18 +206,7 @@ func (g *Graph) To(id int64) graph.Nodes {
 	if len(g.to[id]) == 0 {
 		return graph.Empty
 	}
-
-	edges := g.to[id]
-	es := make(byWeight, 0, len(edges))
-	for _, e := range edges {
-		es = append(es, e)
-	}
-	sort.Sort(es)
-	ns := make([]*Node, 0, len(es))
-	for _, e := range es {
-		ns = append(ns, g.nodes[e.From().ID()])
-	}
-	return NodesFromOrdered(ns)
+	return NodesFromIDs(g, g.to[id])
 }
 
 // NewNode returns a new Node with a unique
@@ -246,42 +244,39 @@ func (g *Graph) AddNode(n *Node) error {
 	return nil
 }
 
-// setWeightedEdge adds a weighted edge from one node to another. If the nodes do not exist, they are added
-// and are set to the nodes of the edge otherwise.
-// It will return an error if the IDs of the e.From and e.To are equal.
-// It will return an  ErrNotFoundInGraph is either from or to node does not exists in the graph
-func (g *Graph) setWeightedEdge(e graph.WeightedEdge) error {
-	var (
-		from = e.From()
-		fid  = from.ID()
-		to   = e.To()
-		tid  = to.ID()
-	)
-
-	if fid == tid {
-		return errors.New("simple: adding self edge")
+// createEdge creates an edge.
+func (g *Graph) createEdge(from, to *Node) error {
+	if from == to || from.ID() == to.ID() {
+		return errors.New("Adding self-edge")
 	}
 
-	if _, ok := g.nodes[fid]; !ok {
-		return fmt.Errorf("node id %v: %w", fid, ErrNotFoundInGraph)
-	}
-	if _, ok := g.nodes[tid]; !ok {
-		return fmt.Errorf("node id %v: %w", tid, ErrNotFoundInGraph)
-	}
-	g.nodes[fid] = from.(*Node)
-	g.nodes[tid] = to.(*Node)
+	// this check is not necessary because createEdge is only called by AddChildren
+	// which checks for existence of the graph nodes alredy
+	/*
+		fid, tid := from.ID(), to.ID()
+		if _, ok := g.nodes[fid]; !ok {
+			return fmt.Errorf("node id %v: %w", fid, ErrNotFoundInGraph)
+		}
+		if _, ok := g.nodes[tid]; !ok {
+			return fmt.Errorf("node id %v: %w", tid, ErrNotFoundInGraph)
+		}
+	*/
 
-	if fm, ok := g.from[fid]; ok {
-		fm[tid] = e
-	} else {
-		g.from[fid] = map[int64]graph.WeightedEdge{tid: e}
+	fid := from.ID()
+	tid := to.ID()
+	// We don't create multiple edges. No hypergraph shennanigans here
+
+	if in(g.from[fid], tid) {
+		return nil
 	}
-	if tm, ok := g.to[tid]; ok {
-		tm[fid] = e
-	} else {
-		g.to[tid] = map[int64]graph.WeightedEdge{fid: e}
+	if in(g.to[tid], fid) {
+		return nil
 	}
+
+	g.from[fid] = append(g.from[fid], tid)
+	g.to[tid] = append(g.to[tid], fid)
 	return nil
+
 }
 
 // AddChildren creates weighted edges betwen n and children.
@@ -296,15 +291,24 @@ func (g *Graph) AddChildren(n *Node, children ...*Node) error {
 			return fmt.Errorf("%v: %w", n, ErrNotFoundInGraph)
 		}
 	}
+
+	/*
+		for i, child := range children {
+			err := g.setWeightedEdge(WeightedEdge{
+				F: n,
+				T: child,
+				W: float64(i), // the weight of the child is the order of the children into the Op
+			},
+			)
+			if err != nil {
+				return err
+			}
+		}
+	*/
+
 	for i, child := range children {
-		err := g.setWeightedEdge(WeightedEdge{
-			F: n,
-			T: child,
-			W: float64(i), // the weight of the child is the order of the children into the Op
-		},
-		)
-		if err != nil {
-			return err
+		if err := g.createEdge(n, child); err != nil {
+			return errors.Wrapf(err, "Adding edge between %v and %v (%dth child)", n, child, i)
 		}
 	}
 	return nil
@@ -312,9 +316,9 @@ func (g *Graph) AddChildren(n *Node, children ...*Node) error {
 
 // Roots returns the roots of a graph.
 func (g *Graph) Roots() (retVal Nodes) {
-	for n, tos := range g.to {
-		if len(tos) == 0 {
-			retVal.ns = append(retVal.ns, g.nodes[n])
+	for n, tos := range g.nodes {
+		if len(g.to[n]) == 0 {
+			retVal.ns = append(retVal.ns, tos)
 		}
 	}
 	return retVal
