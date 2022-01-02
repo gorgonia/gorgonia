@@ -36,7 +36,12 @@ type Node struct {
 }
 
 // Name returns the name of the node
-func (n *Node) Name() string { return n.name }
+func (n *Node) Name() string {
+	if n == nil {
+		return "<nil>"
+	}
+	return n.name
+}
 
 // NewNode in a given graph.
 func NewNode(g *Graph, name string, opts ...tensor.ConsOpt) *Node {
@@ -86,7 +91,12 @@ func cons(g *Graph, name string, t Tensor) (*Node, error) {
 }
 
 // ID allows Node  to implement gonum.org/graph.Node
-func (n *Node) ID() int64 { return n.id }
+func (n *Node) ID() int64 {
+	if n == nil {
+		return -1
+	}
+	return n.id
+}
 
 // Format of the node
 func (n Node) Format(f fmt.State, c rune) {
