@@ -11,32 +11,45 @@ type Nodes struct {
 }
 
 // Len returns the remaining number of nodes to be iterated over.
-func (n *Nodes) Len() int { return len(n.ns) }
+func (ns *Nodes) Len() int { return len(ns.ns) }
 
 // Next returns whether the next call of Node will return a valid node.
-func (n *Nodes) Next() bool { n.i++; return n.i < len(n.ns) }
+func (ns *Nodes) Next() bool { ns.i++; return ns.i < len(ns.ns) }
 
 // Node returns the current node of the iterator. Next must have been
 // called prior to a call to Node.
-func (n *Nodes) Node() graph.Node {
-	if n.i < 0 || n.i >= len(n.ns) {
+func (ns *Nodes) Node() graph.Node {
+	if ns.i < 0 || ns.i >= len(ns.ns) {
 		return nil
 	}
-	return n.ns[n.i]
+	return ns.ns[ns.i]
 }
 
 // Reset returns the iterator to its initial state.
 func (n *Nodes) Reset() { n.i = -1 }
 
 // NodeSlice returns all the remaining nodes in the iterator and advances
-// the iterator. The order of nodes within the returned slice is not
-// specified.
-func (n *Nodes) NodeSlice() []*Node {
-	if n.i < 0 {
-		n.i = 0
+// the iterator. The order of nodes within the returned slice is not specified.
+func (ns *Nodes) NodeSlice() []*Node {
+	if ns.i < 0 {
+		ns.i = 0
 	}
-	retVal := n.ns[n.i:len(n.ns)]
-	n.i = len(n.ns)
+	retVal := ns.ns[ns.i:len(ns.ns)]
+	ns.i = len(ns.ns)
+	return retVal
+}
+
+// NodeIDSlice returns all the remaining nodes in the iterator and advances
+// the iterator. The order of nodes within the returned slice is not specified.
+func (ns *Nodes) NodeIDSlice() []NodeID {
+	if ns.i < 0 {
+		ns.i = 0
+	}
+	retVal := make([]NodeID, 0, len(ns.ns)-ns.i+1)
+	for _, n := range ns.ns {
+		retVal = append(retVal, NodeID(n.id))
+	}
+	ns.i = len(ns.ns)
 	return retVal
 }
 
@@ -47,9 +60,24 @@ func (n *Nodes) NodeSlice() []*Node {
 // over.
 func NodesFromOrdered(ns []*Node) *Nodes { return &Nodes{ns: ns, i: -1} }
 
-type nodeIDs []NodeID
+// NodesFromIDs creates a *Nodes (an iterator) from a list of int64 IDs.
+func NodesFromIDs(g *Graph, ns []int64) *Nodes {
+	nodes := make([]*Node, 0, len(ns))
+	for _, id := range ns {
+		nodes = append(nodes, g.nodes[id])
+	}
+	return NodesFromOrdered(nodes)
+}
 
-func (ns nodeIDs) Contains(a NodeID) bool {
+// NodesFromNodeIDs creates a *Nodes (an iterator) from a list of NodeIDs.
+func NodesFromNodeIDs(g *Graph, ns []NodeID) *Nodes { return NodesFromIDs(g, nodeIDs2IDs(ns)) }
+
+// NodeIDs is a set of NodeIDs.
+// It implements sort.Sort as the basis of the set.
+// (see github.com/xtgo/set)
+type NodeIDs []NodeID
+
+func (ns NodeIDs) Contains(a NodeID) bool {
 	for _, n := range ns {
 		if n == a {
 			return true
@@ -58,10 +86,8 @@ func (ns nodeIDs) Contains(a NodeID) bool {
 	return false
 }
 
-func NodesFromIDs(g *Graph, ns []int64) *Nodes {
-	nodes := make([]*Node, 0, len(ns))
-	for _, id := range ns {
-		nodes = append(nodes, g.nodes[id])
-	}
-	return NodesFromOrdered(nodes)
-}
+/* NodeIDs implements sort.Sort */
+
+func (ns NodeIDs) Len() int           { return len(ns) }
+func (ns NodeIDs) Less(i, j int) bool { return ns[i] < ns[j] }
+func (ns NodeIDs) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
