@@ -116,7 +116,7 @@ func (e *RxEngine) flowUp(ctx context.Context, n *exprgraph.Node) int {
 	var parents []*exprgraph.Node
 	ns, ok := e.g.To(n.ID()).(*exprgraph.IterNodes)
 	if ok {
-		parents = ns.NodeSlice()
+		parents = ns.Nodes()
 	}
 	var nonRootParents int
 	for _, parent := range parents {
@@ -142,7 +142,7 @@ func (e *RxEngine) flowDown(ctx context.Context, n *exprgraph.Node) error {
 		return nil
 	}
 	children.Reset()
-	childNodes := children.(*exprgraph.IterNodes).NodeSlice()
+	childNodes := children.(*exprgraph.IterNodes).Nodes()
 
 	// Depth first search.
 	// TODO: maybe traverse and process the graph concurrently?

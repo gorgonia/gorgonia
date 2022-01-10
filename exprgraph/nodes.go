@@ -28,9 +28,9 @@ func (ns *IterNodes) Node() graph.Node {
 // Reset returns the iterator to its initial state.
 func (n *IterNodes) Reset() { n.i = -1 }
 
-// NodeSlice returns all the remaining nodes in the iterator and advances
+// Nodes returns all the remaining nodes in the iterator and advances
 // the iterator. The order of nodes within the returned slice is not specified.
-func (ns *IterNodes) NodeSlice() []*Node {
+func (ns *IterNodes) Nodes() []*Node {
 	if ns.i < 0 {
 		ns.i = 0
 	}

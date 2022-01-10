@@ -101,7 +101,7 @@ func TestNodes_NodeSlice(t *testing.T) {
 				i:  tt.fields.i,
 			}
 			if n.Next() {
-				got := n.NodeSlice()
+				got := n.Nodes()
 				if len(got) != len(tt.want) {
 					t.Errorf("Nodes.NodeSlice() = %v, want %v", got, tt.want)
 				}
