@@ -315,7 +315,7 @@ func (g *Graph) AddChildren(n *Node, children ...*Node) error {
 }
 
 // Roots returns the roots of a graph.
-func (g *Graph) Roots() (retVal Nodes) {
+func (g *Graph) Roots() (retVal IterNodes) {
 	for n, tos := range g.nodes {
 		if len(g.to[n]) == 0 {
 			retVal.ns = append(retVal.ns, tos)

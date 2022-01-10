@@ -9,10 +9,10 @@ import (
 	"gonum.org/v1/gonum/graph"
 )
 
-func (n *Nodes) Generate(r *rand.Rand, size int) reflect.Value {
+func (n *IterNodes) Generate(r *rand.Rand, size int) reflect.Value {
 	ns := make([]*Node, size)
 	i := r.Int()
-	nn := &Nodes{
+	nn := &IterNodes{
 		ns: ns,
 		i:  i,
 	}
@@ -25,7 +25,7 @@ func Test_nodeIDs_Contains(t *testing.T) {
 	}
 	tests := []struct {
 		name string
-		ns   nodeIDs
+		ns   NodeIDs
 		args args
 		want bool
 	}{
@@ -96,7 +96,7 @@ func TestNodes_NodeSlice(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			n := &Nodes{
+			n := &IterNodes{
 				ns: tt.fields.ns,
 				i:  tt.fields.i,
 			}
@@ -112,7 +112,7 @@ func TestNodes_NodeSlice(t *testing.T) {
 }
 
 func TestNodes_Reset(t *testing.T) {
-	f := func(n *Nodes) bool {
+	f := func(n *IterNodes) bool {
 		n.Reset()
 		if n.i != -1 {
 			return false
@@ -161,7 +161,7 @@ func TestNodes_Next(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			n := &Nodes{
+			n := &IterNodes{
 				ns: tt.fields.ns,
 				i:  tt.fields.i,
 			}
@@ -204,7 +204,7 @@ func TestNodes_Node(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			n := &Nodes{
+			n := &IterNodes{
 				ns: tt.fields.ns,
 				i:  tt.fields.i,
 			}
