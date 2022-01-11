@@ -87,6 +87,9 @@ func (g *Graph) IDOf(t Tensor) (NodeID, error) {
 func (g *Graph) NodeOf(t Tensor) *Node { return g.find(t) }
 
 func (g *Graph) find(t Tensor) *Node {
+	if t == nil {
+		return nil
+	}
 	if n, ok := t.(*Node); ok {
 		return n
 	}
@@ -336,8 +339,20 @@ func (g *Graph) GroupsOf(t Tensor) encoding.Groups {
 
 // ChildrenOf finds the children of a given tensor. The result is returned as a NodeIDs.
 func (g *Graph) ChildrenOf(t Nodelike) NodeIDs {
+	if t == nil {
+		return nil
+	}
+
 	n := g.getByID(t.ID())
+	if n == nil {
+		return nil
+	}
+
 	children := g.from[n.id]
+	if len(children) == 0 {
+		return nil
+	}
+
 	retVal := make(NodeIDs, 0, len(children))
 	for _, child := range children {
 		retVal = append(retVal, NodeID(child))
@@ -347,8 +362,20 @@ func (g *Graph) ChildrenOf(t Nodelike) NodeIDs {
 
 // ParentsOf finds the parents of a given tensor. The result is returned as a NodeIDs.
 func (g *Graph) ParentsOf(t Nodelike) NodeIDs {
+	if t == nil {
+		return nil
+	}
+
 	n := g.getByID(t.ID())
+	if n == nil {
+		return nil
+	}
+
 	parents := g.to[n.id]
+	if len(parents) == 0 {
+		return nil
+	}
+
 	retVal := make(NodeIDs, 0, len(parents))
 	for _, p := range parents {
 		retVal = append(retVal, NodeID(p))
