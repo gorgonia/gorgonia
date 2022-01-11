@@ -91,3 +91,14 @@ func (ns NodeIDs) Contains(a NodeID) bool {
 func (ns NodeIDs) Len() int           { return len(ns) }
 func (ns NodeIDs) Less(i, j int) bool { return ns[i] < ns[j] }
 func (ns NodeIDs) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
+
+/* Utility functions */
+
+// NodeIDsFromNodes returns a NodeIDs given a slice of *Nodes.
+func NodeIDsFromNodes(ns []*Node) NodeIDs {
+	retVal := make(NodeIDs, 0, len(ns))
+	for _, n := range ns {
+		retVal = append(retVal, NodeID(n.id))
+	}
+	return retVal
+}

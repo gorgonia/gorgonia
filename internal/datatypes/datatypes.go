@@ -8,6 +8,7 @@ import (
 	"gorgonia.org/dtype"
 	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/types"
+	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 )
 
@@ -18,9 +19,9 @@ import (
 // There is an overlap with values.Value. The reason is semantic clarity. Values are Tensors. Tensors are Values.
 type Tensor interface {
 	// info about the ndarrayN
-	Shape() tensor.Shape
+	Shape() shapes.Shape
 	Strides() []int
-	Dtype() tensor.Dtype
+	Dtype() dtype.Dtype
 	Dims() int
 	Size() int
 	DataSize() int

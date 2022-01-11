@@ -14,14 +14,9 @@ import (
 
 // constraints
 var (
-	_ Tensor = &Node{}
+	_ Tensor   = &Node{}
+	_ Nodelike = &Node{}
 )
-
-// NodeID represents a Node's ID
-type NodeID int64
-
-// ID returns the ID as an int64. This is used to fulfil gonum.org/gonum/graph.Node interface.
-func (n NodeID) ID() int64 { return int64(n) }
 
 // Node is a tuple of a Tensor, ID, and name.
 type Node struct {
@@ -97,6 +92,9 @@ func (n *Node) ID() int64 {
 	}
 	return n.id
 }
+
+// NodeID returns the ID as a NodeID of the node.
+func (n *Node) NodeID() NodeID { return NodeID(n.ID()) }
 
 // Format of the node
 func (n Node) Format(f fmt.State, c rune) {

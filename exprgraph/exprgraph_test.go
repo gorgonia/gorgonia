@@ -764,6 +764,10 @@ func TestGraph_Nodes(t *testing.T) {
 		absent  float64
 		nodeIDs uid.Set
 	}
+	first := &Node{
+		id:   0,
+		name: "First",
+	}
 	tests := []struct {
 		name   string
 		fields fields
@@ -774,7 +778,15 @@ func TestGraph_Nodes(t *testing.T) {
 			fields{},
 			graph.Empty,
 		},
-		// TODO: Add test cases.
+		{
+			"one node",
+			fields{
+				nodes: map[int64]*Node{
+					0: first,
+				},
+			},
+			&IterNodes{[]*Node{first}, -1},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

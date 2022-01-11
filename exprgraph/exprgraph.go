@@ -115,6 +115,13 @@ func (g *Graph) find(t Tensor) *Node {
 	return nil
 }
 
+func (g *Graph) getByID(id int64) *Node {
+	if n, ok := g.nodes[id]; ok {
+		return n
+	}
+	return nil
+}
+
 // NewGraph with default values
 func NewGraph(e tensor.Engine) *Graph {
 	if e == nil {
@@ -134,12 +141,17 @@ func NewGraph(e tensor.Engine) *Graph {
 	}
 }
 
+// Get gets the concrete *Node of a nodelike (graph.Node) object.
+func (g *Graph) Get(n Nodelike) *Node { return g.getByID(n.ID()) }
+
 // Node returns the node with the given ID, if it exists. Nil otherwise.
 func (g *Graph) Node(id int64) graph.Node {
-	if n, ok := g.nodes[id]; ok {
-		return n
+	n := g.getByID(id)
+	// This weird bit here is necessary because (*Node)(nil) ≠ nil (untyped)
+	if n == nil { // (*Node)(nil)
+		return nil // untyped nil
 	}
-	return nil
+	return n
 }
 
 // Nodes returns the list of all nodes in the graph.
@@ -292,20 +304,6 @@ func (g *Graph) AddChildren(n *Node, children ...*Node) error {
 		}
 	}
 
-	/*
-		for i, child := range children {
-			err := g.setWeightedEdge(WeightedEdge{
-				F: n,
-				T: child,
-				W: float64(i), // the weight of the child is the order of the children into the Op
-			},
-			)
-			if err != nil {
-				return err
-			}
-		}
-	*/
-
 	for i, child := range children {
 		if err := g.createEdge(n, child); err != nil {
 			return errors.Wrapf(err, "Adding edge between %v and %v (%dth child)", n, child, i)
@@ -334,4 +332,26 @@ func (g *Graph) SetGroup(t Tensor, group encoding.Group) {
 func (g *Graph) GroupsOf(t Tensor) encoding.Groups {
 	n := g.find(t)
 	return g.groups[n.id]
+}
+
+// ChildrenOf finds the children of a given tensor. The result is returned as a NodeIDs.
+func (g *Graph) ChildrenOf(t Nodelike) NodeIDs {
+	n := g.getByID(t.ID())
+	children := g.from[n.id]
+	retVal := make(NodeIDs, 0, len(children))
+	for _, child := range children {
+		retVal = append(retVal, NodeID(child))
+	}
+	return retVal
+}
+
+// ParentsOf finds the parents of a given tensor. The result is returned as a NodeIDs.
+func (g *Graph) ParentsOf(t Nodelike) NodeIDs {
+	n := g.getByID(t.ID())
+	parents := g.to[n.id]
+	retVal := make(NodeIDs, 0, len(parents))
+	for _, p := range parents {
+		retVal = append(retVal, NodeID(p))
+	}
+	return retVal
 }
