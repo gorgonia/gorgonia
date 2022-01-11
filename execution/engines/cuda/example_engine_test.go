@@ -44,18 +44,6 @@ func Example() {
 	}
 	engine.Signal()
 
-	// xypz2, err := Add(xypz, z)
-	// if err != nil {
-	// 	fmt.Printf("AAddERr %v", err)
-	// 	return
-	// }
-
-	// xypz3, err := engine.Accessible(xypz)
-	// if err != nil {
-	// 	fmt.Printf("Unable to copy xypz to a local variable. Err: %v\n", err)
-	// 	return
-	// }
-
 	fmt.Printf("x:\n%v\ny:\n%v\nxy:\n%v\nxy+z:\n%v\n", x, y, xy, xypz)
 
 	// Output:
