@@ -1065,6 +1065,71 @@ func TestGraph_To(t *testing.T) {
 	}
 }
 
+func TestGraph_Roots(t *testing.T) {
+	anode := &Node{id: 0, name: "a"}
+	bnode := &Node{id: 1, name: "b"}
+	cnode := &Node{id: 2, name: "c"}
+	dnode := &Node{id: 3, name: "d"}
+	tests := []struct {
+		name   string
+		fields testGraphFields
+		want   []*Node
+	}{
+		{
+			"nil graph",
+			testGraphFields{},
+			nil,
+		},
+		{
+			"simple",
+			testGraphFields{
+				nodes: map[int64]*Node{
+					0: anode,
+					1: bnode,
+					2: cnode,
+				},
+				from: map[int64][]int64{
+					2: {0, 1},
+				},
+				to: map[int64][]int64{
+					0: {2},
+					1: {2},
+				},
+			},
+			[]*Node{cnode},
+		},
+		{
+			"simple2",
+			testGraphFields{
+				nodes: map[int64]*Node{
+					0: anode,
+					1: bnode,
+					2: cnode,
+					3: dnode,
+				},
+				from: map[int64][]int64{
+					2: {0, 1},
+				},
+				to: map[int64][]int64{
+					0: {2},
+					1: {2},
+				},
+			},
+			[]*Node{cnode, dnode},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := graphFromFields(tt.fields)
+			if got := g.Roots(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Graph.Roots = %v. Want %v", got, tt.want)
+			}
+		})
+	}
+
+}
+
 func TestGraph_ChildrenOf(t *testing.T) {
 	anode := &Node{id: 0, name: "a"}
 	bnode := &Node{id: 1, name: "b"}
