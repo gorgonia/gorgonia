@@ -11,6 +11,29 @@ import (
 	"gorgonia.org/tensor"
 )
 
+type testGraphFields struct {
+	Engine  tensor.Engine
+	nodes   map[int64]*Node
+	from    map[int64][]int64
+	to      map[int64][]int64
+	self    float64
+	absent  float64
+	nodeIDs uid.Set
+}
+
+func graphFromFields(fields testGraphFields) *Graph {
+	g := &Graph{
+		Engine:  fields.Engine,
+		nodes:   fields.nodes,
+		from:    fields.from,
+		to:      fields.to,
+		self:    fields.self,
+		absent:  fields.absent,
+		nodeIDs: fields.nodeIDs,
+	}
+	return g
+}
+
 func TestNewGraph(t *testing.T) {
 	type args struct {
 		e tensor.Engine
@@ -47,27 +70,18 @@ func TestNewGraph(t *testing.T) {
 }
 
 func TestGraph_Node(t *testing.T) {
-	type fields struct {
-		Engine  tensor.Engine
-		nodes   map[int64]*Node
-		from    map[int64][]int64
-		to      map[int64][]int64
-		self    float64
-		absent  float64
-		nodeIDs uid.Set
-	}
 	type args struct {
 		id int64
 	}
 	tests := []struct {
 		name   string
-		fields fields
+		fields testGraphFields
 		args   args
 		want   graph.Node
 	}{
 		{
 			"node exists",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					1: {},
 				},
@@ -79,7 +93,7 @@ func TestGraph_Node(t *testing.T) {
 		},
 		{
 			"node does not exists",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					1: {},
 				},
@@ -92,15 +106,7 @@ func TestGraph_Node(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &Graph{
-				Engine:  tt.fields.Engine,
-				nodes:   tt.fields.nodes,
-				from:    tt.fields.from,
-				to:      tt.fields.to,
-				self:    tt.fields.self,
-				absent:  tt.fields.absent,
-				nodeIDs: tt.fields.nodeIDs,
-			}
+			g := graphFromFields(tt.fields)
 			got := g.Node(tt.args.id)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Graph.Node() = %v, want %v", got, tt.want)
@@ -110,28 +116,19 @@ func TestGraph_Node(t *testing.T) {
 }
 
 func TestGraph_AddChildren(t *testing.T) {
-	type fields struct {
-		Engine  tensor.Engine
-		nodes   map[int64]*Node
-		from    map[int64][]int64
-		to      map[int64][]int64
-		self    float64
-		absent  float64
-		nodeIDs uid.Set
-	}
 	type args struct {
 		n        *Node
 		children []*Node
 	}
 	tests := []struct {
 		name    string
-		fields  fields
+		fields  testGraphFields
 		args    args
 		wantErr bool
 	}{
 		{
 			"main node is not found",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: {},
 				},
@@ -145,7 +142,7 @@ func TestGraph_AddChildren(t *testing.T) {
 		},
 		{
 			"child node is not found",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: {
 						id: 0,
@@ -166,7 +163,7 @@ func TestGraph_AddChildren(t *testing.T) {
 		},
 		{
 			"child of itself",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: {
 						id: 0,
@@ -187,7 +184,7 @@ func TestGraph_AddChildren(t *testing.T) {
 		},
 		{
 			"all ok",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: {
 						id: 0,
@@ -215,15 +212,7 @@ func TestGraph_AddChildren(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &Graph{
-				Engine:  tt.fields.Engine,
-				nodes:   tt.fields.nodes,
-				from:    tt.fields.from,
-				to:      tt.fields.to,
-				self:    tt.fields.self,
-				absent:  tt.fields.absent,
-				nodeIDs: tt.fields.nodeIDs,
-			}
+			g := graphFromFields(tt.fields)
 			if err := g.AddChildren(tt.args.n, tt.args.children...); (err != nil) != tt.wantErr {
 				t.Errorf("Graph.AddChildren() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -243,28 +232,20 @@ func TestGraph_NameOf(t *testing.T) {
 		Tensor:     sampleDV,
 		beforeLift: sampleTensor,
 	}
-	type fields struct {
-		Engine  tensor.Engine
-		nodes   map[int64]*Node
-		from    map[int64][]int64
-		to      map[int64][]int64
-		self    float64
-		absent  float64
-		nodeIDs uid.Set
-	}
+
 	type args struct {
 		t Tensor
 	}
 	tests := []struct {
 		name    string
-		fields  fields
+		fields  testGraphFields
 		args    args
 		want    string
 		wantErr bool
 	}{
 		{
 			"not found",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: {},
 				},
@@ -277,7 +258,7 @@ func TestGraph_NameOf(t *testing.T) {
 		},
 		{
 			"tensor found",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: {
 						name:   "test",
@@ -293,7 +274,7 @@ func TestGraph_NameOf(t *testing.T) {
 		},
 		{
 			"tensor lifted found",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: sampleNodeLifted,
 				},
@@ -306,7 +287,7 @@ func TestGraph_NameOf(t *testing.T) {
 		},
 		{
 			"node found",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: sampleNode,
 				},
@@ -320,15 +301,7 @@ func TestGraph_NameOf(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &Graph{
-				Engine:  tt.fields.Engine,
-				nodes:   tt.fields.nodes,
-				from:    tt.fields.from,
-				to:      tt.fields.to,
-				self:    tt.fields.self,
-				absent:  tt.fields.absent,
-				nodeIDs: tt.fields.nodeIDs,
-			}
+			g := graphFromFields(tt.fields)
 			got, err := g.NameOf(tt.args.t)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Graph.NameOf() error = %v, wantErr %v", err, tt.wantErr)
@@ -353,28 +326,20 @@ func TestGraph_IDOf(t *testing.T) {
 		Tensor:     sampleDV,
 		beforeLift: sampleTensor,
 	}
-	type fields struct {
-		Engine  tensor.Engine
-		nodes   map[int64]*Node
-		from    map[int64][]int64
-		to      map[int64][]int64
-		self    float64
-		absent  float64
-		nodeIDs uid.Set
-	}
+
 	type args struct {
 		t Tensor
 	}
 	tests := []struct {
 		name    string
-		fields  fields
+		fields  testGraphFields
 		args    args
 		want    NodeID
 		wantErr bool
 	}{
 		{
 			"not found",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: {},
 				},
@@ -387,7 +352,7 @@ func TestGraph_IDOf(t *testing.T) {
 		},
 		{
 			"tensor found",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: {
 						name:   "test",
@@ -403,7 +368,7 @@ func TestGraph_IDOf(t *testing.T) {
 		},
 		{
 			"tensor lifted found",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: sampleNodeLifted,
 				},
@@ -416,7 +381,7 @@ func TestGraph_IDOf(t *testing.T) {
 		},
 		{
 			"node found",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: sampleNode,
 				},
@@ -431,15 +396,7 @@ func TestGraph_IDOf(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &Graph{
-				Engine:  tt.fields.Engine,
-				nodes:   tt.fields.nodes,
-				from:    tt.fields.from,
-				to:      tt.fields.to,
-				self:    tt.fields.self,
-				absent:  tt.fields.absent,
-				nodeIDs: tt.fields.nodeIDs,
-			}
+			g := graphFromFields(tt.fields)
 			got, err := g.IDOf(tt.args.t)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Graph.IDOf() error = %v, wantErr %v", err, tt.wantErr)
@@ -464,27 +421,19 @@ func TestGraph_NodeOf(t *testing.T) {
 		Tensor:     sampleDV,
 		beforeLift: sampleTensor,
 	}
-	type fields struct {
-		Engine  tensor.Engine
-		nodes   map[int64]*Node
-		from    map[int64][]int64
-		to      map[int64][]int64
-		self    float64
-		absent  float64
-		nodeIDs uid.Set
-	}
+
 	type args struct {
 		t Tensor
 	}
 	tests := []struct {
 		name   string
-		fields fields
+		fields testGraphFields
 		args   args
 		want   *Node
 	}{
 		{
 			"not found",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: {},
 				},
@@ -496,7 +445,7 @@ func TestGraph_NodeOf(t *testing.T) {
 		},
 		{
 			"tensor found",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: {
 						name:   "test",
@@ -514,7 +463,7 @@ func TestGraph_NodeOf(t *testing.T) {
 		},
 		{
 			"node found",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: sampleNode,
 				},
@@ -526,7 +475,7 @@ func TestGraph_NodeOf(t *testing.T) {
 		},
 		{
 			"lift",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: sampleNodeLifted,
 				},
@@ -540,15 +489,7 @@ func TestGraph_NodeOf(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &Graph{
-				Engine:  tt.fields.Engine,
-				nodes:   tt.fields.nodes,
-				from:    tt.fields.from,
-				to:      tt.fields.to,
-				self:    tt.fields.self,
-				absent:  tt.fields.absent,
-				nodeIDs: tt.fields.nodeIDs,
-			}
+			g := graphFromFields(tt.fields)
 			if got := g.NodeOf(tt.args.t); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Graph.NodeOf() = %v, want %v", got, tt.want)
 			}
@@ -557,27 +498,18 @@ func TestGraph_NodeOf(t *testing.T) {
 }
 
 func TestGraph_createEdge(t *testing.T) {
-	type fields struct {
-		Engine  tensor.Engine
-		nodes   map[int64]*Node
-		from    map[int64][]int64
-		to      map[int64][]int64
-		self    float64
-		absent  float64
-		nodeIDs uid.Set
-	}
 	type args struct {
 		e graph.WeightedEdge
 	}
 	tests := []struct {
 		name    string
-		fields  fields
+		fields  testGraphFields
 		args    args
 		wantErr bool
 	}{
 		{
 			"self node",
-			fields{
+			testGraphFields{
 				from: make(map[int64][]int64),
 				to:   make(map[int64][]int64),
 			},
@@ -644,7 +576,7 @@ func TestGraph_createEdge(t *testing.T) {
 		*/
 		{
 			"ok, overriding existing links",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: {
 						id: 0,
@@ -670,7 +602,7 @@ func TestGraph_createEdge(t *testing.T) {
 		},
 		{
 			"ok, new fresh link",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: {
 						id: 0,
@@ -698,15 +630,7 @@ func TestGraph_createEdge(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &Graph{
-				Engine:  tt.fields.Engine,
-				nodes:   tt.fields.nodes,
-				from:    tt.fields.from,
-				to:      tt.fields.to,
-				self:    tt.fields.self,
-				absent:  tt.fields.absent,
-				nodeIDs: tt.fields.nodeIDs,
-			}
+			g := graphFromFields(tt.fields)
 			if err := g.createEdge(tt.args.e.From().(*Node), tt.args.e.To().(*Node)); (err != nil) != tt.wantErr {
 				t.Errorf("Graph.setWeightedEdge() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -715,38 +639,22 @@ func TestGraph_createEdge(t *testing.T) {
 }
 
 func TestGraph_Graph(t *testing.T) {
-	type fields struct {
-		Engine  tensor.Engine
-		nodes   map[int64]*Node
-		from    map[int64][]int64
-		to      map[int64][]int64
-		self    float64
-		absent  float64
-		nodeIDs uid.Set
-	}
+
 	tests := []struct {
 		name   string
-		fields fields
+		fields testGraphFields
 		want   *Graph
 	}{
 		{
 			"simple",
-			fields{},
+			testGraphFields{},
 			&Graph{},
 		},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &Graph{
-				Engine:  tt.fields.Engine,
-				nodes:   tt.fields.nodes,
-				from:    tt.fields.from,
-				to:      tt.fields.to,
-				self:    tt.fields.self,
-				absent:  tt.fields.absent,
-				nodeIDs: tt.fields.nodeIDs,
-			}
+			g := graphFromFields(tt.fields)
 			if got := g.Graph(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Graph.Graph() = %v, want %v", got, tt.want)
 			}
@@ -755,32 +663,24 @@ func TestGraph_Graph(t *testing.T) {
 }
 
 func TestGraph_Nodes(t *testing.T) {
-	type fields struct {
-		Engine  tensor.Engine
-		nodes   map[int64]*Node
-		from    map[int64][]int64
-		to      map[int64][]int64
-		self    float64
-		absent  float64
-		nodeIDs uid.Set
-	}
+
 	first := &Node{
 		id:   0,
 		name: "First",
 	}
 	tests := []struct {
 		name   string
-		fields fields
+		fields testGraphFields
 		want   graph.Nodes
 	}{
 		{
 			"empty graph",
-			fields{},
+			testGraphFields{},
 			graph.Empty,
 		},
 		{
 			"one node",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					0: first,
 				},
@@ -790,15 +690,7 @@ func TestGraph_Nodes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &Graph{
-				Engine:  tt.fields.Engine,
-				nodes:   tt.fields.nodes,
-				from:    tt.fields.from,
-				to:      tt.fields.to,
-				self:    tt.fields.self,
-				absent:  tt.fields.absent,
-				nodeIDs: tt.fields.nodeIDs,
-			}
+			g := graphFromFields(tt.fields)
 			if got := g.Nodes(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Graph.Nodes() = %v, want %v", got, tt.want)
 			}
@@ -807,27 +699,18 @@ func TestGraph_Nodes(t *testing.T) {
 }
 
 func TestGraph_From(t *testing.T) {
-	type fields struct {
-		Engine  tensor.Engine
-		nodes   map[int64]*Node
-		from    map[int64][]int64
-		to      map[int64][]int64
-		self    float64
-		absent  float64
-		nodeIDs uid.Set
-	}
 	type args struct {
 		id int64
 	}
 	tests := []struct {
 		name   string
-		fields fields
+		fields testGraphFields
 		args   args
 		want   graph.Nodes
 	}{
 		{
 			"empty graph",
-			fields{},
+			testGraphFields{},
 			args{
 				0,
 			},
@@ -837,15 +720,7 @@ func TestGraph_From(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &Graph{
-				Engine:  tt.fields.Engine,
-				nodes:   tt.fields.nodes,
-				from:    tt.fields.from,
-				to:      tt.fields.to,
-				self:    tt.fields.self,
-				absent:  tt.fields.absent,
-				nodeIDs: tt.fields.nodeIDs,
-			}
+			g := graphFromFields(tt.fields)
 			if got := g.From(tt.args.id); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Graph.From() = %v, want %v", got, tt.want)
 			}
@@ -854,28 +729,19 @@ func TestGraph_From(t *testing.T) {
 }
 
 func TestGraph_HasEdgeBetween(t *testing.T) {
-	type fields struct {
-		Engine  tensor.Engine
-		nodes   map[int64]*Node
-		from    map[int64][]int64
-		to      map[int64][]int64
-		self    float64
-		absent  float64
-		nodeIDs uid.Set
-	}
 	type args struct {
 		xid int64
 		yid int64
 	}
 	tests := []struct {
 		name   string
-		fields fields
+		fields testGraphFields
 		args   args
 		want   bool
 	}{
 		{
 			"link between x and y",
-			fields{
+			testGraphFields{
 				from: map[int64][]int64{
 					0: {1},
 				},
@@ -891,7 +757,7 @@ func TestGraph_HasEdgeBetween(t *testing.T) {
 		},
 		{
 			"link between y and x",
-			fields{
+			testGraphFields{
 				from: map[int64][]int64{
 					0: {1},
 				},
@@ -907,7 +773,7 @@ func TestGraph_HasEdgeBetween(t *testing.T) {
 		},
 		{
 			"no link between y and x",
-			fields{
+			testGraphFields{
 				from: map[int64][]int64{
 					0: {1},
 				},
@@ -925,15 +791,7 @@ func TestGraph_HasEdgeBetween(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &Graph{
-				Engine:  tt.fields.Engine,
-				nodes:   tt.fields.nodes,
-				from:    tt.fields.from,
-				to:      tt.fields.to,
-				self:    tt.fields.self,
-				absent:  tt.fields.absent,
-				nodeIDs: tt.fields.nodeIDs,
-			}
+			g := graphFromFields(tt.fields)
 			if got := g.HasEdgeBetween(tt.args.xid, tt.args.yid); got != tt.want {
 				t.Errorf("Graph.HasEdgeBetween() = %v, want %v", got, tt.want)
 			}
@@ -942,28 +800,19 @@ func TestGraph_HasEdgeBetween(t *testing.T) {
 }
 
 func TestGraph_HasEdgeFromTo(t *testing.T) {
-	type fields struct {
-		Engine  tensor.Engine
-		nodes   map[int64]*Node
-		from    map[int64][]int64
-		to      map[int64][]int64
-		self    float64
-		absent  float64
-		nodeIDs uid.Set
-	}
 	type args struct {
 		uid int64
 		vid int64
 	}
 	tests := []struct {
 		name   string
-		fields fields
+		fields testGraphFields
 		args   args
 		want   bool
 	}{
 		{
 			"link between x and y",
-			fields{
+			testGraphFields{
 				from: map[int64][]int64{
 					0: {1},
 				},
@@ -979,7 +828,7 @@ func TestGraph_HasEdgeFromTo(t *testing.T) {
 		},
 		{
 			"link between y and x",
-			fields{
+			testGraphFields{
 				from: map[int64][]int64{
 					0: {1},
 				},
@@ -995,7 +844,7 @@ func TestGraph_HasEdgeFromTo(t *testing.T) {
 		},
 		{
 			"no link between y and x",
-			fields{
+			testGraphFields{
 				from: map[int64][]int64{
 					// 0: {
 					// 	1: &WeightedEdge{},
@@ -1011,15 +860,7 @@ func TestGraph_HasEdgeFromTo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &Graph{
-				Engine:  tt.fields.Engine,
-				nodes:   tt.fields.nodes,
-				from:    tt.fields.from,
-				to:      tt.fields.to,
-				self:    tt.fields.self,
-				absent:  tt.fields.absent,
-				nodeIDs: tt.fields.nodeIDs,
-			}
+			g := graphFromFields(tt.fields)
 			if got := g.HasEdgeFromTo(tt.args.uid, tt.args.vid); got != tt.want {
 				t.Errorf("Graph.HasEdgeFromTo() = %v, want %v", got, tt.want)
 			}
@@ -1028,27 +869,18 @@ func TestGraph_HasEdgeFromTo(t *testing.T) {
 }
 
 func TestGraph_AddNode(t *testing.T) {
-	type fields struct {
-		Engine  tensor.Engine
-		nodes   map[int64]*Node
-		from    map[int64][]int64
-		to      map[int64][]int64
-		self    float64
-		absent  float64
-		nodeIDs uid.Set
-	}
 	type args struct {
 		n *Node
 	}
 	tests := []struct {
 		name    string
-		fields  fields
+		fields  testGraphFields
 		args    args
 		wantErr bool
 	}{
 		{
 			"invalid node id",
-			fields{},
+			testGraphFields{},
 			args{
 				&Node{
 					id: -1,
@@ -1058,7 +890,7 @@ func TestGraph_AddNode(t *testing.T) {
 		},
 		{
 			"node collision",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					MinNodeID + 1: {},
 				},
@@ -1072,7 +904,7 @@ func TestGraph_AddNode(t *testing.T) {
 		},
 		{
 			"node ok",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					MinNodeID + 1: {},
 				},
@@ -1088,7 +920,7 @@ func TestGraph_AddNode(t *testing.T) {
 		},
 		{
 			"node lifter ok",
-			fields{
+			testGraphFields{
 				nodes: map[int64]*Node{
 					MinNodeID + 1: {},
 				},
@@ -1108,15 +940,7 @@ func TestGraph_AddNode(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &Graph{
-				Engine:  tt.fields.Engine,
-				nodes:   tt.fields.nodes,
-				from:    tt.fields.from,
-				to:      tt.fields.to,
-				self:    tt.fields.self,
-				absent:  tt.fields.absent,
-				nodeIDs: tt.fields.nodeIDs,
-			}
+			g := graphFromFields(tt.fields)
 			if err := g.AddNode(tt.args.n); (err != nil) != tt.wantErr {
 				t.Errorf("Graph.AddNode() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -1135,28 +959,19 @@ func (*dummyLifter) Lift(t Tensor) Tensor {
 }
 
 func TestGraph_Edge(t *testing.T) {
-	type fields struct {
-		Engine  tensor.Engine
-		nodes   map[int64]*Node
-		from    map[int64][]int64
-		to      map[int64][]int64
-		self    float64
-		absent  float64
-		nodeIDs uid.Set
-	}
 	type args struct {
 		uid int64
 		vid int64
 	}
 	tests := []struct {
 		name   string
-		fields fields
+		fields testGraphFields
 		args   args
 		want   graph.Edge
 	}{
 		{
 			"simple",
-			fields{
+			testGraphFields{
 				from: map[int64][]int64{
 					0: {1},
 				},
@@ -1174,7 +989,7 @@ func TestGraph_Edge(t *testing.T) {
 		},
 		{
 			"no link",
-			fields{
+			testGraphFields{
 				from: map[int64][]int64{
 					0: {
 						//1: &WeightedEdge{},
@@ -1190,15 +1005,7 @@ func TestGraph_Edge(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &Graph{
-				Engine:  tt.fields.Engine,
-				nodes:   tt.fields.nodes,
-				from:    tt.fields.from,
-				to:      tt.fields.to,
-				self:    tt.fields.self,
-				absent:  tt.fields.absent,
-				nodeIDs: tt.fields.nodeIDs,
-			}
+			g := graphFromFields(tt.fields)
 			if got := g.Edge(tt.args.uid, tt.args.vid); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Graph.Edge() = %#v, want %#v", got, tt.want)
 			}
@@ -1207,27 +1014,18 @@ func TestGraph_Edge(t *testing.T) {
 }
 
 func TestGraph_To(t *testing.T) {
-	type fields struct {
-		Engine  tensor.Engine
-		nodes   map[int64]*Node
-		from    map[int64][]int64
-		to      map[int64][]int64
-		self    float64
-		absent  float64
-		nodeIDs uid.Set
-	}
 	type args struct {
 		id int64
 	}
 	tests := []struct {
 		name   string
-		fields fields
+		fields testGraphFields
 		args   args
 		want   graph.Nodes
 	}{
 		{
 			"nil graph",
-			fields{
+			testGraphFields{
 				to: map[int64][]int64{},
 			},
 			args{
@@ -1239,15 +1037,7 @@ func TestGraph_To(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &Graph{
-				Engine:  tt.fields.Engine,
-				nodes:   tt.fields.nodes,
-				from:    tt.fields.from,
-				to:      tt.fields.to,
-				self:    tt.fields.self,
-				absent:  tt.fields.absent,
-				nodeIDs: tt.fields.nodeIDs,
-			}
+			g := graphFromFields(tt.fields)
 			if got := g.To(tt.args.id); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Graph.To() = %v, want %v", got, tt.want)
 			}
