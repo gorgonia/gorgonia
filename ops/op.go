@@ -38,7 +38,7 @@ type Op interface {
 	fmt.Stringer
 }
 
-// PreAllocOp represents and Op that has a PreallocDo() method. The PreallocDo method is exactly the same as Do() except it also requres a previously preallocated value.
+// PreallocOp represents and Op that has a PreallocDo() method. The PreallocDo method is exactly the same as Do() except it also requres a previously preallocated value.
 type PreallocOp interface {
 	Op
 
@@ -57,6 +57,11 @@ type AnalyzableOp interface {
 // Operand represents an operand that an Op operates on. In short, it's a gorgonia.Tensor.
 type Operand interface {
 	Shape() shapes.Shape
+}
+
+// Statement represents an Op that is not necessarily pure. It's more akin to a programming statement, and may have side effects.
+type Statement interface {
+	IsStatement()
 }
 
 /*

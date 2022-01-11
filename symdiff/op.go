@@ -13,3 +13,7 @@ type Op interface {
 
 	SymDiff(inputs []*exprgraph.Node, output, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error)
 }
+
+func isStmt(op Op) bool { _, ok := op.(ops.Statement); return ok }
+
+func isInput(op Op) bool { return op == nil }
