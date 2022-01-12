@@ -104,3 +104,12 @@ func NodeIDsFromNodes(ns []*Node) NodeIDs {
 	}
 	return retVal
 }
+
+// NodesFromNodeIDs creates a slice of *Node given a slice of NodeIDs and a *Graph.
+func NodesFromNodeIDs(g *Graph, ns []NodeID) []*Node {
+	retVal := make([]*Node, 0, len(ns))
+	for _, n := range ns {
+		retVal = append(retVal, g.getByID(n.ID()))
+	}
+	return retVal
+}
