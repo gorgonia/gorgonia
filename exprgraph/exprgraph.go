@@ -166,7 +166,7 @@ func (g *Graph) Nodes() graph.Nodes {
 	for id, n := range g.nodes {
 		ordered[id] = n
 	}
-	return NodesFromOrdered(ordered)
+	return IterNodesFromNodes(ordered)
 }
 
 // From returns the list of nodes that can be reached directly from the given ID.
@@ -174,7 +174,7 @@ func (g *Graph) From(id int64) graph.Nodes {
 	if len(g.from[id]) == 0 {
 		return graph.Empty
 	}
-	return NodesFromIDs(g, g.from[id])
+	return IterNodesFromIDs(g, g.from[id])
 }
 
 // HasEdgeBetween returns whether an edge exists between x and y.
@@ -221,7 +221,7 @@ func (g *Graph) To(id int64) graph.Nodes {
 	if len(g.to[id]) == 0 {
 		return graph.Empty
 	}
-	return NodesFromIDs(g, g.to[id])
+	return IterNodesFromIDs(g, g.to[id])
 }
 
 // NewNode returns a new Node with a unique

@@ -39,9 +39,9 @@ func (ns *IterNodes) Nodes() []*Node {
 	return retVal
 }
 
-// NodeIDSlice returns all the remaining nodes in the iterator and advances
+// NodeIDs returns all the remaining nodes in the iterator and advances
 // the iterator. The order of nodes within the returned slice is not specified.
-func (ns *IterNodes) NodeIDSlice() []NodeID {
+func (ns *IterNodes) NodeIDs() NodeIDs {
 	if ns.i < 0 {
 		ns.i = 0
 	}
@@ -53,24 +53,26 @@ func (ns *IterNodes) NodeIDSlice() []NodeID {
 	return retVal
 }
 
-// NodesFromOrdered returns a Nodes initialized with the
+// IterNodesFromNodes returns a *IterNodes initialized with the
 // provided nodes, a map of node IDs to graph.Nodes, and the set
 // of edges, a map of to-node IDs to graph.WeightedEdge, that can be
 // traversed to reach the nodes that the NodesByEdge will iterate
 // over.
-func NodesFromOrdered(ns []*Node) *IterNodes { return &IterNodes{ns: ns, i: -1} }
+func IterNodesFromNodes(ns []*Node) *IterNodes { return &IterNodes{ns: ns, i: -1} }
 
-// NodesFromIDs creates a *Nodes (an iterator) from a list of int64 IDs.
-func NodesFromIDs(g *Graph, ns []int64) *IterNodes {
+// IterNodesFromIDs creates a *Nodes (an iterator) from a list of int64 IDs.
+func IterNodesFromIDs(g *Graph, ns []int64) *IterNodes {
 	nodes := make([]*Node, 0, len(ns))
 	for _, id := range ns {
 		nodes = append(nodes, g.nodes[id])
 	}
-	return NodesFromOrdered(nodes)
+	return IterNodesFromNodes(nodes)
 }
 
-// NodesFromNodeIDs creates a *Nodes (an iterator) from a list of NodeIDs.
-func NodesFromNodeIDs(g *Graph, ns []NodeID) *IterNodes { return NodesFromIDs(g, nodeIDs2IDs(ns)) }
+// IterNodesFromNodeIDs creates a *Nodes (an iterator) from a list of NodeIDs.
+func IterNodesFromNodeIDs(g *Graph, ns []NodeID) *IterNodes {
+	return IterNodesFromIDs(g, nodeIDs2IDs(ns))
+}
 
 // NodeIDs is a set of NodeIDs.
 // It implements sort.Sort as the basis of the set.
