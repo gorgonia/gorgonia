@@ -2,6 +2,7 @@ package exprgraph
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
@@ -21,7 +22,7 @@ const (
 	// Absent is the weight of a missing link in a graph
 	Absent float64 = -20
 	// MinNodeID is the minimun ID of the node accepted in the graph
-	MinNodeID = 1
+	MinNodeID = 0
 )
 
 // Graph is a representation of an expression graph.
@@ -162,10 +163,12 @@ func (g *Graph) Nodes() graph.Nodes {
 	if len(g.nodes) == 0 {
 		return graph.Empty
 	}
-	ordered := make([]*Node, len(g.nodes))
-	for id, n := range g.nodes {
-		ordered[id] = n
+
+	ordered := make([]*Node, 0, len(g.nodes))
+	for _, n := range g.nodes {
+		ordered = append(ordered, n)
 	}
+	sort.Slice(ordered, func(i, j int) bool { return ordered[i].id < ordered[j].id })
 	return IterNodesFromNodes(ordered)
 }
 

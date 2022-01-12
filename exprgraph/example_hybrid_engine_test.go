@@ -112,6 +112,6 @@ func Example_hybridEngine_mixmatch() {
 	// ⎣56  41⎦
 	//
 	// xy+z:
-	// node(5,Random_1×y+z,Random_1×y+z)
+	// node(4,Random_1×y+z,Random_1×y+z)
 
 }

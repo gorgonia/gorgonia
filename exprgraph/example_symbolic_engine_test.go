@@ -47,7 +47,6 @@ func Example_symbolicEngine() {
 	//x×y
 	//xy+z:
 	//x×y+z
-
 }
 
 // Example_symbolicEngineUsingTensorAPI demonstrates how the tensor package's API may be used with a symbolic engine.
@@ -83,8 +82,8 @@ func Example_symbolicEngineUsingTensorAPI() {
 	// ⎣2  1⎦
 	//
 	// xy:
-	// node(3,Random_2×Random_3,Random_2×Random_3)
+	// node(2,Random_2×Random_3,Random_2×Random_3)
 	// xy+z:
-	// node(5,Random_2×Random_3+Random_4,Random_2×Random_3+Random_4)
+	// node(4,Random_2×Random_3+Random_4,Random_2×Random_3+Random_4)
 
 }

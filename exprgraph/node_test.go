@@ -46,7 +46,7 @@ func TestCons(t *testing.T) {
 				tens,
 			},
 			&Node{
-				id:     1,
+				id:     0,
 				Tensor: tens,
 				name:   "test",
 				Op:     nil,

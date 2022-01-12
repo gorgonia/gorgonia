@@ -45,28 +45,26 @@ func TestSort(t *testing.T) {
 			[]*Node{cnode, bnode, anode},
 			false,
 		},
-		/*
 
-			{
-				"simple, but something went wrong with the numbering of nodes",
-				testGraphFields{
-					nodes: map[int64]*Node{
-						5: anode2,
-						4: bnode2,
-						3: cnode2,
-					},
-					from: map[int64][]int64{
-						3: {5, 4},
-					},
-					to: map[int64][]int64{
-						5: {3},
-						4: {3},
-					},
+		{
+			"simple, but something went wrong with the numbering of nodes",
+			testGraphFields{
+				nodes: map[int64]*Node{
+					5: anode2,
+					4: bnode2,
+					3: cnode2,
 				},
-				[]*Node{cnode2, anode2, bnode2},
-				false,
+				from: map[int64][]int64{
+					3: {5, 4},
+				},
+				to: map[int64][]int64{
+					5: {3},
+					4: {3},
+				},
 			},
-		*/
+			[]*Node{cnode2, anode2, bnode2},
+			false,
+		},
 
 		{
 			"two roots, disjoint subgraphs",
