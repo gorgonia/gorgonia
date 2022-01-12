@@ -1071,13 +1071,15 @@ func TestGraph_Roots(t *testing.T) {
 	cnode := &Node{id: 2, name: "c"}
 	dnode := &Node{id: 3, name: "d"}
 	tests := []struct {
-		name   string
-		fields testGraphFields
-		want   []*Node
+		name    string
+		fields  testGraphFields
+		want    []*Node
+		altWant []*Node // alternative results due to random ordering when iterating thru map
 	}{
 		{
 			"nil graph",
 			testGraphFields{},
+			nil,
 			nil,
 		},
 		{
@@ -1096,6 +1098,7 @@ func TestGraph_Roots(t *testing.T) {
 					1: {2},
 				},
 			},
+			[]*Node{cnode},
 			[]*Node{cnode},
 		},
 		{
@@ -1116,13 +1119,14 @@ func TestGraph_Roots(t *testing.T) {
 				},
 			},
 			[]*Node{cnode, dnode},
+			[]*Node{dnode, cnode},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := graphFromFields(tt.fields)
-			if got := g.Roots(); !reflect.DeepEqual(got, tt.want) {
+			if got := g.Roots(); !(reflect.DeepEqual(got, tt.want) || reflect.DeepEqual(got, tt.altWant)) {
 				t.Errorf("Graph.Roots = %v. Want %v", got, tt.want)
 			}
 		})
