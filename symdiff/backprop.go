@@ -56,7 +56,7 @@ func backwardDiffAnalysis(g *exprgraph.Graph, wrt, sorted []*exprgraph.Node) (re
 			case isStmt(op):
 				// op is statement
 				continue
-			case isInput(op):
+			case isInput(n.Op):
 				// op == nil ⇒ n is input
 				continue
 			case len(children) == 0:
@@ -95,6 +95,40 @@ func backwardDiffAnalysis(g *exprgraph.Graph, wrt, sorted []*exprgraph.Node) (re
 // 	3. Backwards analysis, where a list of nodes affected by differentiating the output are added to `affectedByOutput`
 //	4. If there is a difference in both sets, then it's an error
 // 	5. Walk the graph from output towards input. On visit of each node, perform symbolic differentiation.
+//
+// Here's a visual example of what is going on. Given an expression like:
+//	(x × w) + b
+// The graph looks like this:
+// 	        x×w+b
+// 	           │
+// 	      ┌────┴────┐
+// 	      │         │
+// 	      │         │
+// 	      ▼         ▼
+// 	     x×w        b
+// 	      │
+// 	┌─────┴────┐
+// 	│          │
+// 	▼          ▼
+// 	x          w
+// The sorted nodes will be as follows:
+// 	[x×w+b x×w b w x]
+// Here `x×w+b` is an output. So there will be an associated `gradOutput`. The `deriv` map will
+// look like the following at the start:
+// 	{x×w+b: grad_x×w+b}
+// Now we traverse the graph using the topologically sorted slice, which yields the following:
+// 	| Step | Visited |                   Action                    |                  Result                   |                            `deriv`                             |
+// 	|------|---------|---------------------------------------------|-------------------------------------------|----------------------------------------------------------------|
+// 	|    0 | x×w+b   | Call +.SymDiff({x×w, b}, x×w+b, grad_x×w+b) | Get {grad_x×w, grad_b} then map it.       | {x×w+b:grad_x×w+b, x×w:grad_x×w, b:grad_b}                     |
+// 	|    1 | x×w     | Call ×.SymDiff({x, w}, x×w, grad_x×w)       | Get {grad_x, grad_w} then map it.         | {x×w+b:grad_x×w+b, x×w:grad_x×w, b:grad_b, w:grad_w, x:grad_x} |
+// 	|    2 | b       | No Action.                                  | The gradient is already mapped in Step 0. |                                                                |
+// 	|    3 | w       | No Action.                                  | The gradient is already mapped in Step 1. |                                                                |
+// 	|    4 | x       | No Action.                                  | The gradient is already mapped in Step 1. |                                                                |
+//
+// This is the simple case. For more complicated graphs where multiple gradients need to accumulate (e.g `w` in the following expression)
+// 	x×w²
+// The multiple gradients of `w` would need to be summed up beforehand. This is done through mapping in `nodeGrads`, which tracks the
+// input gradients
 func Backporopagate(g *exprgraph.Graph, outputs, gradOutputs, wrt []*exprgraph.Node) (deriv map[exprgraph.NodeID]exprgraph.NodeID, derivOf map[exprgraph.NodeID]exprgraph.NodeIDs, err error) {
 	// input check
 	if len(outputs) != len(gradOutputs) {
@@ -152,32 +186,75 @@ func Backporopagate(g *exprgraph.Graph, outputs, gradOutputs, wrt []*exprgraph.N
 	actives := inter(affectsOutput, affectedByOutput)
 
 	for _, n := range sorted {
-		if in(actives, n.NodeID()) {
+		op, isSDOp := n.Op.(Op)
+		nid := n.NodeID()
+
+		if in(actives, nid) {
 			// skip, because it's already in the list of actives.
 			continue
 		}
-		if d, ok := deriv[n.NodeID()]; ok {
+		if d, ok := deriv[nid]; ok {
 			// skip, because it was previously differentiated
-			nodeGrads[n.NodeID()] = append(nodeGrads[n.NodeID()], d)
+			nodeGrads[nid] = append(nodeGrads[nid], d)
 			continue
 		}
 
 		// check if there are any grads coming into this node
-		grads := nodeGrads[n.NodeID()]
+		grads := nodeGrads[nid]
 		switch len(grads) {
 		case 0:
-			err := Error{
-				single:    n.NodeID(),
+			err = Error{
+				g:         g,
+				single:    nid,
 				nodeGrads: nodeGrads,
 				err:       errors.New("No gradients found for node"),
 			}
 			return nil, nil, err
 		case 1:
-			// TODO
+			d := nodeGrads[nid][0]
+			deriv[nid] = d
+			derivOf[d] = append(derivOf[d], nid)
 
 		default:
 			// once we've reached a node, we've already backpropagated from its dependents, so we sum up the gradients
 			// TODO
+		}
+
+		gradNode := g.Get(nodeGrads[nid][0])
+
+		// do the symbolic differentiation
+		if isInput(n.Op) {
+			continue
+		}
+
+		if !isSDOp {
+			err = Error{
+				g:      g,
+				single: nid,
+				err:    errors.Errorf("%v Not a symdiff.Op", op),
+			}
+			return nil, nil, err
+		}
+
+		children := exprgraph.NodesFromNodeIDs(g, g.ChildrenOf(n))
+		childrenGrads, err := op.SymDiff(children, n, gradNode)
+		if err != nil {
+			return nil, nil, Error{
+				single:    nid,
+				grad:      gradNode.NodeID(),
+				nodeGrads: nodeGrads,
+				err:       errors.Wrap(err, ".SymDiff() failed"),
+			}
+		}
+
+		diffs := op.DiffWRT(len(children))
+		for i, child := range children {
+			cid := child.NodeID()
+			differentiable := diffs[i]
+			childGrad := childrenGrads[i]
+			if differentiable {
+				nodeGrads[cid] = append(nodeGrads[cid], childGrad.NodeID())
+			}
 		}
 
 	}

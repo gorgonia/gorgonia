@@ -16,4 +16,4 @@ type Op interface {
 
 func isStmt(op Op) bool { _, ok := op.(ops.Statement); return ok }
 
-func isInput(op Op) bool { return op == nil }
+func isInput(op ops.Op) bool { return op == nil }
