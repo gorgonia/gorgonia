@@ -12,7 +12,10 @@ import (
 	"gorgonia.org/tensor"
 )
 
-var _ tensor.Adder = &RxEngine{}
+var (
+	_ tensor.Adder    = &RxEngine{}
+	_ tensor.MatMuler = &RxEngine{}
+)
 
 type obs struct {
 	n      *exprgraph.Node
@@ -113,11 +116,8 @@ func (e *RxEngine) loop() {
 // If the parent node(s) themselves have parent node(s), those parent nodes will
 // be placed into the queue.
 func (e *RxEngine) flowUp(ctx context.Context, n *exprgraph.Node) int {
-	var parents []*exprgraph.Node
-	ns, ok := e.g.To(n.ID()).(*exprgraph.IterNodes)
-	if ok {
-		parents = ns.Nodes()
-	}
+	parents := e.g.ParentsOfAsNodes(n)
+
 	var nonRootParents int
 	for _, parent := range parents {
 		if err := e.flowDown(ctx, parent); err != nil {
@@ -136,17 +136,11 @@ func (e *RxEngine) flowUp(ctx context.Context, n *exprgraph.Node) int {
 // flowDown recomputes the value of `n`, and recomputes any of the children if need be.
 // The criteria for recomputation is in the .Waiting() method of a `*Node`.
 func (e *RxEngine) flowDown(ctx context.Context, n *exprgraph.Node) error {
-	children := e.g.From(n.ID())
-	if children.Len() == 0 {
-		// done
-		return nil
-	}
-	children.Reset()
-	childNodes := children.(*exprgraph.IterNodes).Nodes()
+	children := e.g.ChildrenOfAsNodes(n)
 
 	// Depth first search.
 	// TODO: maybe traverse and process the graph concurrently?
-	for _, c := range childNodes {
+	for _, c := range children {
 		if c.Waiting() > 0 {
 			// then it needs to be reprocessed
 			ctx2, cancel2 := context.WithCancel(ctx)
@@ -156,8 +150,8 @@ func (e *RxEngine) flowDown(ctx context.Context, n *exprgraph.Node) error {
 		}
 	}
 
-	childValues := make([]values.Value, 0, len(childNodes))
-	for _, n := range childNodes {
+	childValues := make([]values.Value, 0, len(children))
+	for _, n := range children {
 		childValues = append(childValues, n.Value())
 	}
 

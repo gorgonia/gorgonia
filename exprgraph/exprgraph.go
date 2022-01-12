@@ -340,8 +340,22 @@ func (g *Graph) GroupsOf(t Tensor) encoding.Groups {
 	return g.groups[n.id]
 }
 
-// ChildrenOf finds the children of a given tensor. The result is returned as a NodeIDs.
-func (g *Graph) ChildrenOf(t Nodelike) NodeIDs {
+/* UTILITY API METHODS FOR PERFORMANCE */
+/* These methods are not strictly necessary.
+
+   Consider `.ChildrenOf()`.
+   You can use the original API to find get a `[]NodeID`:
+   	iterChildren := g.From(n.ID())
+        childNodes := iterChildren.NodeIDs()
+
+   Here you will note that `g.From` allocates a *IterNodes (which allocates a []*Node).
+   Then `.NodeIDs` will allocate a `[]NodeID`.
+   If we're only ever going to use a slice of NodeID, then the intermediary allocation
+   of `[]*Node` (in the *IterNodes) is a wasted allocation.
+*/
+
+// edgesOf gets an edge of a Nodelike. You must provide a map of edges (usually g.to or g.from).
+func (g *Graph) edgesOf(t Nodelike, whichEdges map[int64][]int64) []int64 {
 	if t == nil {
 		return nil
 	}
@@ -351,7 +365,13 @@ func (g *Graph) ChildrenOf(t Nodelike) NodeIDs {
 		return nil
 	}
 
-	children := g.from[n.id]
+	return whichEdges[n.id]
+}
+
+// ChildrenOf finds the children of a given tensor. The result is returned as a NodeIDs.
+// The returned value is a copy, so it can be safely mutated upon.
+func (g *Graph) ChildrenOf(t Nodelike) NodeIDs {
+	children := g.edgesOf(t, g.from)
 	if len(children) == 0 {
 		return nil
 	}
@@ -363,25 +383,43 @@ func (g *Graph) ChildrenOf(t Nodelike) NodeIDs {
 	return retVal
 }
 
+// ChildrenOfAsNodes finds the children of a given tensor. The result is returned as a NodeIDs.
+func (g *Graph) ChildrenOfAsNodes(t Nodelike) []*Node {
+	children := g.edgesOf(t, g.from)
+	if len(children) == 0 {
+		return nil
+	}
+
+	retVal := make([]*Node, 0, len(children))
+	for _, child := range children {
+		retVal = append(retVal, g.getByID(child))
+	}
+	return retVal
+}
+
 // ParentsOf finds the parents of a given tensor. The result is returned as a NodeIDs.
 func (g *Graph) ParentsOf(t Nodelike) NodeIDs {
-	if t == nil {
+	parents := g.edgesOf(t, g.to)
+	if len(parents) == 0 {
 		return nil
 	}
-
-	n := g.getByID(t.ID())
-	if n == nil {
-		return nil
+	retVal := make(NodeIDs, 0, len(parents))
+	for _, p := range parents {
+		retVal = append(retVal, NodeID(p))
 	}
+	return retVal
+}
 
-	parents := g.to[n.id]
+// ParentsOfAsNodes returns the parents of a given tensor as a []*Node.
+func (g *Graph) ParentsOfAsNodes(t Nodelike) []*Node {
+	parents := g.edgesOf(t, g.to)
 	if len(parents) == 0 {
 		return nil
 	}
 
-	retVal := make(NodeIDs, 0, len(parents))
+	retVal := make([]*Node, 0, len(parents))
 	for _, p := range parents {
-		retVal = append(retVal, NodeID(p))
+		retVal = append(retVal, g.getByID(p))
 	}
 	return retVal
 }
