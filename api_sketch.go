@@ -5,6 +5,7 @@ import (
 	"gorgonia.org/gorgonia/execution/engines"
 	"gorgonia.org/gorgonia/exprgraph"
 	gerrors "gorgonia.org/gorgonia/internal/errors"
+	gtu "gorgonia.org/gorgonia/internal/tensorutils"
 	"gorgonia.org/gorgonia/ops"
 	stdops "gorgonia.org/gorgonia/ops/std"
 	"gorgonia.org/tensor"
@@ -15,8 +16,55 @@ func MatMul(a, b Tensor) (retVal Tensor, err error) {
 	if !ok {
 		hybrid, ok = b.Engine().(engines.Hybrid)
 	}
+	ctx := gtu.CtxFromEngines(a.Engine(), b.Engine())
 
-	var op ops.Op = stdops.MatMul{}
+	op := stdops.MatMul{}
+	if ok {
+		// do symbolic stuff
+		g := hybrid.Graph()
+		if retVal, err = binopSymbolic(op, g, a, b); err != nil {
+			return nil, errors.Wrapf(err, gerrors.SymbolicOpFail, "MatMul")
+		}
+	}
+	// do the values stuff
+	at := exprgraph.T2T(a)
+	bt := exprgraph.T2T(b)
+	var ct tensor.Tensor
+
+	switch {
+	case at != nil && bt != nil && retVal != nil:
+		// both a and b  are values, so we can "materialize" c
+		ct = retVal.(*exprgraph.Node).Value() // Value will "lift" *header into a proper tensor.Dense
+	case at != nil && bt != nil && retVal == nil:
+		// we'd have to create one ourselves
+		shp := tensor.Shape{a.Shape()[0], b.Shape()[1]}
+		dt := a.Dtype()
+		ct = tensor.New(tensor.WithEngine(a.Engine()), tensor.WithShape(shp...), tensor.Of(dt))
+	default:
+		// one of a or b is not a value tensor
+		return retVal, nil
+	}
+
+	if ct, err = op.PreallocDo(ctx, ct, at, bt); err != nil {
+		return nil, err
+	}
+	if retVal == nil {
+		retVal = ct // return not the Node, but the value.
+	}
+
+	// TODO:
+	// queuer (backwards engine)
+	return
+}
+
+func Add(a, b Tensor) (retVal Tensor, err error) {
+	hybrid, ok := a.Engine().(engines.Hybrid)
+	if !ok {
+		hybrid, ok = b.Engine().(engines.Hybrid)
+	}
+	ctx := gtu.CtxFromEngines(a.Engine(), b.Engine())
+
+	op := stdops.Add(a, b).(ops.PreallocOp)
 	if ok {
 		// do symbolic stuff
 		g := hybrid.Graph()
@@ -25,70 +73,40 @@ func MatMul(a, b Tensor) (retVal Tensor, err error) {
 		}
 	}
 
-	// do actual thing
-	mm, ok := a.Engine().(tensor.MatMuler)
-	if !ok {
-		mm, ok = b.Engine().(tensor.MatMuler)
-	}
-	if ok {
-		mm.MatMul(nil, exprgraph.T2T(a), exprgraph.T2T(b), nil)
-	}
-	panic("Unreachable")
-}
-
-/*
-
-func Add(a, b Tensor) (Tensor, error) {
-	eng := a.Engine().(GraphEngine)
-	if eng == nil {
-		eng = b.Engine().(GraphEngine)
-	}
-
-	g := eng.Graph()
-	aname, err := g.NameOf(a)
-	if err != nil {
-		return nil, err
-	}
-	bname, err := g.NameOf(b)
-	if err != nil {
-		return nil, err
-	}
-	cname := aname + "+" + bname
-
-	switch e := eng.(type) {
-	case *exprgraph.Graph:
-		aNode := g.NodeOf(a)
-		if aNode == nil {
-			return nil, exprgraph.ErrNotFoundInGraph
+	// check if engine supports Add. If not, return
+	if _, ok := a.Engine().(tensor.Adder); !ok {
+		if _, ok := b.Engine().(tensor.Adder); !ok {
+			return
 		}
-		bNode := g.NodeOf(b)
-		if bNode == nil {
-			return nil, exprgraph.ErrNotFoundInGraph
-		}
-		// TODO: check shapes obvs
+	}
+
+	// do the values stuff
+	at := exprgraph.T2T(a)
+	bt := exprgraph.T2T(b)
+	var ct tensor.Tensor
+	switch {
+	case at != nil && bt != nil && retVal != nil:
+		// both a and b  are values, so we can "materialize" c
+		ct = retVal.(*exprgraph.Node).Value() // Value will "lift" *header into a proper tensor.Dense
+	case at != nil && bt != nil && retVal == nil:
+		// we'd have to create one ourselves
 		shp := a.Shape().Clone()
 		dt := a.Dtype()
-		retVal := exprgraph.NewSymbolic(g, e, dt, shp)
-		c, err := exprgraph.Cons(e, aname+"+"+bname, exprgraph.T2T(retVal))
-		if err != nil {
-			return nil, err
-		}
-		err = e.AddChildren(c, aNode, bNode)
-		if err != nil {
-			return nil, err
-		}
+		ct = tensor.New(tensor.WithEngine(a.Engine()), tensor.WithShape(shp...), tensor.Of(dt))
+	default:
+		// one of a or b is not a value tensor
 		return retVal, nil
-	case tensor.Adder:
-		at := exprgraph.T2T(a)
-		bt := exprgraph.T2T(b)
-		// note this brief example is specific to the examples.
-		// More switch cases are needed to figure out leftScalar vs rightScalar
-		ct, err := e.AddScalar(at, bt, true)
-		if err != nil {
-			return nil, err
-		}
-		return exprgraph.Cons(g, cname, ct)
 	}
-	return nil, errors.New("NotImplemented")
+
+	if ct, err = op.PreallocDo(ctx, ct, at, bt); err != nil {
+		return nil, err
+	}
+	if retVal == nil {
+		retVal = ct // return not the Node, but the value.
+	}
+
+	// TODO:
+	// queuer (backwards engine)
+
+	return
 }
-*/
