@@ -141,6 +141,11 @@ func TestNode_Name(t *testing.T) {
 			},
 			"test",
 		},
+		{
+			"nil",
+			fields{},
+			"<nil>",
+		},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
@@ -150,6 +155,10 @@ func TestNode_Name(t *testing.T) {
 				id:     tt.fields.id,
 				name:   tt.fields.name,
 				Op:     tt.fields.Op,
+			}
+			// special case:
+			if tt.name == "nil" {
+				n = nil
 			}
 			if got := n.Name(); got != tt.want {
 				t.Errorf("Node.Name() = %v, want %v", got, tt.want)

@@ -46,6 +46,32 @@ func graphFromFields(fields testGraphFields) *Graph {
 	return g
 }
 
+// simpleTestGraph returns the partial graph representation
+// of the expression
+// 	c = a + b
+// "partial" because the `Op` in the node is nil.
+func simpleTestGraph() (f testGraphFields, a, b, c *Node) {
+	a = &Node{id: 0, name: "a"}
+	b = &Node{id: 1, name: "b"}
+	c = &Node{id: 2, name: "c"}
+
+	return testGraphFields{
+		nodes: map[int64]*Node{
+			0: a,
+			1: b,
+			2: c,
+		},
+		from: map[int64][]int64{
+			2: {0, 1},
+		},
+		to: map[int64][]int64{
+			0: {2},
+			1: {2},
+		},
+	}, a, b, c
+
+}
+
 func TestNewGraph(t *testing.T) {
 	type args struct {
 		e tensor.Engine
@@ -255,6 +281,13 @@ func TestGraph_NameOf(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
+		{
+			"nil",
+			testGraphFields{},
+			args{t: nil},
+			"",
+			true,
+		},
 		{
 			"not found",
 			testGraphFields{
@@ -1036,6 +1069,7 @@ func TestGraph_Edge(t *testing.T) {
 }
 
 func TestGraph_To(t *testing.T) {
+	simple, a, b, c := simpleTestGraph()
 	type args struct {
 		id int64
 	}
@@ -1053,6 +1087,24 @@ func TestGraph_To(t *testing.T) {
 			args{0},
 			graph.Empty,
 		},
+		{
+			"simple, to a",
+			simple,
+			args{a.ID()},
+			&IterNodes{ns: []*Node{c}, i: -1},
+		},
+		{
+			"simple, to b",
+			simple,
+			args{b.ID()},
+			&IterNodes{ns: []*Node{c}, i: -1},
+		},
+		{
+			"simple, to c",
+			simple,
+			args{c.ID()},
+			graph.Empty,
+		},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
@@ -1066,10 +1118,9 @@ func TestGraph_To(t *testing.T) {
 }
 
 func TestGraph_Roots(t *testing.T) {
-	anode := &Node{id: 0, name: "a"}
-	bnode := &Node{id: 1, name: "b"}
-	cnode := &Node{id: 2, name: "c"}
 	dnode := &Node{id: 3, name: "d"}
+	simple, anode, bnode, cnode := simpleTestGraph()
+
 	tests := []struct {
 		name    string
 		fields  testGraphFields
@@ -1084,20 +1135,7 @@ func TestGraph_Roots(t *testing.T) {
 		},
 		{
 			"simple",
-			testGraphFields{
-				nodes: map[int64]*Node{
-					0: anode,
-					1: bnode,
-					2: cnode,
-				},
-				from: map[int64][]int64{
-					2: {0, 1},
-				},
-				to: map[int64][]int64{
-					0: {2},
-					1: {2},
-				},
-			},
+			simple,
 			[]*Node{cnode},
 			[]*Node{cnode},
 		},
@@ -1135,30 +1173,7 @@ func TestGraph_Roots(t *testing.T) {
 }
 
 func TestGraph_ChildrenOf(t *testing.T) {
-	anode := &Node{id: 0, name: "a"}
-	bnode := &Node{id: 1, name: "b"}
-	cnode := &Node{id: 2, name: "c"}
-
-	// simple returns the partial graph representation
-	// of the expression
-	// 	c = a + b
-	// "partial" because the `Op` in the node is nil.
-	simple := func() testGraphFields {
-		return testGraphFields{
-			nodes: map[int64]*Node{
-				0: anode,
-				1: bnode,
-				2: cnode,
-			},
-			from: map[int64][]int64{
-				2: {0, 1},
-			},
-			to: map[int64][]int64{
-				0: {2},
-				1: {2},
-			},
-		}
-	}
+	simple, anode, bnode, cnode := simpleTestGraph()
 
 	type args struct {
 		node Nodelike
@@ -1193,20 +1208,26 @@ func TestGraph_ChildrenOf(t *testing.T) {
 		},
 		{
 			"c = a + b, want: c (as NodeID)",
-			simple(),
+			simple,
 			args{NodeID(2)},
 			NodeIDs{0, 1},
 		},
 		{
 			"c = a + b, want: c (as *Node)",
-			simple(),
+			simple,
 			args{cnode},
 			NodeIDs{0, 1},
 		},
 		{
 			"c = a + b, want: a",
-			simple(),
+			simple,
 			args{anode},
+			nil,
+		},
+		{
+			"c = a + b, want: b",
+			simple,
+			args{bnode},
 			nil,
 		},
 	}
@@ -1222,31 +1243,7 @@ func TestGraph_ChildrenOf(t *testing.T) {
 }
 
 func TestGraph_ParentsOf(t *testing.T) {
-	anode := &Node{id: 0, name: "a"}
-	bnode := &Node{id: 1, name: "b"}
-	cnode := &Node{id: 2, name: "c"}
-
-	// simple returns the partial graph representation
-	// of the expression
-	// 	c = a + b
-	// "partial" because the `Op` in the node is nil.
-	simple := func() testGraphFields {
-		return testGraphFields{
-			nodes: map[int64]*Node{
-				0: anode,
-				1: bnode,
-				2: cnode,
-			},
-			from: map[int64][]int64{
-				2: {0, 1},
-			},
-			to: map[int64][]int64{
-				0: {2},
-				1: {2},
-			},
-		}
-	}
-
+	simple, anode, bnode, cnode := simpleTestGraph()
 	type args struct {
 		node Nodelike
 	}
@@ -1280,20 +1277,20 @@ func TestGraph_ParentsOf(t *testing.T) {
 		},
 		{
 			"c = a + b, want: a (as NodeID)",
-			simple(),
-			args{NodeID(0)},
+			simple,
+			args{anode.NodeID()},
 			NodeIDs{2},
 		},
 		{
 			"c = a + b, want: b (as *Node)",
-			simple(),
+			simple,
 			args{bnode},
 			NodeIDs{2},
 		},
 
 		{
 			"c = a + b, want: c (as *Node)",
-			simple(),
+			simple,
 			args{cnode},
 			nil,
 		},
@@ -1303,6 +1300,70 @@ func TestGraph_ParentsOf(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := graphFromFields(tt.fields)
 			if got := g.ParentsOf(tt.args.node); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Graph.ParentsOf = %v. Want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGraph_ParentsOfAsNodes(t *testing.T) {
+	simple, anode, bnode, cnode := simpleTestGraph()
+	type args struct {
+		node Nodelike
+	}
+
+	tests := []struct {
+		name   string
+		fields testGraphFields
+		args   args
+		want   []*Node
+	}{
+		{
+			"nil graph, want: nodeID(100)",
+			testGraphFields{
+				from: map[int64][]int64{},
+				to:   map[int64][]int64{},
+			},
+			args{NodeID(100)},
+			nil,
+		},
+		{
+			"nil graph, want: nil",
+			testGraphFields{},
+			args{nil},
+			nil,
+		},
+		{
+			"nil graph, want: (*Node)(nil)",
+			testGraphFields{},
+			args{(*Node)(nil)},
+			nil,
+		},
+		{
+			"c = a + b, want: a (as NodeID)",
+			simple,
+			args{anode.NodeID()},
+			[]*Node{cnode},
+		},
+		{
+			"c = a + b, want: b (as *Node)",
+			simple,
+			args{bnode},
+			[]*Node{cnode},
+		},
+
+		{
+			"c = a + b, want: c (as *Node)",
+			simple,
+			args{cnode},
+			nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := graphFromFields(tt.fields)
+			if got := g.ParentsOfAsNodes(tt.args.node); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Graph.ParentsOf = %v. Want %v", got, tt.want)
 			}
 		})
