@@ -22,10 +22,10 @@ func Add(a, b datatypes.Tensor) (retVal datatypes.Tensor, err error) {
 
 	op := stdops.Add(a, b).(ops.PreallocOp)
 	if ok {
-		// do symbolic stuff
+		// do symbolic stuff if there is an engine that supports symbolic things
 		g := hybrid.Graph()
 		if retVal, err = binopSymbolic(op, g, a, b); err != nil {
-			return nil, errors.Wrapf(err, gerrors.SymbolicOpFail, "MatMul")
+			return nil, errors.Wrapf(err, gerrors.SymbolicOpFail, "Add")
 		}
 	}
 
