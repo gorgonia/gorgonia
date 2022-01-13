@@ -580,7 +580,7 @@ func Test{{.Name | title}}(t *testing.T){
 `
 
 const doDiffTmplRaw = `{{ if .IsDiff }}
-// DoDiff is the method that allows automatic differentiation to occur.
+// DoDiff is the method that allows automatic differentiation of` + " `{{ .Name }}` " + `g.
 func (op {{ .Name }}Op) DoDiff(ctx context.Context, inputs []datatypes.Tensor, output datatypes.Tensor) error {
 	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
 	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
