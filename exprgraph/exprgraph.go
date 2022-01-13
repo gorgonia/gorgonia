@@ -193,9 +193,7 @@ func (g *Graph) HasEdgeBetween(xid, yid int64) bool {
 }
 
 // Edge returns an edge object, if an edge exists. Nil otherwise.
-func (g *Graph) Edge(uid, vid int64) graph.Edge {
-	return g.WeightedEdge(uid, vid)
-}
+func (g *Graph) Edge(uid, vid int64) graph.Edge { return g.WeightedEdge(uid, vid) }
 
 // WeightedEdge returns the weighted edge from u to v if such an edge exists and nil otherwise.
 // The node v must be directly reachable from u as defined by the From method.
@@ -215,9 +213,7 @@ func (g *Graph) WeightedEdge(uid, vid int64) graph.WeightedEdge {
 }
 
 // HasEdgeFromTo returns whether a directed edge between x and y.
-func (g *Graph) HasEdgeFromTo(uid, vid int64) bool {
-	return in(g.from[uid], vid)
-}
+func (g *Graph) HasEdgeFromTo(uid, vid int64) bool { return in(g.from[uid], vid) }
 
 // To returns all the nodes that can reach the given id.
 func (g *Graph) To(id int64) graph.Nodes {
@@ -227,9 +223,9 @@ func (g *Graph) To(id int64) graph.Nodes {
 	return IterNodesFromIDs(g, g.to[id])
 }
 
-// NewNode returns a new Node with a unique
+// newNode creates a new Node with a unique
 // arbitrary ID and default values.
-func (g *Graph) NewNode() *Node {
+func (g *Graph) newNode() *Node {
 	if len(g.nodes) == 0 {
 		return &Node{
 			id: MinNodeID,

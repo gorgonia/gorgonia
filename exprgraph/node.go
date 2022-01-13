@@ -70,7 +70,7 @@ func Cons(g *Graph, name string, t tensor.Tensor) (*Node, error) {
 func cons(g *Graph, name string, t Tensor) (*Node, error) {
 	nm := g.NodeOf(t)
 	if nm == nil {
-		nm = g.NewNode()
+		nm = g.newNode()
 		nm.Tensor = t
 		nm.name = name
 		err := g.AddNode(nm)
