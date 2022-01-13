@@ -7,7 +7,15 @@ import (
 	"testing/quick"
 
 	"gonum.org/v1/gonum/graph"
+	"gorgonia.org/dtype"
+	"gorgonia.org/shapes"
+	"gorgonia.org/tensor"
 )
+
+type testIterNodesFields struct {
+	ns []*Node
+	i  int
+}
 
 func (n *IterNodes) Generate(r *rand.Rand, size int) reflect.Value {
 	ns := make([]*Node, size)
@@ -59,18 +67,15 @@ func TestNodes_NodeSlice(t *testing.T) {
 	n0 := &Node{id: 0}
 	n1 := &Node{id: 1}
 	n2 := &Node{id: 2}
-	type fields struct {
-		ns []*Node
-		i  int
-	}
+
 	tests := []struct {
 		name   string
-		fields fields
+		fields testIterNodesFields
 		want   []*Node
 	}{
 		{
 			"nil length Nodes",
-			fields{
+			testIterNodesFields{
 				ns: nil,
 			},
 			nil,
@@ -78,7 +83,7 @@ func TestNodes_NodeSlice(t *testing.T) {
 
 		{
 			"all Nodes",
-			fields{
+			testIterNodesFields{
 				ns: []*Node{n0, n1, n2},
 				i:  -1,
 			},
@@ -86,7 +91,7 @@ func TestNodes_NodeSlice(t *testing.T) {
 		},
 		{
 			"all Nodes, used iterator",
-			fields{
+			testIterNodesFields{
 				ns: []*Node{n0, n1, n2},
 				i:  0,
 			},
@@ -114,10 +119,7 @@ func TestNodes_NodeSlice(t *testing.T) {
 func TestNodes_Reset(t *testing.T) {
 	f := func(n *IterNodes) bool {
 		n.Reset()
-		if n.i != -1 {
-			return false
-		}
-		return true
+		return n.i == -1
 	}
 	if err := quick.Check(f, nil); err != nil {
 		t.Error(err)
@@ -125,18 +127,14 @@ func TestNodes_Reset(t *testing.T) {
 }
 
 func TestNodes_Next(t *testing.T) {
-	type fields struct {
-		ns []*Node
-		i  int
-	}
 	tests := []struct {
 		name   string
-		fields fields
+		fields testIterNodesFields
 		want   bool
 	}{
 		{
 			"nil nodesbyedge",
-			fields{
+			testIterNodesFields{
 				ns: nil,
 				i:  -1,
 			},
@@ -144,7 +142,7 @@ func TestNodes_Next(t *testing.T) {
 		},
 		{
 			"exhausted iterator",
-			fields{
+			testIterNodesFields{
 				ns: make([]*Node, 2),
 				i:  2,
 			},
@@ -152,7 +150,7 @@ func TestNodes_Next(t *testing.T) {
 		},
 		{
 			"usual use",
-			fields{
+			testIterNodesFields{
 				ns: make([]*Node, 2),
 				i:  -1,
 			},
@@ -175,18 +173,14 @@ func TestNodes_Next(t *testing.T) {
 func TestNodes_Node(t *testing.T) {
 	n0 := &Node{id: 0, name: "foo"}
 	n1 := &Node{id: 1, name: "bar"}
-	type fields struct {
-		ns []*Node
-		i  int
-	}
 	tests := []struct {
 		name   string
-		fields fields
+		fields testIterNodesFields
 		want   graph.Node
 	}{
 		{
 			"nil ns",
-			fields{
+			testIterNodesFields{
 				ns: nil,
 				i:  -1,
 			},
@@ -195,7 +189,7 @@ func TestNodes_Node(t *testing.T) {
 
 		{
 			"usual",
-			fields{
+			testIterNodesFields{
 				ns: []*Node{n0, n1},
 				i:  0, // this must be advanced by .Next(), but in this test case it's hard coded
 			},
@@ -212,5 +206,21 @@ func TestNodes_Node(t *testing.T) {
 				t.Errorf("Nodes.Node() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestTensorsFromNodeIDs(t *testing.T) {
+	g := NewGraph(nil)
+	a := NewNode(g, "a", tensor.WithShape(2), tensor.Of(dtype.Float64))
+	b, err := NewSymbolic(g, "b", dtype.Float64, shapes.Shape{2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ns := NodeIDs{a.NodeID(), b.NodeID()}
+	ts := TensorsFromNodeIDs(g, ns)
+
+	var correct = []Tensor{a, b}
+	if !reflect.DeepEqual(ts, correct) {
+		t.Errorf("Expected a slice of Tensors %v. Got %v instead", correct, ts)
 	}
 }
