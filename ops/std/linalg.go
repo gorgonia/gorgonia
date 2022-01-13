@@ -69,7 +69,7 @@ func (op MatMul) PreallocDo(ctx context.Context, prealloc values.Value, vs ...va
 func (op MatMul) String() string { return "×" }
 
 // DoDiff allows automatic differentiation for `MatMul`.
-func (op MatMul) DoDiff(ctx context.Context, inputs []Tensor, output []Tensor) (err error) {
+func (op MatMul) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) (err error) {
 	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
 	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
 	cdv := exprgraph.T2T(output).(*dual.Dual)
