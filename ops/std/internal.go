@@ -2,6 +2,7 @@ package stdops
 
 import (
 	"github.com/chewxy/hm"
+	"gorgonia.org/gorgonia/internal/datatypes"
 	"gorgonia.org/shapes"
 )
 

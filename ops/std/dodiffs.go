@@ -4,13 +4,12 @@ import (
 	"context"
 
 	"gorgonia.org/gorgonia/exprgraph"
-	"gorgonia.org/gorgonia/internal/datatypes"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
 )
 
 // DoDiff is the method that allows automatic differentiation of `add`.
-func (op addOp) DoDiff(ctx context.Context, inputs []datatypes.Tensor, output datatypes.Tensor) (err error) {
+func (op addOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) (err error) {
 	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
 	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
 
