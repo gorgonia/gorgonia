@@ -46,8 +46,7 @@ func (op subOp) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *ex
 	if err != nil {
 		return nil, errors.Wrapf(err, symdiffErr, op, grN(y))
 	}
-	g.SetGroup(dzdy, encoding.GradientCluster)
-	g.SetGroup(grad, encoding.GradientCluster)
+	setGroup(g, encoding.GradientCluster, grad, dzdy)
 	return []*exprgraph.Node{grad, dzdy}, nil
 }
 
@@ -64,9 +63,7 @@ func (op mulOp) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *ex
 	if err != nil {
 		return nil, errors.Wrapf(err, symdiffErr, op, grN(y))
 	}
-	g.SetGroup(dzdx, encoding.GradientCluster)
-	g.SetGroup(dzdy, encoding.GradientCluster)
-	g.SetGroup(grad, encoding.GradientCluster)
+	setGroup(g, encoding.GradientCluster, dzdx, dzdy, grad)
 	return []*exprgraph.Node{dzdx, dzdy}, nil
 }
 
