@@ -484,7 +484,7 @@ const binopAPIRaw = `{{- $cmp := "" -}}
 {{- end -}}
 
 // {{.Name | title}} creates an ops.Op that is correct to the shape of the given operands.
-func {{.Name | title}}(a, b ops.Operand {{$cmp}}) ops.Op {
+func {{.Name | title}}(a, b ops.Operand {{$cmp}}) ops.PreallocOp {
 	aScalar := a.Shape().IsScalar()
 	bScalar := b.Shape().IsScalar()
 
