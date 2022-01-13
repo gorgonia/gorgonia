@@ -11,8 +11,20 @@ import (
 	"gorgonia.org/tensor"
 )
 
+// dumbEngine is a tensor.Engine that doesn't actually do anything.
+type dumbEngine struct{}
+
+func (e dumbEngine) AllocAccessible() bool                               { panic("not implemented") }
+func (e dumbEngine) Alloc(size int64) (tensor.Memory, error)             { panic("not implemented") }
+func (e dumbEngine) Free(mem tensor.Memory, size int64) error            { panic("not implemented") }
+func (e dumbEngine) Memset(mem tensor.Memory, val interface{}) error     { panic("not implemented") }
+func (e dumbEngine) Memclr(mem tensor.Memory)                            { panic("not implemented") }
+func (e dumbEngine) Memcpy(dst tensor.Memory, src tensor.Memory) error   { panic("not implemented") }
+func (e dumbEngine) Accessible(mem tensor.Memory) (tensor.Memory, error) { panic("not implemented") }
+func (e dumbEngine) WorksWith(order tensor.DataOrder) bool               { panic("not implemented") }
+
 func TestAdd_SymbolicSymbolic(t *testing.T) {
-	g := exprgraph.NewGraph(nil)
+	g := exprgraph.NewGraph(dumbEngine{})
 	a, err := exprgraph.NewSymbolic(g, "a", dtype.Float64, shapes.Shape{2, 3})
 	if err != nil {
 		t.Fatalf("Unable to create `a`. Error: %v", err)
