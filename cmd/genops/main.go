@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"io"
 	"log"
 	"os"
@@ -20,8 +23,15 @@ const importgcontext = `import gctx "gorgonia.org/gorgonia/internal/context"`
 
 var (
 	gopath, stdopsloc string
-	stubsFilename     string
-	stubsFile         io.WriteCloser
+
+	stubsFilename string
+	stubsFile     io.WriteCloser
+
+	symdiffsFilename string
+	symdiffsFile     io.Reader
+
+	dodiffsFilename string
+	dodiffsFile     io.Reader
 )
 
 func init() {
@@ -42,6 +52,8 @@ func init() {
 	}
 	stdopsloc = path.Join(gopath, "src/gorgonia.org/gorgonia/ops/std")
 	stubsFilename = path.Join(stdopsloc, "stubs_generated.go")
+	symdiffsFilename = path.Join(stdopsloc, "symdiffs.go")
+	dodiffsFilename = path.Join(stdopsloc, "dodiffs.go")
 
 	// handle stubsFile
 	var err error
@@ -49,6 +61,16 @@ func init() {
 		log.Fatal(err)
 	}
 	fmt.Fprintf(stubsFile, "package stdops\n\n%v\n\n", genmsg)
+
+	// handle symdiffsFile
+	if symdiffsFile, err = os.OpenFile(symdiffsFilename, os.O_CREATE|os.O_RDONLY, 0644); err != nil {
+		log.Fatal(err)
+	}
+
+	// handle dodiffsFile
+	if dodiffsFile, err = os.OpenFile(dodiffsFilename, os.O_CREATE|os.O_RDONLY, 0644); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func goimports(filename string) error {
@@ -60,7 +82,7 @@ func goimports(filename string) error {
 	return nil
 }
 
-func generateBinOp(ops []op, tmpl *template.Template) error {
+func generateBinOp(ops []op, tmpl *template.Template, unstubbedSymDiffs, unstubbedDoDiffs []string) error {
 	for _, op := range ops {
 		filename := strings.ToLower(op.Name) + "_generated.go"
 		p := path.Join(stdopsloc, filename)
@@ -80,8 +102,17 @@ func generateBinOp(ops []op, tmpl *template.Template) error {
 		}
 
 		// extra: write symdiff to stubs
-		if err := binSymDiffTmpl.Execute(stubsFile, op); err != nil {
-			return errors.Wrapf(err, "Unable to add %v SymDiff stubs", op.Name)
+		if !in(unstubbedSymDiffs, op.Name) {
+			if err := binSymDiffTmpl.Execute(stubsFile, op); err != nil {
+				return errors.Wrapf(err, "Unable to add %v SymDiff stubs", op.Name)
+			}
+		}
+
+		// extra: write dodiff to stubs
+		if !in(unstubbedDoDiffs, op.Name) {
+			if err := doDiffTmpl.Execute(stubsFile, op); err != nil {
+				return errors.Wrapf(err, "Unable to add %d DoDiff stubs", op.Name)
+			}
 		}
 	}
 	return nil
@@ -119,8 +150,8 @@ func generateBinOpTest(ops []op, input binopTestInput, results []binopTestResult
 	return nil
 }
 
-func generateAriths() error {
-	if err := generateBinOp(ariths, arithOpTmpl); err != nil {
+func generateAriths(unstubbedSymDiffs, unstubbedDoDiffs []string) error {
+	if err := generateBinOp(ariths, arithOpTmpl, unstubbedSymDiffs, unstubbedDoDiffs); err != nil {
 		return errors.Wrap(err, "generateAriths.generateBinOp")
 	}
 	if err := generateBinOpTest(ariths, arithTestInput, arithTestResults, false, arithOpTestTmpl); err != nil {
@@ -130,8 +161,8 @@ func generateAriths() error {
 	return nil
 }
 
-func generateCmps() error {
-	if err := generateBinOp(cmps, cmpOpTmpl); err != nil {
+func generateCmps(unstubbedSymDiffs, unstubbedDoDiffs []string) error {
+	if err := generateBinOp(cmps, cmpOpTmpl, unstubbedSymDiffs, unstubbedDoDiffs); err != nil {
 		return errors.Wrap(err, "generateCmps.generateBinOp")
 	}
 	if err := generateBinOpTest(cmps, cmpTestInputBool, cmpTestResultsBool, true, arithOpTestTmpl); err != nil {
@@ -140,7 +171,7 @@ func generateCmps() error {
 	return nil
 }
 
-func generateUnOps() error {
+func generateUnOps(unstubbedSymDiffs, unstubbedDoDiffs []string) error {
 	tmpl := unopTmpl
 	for _, op := range unops {
 		filename := strings.ToLower(op.Name) + "_generated.go"
@@ -161,8 +192,17 @@ func generateUnOps() error {
 		}
 
 		// extra: write symdiff to stubs
-		if err := binSymDiffTmpl.Execute(stubsFile, op); err != nil {
-			return errors.Wrapf(err, "Unable to add %v SymDiff stubs", op.Name)
+		if !in(unstubbedSymDiffs, op.Name) {
+			if err := binSymDiffTmpl.Execute(stubsFile, op); err != nil {
+				return errors.Wrapf(err, "Unable to add %v SymDiff stubs", op.Name)
+			}
+		}
+
+		// extra: write dodiff to stubs
+		if !in(unstubbedDoDiffs, op.Name) {
+			if err := doDiffTmpl.Execute(stubsFile, op); err != nil {
+				return errors.Wrapf(err, "Unable to add %d DoDiff stubs", op.Name)
+			}
 		}
 	}
 
@@ -250,18 +290,47 @@ func finishStubs() error {
 	return goimports(stubsFilename)
 }
 
+// unstubbed parses the generated package for anything that has been manually moved out from the stubs file and "unstubbed".
+func unstubbed(file io.Reader, name string) []string {
+	fs := token.NewFileSet()
+	sdf, err := parser.ParseFile(fs, name, file, parser.SkipObjectResolution)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var ignored []string
+	ast.Inspect(sdf, func(n ast.Node) bool {
+		fn, ok := n.(*ast.FuncDecl)
+		if !ok {
+			return true
+		}
+
+		// should have one receiver
+		if fn.Recv == nil || len(fn.Recv.List) != 1 {
+			return true
+		}
+		recv := fn.Recv.List[0].Type.(*ast.Ident).Name
+		ignored = append(ignored, strings.TrimSuffix(recv, "Op"))
+		return false
+	})
+	return ignored
+}
+
 func main() {
 	defer finishStubs()
-	if err := generateAriths(); err != nil {
+	unstubbedSymDiffs := unstubbed(symdiffsFile, "symdiffs.go")
+	unstubbedDoDiffs := unstubbed(dodiffsFile, "dodiffs.go")
+
+	if err := generateAriths(unstubbedSymDiffs, unstubbedDoDiffs); err != nil {
 		log.Fatal(err)
 	}
-	if err := generateCmps(); err != nil {
+	if err := generateCmps(unstubbedSymDiffs, unstubbedDoDiffs); err != nil {
 		log.Fatal(err)
 	}
-	if err := generateUnOps(); err != nil {
+	if err := generateUnOps(unstubbedSymDiffs, unstubbedDoDiffs); err != nil {
 		log.Fatal(err)
 	}
 	if err := generateBinOpAPI(); err != nil {
 		log.Fatal(err)
 	}
+
 }

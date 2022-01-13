@@ -579,6 +579,23 @@ func Test{{.Name | title}}(t *testing.T){
 
 `
 
+const doDiffTmplRaw = `{{ if .IsDiff }}
+// DoDiff is the method that allows automatic differentiation to occur.
+func (op {{ .Name }}Op) DoDiff(ctx context.Context, inputs []datatypes.Tensor, output datatypes.Tensor) error {
+	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2T(output).(*dual.Dual)
+
+	advd := adv.Deriv()
+	bdvd := bdv.Deriv()
+
+	_, _, _ = cdv, advd, bdvd
+	panic("Not implemented")
+}
+{{ end }}
+
+`
+
 var (
 	arithMetaTmpl    *template.Template
 	arithOpTmpl      *template.Template
@@ -590,6 +607,8 @@ var (
 	unopTestTmpl     *template.Template
 	binopAPITmpl     *template.Template
 	binopAPITestTmpl *template.Template
+
+	doDiffTmpl *template.Template
 )
 
 func init() {
@@ -603,4 +622,5 @@ func init() {
 	unopTestTmpl = template.Must(template.New("unary op test").Funcs(funcmap).Parse(unopTestRaw))
 	binopAPITmpl = template.Must(template.New("api").Funcs(funcmap).Parse(binopAPIRaw))
 	binopAPITestTmpl = template.Must(template.New("api test").Funcs(funcmap).Parse(binopAPITestRaw))
+	doDiffTmpl = template.Must(template.New("binop DoDiff").Funcs(funcmap).Parse(doDiffTmplRaw))
 }
