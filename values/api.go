@@ -2,6 +2,7 @@ package values
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -48,12 +49,6 @@ func AnyToValue(any interface{}) (val Value, t hm.Type, dt tensor.Dtype, err err
 		val, dt = AnyToScalar(any)
 		t = dt
 		return
-
-	case tensor.Tensor:
-		val = a
-		t = TypeOf(a)
-		dt = a.Dtype()
-		return
 	default:
 		err = errors.Errorf("value %v of %T not yet handled", any, any)
 		return
@@ -62,51 +57,40 @@ func AnyToValue(any interface{}) (val Value, t hm.Type, dt tensor.Dtype, err err
 
 // One creates a Value of the given Dtype with the equivalent value of 1.
 func One(dt tensor.Dtype) Scalar {
+	return MakeScalar(nativeOne(dt))
+}
 
+// nativeOne generates the given "1" value and returns it as an interface.
+// The reason for abstracting out this function is because this function is
+// linkname'd in various other subpackages.
+func nativeOne(dt tensor.Dtype) interface{} {
 	switch dt {
 	case tensor.Float64:
-		return MakeScalar(float64(1))
+		return float64(1)
 	case tensor.Float32:
-		return MakeScalar(float32(1))
+		return float32(1)
 	case tensor.Int:
-		return MakeScalar(1)
+		return int(1)
 	case tensor.Int32:
-		return MakeScalar(int32(1))
+		return int32(1)
 	case tensor.Int64:
-		return MakeScalar(int64(1))
+		return int64(1)
 	case tensor.Byte:
-		return MakeScalar(byte(1))
+		return byte(1)
 	case tensor.Bool:
-		return MakeScalar(true)
+		return true
 	default:
 		panic("Unhandled dtype")
 	}
-
 }
 
 // Zero creates a Value of the given Dtype with the equivalent value of 0.
-func Zero(dt tensor.Dtype) Scalar {
-	switch dt {
-	case tensor.Float64:
-		return MakeScalar(float64(0))
-	case tensor.Float32:
-		return MakeScalar(float32(0))
-	case tensor.Int:
-		return MakeScalar(0)
-	case tensor.Int32:
-		return MakeScalar(int32(0))
-	case tensor.Int64:
-		return MakeScalar(int64(0))
-	case tensor.Byte:
-		return MakeScalar(byte(0))
-	case tensor.Bool:
-		return MakeScalar(false)
-	default:
-		panic("Unhandled dtype")
-	}
+func Zero(dt tensor.Dtype) Scalar { return MakeScalar(nativeZero(dt)) }
 
-	panic("YYY")
-}
+// nativeZero generates the given "0" value and returns it as an interface.
+// The reason for abstracting out this function is because this function is
+// linkname'd in various other subpackages.
+func nativeZero(dt tensor.Dtype) interface{} { return reflect.Zero(dt.Type).Interface() }
 
 func MakeFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal Value, err error) {
 	var dt tensor.Dtype
