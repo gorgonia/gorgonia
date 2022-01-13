@@ -7,7 +7,6 @@ import (
 	"gorgonia.org/gorgonia/internal/datatypes"
 	gerrors "gorgonia.org/gorgonia/internal/errors"
 	gtu "gorgonia.org/gorgonia/internal/tensorutils"
-	"gorgonia.org/gorgonia/ops"
 	stdops "gorgonia.org/gorgonia/ops/std"
 	"gorgonia.org/tensor"
 )
@@ -20,7 +19,7 @@ func Add(a, b datatypes.Tensor) (retVal datatypes.Tensor, err error) {
 	}
 	ctx := gtu.CtxFromEngines(a.Engine(), b.Engine())
 
-	op := stdops.Add(a, b).(ops.PreallocOp)
+	op := stdops.Add(a, b)
 	if ok {
 		// do symbolic stuff if there is an engine that supports symbolic things
 		g := hybrid.Graph()
