@@ -7,7 +7,6 @@ import (
 	"github.com/xtgo/set"
 	"gorgonia.org/gorgonia/exprgraph"
 	gapi "gorgonia.org/gorgonia/internal/api"
-	"gorgonia.org/gorgonia/internal/datatypes"
 )
 
 // forwardDiffAnalysis returns the nodes that affect the outputs.
@@ -66,12 +65,12 @@ func backwardDiffAnalysis(g *exprgraph.Graph, wrt, sorted []*exprgraph.Node) (re
 				continue
 			}
 
-			for _, child := range children {
+			for j, child := range children {
 				c := g.Node(int64(child)).(*exprgraph.Node)
 				parents := g.ParentsOf(c)
 				grandKids := g.ChildrenOf(c)
 				if len(parents) == 1 && len(grandKids) > 0 {
-					return nil, errors.Errorf("%v is undifferentiable. This makes a portion of the graph unreachable")
+					return nil, errors.Errorf("%v is  the %dth child of %v. It is undifferentiable. This makes a portion of the graph unreachable", c, j, n)
 				}
 			}
 
@@ -131,17 +130,19 @@ func backwardDiffAnalysis(g *exprgraph.Graph, wrt, sorted []*exprgraph.Node) (re
 // 	x×w²
 // The multiple gradients of `w` would need to be summed up beforehand. This is done through mapping in `nodeGrads`, which tracks the
 // input gradients
-func Backporopagate(g *exprgraph.Graph, outputs, gradOutputs, wrt []*exprgraph.Node) (deriv map[exprgraph.NodeID]exprgraph.NodeID, derivOf map[exprgraph.NodeID]exprgraph.NodeIDs, err error) {
+func Backporopagate(g *exprgraph.Graph, outputs, gradOutputs, wrt []*exprgraph.Node) (bpgraph *Graph, err error) {
 	// input check
 	if len(outputs) != len(gradOutputs) {
 		// error
-		return nil, nil, errors.Errorf("Expected `outputs` and `gradOutputs` to have the same length. `outputs` has %d items. `gradOutputs` has %d items`", len(outputs), len(gradOutputs))
+		return nil, errors.Errorf("Expected `outputs` and `gradOutputs` to have the same length. `outputs` has %d items. `gradOutputs` has %d items`", len(outputs), len(gradOutputs))
 	}
 
 	var sorted []*exprgraph.Node
 	if sorted, err = exprgraph.Sort(g); err != nil {
-		return nil, nil, errors.Wrap(err, "Failed to sort graph in Backpropagate()")
+		return nil, errors.Wrap(err, "Failed to sort graph in Backpropagate()")
 	}
+
+	// TODO: filter out unreachable nodes (out of consideration anyway)
 
 	/* Checks */
 	/*
@@ -153,7 +154,7 @@ func Backporopagate(g *exprgraph.Graph, outputs, gradOutputs, wrt []*exprgraph.N
 	var affectsOutput, affectedByOutput exprgraph.NodeIDs
 	affectsOutput = forwardDiffAnalysis(g, outputs, sorted)
 	if affectedByOutput, err = backwardDiffAnalysis(g, wrt, sorted); err != nil {
-		return nil, nil, errors.Wrap(err, "Failed backwards differentiation analysis")
+		return nil, errors.Wrap(err, "Failed backwards differentiation analysis")
 	}
 
 	wrtSet := exprgraph.NodeIDsFromNodes(wrt)
@@ -179,8 +180,8 @@ func Backporopagate(g *exprgraph.Graph, outputs, gradOutputs, wrt []*exprgraph.N
 	for i, n := range outputs {
 		nodeGrads[n.NodeID()] = exprgraph.NodeIDs{gradOutputs[i].NodeID()}
 	}
-	deriv = make(map[exprgraph.NodeID]exprgraph.NodeID)
-	derivOf = make(map[exprgraph.NodeID]exprgraph.NodeIDs)
+	deriv := make(map[exprgraph.NodeID]exprgraph.NodeID)
+	derivOf := make(map[exprgraph.NodeID]exprgraph.NodeIDs)
 
 	// actives are nodes that are differentially influenced by the inputs
 	// and also differentiably influence the outputs.
@@ -205,7 +206,7 @@ func Backporopagate(g *exprgraph.Graph, outputs, gradOutputs, wrt []*exprgraph.N
 		grads := nodeGrads[nid]
 		switch len(grads) {
 		case 0:
-			return nil, nil, Error{
+			return nil, Error{
 				g:         g,
 				single:    nid,
 				nodeGrads: nodeGrads,
@@ -220,7 +221,7 @@ func Backporopagate(g *exprgraph.Graph, outputs, gradOutputs, wrt []*exprgraph.N
 			// once we've reached a node, we've already backpropagated from its dependents, so we sum up the gradients
 			summed, err := gapi.ReduceAdd(exprgraph.TensorsFromNodeIDs(g, nodeGrads[nid]))
 			if err != nil {
-				return nil, nil, Error{
+				return nil, Error{
 					g:         g,
 					single:    nid,
 					nodeGrads: nodeGrads,
@@ -246,13 +247,13 @@ func Backporopagate(g *exprgraph.Graph, outputs, gradOutputs, wrt []*exprgraph.N
 				single: nid,
 				err:    errors.Errorf("%v Not a symdiff.Op", op),
 			}
-			return nil, nil, err
+			return nil, err
 		}
 
 		children := exprgraph.NodesFromNodeIDs(g, g.ChildrenOf(n))
 		childrenGrads, err := op.SymDiff(children, n, gradNode)
 		if err != nil {
-			return nil, nil, Error{
+			return nil, Error{
 				single:    nid,
 				grad:      gradNode.NodeID(),
 				nodeGrads: nodeGrads,
@@ -271,7 +272,11 @@ func Backporopagate(g *exprgraph.Graph, outputs, gradOutputs, wrt []*exprgraph.N
 		}
 
 	}
-	return
+	return &Graph{
+		Graph:   g,
+		deriv:   deriv,
+		derivOf: derivOf,
+	}, nil
 }
 
 // uniq computes the unique node IDs in a set. This operation is an inplace operation. `a` will get clobbered.
