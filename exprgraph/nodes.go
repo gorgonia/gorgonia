@@ -113,3 +113,12 @@ func NodesFromNodeIDs(g *Graph, ns []NodeID) []*Node {
 	}
 	return retVal
 }
+
+// TensorsFromNodeIDs creates a slice ot Tensor given a slice of NodeIDs and a *Graph.
+func TensorsFromNodeIDs(g *Graph, ns []NodeID) []Tensor {
+	retVal := make([]Tensor, 0, len(ns))
+	for _, n := range ns {
+		retVal = append(retVal, g.getByID(n.ID()))
+	}
+	return retVal
+}

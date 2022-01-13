@@ -6,6 +6,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/xtgo/set"
 	"gorgonia.org/gorgonia/exprgraph"
+	gapi "gorgonia.org/gorgonia/internal/api"
+	"gorgonia.org/gorgonia/internal/datatypes"
 )
 
 // forwardDiffAnalysis returns the nodes that affect the outputs.
@@ -203,13 +205,12 @@ func Backporopagate(g *exprgraph.Graph, outputs, gradOutputs, wrt []*exprgraph.N
 		grads := nodeGrads[nid]
 		switch len(grads) {
 		case 0:
-			err = Error{
+			return nil, nil, Error{
 				g:         g,
 				single:    nid,
 				nodeGrads: nodeGrads,
 				err:       errors.New("No gradients found for node"),
 			}
-			return nil, nil, err
 		case 1:
 			d := nodeGrads[nid][0]
 			deriv[nid] = d
@@ -217,7 +218,19 @@ func Backporopagate(g *exprgraph.Graph, outputs, gradOutputs, wrt []*exprgraph.N
 
 		default:
 			// once we've reached a node, we've already backpropagated from its dependents, so we sum up the gradients
-			// TODO
+			summed, err := gapi.ReduceAdd(exprgraph.TensorsFromNodeIDs(g, nodeGrads[nid]))
+			if err != nil {
+				return nil, nil, Error{
+					g:         g,
+					single:    nid,
+					nodeGrads: nodeGrads,
+					err:       errors.Wrap(err, "Failed to sum the gradients for the node"),
+				}
+			}
+			d := summed.(*exprgraph.Node).NodeID()
+			deriv[nid] = d
+			derivOf[d] = append(derivOf[d], nid)
+			nodeGrads[nid] = exprgraph.NodeIDs{d}
 		}
 
 		gradNode := g.Get(nodeGrads[nid][0])
@@ -258,8 +271,7 @@ func Backporopagate(g *exprgraph.Graph, outputs, gradOutputs, wrt []*exprgraph.N
 		}
 
 	}
-
-	panic("NYI")
+	return
 }
 
 // uniq computes the unique node IDs in a set. This operation is an inplace operation. `a` will get clobbered.

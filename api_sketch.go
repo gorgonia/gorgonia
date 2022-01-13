@@ -10,6 +10,8 @@ import (
 	"gorgonia.org/tensor"
 )
 
+func Add(a, b Tensor) (retVal Tensor, err error) { return add(a, b) }
+
 func MatMul(a, b Tensor) (retVal Tensor, err error) {
 	hybrid, ok := a.Engine().(engines.Hybrid)
 	if !ok {

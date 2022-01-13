@@ -12,6 +12,7 @@ import (
 	"gorgonia.org/tensor"
 )
 
+// Add adds two tensors.
 func Add(a, b datatypes.Tensor) (retVal datatypes.Tensor, err error) {
 	hybrid, ok := a.Engine().(engines.Hybrid)
 	if !ok {
@@ -64,4 +65,27 @@ func Add(a, b datatypes.Tensor) (retVal datatypes.Tensor, err error) {
 	// queuer (backwards engine)
 
 	return
+}
+
+func ReduceAdd(xs []datatypes.Tensor, opts ...tensor.ConsOpt) (retVal datatypes.Tensor, err error) {
+	switch len(xs) {
+	case 0:
+		return nil, nil
+	case 1:
+		return xs[0], nil
+	default:
+		retVal = xs[0]
+		for i, x := range xs {
+			if i == 0 {
+				continue
+			}
+			if retVal, err = Add(retVal, x); err != nil {
+				return nil, errors.Wrapf(err, "reduceAdd %dth term: %v", i, x)
+			}
+			for _, opt := range opts {
+				opt(retVal.(tensor.Tensor))
+			}
+		}
+	}
+	return retVal, nil
 }
