@@ -14,5 +14,3 @@ import (
 func one(dt dtype.Dtype) interface{}
 
 func ints2axes(is []int) shapes.Axes { return *(*shapes.Axes)(unsafe.Pointer(&is)) }
-
-func axes2ints(a shapes.Axes) []int { return *(*[]int)(unsafe.Pointer(&a)) }

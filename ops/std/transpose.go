@@ -68,7 +68,7 @@ func (op transposeOp) Do(ctx context.Context, vs ...values.Value) (retVal values
 	a := vs[0].(tensor.Tensor)
 	_, task := trace.NewTask(ctx, op.String())
 	pattern := tensor.BorrowInts(op.pattern.Dims())
-	copy(pattern, axes2ints(op.pattern))
+	copy(pattern, op.pattern.AsInts())
 	retVal, err = tensor.Transpose(a, pattern...)
 	task.End()
 	return retVal, err

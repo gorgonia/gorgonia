@@ -36,11 +36,3 @@ func ints2axes(is []int) shapes.Axes {
 	}
 	return retVal
 }
-
-func axes2ints(a shapes.Axes) []int {
-	retVal := make([]int, 0, len(a))
-	for_,i := range a {
-		retVal = append(retVal, int(i))
-	}
-	return retVal
-}
