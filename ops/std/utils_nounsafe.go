@@ -4,6 +4,7 @@ package stdops
 
 import (
 	"gorgonia.org/dtype"
+	"gorgonia.org/shapes"
 )
 
 // keepsync: gorgonia.org/gorgonia/values.oneNative
@@ -26,4 +27,20 @@ func one(dt dtype.Dtype) interface{} {
 	default:
 		panic("Unhandled dtype")
 	}
+}
+
+func ints2axes(is []int) shapes.Axes {
+	retVal := make(shapes.Axes, 0, len(is))
+	for _, i := range is {
+		retVal = append(retVal, shapes.Axis(i))
+	}
+	return retVal
+}
+
+func axes2ints(a shapes.Axes) []int {
+	retVal := make([]int, 0, len(a))
+	for_,i := range a {
+		retVal = append(retVal, int(i))
+	}
+	return retVal
 }

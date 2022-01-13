@@ -3,10 +3,16 @@
 package stdops
 
 import (
+	"unsafe"
+
 	"gorgonia.org/dtype"
 	_ "gorgonia.org/gorgonia/values"
-	_ "unsafe"
+	"gorgonia.org/shapes"
 )
 
 //go:linkname one gorgonia.org/gorgonia/values.nativeOne
 func one(dt dtype.Dtype) interface{}
+
+func ints2axes(is []int) shapes.Axes { return *(*shapes.Axes)(unsafe.Pointer(&is)) }
+
+func axes2ints(a shapes.Axes) []int { return *(*[]int)(unsafe.Pointer(&a)) }

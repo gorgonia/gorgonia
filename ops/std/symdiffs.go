@@ -25,6 +25,13 @@ func apply(g *exprgraph.Graph, op ops.Op, optional string, inputs ...*exprgraph.
 // grN is a function that creates a name for the partial derivative.
 func grN(a *exprgraph.Node) string { return fmt.Sprintf("∂%v: ", a.Name()) }
 
+// setGroup sets the Group of the given node.
+func setGroup(g *exprgraph.Graph, group encoding.Group, inputs ...*exprgraph.Node) {
+	for _, in := range inputs {
+		g.SetGroup(in, group)
+	}
+}
+
 // SymDiff performs the symbolic differentiation of add.
 func (op addOp) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
 	g.SetGroup(grad, encoding.GradientCluster)
