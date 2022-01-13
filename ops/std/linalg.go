@@ -6,9 +6,11 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/exprgraph"
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 )
@@ -65,6 +67,46 @@ func (op MatMul) PreallocDo(ctx context.Context, prealloc values.Value, vs ...va
 
 // String implements fmt.Stringer.
 func (op MatMul) String() string { return "×" }
+
+// DoDiff allows automatic differentiation for `MatMul`.
+func (op MatMul) DoDiff(ctx context.Context, inputs []Tensor, output []Tensor) (err error) {
+	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2T(output).(*dual.Dual)
+
+	advd := adv.Deriv()
+	bdvd := bdv.Deriv()
+
+	// temporary transpose
+	if err := bdv.Value.T(); err != nil {
+		return err
+	}
+	if err := adv.Value.T(); err != nil {
+		return err
+	}
+	defer bdv.Value.UT()
+	defer adv.Value.UT()
+
+	// dA = C×B'
+	if _, err := op.PreallocDo(ctx, advd, cdv.Value, bdv.Value); err != nil {
+		return err
+	}
+
+	// dB = A'×C
+	if _, err := op.PreallocDo(ctx, bdvd, adv.Value, cdv.Value); err != nil {
+		return err
+	}
+	return nil
+}
+
+/*
+
+
+
+ MAT-VEC MUL
+
+
+*/
 
 // MatVecMul is an op representing a matrix-vector multiplication operations.
 type MatVecMul struct{ binop }
