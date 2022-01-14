@@ -22,7 +22,7 @@ type MatMul struct{ binop }
 func (op MatMul) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	t := types.MakeTensorType(2, a) // Matrix a
-	return hm.NewFnType(t, t, t)
+	return types.NewFunc(t, t, t)
 }
 
 // ShapeExpr informs the shape operations of MatMul: (a, b) → (b, c) → (a, c)
@@ -67,6 +67,11 @@ func (op MatMul) PreallocDo(ctx context.Context, prealloc values.Value, vs ...va
 
 // String implements fmt.Stringer.
 func (op MatMul) String() string { return "×" }
+
+// SymDiff performs symbolic differentiation for `MatMul`.
+func (op MatMul) SymDiff(inputs []*exprgraph.Node, output, grade *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("NYI")
+}
 
 // DoDiff allows automatic differentiation for `MatMul`.
 func (op MatMul) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) (err error) {
@@ -119,7 +124,7 @@ func (op MatVecMul) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	t := types.MakeTensorType(2, a) // Matrix a
 	v := types.MakeTensorType(1, a) // Vector a
-	return hm.NewFnType(t, v, v)
+	return types.NewFunc(t, v, v)
 }
 
 // ShapeExpr informs the shape operations of MatVecMul: (a, b) → (b, ) → (a, )
@@ -171,7 +176,7 @@ func (op VecDot) String() string { return "·" }
 func (op VecDot) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	v := types.MakeTensorType(1, a) // Vector a
-	return hm.NewFnType(v, v, a)
+	return types.NewFunc(v, v, a)
 }
 
 // ShapeExpr informs the shape operations of VecDot: (a, ) → (a, ) → ()
@@ -232,7 +237,7 @@ func (op Outer) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	t := types.MakeTensorType(-1, a)
 	m := types.MakeTensorType(2, a)
-	return hm.NewFnType(t, t, m)
+	return types.NewFunc(t, t, m)
 }
 
 // ShapeExpr informs the shape operations of Outer: a → b → (Π a, Π b).

@@ -73,10 +73,10 @@ type elEqVV struct {
 func (op elEqVV) Type() hm.Type {
 	a := hm.TypeVariable('a') // (T U) or U
 	if op.retSame {
-		return hm.NewFnType(a, a, a)
+		return types.NewFunc(a, a, a)
 	}
 	b := types.MakeDependent(a, tensor.Bool) // (T Bool) or Bool
-	return hm.NewFnType(a, a, b)
+	return types.NewFunc(a, a, b)
 }
 
 // elEqVS is a tensor-scalar elementwise equal-to.
@@ -93,10 +93,10 @@ func (op elEqVS) Type() hm.Type {
 	a := hm.TypeVariable('a') // (T U) or U
 	b := hm.TypeVariable('b') // U
 	if op.retSame {
-		return hm.NewFnType(a, b, a)
+		return types.NewFunc(a, b, a)
 	}
 	c := types.MakeDependent(a, tensor.Bool) // (T Bool) or Bool
-	return hm.NewFnType(a, b, c)
+	return types.NewFunc(a, b, c)
 }
 
 // elEqSV is a scalar-tensor elementwise equal-to.
@@ -113,8 +113,8 @@ func (op elEqSV) Type() hm.Type {
 	a := hm.TypeVariable('a') // U
 	b := hm.TypeVariable('b') // (T U) or U
 	if op.retSame {
-		return hm.NewFnType(a, b, b)
+		return types.NewFunc(a, b, b)
 	}
 	c := types.MakeDependent(b, tensor.Bool) // (T Bool) or Bool
-	return hm.NewFnType(a, b, c)
+	return types.NewFunc(a, b, c)
 }

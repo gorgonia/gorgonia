@@ -73,10 +73,10 @@ type gteVV struct {
 func (op gteVV) Type() hm.Type {
 	a := hm.TypeVariable('a') // (T U) or U
 	if op.retSame {
-		return hm.NewFnType(a, a, a)
+		return types.NewFunc(a, a, a)
 	}
 	b := types.MakeDependent(a, tensor.Bool) // (T Bool) or Bool
-	return hm.NewFnType(a, a, b)
+	return types.NewFunc(a, a, b)
 }
 
 // gteVS is a tensor-scalar elementwise greater-than-or-equal-to.
@@ -93,10 +93,10 @@ func (op gteVS) Type() hm.Type {
 	a := hm.TypeVariable('a') // (T U) or U
 	b := hm.TypeVariable('b') // U
 	if op.retSame {
-		return hm.NewFnType(a, b, a)
+		return types.NewFunc(a, b, a)
 	}
 	c := types.MakeDependent(a, tensor.Bool) // (T Bool) or Bool
-	return hm.NewFnType(a, b, c)
+	return types.NewFunc(a, b, c)
 }
 
 // gteSV is a scalar-tensor elementwise greater-than-or-equal-to.
@@ -113,8 +113,8 @@ func (op gteSV) Type() hm.Type {
 	a := hm.TypeVariable('a') // U
 	b := hm.TypeVariable('b') // (T U) or U
 	if op.retSame {
-		return hm.NewFnType(a, b, b)
+		return types.NewFunc(a, b, b)
 	}
 	c := types.MakeDependent(b, tensor.Bool) // (T Bool) or Bool
-	return hm.NewFnType(a, b, c)
+	return types.NewFunc(a, b, c)
 }

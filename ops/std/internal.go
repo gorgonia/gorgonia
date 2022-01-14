@@ -3,6 +3,7 @@ package stdops
 import (
 	"github.com/chewxy/hm"
 	"gorgonia.org/gorgonia/internal/datatypes"
+	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/shapes"
 )
 
@@ -32,7 +33,7 @@ type binopVV struct{}
 // Type returns the operation type of (·) : a → a → a
 func (op binopVV) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	return hm.NewFnType(a, a, a)
+	return types.NewFunc(a, a, a)
 }
 
 // ShapeExpr returns the shape expression of (·) : a → a → a.
@@ -47,7 +48,7 @@ type binopVS struct{}
 func (op binopVS) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	b := hm.TypeVariable('b')
-	return hm.NewFnType(a, b, a)
+	return types.NewFunc(a, b, a)
 }
 
 // ShapeExpr returns the shape expression of (·) : a → () → a.
@@ -62,7 +63,7 @@ type binopSV struct{}
 func (op binopSV) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	b := hm.TypeVariable('b')
-	return hm.NewFnType(a, b, b)
+	return types.NewFunc(a, b, b)
 }
 
 // ShapeExpr returns the shape expression of (·) : () → a → a.
@@ -79,7 +80,7 @@ func (op unop) Arity() int { return 1 }
 // Type returns the operation type of (·) : a → a.
 func (op unop) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	return hm.NewFnType(a, a)
+	return types.NewFunc(a, a)
 }
 
 // ShapeExpr returns the shape expression of (·) : a → a.
