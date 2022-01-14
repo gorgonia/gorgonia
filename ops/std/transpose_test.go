@@ -1,25 +1,33 @@
 package stdops
 
 import (
+	"context"
 	"math/rand"
 	"reflect"
 	"testing"
 	"testing/quick"
 
 	"github.com/chewxy/hm"
+	"gorgonia.org/gorgonia/internal/datatypes"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/shapes"
 )
 
-func (op transposeOp) Generate(rand *rand.Rand, size int) reflect.Value {
-	d := rand.Intn(12) // we're only going to test up to 12 dims
+func genTrans(d int) transposeOp {
 	pattern := make(shapes.Axes, 0, d)
 	for i := 0; i < d; i++ {
 		pattern = append(pattern, shapes.Axis(i))
 	}
-	rand.Shuffle(d, func(i, j int) { pattern[i], pattern[j] = pattern[j], pattern[i] })
-	op2 := transposeOp{pattern: pattern}
-	return reflect.ValueOf(op2)
+	for i := 0; i < d; i++ {
+		rand.Shuffle(d, func(i, j int) { pattern[i], pattern[j] = pattern[j], pattern[i] })
+	}
+	return transposeOp{pattern: pattern}
+
+}
+
+func (op transposeOp) Generate(rand *rand.Rand, size int) reflect.Value {
+	d := rand.Intn(12)
+	return reflect.ValueOf(genTrans(d))
 }
 
 func TestTranspose_Basic(t *testing.T) {
@@ -36,36 +44,69 @@ func TestTranspose_Basic(t *testing.T) {
 		d := a.pattern.Dims()
 		v := hm.TypeVariable('a')
 		tt := types.MakeTensorType(d, v)
-		ret := types.MakeDependent(tt, v)
-		correct := hm.NewFnType(tt, ret)
+		correct := hm.NewFnType(tt, tt)
 		return correct.Eq(a.Type())
 	}
 	if err := quick.Check(typ, nil); err != nil {
 		t.Error(err)
 	}
 
-	// ShapeExpr
-	shp := func(a transposeOp) bool {
-		compExpr, ok := a.ShapeExpr().(shapes.Compound)
-		if !ok {
-			return ok
+	/*
+		// ShapeExpr
+		shp := func(a transposeOp) bool {
+			compExpr, ok := a.ShapeExpr().(shapes.Compound)
+			if !ok {
+				return ok
+			}
+			arr, ok := compExpr.Expr.(shapes.Arrow)
+			if !ok {
+				return ok
+			}
+
+			arrBB, ok := arr.B.(shapes.TransposeOf)
+			if !ok {
+				return ok
+			}
+			return reflect.DeepEqual(a.pattern, arrBB.Axes) && reflect.DeepEqual(arr.A, arrBB.A)
 		}
-		arr, ok := compExpr.Expr.(shapes.Arrow)
-		if !ok {
-			return ok
+		if err := quick.Check(shp, nil); err != nil {
+			t.Error(err)
+		}
+	*/
+	do := func(tt tTensor) bool {
+		a := tt.Dense
+		d := a.Dims()
+		op := genTrans(d)
+
+		expectedType, err := typecheck(op, a)
+		if err != nil {
+			t.Errorf("%v failed typechecking. Error: %v", op, err)
+			return false
 		}
 
-		arrB, ok := arr.B.(shapes.Arrow)
-		if !ok {
-			return ok
+		inferred, err := shapes.InferApp(op.ShapeExpr(), a.Shape())
+		if err != nil {
+			t.Logf("%v @ %v ⇒ %v", op.ShapeExpr(), a.Shape(), inferred)
+			t.Errorf("%v", err)
+			return false
 		}
-		arrBB, ok := arrB.B.(shapes.TransposeOf)
-		if !ok {
-			return ok
+
+		expectedShape, err := shapecheck(op, a)
+		if err != nil {
+			t.Errorf("%v failed shapecheck. Error: %v. ", op, err)
+			return false
 		}
-		return reflect.DeepEqual(a.pattern, arrBB.Axes) && reflect.DeepEqual(arr.A, arrBB.A)
+
+		b, err := op.Do(context.Background(), a)
+		if err != nil {
+			t.Errorf("Expected %v to work correctly. Error: %v", op, err)
+			return false
+		}
+
+		return b.Shape().Eq(expectedShape) && datatypes.TypeOf(b).Eq(expectedType)
 	}
-	if err := quick.Check(shp, nil); err != nil {
+	if err := quick.Check(do, nil); err != nil {
 		t.Error(err)
 	}
+
 }

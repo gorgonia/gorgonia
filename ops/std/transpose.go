@@ -30,33 +30,32 @@ func Transpose(pattern []int) transposeOp {
 // Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime.
 func (op transposeOp) Arity() int { return 1 }
 
-// Type returns Tensor-4 a → ⫪[Tensor-4 a a].
+// Type returns Tensor-d a → Tensor-d a.
 func (op transposeOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	d := op.pattern.Dims()
 	t := types.MakeTensorType(d, a)
-	ret := types.MakeDependent(t, a)
-	return hm.NewFnType(t, ret)
+	return hm.NewFnType(t, t)
 }
 
-// ShapeExpr returns { a → X[b] → T X[b] a | (D X[b] = D a) },
+// ShapeExpr returns { a → T X[b] a | (D X[b] = D a) },
 func (op transposeOp) ShapeExpr() shapes.Expr {
 	expr := shapes.Arrow{
 		shapes.Var('a'),
-		shapes.Arrow{
+		shapes.TransposeOf{
 			op.pattern,
-			shapes.TransposeOf{
-				op.pattern,
-				shapes.Var('a'),
-			},
+			shapes.Var('a'),
 		},
 	}
+
 	st := shapes.SubjectTo{
 		shapes.Eq,
 		shapes.UnaryOp{shapes.Dims, op.pattern},
 		shapes.UnaryOp{shapes.Dims, shapes.Var('a')},
 	}
 	return shapes.Compound{Expr: expr, SubjectTo: st}
+
+	return expr
 }
 
 // Do executes the op.
