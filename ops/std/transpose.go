@@ -35,7 +35,7 @@ func (op transposeOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	d := op.pattern.Dims()
 	t := types.MakeTensorType(d, a)
-	return hm.NewFnType(t, t)
+	return types.NewFunc(t, t)
 }
 
 // ShapeExpr returns { a → T X[b] a | (D X[b] = D a) },

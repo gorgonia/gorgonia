@@ -108,7 +108,11 @@ func (t TensorType) Format(state fmt.State, c rune) {
 func (t TensorType) String() string { return fmt.Sprintf("%v", t) }
 
 // Types returns a list of types that TensorType contains - in this case, the type of Tensor (float64, float32, etc). Satisfies the hm.Type interface.
-func (t TensorType) Types() hm.Types { ts := hm.BorrowTypes(1); ts[0] = t.Of; return ts }
+func (t TensorType) Types() hm.Types {
+	ts := hm.BorrowTypes(1)
+	ts[0] = t.Of
+	return ts
+}
 
 // Normalize normalizes the type variable names (if any) in the TensorType. Satisfies the hm.Type interface.
 func (t TensorType) Normalize(k, v hm.TypeVarSet) (hm.Type, error) {
@@ -151,4 +155,12 @@ func (t TensorType) Eq(other hm.Type) bool {
 	}
 
 	return false
+}
+
+// Canonical returns the canonical type. This is because TensorType can represent a scalar type as well.
+func (t TensorType) Canonical() hm.Type {
+	if t.Dims == 0 {
+		return t.Of
+	}
+	return t
 }

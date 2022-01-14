@@ -11,6 +11,7 @@ import (
 	"gorgonia.org/gorgonia/internal/datatypes"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/shapes"
+	"gorgonia.org/tensor"
 )
 
 func genTrans(d int) transposeOp {
@@ -44,35 +45,34 @@ func TestTranspose_Basic(t *testing.T) {
 		d := a.pattern.Dims()
 		v := hm.TypeVariable('a')
 		tt := types.MakeTensorType(d, v)
-		correct := hm.NewFnType(tt, tt)
+		correct := types.NewFunc(tt, tt)
 		return correct.Eq(a.Type())
 	}
 	if err := quick.Check(typ, nil); err != nil {
 		t.Error(err)
 	}
 
-	/*
-		// ShapeExpr
-		shp := func(a transposeOp) bool {
-			compExpr, ok := a.ShapeExpr().(shapes.Compound)
-			if !ok {
-				return ok
-			}
-			arr, ok := compExpr.Expr.(shapes.Arrow)
-			if !ok {
-				return ok
-			}
+	// ShapeExpr
+	shp := func(a transposeOp) bool {
+		compExpr, ok := a.ShapeExpr().(shapes.Compound)
+		if !ok {
+			return ok
+		}
+		arr, ok := compExpr.Expr.(shapes.Arrow)
+		if !ok {
+			return ok
+		}
 
-			arrBB, ok := arr.B.(shapes.TransposeOf)
-			if !ok {
-				return ok
-			}
-			return reflect.DeepEqual(a.pattern, arrBB.Axes) && reflect.DeepEqual(arr.A, arrBB.A)
+		arrBB, ok := arr.B.(shapes.TransposeOf)
+		if !ok {
+			return ok
 		}
-		if err := quick.Check(shp, nil); err != nil {
-			t.Error(err)
-		}
-	*/
+		return reflect.DeepEqual(a.pattern, arrBB.Axes) && reflect.DeepEqual(arr.A, arrBB.A)
+	}
+	if err := quick.Check(shp, nil); err != nil {
+		t.Error(err)
+	}
+
 	do := func(tt tTensor) bool {
 		a := tt.Dense
 		d := a.Dims()
@@ -109,4 +109,17 @@ func TestTranspose_Basic(t *testing.T) {
 		t.Error(err)
 	}
 
+}
+
+func TestTransposeScalar(t *testing.T) {
+	s := tensor.New(tensor.FromScalar(1337.0))
+	op := genTrans(s.Dims())
+
+	expectedType, err := typecheck(op, s)
+	if err != nil {
+		t.Errorf("%v failed typechecking. Error: %v", op, err)
+	}
+
+	t.Logf("op.Type %T, s.Type %T", op.Type().Types()[0], datatypes.TypeOf(s))
+	t.Logf("expected %v", expectedType)
 }
