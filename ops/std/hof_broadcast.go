@@ -41,6 +41,8 @@ func (pat bcPat) bc(left bool, axis byte) bool {
 	return (byte(pat)>>operand)&byte(1) == 1
 }
 
+// on returns a slice of axes to broadcast along.
+// TODO(chewxy): there are a lot of infelicities with the code involving `.on()` and the bcPat. Fix them when free.
 func (pat bcPat) on() (retVal [2][]int) {
 	for i := 0; i < bcAllowableAxes; i++ {
 		if pat.bc(true, byte(i)) {
@@ -102,11 +104,14 @@ func Auto(op ops.Op, a, b ops.Operand) (ops.Op, error) {
 			pat |= bcPat(1) << bcPat(i+bcAllowableAxes)
 		}
 	}
+	retShape := computeNewShape(aShape, bShape, pat.on()[0])
+	retShape = computeNewShape(bShape, retShape, pat.on()[1])
 	return &Broadcast{
-		op:      op,
-		a:       aShape,
-		b:       bShape,
-		pattern: pat,
+		op:       op,
+		a:        aShape,
+		b:        bShape,
+		pattern:  pat,
+		retShape: retShape,
 	}, nil
 
 }
@@ -129,7 +134,7 @@ func (op *Broadcast) Do(ctx context.Context, vs ...values.Value) (retVal values.
 	b := vs[1].(tensor.Tensor)
 
 	ctx2, task := trace.NewTask(ctx, op.String())
-	newA, newB, prealloc := op.alloc(ctx, a, b)
+	newA, newB, prealloc := op.alloc(ctx, a, b, true)
 	err = op.do(ctx2, prealloc, newA, newB, a, b)
 	task.End()
 	return prealloc, err
@@ -137,28 +142,44 @@ func (op *Broadcast) Do(ctx context.Context, vs ...values.Value) (retVal values.
 
 func (op *Broadcast) String() string { return fmt.Sprintf("¨%v", op.op) } // The ¨ symbol is the Diaeresis symbol (U+00A8), not the Combining Diaeresis (U+0308).
 
+// PreallocDo performs the broadcasted operation with a preallocated value for the result.
+func (op *Broadcast) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+	if err = gctx.Handle(ctx); err != nil {
+		return nil, err
+	}
+	a := vs[0].(tensor.Tensor)
+	b := vs[1].(tensor.Tensor)
+
+	ctx2, task := trace.NewTask(ctx, op.String())
+	newA, newB, _ := op.alloc(ctx, a, b, false)
+	err = op.do(ctx2, prealloc, newA, newB, a, b)
+	task.End()
+	return prealloc, err
+}
+
 // SaveRetShape allows the final shape from the shape system to be cached in the op.
 func (op *Broadcast) SaveRetShape(ret shapes.Shape) { op.retShape = ret }
 
-func (op *Broadcast) alloc(ctx context.Context, a, b tensor.Tensor) (newA, newB, prealloc values.Value) {
+// alloc allocates new repeated-on values (for `a` and `b`) as well as the preallocates the return value
+func (op *Broadcast) alloc(ctx context.Context, a, b tensor.Tensor, computePrealloc bool) (newA, newB, prealloc values.Value) {
 	broadcastOn := op.pattern.on()
 	leftOperand := broadcastOn[0]
 	rightOperand := broadcastOn[1]
 	ashp := a.Shape()
 	bshp := b.Shape()
 	newShape := computeNewShape(ashp, bshp, leftOperand)
-
 	if !newShape.Eq(ashp) {
 		newA = tensor.New(tensor.WithShape(newShape...), tensor.WithEngine(a.Engine()), tensor.Of(a.Dtype()))
 	}
 
 	newShape = computeNewShape(bshp, newShape, rightOperand)
-
 	if !newShape.Eq(bshp) {
 		newB = tensor.New(tensor.WithShape(newShape...), tensor.WithEngine(b.Engine()), tensor.Of(b.Dtype()))
 	}
 
-	prealloc = tensor.New(tensor.WithShape(newShape...), tensor.WithEngine(a.Engine()), tensor.Of(a.Dtype()))
+	if computePrealloc {
+		prealloc = tensor.New(tensor.WithShape(newShape...), tensor.WithEngine(a.Engine()), tensor.Of(a.Dtype()))
+	}
 	return
 }
 
@@ -203,6 +224,7 @@ func (op *Broadcast) do(ctx context.Context, prealloc, newA, newB, a, b values.V
 	return err
 }
 
+// repeat performs the repeat operation to create a new tensor that is amenable to the binary operation.
 func (op *Broadcast) repeat(along []int, prealloc, toBeRepeated, reference values.Value) (err error) {
 	shp := reference.Shape()
 	for _, ax := range along {

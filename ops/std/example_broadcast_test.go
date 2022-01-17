@@ -1,6 +1,7 @@
 package stdops
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/chewxy/hm"
@@ -31,9 +32,23 @@ func ExampleBroadcast() {
 	if expectedShape, err = shapecheck(op, a, b); err != nil {
 		fmt.Printf("Expected Broadcast to pass shape checking. Err: %v\n", err)
 	}
-	_ = c
-	fmt.Printf("Expected Type %v\nExpected Shape %v\n", expectedType, expectedShape)
+	fmt.Printf("Expected Type: %v\nExpected Shape: %v\n", expectedType, expectedShape)
+
+	if c, err = op.Do(context.Background(), a, b); err != nil {
+		fmt.Printf("Err: %v", err)
+	}
+	fmt.Printf("a:\n%v\nb: %v\nc = a %v b:\n%v\n", a, b, op, c)
 
 	// Output:
-	// TODO
+	// Expected Type: Matrix float64
+	// Expected Shape: (2, 3)
+	// a:
+	// ⎡1  2  3⎤
+	// ⎣4  5  6⎦
+	//
+	// b: R[10  20  30]
+	// c = a ¨+ b:
+	// ⎡11  22  33⎤
+	// ⎣14  25  36⎦
+
 }
