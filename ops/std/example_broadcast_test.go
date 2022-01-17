@@ -35,5 +35,5 @@ func ExampleBroadcast() {
 	fmt.Printf("Expected Type %v\nExpected Shape %v\n", expectedType, expectedShape)
 
 	// Output:
-	// xx.
+	// TODO
 }

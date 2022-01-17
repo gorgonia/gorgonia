@@ -59,6 +59,16 @@ func (pat bcPat) on() (retVal [2][]int) {
 
 // Broadcast is an Op that performs broadcasting.
 // While it's modeled as a higher order function, it's not actually a fully higher order function.
+//
+// Consider the type signature and shape signature of a hypothetical higher-order-function `Broadcast`:
+// 	(a → b → c) → a → b → c
+// 	{(a → b → c) → a → b → (a|b) | IsBroadcastable(a, b)}
+// While it is perfectly doable to have such a function, in real life, we're not going to be broadcasting
+// that many functions. Instead, we're just going to be broadcasting a few binary functions.
+//
+// So instead, we parameterize the `Op`. This makes the
+// constructor `Auto` quite necessary. The constructor would make any number of different kinds of
+// `Broadcast` op.
 type Broadcast struct {
 	op      ops.Op
 	pattern bcPat
@@ -69,6 +79,9 @@ type Broadcast struct {
 
 // Auto creates a Broadcast Op.
 func Auto(op ops.Op, a, b ops.Operand) (ops.Op, error) {
+	if op.Arity() != 2 {
+		return nil, errors.Errorf("Broadcast only broadcasts binary operations. %v has an arity of %d", op, op.Arity())
+	}
 	aShape := a.Shape()
 	bShape := b.Shape()
 
@@ -116,10 +129,10 @@ func (op *Broadcast) Do(ctx context.Context, vs ...values.Value) (retVal values.
 	b := vs[1].(tensor.Tensor)
 
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal = op.alloc(ctx2, a, b)
-	err = op.do(ctx2, retVal, a, b)
+	newA, newB, prealloc := op.alloc(ctx, a, b)
+	err = op.do(ctx2, prealloc, newA, newB, a, b)
 	task.End()
-	return
+	return prealloc, err
 }
 
 func (op *Broadcast) String() string { return fmt.Sprintf("¨%v", op.op) } // The ¨ symbol is the Diaeresis symbol (U+00A8), not the Combining Diaeresis (U+0308).
@@ -127,18 +140,97 @@ func (op *Broadcast) String() string { return fmt.Sprintf("¨%v", op.op) } // Th
 // SaveRetShape allows the final shape from the shape system to be cached in the op.
 func (op *Broadcast) SaveRetShape(ret shapes.Shape) { op.retShape = ret }
 
-func (op *Broadcast) alloc(ctx context.Context, a, b tensor.Tensor) (retVal values.Value) {
+func (op *Broadcast) alloc(ctx context.Context, a, b tensor.Tensor) (newA, newB, prealloc values.Value) {
 	broadcastOn := op.pattern.on()
 	leftOperand := broadcastOn[0]
 	rightOperand := broadcastOn[1]
-	_, _ = leftOperand, rightOperand
-	panic("NYI")
+	ashp := a.Shape()
+	bshp := b.Shape()
+	newShape := computeNewShape(ashp, bshp, leftOperand)
+
+	if !newShape.Eq(ashp) {
+		newA = tensor.New(tensor.WithShape(newShape...), tensor.WithEngine(a.Engine()), tensor.Of(a.Dtype()))
+	}
+
+	newShape = computeNewShape(bshp, newShape, rightOperand)
+
+	if !newShape.Eq(bshp) {
+		newB = tensor.New(tensor.WithShape(newShape...), tensor.WithEngine(b.Engine()), tensor.Of(b.Dtype()))
+	}
+
+	prealloc = tensor.New(tensor.WithShape(newShape...), tensor.WithEngine(a.Engine()), tensor.Of(a.Dtype()))
+	return
 }
 
-func (op *Broadcast) do(ctx context.Context, prealloc, a, b values.Value) (err error) {
-	panic("NYI")
+/*
+   example cases:
+
+   a (2, 1) b (2, 3) along: {1}
+   repeat along axis 0, repeats = 3
+
+   a (1, 3) b (2, 3) along: {0}
+   repeat along axis 1, repeats = 2
+
+   a (2, 1, 3) b (2, 4, 3) along: {1}
+   repeat along axis 1, repeats = 4
+
+   a (2, 1, 1) b (2, 4, 3) along: {1, 2}
+   repeat along axis 1, repeats = 4
+   repeat along axis 2, repeats = 3
+*/
+func (op *Broadcast) do(ctx context.Context, prealloc, newA, newB, a, b values.Value) (err error) {
+	if err = gctx.Handle(ctx); err != nil {
+		return err
+	}
+	on := op.pattern.on()
+	if len(on[0]) > 0 {
+		if err = op.repeat(on[0], newA, a, b); err != nil {
+			return errors.Wrap(err, "While doing Broadcast on left operand")
+		}
+	} else {
+		newA = a
+	}
+
+	if len(on[1]) > 0 {
+		if err = op.repeat(on[1], newB, b, a); err != nil {
+			return errors.Wrap(err, "While doing Broadcast on right operand")
+		}
+	} else {
+		newB = b
+	}
+	p := op.op.(ops.PreallocOp)
+	_, err = p.PreallocDo(ctx, prealloc, newA, newB)
+	return err
 }
 
+func (op *Broadcast) repeat(along []int, prealloc, toBeRepeated, reference values.Value) (err error) {
+	shp := reference.Shape()
+	for _, ax := range along {
+		reps := shp[ax]
+		if prealloc, err = tensor.RepeatReuse(toBeRepeated, prealloc, ax, reps); err != nil {
+			return errors.Wrapf(err, "Cannot repeat along axis %d of %v", ax, toBeRepeated)
+		}
+	}
+	return nil
+}
+
+// computeNewShape assumes `a` and `b` have the same Dims().
+// computeNewShape assumes broadcastAlong has the correct values (i.e. doesn't contain Dims() not in `a` or `b`)
+func computeNewShape(a, b shapes.Shape, broadcastAlong []int) shapes.Shape {
+	newShape := a.Clone()
+	for _, i := range broadcastAlong {
+		if newShape[i] != 1 {
+			err := errors.Errorf("%dth dim of `a` is not broadcastable. a: %v b %v broadcastAlong %v", i, a, b, broadcastAlong)
+			panic(err)
+		}
+		newShape[i] = b[i]
+	}
+	return newShape
+}
+
+// calcBCShape computes the shape to be reshaped to. e.g.
+// 	a: (3,), b: (2, 3), broadcastAlong: {0}
+// will compute (3,1) for `a`.
 func calcBCShape(shp shapes.Shape, expectedDims int, broadcastAlong []int) (newShape shapes.Shape) {
 	if shp.Dims() == expectedDims {
 		newShape = shp.Clone()
