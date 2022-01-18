@@ -140,7 +140,7 @@ func MaxFloat32(cl []float32) (float32, int) {
 }
 
 // Rectify Creates rectangle
-func Rectify(x, y, h, w, maxwidth, maxheight int) image.Rectangle {
+func Rectify(x, y, w, h, maxwidth, maxheight int) image.Rectangle {
 	return image.Rect(MaxInt(x-w/2, 0), MaxInt(y-h/2, 0), MinInt(x+w/2+1, maxwidth), MinInt(y+h/2+1, maxheight))
 }
 
