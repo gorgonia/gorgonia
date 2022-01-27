@@ -29,6 +29,7 @@ type tapeMachine struct {
 	bindNodesDV  Nodes // nodes that require binding of DV
 	watchNodes   Nodes
 	watchRegs    []register
+	watchNodeIDs []NodeID
 	logger       *log.Logger
 	buf          *bytes.Buffer
 	valueFmt     string
@@ -252,7 +253,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 				instr: m.pc,
 				node:  errNode,
 			}
-			//panic(r)
+			// panic(r)
 			errChan <- err
 		}
 	}()
@@ -354,19 +355,21 @@ func (m *tapeMachine) watchedLogf(format string, attrs ...interface{}) {
 				}
 			}
 		}
-	}
+		if watched {
+			goto end
+		}
 
-	if !watched {
 		for _, watch := range m.watchRegs {
 			if watch.id == writes.id {
 				watched = true
 				break
 			}
 		}
-	}
 
-	// TODO: Work on watched nodes
-	if !watched {
+		if watched {
+			goto end
+		}
+
 		n := m.nodeFromInstr(instr)
 		for _, watch := range m.watchNodes {
 			if watch == n {
@@ -374,11 +377,24 @@ func (m *tapeMachine) watchedLogf(format string, attrs ...interface{}) {
 				break
 			}
 		}
+		if watched {
+			goto end
+		}
+
+		for _, watch := range m.watchNodeIDs {
+			if int64(watch) == n.ID() {
+				watched = true
+				break
+			}
+		}
+	}
+	if !watched {
+		return
 	}
 
-	if watched {
-		m.logf(format, attrs...)
-	}
+end:
+	m.logf(format, attrs...)
+
 }
 
 func (m *tapeMachine) logf(format string, attrs ...interface{}) {

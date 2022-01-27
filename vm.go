@@ -119,6 +119,8 @@ func WithWatchlist(list ...interface{}) VMOpt {
 				switch i := item.(type) {
 				case int:
 					v.watchRegs = append(v.watchRegs, register{id: i})
+				case NodeID:
+					v.watchNodeIDs = append(v.watchNodeIDs, i)
 				case *Node:
 					v.watchNodes = append(v.watchNodes, i)
 				default:
