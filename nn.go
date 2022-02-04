@@ -395,6 +395,8 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 
 	saveMean := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	saveVar := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	alpha := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	beta := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 
 	var uno interface{}
 	switch dt {
@@ -427,6 +429,9 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 
 		saveMean:     saveMean,
 		saveVariance: saveVar,
+
+		alpha: alpha,
+		beta:  beta,
 
 		training: true,
 		dims:     x.Dims(),

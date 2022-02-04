@@ -1152,8 +1152,10 @@ type BatchNormOp struct {
 
 	// learnables
 	runningMean, runningVariance *tensor.Dense
+	saveMean, saveVariance       *tensor.Dense
 
-	saveMean, saveVariance *tensor.Dense
+	// internal use
+	alpha, beta *tensor.Dense // shape: (channels, )
 
 	// training? if training then update movingMean and movingVar
 	training bool
@@ -1413,8 +1415,8 @@ func (op *BatchNormOp) calculateAlphaAndBetaF64(batchSize, channels, spatialDim 
 	runningVar := op.runningVariance.Float64s()
 	n := spatialDim * batchSize
 
-	alpha = make([]float64, channels)
-	beta = make([]float64, channels)
+	alpha = op.alpha.Float64s()
+	beta = op.beta.Float64s()
 
 	for c := 0; c < channels; c++ {
 		var invStd, mean float64
@@ -1446,9 +1448,10 @@ func (op *BatchNormOp) f64s(input, output, scale, bias *tensor.Dense) (err error
 		saveMean, saveVar := op.updateStatsF64(batchSize, channels, spatialDim, input)
 		alpha, beta = op.calculateAlphaAndBetaF64(batchSize, channels, spatialDim, scale, bias, saveMean, saveVar)
 	} else {
-		saveMean := make([]float64, channels)
-		saveVar := make([]float64, channels)
-
+		op.saveMean.Zero()
+		op.saveVariance.Zero()
+		saveMean := op.saveMean.Float64s()
+		saveVar := op.saveVariance.Float64s()
 		alpha, beta = op.calculateAlphaAndBetaF64(batchSize, channels, spatialDim, scale, bias, saveMean, saveVar)
 	}
 
@@ -1555,8 +1558,8 @@ func (op *BatchNormOp) calculateAlphaAndBetaF32(batchSize, channels, spatialDim 
 
 	n := spatialDim * batchSize
 
-	alpha = make([]float32, channels)
-	beta = make([]float32, channels)
+	alpha = op.alpha.Float32s()
+	beta = op.beta.Float32s()
 
 	for c := 0; c < channels; c++ {
 		var invStd, mean float32
@@ -1588,9 +1591,10 @@ func (op *BatchNormOp) f32s(input, output, scale, bias *tensor.Dense) (err error
 		saveMean, saveVar := op.updateStatsF32(batchSize, channels, spatialDim, input)
 		alpha, beta = op.calculateAlphaAndBetaF32(batchSize, channels, spatialDim, scale, bias, saveMean, saveVar)
 	} else {
-		saveMean := make([]float32, channels)
-		saveVar := make([]float32, channels)
-
+		op.saveMean.Zero()
+		op.saveVariance.Zero()
+		saveMean := op.saveMean.Float32s()
+		saveVar := op.saveVariance.Float32s()
 		alpha, beta = op.calculateAlphaAndBetaF32(batchSize, channels, spatialDim, scale, bias, saveMean, saveVar)
 	}
 
