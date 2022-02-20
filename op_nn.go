@@ -518,12 +518,15 @@ func (op col2imOp) do(prealloc, input Value) (retVal Value, err error) {
 	imEnd = imStart + batchStrideIm
 	colEnd = colStart + batchStrideCol
 
+	var wg sync.WaitGroup
+	workers := make(chan struct{}, runtime.NumCPU())
 	switch input.Dtype() {
 	case tensor.Float64:
 		colData := input.Data().([]float64)
 		imData := prealloc.Data().([]float64)
 		for i := 0; i < b; i++ {
-			op.f64s(c, retHeight, retWidth, chanStride, h, w, colData[colStart:colEnd], imData[imStart:imEnd])
+			wg.Add(1)
+			go op.f64s(c, retHeight, retWidth, chanStride, h, w, colData[colStart:colEnd], imData[imStart:imEnd], &wg, workers)
 
 			colStart += batchStrideCol
 			colEnd += batchStrideCol
@@ -542,7 +545,8 @@ func (op col2imOp) do(prealloc, input Value) (retVal Value, err error) {
 		colData := input.Data().([]float32)
 		imData := prealloc.Data().([]float32)
 		for i := 0; i < b; i++ {
-			op.f32s(c, retHeight, retWidth, chanStride, h, w, colData[colStart:colEnd], imData[imStart:imEnd])
+			wg.Add(1)
+			go op.f32s(c, retHeight, retWidth, chanStride, h, w, colData[colStart:colEnd], imData[imStart:imEnd], &wg, workers)
 
 			colStart += batchStrideCol
 			colEnd += batchStrideCol
@@ -560,11 +564,12 @@ func (op col2imOp) do(prealloc, input Value) (retVal Value, err error) {
 	default:
 		return nil, errors.Errorf(nyiFail, "col2im", input.Dtype())
 	}
-
+	wg.Wait()
 	return prealloc, nil
 }
 
-func (op col2imOp) f64s(chans, height, width, chanStride, retHeight, retWidth int, col, im []float64) {
+func (op col2imOp) f64s(chans, height, width, chanStride, retHeight, retWidth int, col, im []float64, wg *sync.WaitGroup, workers chan struct{}) {
+	workers <- struct{}{}
 	// memset im to 0
 	for i := 0; i < len(im); i++ {
 		im[i] = 0
@@ -593,9 +598,12 @@ func (op col2imOp) f64s(chans, height, width, chanStride, retHeight, retWidth in
 			}
 		}
 	}
+	<-workers
+	wg.Done()
 }
 
-func (op col2imOp) f32s(chans, height, width, chanStride, retHeight, retWidth int, col, im []float32) {
+func (op col2imOp) f32s(chans, height, width, chanStride, retHeight, retWidth int, col, im []float32, wg *sync.WaitGroup, workers chan struct{}) {
+	workers <- struct{}{}
 	// memset im to 0
 	for i := 0; i < len(im); i++ {
 		im[i] = 0
@@ -624,6 +632,8 @@ func (op col2imOp) f32s(chans, height, width, chanStride, retHeight, retWidth in
 			}
 		}
 	}
+	<-workers
+	wg.Done()
 }
 
 // It's important to note that this op actually produces TWO values - one argmax, which will be used
