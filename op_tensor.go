@@ -631,8 +631,8 @@ func (op sliceOp) WriteHash(h hash.Hash) {
 	if err := binary.Write(h, binary.LittleEndian, byte(op.Step())); err != nil {
 		panic(err)
 	}
-
 }
+
 func (op sliceOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op sliceOp) String() string {
