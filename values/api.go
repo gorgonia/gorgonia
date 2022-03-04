@@ -6,6 +6,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/dtype"
 	"gorgonia.org/gorgonia/internal/datatypes"
 	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/internal/memutils"
@@ -64,24 +65,11 @@ func One(dt tensor.Dtype) Scalar {
 // The reason for abstracting out this function is because this function is
 // linkname'd in various other subpackages.
 func nativeOne(dt tensor.Dtype) interface{} {
-	switch dt {
-	case tensor.Float64:
-		return float64(1)
-	case tensor.Float32:
-		return float32(1)
-	case tensor.Int:
-		return int(1)
-	case tensor.Int32:
-		return int32(1)
-	case tensor.Int64:
-		return int64(1)
-	case tensor.Byte:
-		return byte(1)
-	case tensor.Bool:
-		return true
-	default:
-		panic("Unhandled dtype")
+	r, err := dtype.FromInt(1)
+	if err != nil {
+		panic(err)
 	}
+	return r
 }
 
 // Zero creates a Value of the given Dtype with the equivalent value of 0.

@@ -183,3 +183,19 @@ func Example_backward_differentiation_engine() {
 	// ⎡0  0⎤
 	// ⎣0  0⎦
 }
+
+/*
+func Example_backward_differentiation_engine_samenodename() {
+	engine := &BwdEngine{}
+	g := exprgraph.NewGraph(engine)
+	engine.g = g
+
+	x := exprgraph.NewNode(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	x2 := exprgraph.NewNode(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{100, 200, 300, 400, 500, 600}))
+
+	fmt.Printf("%v\n%v", x, x2)
+
+	// Output:
+
+}
+*/
