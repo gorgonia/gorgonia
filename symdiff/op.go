@@ -11,7 +11,7 @@ type Op interface {
 
 	DiffWRT(inputs int) []bool
 
-	SymDiff(inputs []*exprgraph.Node, output, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error)
+	SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error)
 }
 
 func isStmt(op Op) bool { _, ok := op.(ops.Statement); return ok }

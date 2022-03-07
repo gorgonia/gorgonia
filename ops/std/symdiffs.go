@@ -91,3 +91,17 @@ func (op divOp) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *ex
 	g.SetGroup(dzdy, encoding.GradientCluster)
 	return []*exprgraph.Node{dzdx, dzdy}, nil
 }
+
+/* TENSOR FUNCTION SYMDIFFS */
+
+// SymDiff performs the symbolic differentiation of Reshape
+func (op *Reshape) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	x := inputs[0]
+	op2 := &Reshape{To: x.Shape().Clone()}
+	dydx, err := apply(g, op2, grN(x), grad)
+	if err != nil {
+		return nil, errors.Wrapf(err, symdiffErr, op, grN(x))
+	}
+	setGroup(g, encoding.GradientCluster, dydx)
+	return []*exprgraph.Node{dydx}, nil
+}

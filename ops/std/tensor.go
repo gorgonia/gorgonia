@@ -6,6 +6,7 @@ import (
 	"runtime/trace"
 
 	"github.com/chewxy/hm"
+	"github.com/pkg/errors"
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
@@ -55,20 +56,21 @@ func (op At) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, e
 func (op At) String() string { return fmt.Sprintf("At(%v)", []int(op)) }
 
 // Size is an operation that gets the size of a given axis in a shape. It returns the size in the datatype of the input
-type Size int
+type Size uint
 
 func (op Size) Arity() int { return 1 }
 
 func (op Size) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	b := hm.TypeVariable('b')
-	return hm.NewFnType(a, b)
+	t := types.MakeTensorType(0, types.Ptr) // types.Ptr is a dummy dtype. types.Dependent relies on the dtype of `a` and the dims of `t`
+	return hm.NewFnType(a, types.MakeDependent(t, a))
 }
 
 func (op Size) ShapeExpr() shapes.Expr {
 	return shapes.MakeArrow(
 		shapes.Var('a'),
-		shapes.IndexOf{I: shapes.Size(op), A: shapes.Var('a')},
+		// shapes.IndexOf{I: shapes.Size(op), A: shapes.Var('a')},
+		shapes.ScalarShape(),
 	)
 }
 
@@ -81,11 +83,14 @@ func (op Size) Do(ctx context.Context, vs ...values.Value) (retVal values.Value,
 	if shp.Eq(shapes.ScalarShape()) {
 		return values.MakeScalarOf(v.Dtype(), 1), nil
 	}
+	if int(op) >= shp.Dims() {
+		return nil, errors.Errorf("Input has shape %v, which has %d dims. Want dim %d.", shp, shp.Dims(), int(op))
+	}
 
 	return values.MakeScalarOf(v.Dtype(), shp[int(op)]), nil
 }
 
-func (op Size) String() string { return "Sz" }
+func (op Size) String() string { return fmt.Sprintf("Sz[%d]", int(op)) }
 
 // Repeat1 is the old style repeat
 type Repeat1 struct {
@@ -104,7 +109,10 @@ func (op Repeat1) PreallocDo(ctx context.Context, prealloc values.Value, vs ...v
 }
 
 // Repeat :: along:int → n:int → a:Tensor → result:Tensor
-type Repeat struct{}
+type Repeat struct {
+	n     int
+	along int
+}
 
 func (op Repeat) Arity() int             { return 3 }
 func (op Repeat) Type() hm.Type          { panic("NYI") }
@@ -121,8 +129,38 @@ type Slice struct{}
 
 type sliceDiff struct{ Slice }
 
-type Transpose struct{}
-
 type Concat struct{}
 
-type Reshape struct{}
+// Reshape is an Op representing a reshape operation.
+type Reshape struct {
+	To shapes.Shape
+}
+
+func (op *Reshape) Arity() int { return 1 }
+func (op *Reshape) Type() hm.Type {
+	a := hm.TypeVariable('a')
+	t := types.MakeTensorType(op.To.Dims(), types.Ptr) // here we use types.Ptr but because we are using types.Dependent, the resulting type only cares about the dims of `t`, not the `t.Of`
+	return hm.NewFnType(a, types.MakeDependent(t, a))
+}
+func (op *Reshape) ShapeExpr() shapes.Expr { return shapes.MakeArrow(shapes.Var('a'), op.To) } // TODO: take advantage of shapes library's checking options
+
+func (op *Reshape) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+	if err := gctx.Handle(ctx); err != nil {
+		return nil, err
+	}
+
+	v, err := values.ShallowClone(vs[0])
+	if err != nil {
+		return nil, errors.Wrapf(err, "Reshape failed. Cannot reshape %v to %v", v.Shape(), op.To)
+	}
+
+	if err = v.Reshape(op.To...); err != nil {
+		return nil, errors.Wrapf(err, "Reshape failed. Cannot reshape %v to %v", v.Shape(), op.To)
+	}
+	return v, nil
+
+}
+
+func (op *Reshape) String() string { return fmt.Sprintf("ReshapeTo %v", op.To) }
+
+func (op *Reshape) DiffWRT(inputs int) []bool { return onetrue }

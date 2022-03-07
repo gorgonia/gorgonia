@@ -65,7 +65,7 @@ func One(dt tensor.Dtype) Scalar {
 // The reason for abstracting out this function is because this function is
 // linkname'd in various other subpackages.
 func nativeOne(dt tensor.Dtype) interface{} {
-	r, err := dtype.FromInt(1)
+	r, err := dtype.FromInt(dt, 1)
 	if err != nil {
 		panic(err)
 	}
@@ -187,6 +187,19 @@ func Clone(v Value) (Value, error) {
 	}
 }
 
+// ShallowClone clones a value without making a copy of the underlying data.
+// If A and B are shallow clones of C then if A modifies the data, B will see the modification too.
+// The whole purpose of ShallowClone is for there to be multiple "views" of the same underlying data:
+// e.g. A and B could be reshapes or slices of C.
+func ShallowClone(v Value) (Value, error) {
+	switch vt := v.(type) {
+	case denseShallowCloner:
+		return vt.ShallowClone(), nil
+	default:
+		return nil, errors.Errorf("Unable to shallow clone value of type %T", v)
+	}
+}
+
 // ZeroValue returns the zero value of a type
 func ZeroValue(v Value) Value {
 	switch vt := v.(type) {
@@ -239,4 +252,8 @@ func SetEngine(v Value, e tensor.Engine) {
 
 type engineSetter interface {
 	SetEngine(e tensor.Engine)
+}
+
+type denseShallowCloner interface {
+	ShallowClone() *tensor.Dense
 }
