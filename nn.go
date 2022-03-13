@@ -432,7 +432,7 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 		dims:     x.Dims(),
 	}
 
-	if retVal, err = ApplyOp(op, x, scale, bias); err != nil {
+	if retVal, err = ApplyOp(op, x); err != nil {
 		return nil, nil, nil, nil, err
 	}
 

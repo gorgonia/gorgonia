@@ -366,8 +366,6 @@ func TestBatchNormAll(t *testing.T) {
 
 			y = Must(Mul(y, wT))
 
-			op.SetTraining(true)
-
 			var yVal, scaleVal Value
 			Read(y, &yVal)
 			Read(scale, &scaleVal)
@@ -378,7 +376,7 @@ func TestBatchNormAll(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			m := NewTapeMachine(g, BindDualValues(x, scale, bias), TraceExec(), WithInfWatch())
+			m := NewTapeMachine(g, BindDualValues(x, scale, bias), TraceExec(), WithInfWatch(), WithNaNWatch())
 
 			err = m.RunAll()
 			c.NoError(err)
@@ -391,6 +389,7 @@ func TestBatchNormAll(t *testing.T) {
 			t.Logf("%v running var: %v", tC.desc, op.runningVariance)
 			t.Logf("%v output:\n%v", tC.desc, y.Value())
 			t.Logf("%v output grad:\n%v", tC.desc, y.Deriv().Value())
+			t.Logf("%v scale: %v", tC.desc, scale.Value())
 			t.Logf("%v scale grad: %v", tC.desc, scale.Deriv().Value())
 			t.Logf("%v bias grad: %v", tC.desc, bias.Deriv().Value())
 			t.Logf("%v input grad:\n%v", tC.desc, x.Deriv().Value())
@@ -411,14 +410,18 @@ func TestBatchNormAll(t *testing.T) {
 
 			t.Logf("-------- Switching to Eval Mode --------")
 
-			m2 := NewTapeMachine(g, TraceExec(), WithInfWatch(), EvalMode())
+			m2 := NewTapeMachine(g, TraceExec(), WithNaNWatch(), WithInfWatch(), EvalMode())
 
 			err = m2.RunAll()
 			c.NoError(err)
 			c.NoError(m2.Close())
 
+			t.Logf("%v output:\n%v", tC.desc, yVal.Data())
 			t.Logf("%v input grad:\n%v", tC.desc, x.Deriv().Value())
+			t.Logf("%v bias: %v", tC.desc, bias.Value())
 			t.Logf("%v bias grad: %v", tC.desc, bias.Deriv().Value())
+			t.Logf("%v scale: %v", tC.desc, scale.Value())
+			t.Logf("%v scale grad: %v", tC.desc, scale.Deriv().Value().Data())
 
 			c.True(dawson.AllClose(tC.ExpectedEvalResult, yVal.Data()), "Output doesn't match\ngot=%#v\nexpected=%#v", yVal.Data(), tC.ExpectedEvalResult)
 		})
