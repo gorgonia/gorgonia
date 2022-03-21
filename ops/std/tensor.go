@@ -90,6 +90,24 @@ func (op Size) Do(ctx context.Context, vs ...values.Value) (retVal values.Value,
 	return values.MakeScalarOf(v.Dtype(), shp[int(op)]), nil
 }
 
+func (op Size) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+	if err := gctx.Handle(ctx); err != nil {
+		return nil, err
+	}
+	v := vs[0].(tensor.Tensor)
+	shp := v.Shape()
+	if shp.Eq(shapes.ScalarShape()) {
+		err = values.CopyScalarOf(v.Dtype(), prealloc.(values.Scalar), 1)
+		return prealloc, err
+	}
+	if int(op) >= shp.Dims() {
+		return nil, errors.Errorf("Input has shape %v, which has %d dims. Want dim %d.", shp, shp.Dims(), int(op))
+	}
+	err = values.CopyScalarOf(v.Dtype(), prealloc.(values.Scalar), shp[int(op)])
+	return prealloc, err
+
+}
+
 func (op Size) String() string { return fmt.Sprintf("Sz[%d]", int(op)) }
 
 // Repeat1 is the old style repeat
@@ -125,7 +143,38 @@ func (op Repeat) PreallocDo(ctx context.Context, prealloc values.Value, vs ...va
 	panic("NYI")
 }
 
-type Slice struct{}
+// Slice _{Slices} :: Tensor → a
+// The list of slices are parameterized
+type Slice struct {
+	Slices shapes.Slices
+}
+
+func (op Slice) Arity() int { return 1 }
+func (op Slice) Type() hm.Type {
+	a := hm.TypeVariable('a')
+	r := &types.Sliced{Of: a, Along: op.Slices}
+	return hm.NewFnType(a, r)
+}
+
+func (op Slice) ShapeExpr() shapes.Expr {
+	a := shapes.Var('a')
+	r := shapes.SliceOf{
+		Slice: op.Slices,
+		A:     a,
+	}
+	return shapes.MakeArrow(a, r)
+}
+
+func (op Slice) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+	if err := gctx.Handle(ctx); err != nil {
+		return nil, err
+	}
+
+	v := vs[0]
+	return v.Slice(op.Slices...)
+}
+
+func (op Slice) String() string { return fmt.Sprintf("%v", op.Slices) }
 
 type sliceDiff struct{ Slice }
 

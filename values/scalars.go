@@ -24,6 +24,16 @@ func MakeScalarOf(dt dtype.Dtype, v int) Scalar {
 	return MakeScalar(r)
 }
 
+// CopyScalarOf copies the scalar value
+func CopyScalarOf(dt dtype.Dtype, to Scalar, v int) error {
+	r, err := dtype.FromInt(dt, v)
+	if err != nil {
+		return err
+	}
+	to.Set(0, r)
+	return nil
+}
+
 func (s Scalar) Clone() interface{} {
 	return Scalar{s.Dense.Clone().(*tensor.Dense)}
 }

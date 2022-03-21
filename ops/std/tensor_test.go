@@ -42,6 +42,40 @@ func TestAt(t *testing.T) {
 	assert.True(t, expectedShape.Eq(b.Shape()))
 	correct := 5.0
 	assert.Equal(t, correct, b.Data())
+}
+
+func TestSlice(t *testing.T) {
+	op := &Slice{Slices: shapes.Slices{shapes.S(1, 2), shapes.S(0, 2)}}
+
+	// basic test
+	assert.Equal(t, 1, op.Arity())
+
+	// set up
+	var a, b values.Value
+	var expectedType hm.Type
+	var expectedShape shapes.Shape
+	var err error
+
+	a = tensor.New(tensor.WithShape(2, 3, 2), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}))
+
+	// type and shape checks
+	if expectedType, err = typecheck(op, a); err != nil {
+		t.Fatalf("Expected Slice{} to pass type checking. Err: %v", err)
+	}
+	if expectedShape, err = shapecheck(op, a); err != nil {
+		t.Fatalf("Expected Slice{} to pass shape checking. Err: %v", err)
+	}
+
+	// actually doing and testing
+	if b, err = op.Do(context.Background(), a); err != nil {
+		t.Fatalf("Expected Slice{} to work correctly. Err: %v", err)
+	}
+	assert.Equal(t, expectedType, datatypes.TypeOf(b))
+	assert.True(t, expectedShape.Eq(b.Shape()))
+	correct := []float64{7, 8, 9, 10}
+	assert.Equal(t, correct, b.Data())
+
+	t.Logf("\n%v \n%v \n%v", a, op, b)
 
 }
 
