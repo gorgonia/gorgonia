@@ -1218,9 +1218,9 @@ func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal N
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
-	input := inputs[0]
 
 	diff := &batchnormDiffOp{op}
+	input := inputs[0]
 
 	var dy *Node
 	if dy, err = ApplyOp(diff, input, grad); err != nil {
@@ -1328,9 +1328,8 @@ func (op *BatchNormOp) updateStatsF64(batchSize, channels, spatialDim int, input
 	runningVar := op.runningVariance.Float64s()
 	n := spatialDim * batchSize
 
-	// NOTE: this can be parallelized by channel, should we?
 	if spatialDim == 1 { // image size = 1
-		for c := 0; c < channels; c++ {
+		runInParallel(0, channels, func(c int) {
 			for s := 0; s < batchSize; s++ {
 				i := s*channels + c
 
@@ -1349,9 +1348,9 @@ func (op *BatchNormOp) updateStatsF64(batchSize, channels, spatialDim int, input
 
 			unbiasedVar := saveVar[c] / float64(n-1)
 			runningVar[c] = (momentum*unbiasedVar + (1-momentum)*runningVar[c])
-		}
+		})
 	} else { // image size > 1
-		for c := 0; c < channels; c++ {
+		runInParallel(0, channels, func(c int) {
 			for s := 0; s < batchSize; s++ {
 				for d := 0; d < spatialDim; d++ {
 					i := s*channels*spatialDim + c*spatialDim + d
@@ -1376,7 +1375,7 @@ func (op *BatchNormOp) updateStatsF64(batchSize, channels, spatialDim int, input
 
 			unbiasedVar := saveVar[c] / float64(n-1)
 			runningVar[c] = (momentum*unbiasedVar + (1-momentum)*runningVar[c])
-		}
+		})
 	}
 
 	return saveMean, saveVar
@@ -1392,7 +1391,7 @@ func (op *BatchNormOp) calculateAlphaAndBetaF64(batchSize, channels, spatialDim 
 	alpha = make([]float64, channels)
 	beta = make([]float64, channels)
 
-	for c := 0; c < channels; c++ {
+	runInParallel(0, channels, func(c int) {
 		var invStd, mean float64
 
 		if op.training {
@@ -1405,7 +1404,7 @@ func (op *BatchNormOp) calculateAlphaAndBetaF64(batchSize, channels, spatialDim 
 
 		alpha[c] = invStd
 		beta[c] = -(mean * alpha[c])
-	}
+	})
 
 	return alpha, beta
 }
@@ -1432,15 +1431,15 @@ func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
 	outputF64s := output.Float64s()
 
 	if spatialDim == 1 {
-		for s := 0; s < batchSize; s++ {
+		runInParallel(0, batchSize, func(s int) {
 			for c := 0; c < channels; c++ {
 				i := s*channels + c
 
 				outputF64s[i] = outputF64s[i]*alpha[c] + beta[c]
 			}
-		}
+		})
 	} else {
-		for c := 0; c < channels; c++ {
+		runInParallel(0, channels, func(c int) {
 			for s := 0; s < batchSize; s++ {
 				for d := 0; d < spatialDim; d++ {
 					i := s*channels*spatialDim + c*spatialDim + d
@@ -1448,7 +1447,7 @@ func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
 					outputF64s[i] = outputF64s[i]*alpha[c] + beta[c]
 				}
 			}
-		}
+		})
 	}
 
 	return nil
@@ -1469,9 +1468,8 @@ func (op *BatchNormOp) updateStatsF32(batchSize, channels, spatialDim int, input
 	runningVar := op.runningVariance.Float32s()
 	n := spatialDim * batchSize
 
-	// NOTE: this can be parallelized by channel, should we?
 	if spatialDim == 1 { // image size = 1
-		for c := 0; c < channels; c++ {
+		runInParallel(0, channels, func(c int) {
 			for s := 0; s < batchSize; s++ {
 				i := s*channels + c
 
@@ -1490,9 +1488,9 @@ func (op *BatchNormOp) updateStatsF32(batchSize, channels, spatialDim int, input
 
 			unbiasedVar := (saveVar[c]) / float32(n-1)
 			runningVar[c] = (momentum*unbiasedVar + (1-momentum)*(runningVar[c]))
-		}
+		})
 	} else { // image size > 1
-		for c := 0; c < channels; c++ {
+		runInParallel(0, channels, func(c int) {
 			for s := 0; s < batchSize; s++ {
 				for d := 0; d < spatialDim; d++ {
 					i := s*channels*spatialDim + c*spatialDim + d
@@ -1517,7 +1515,7 @@ func (op *BatchNormOp) updateStatsF32(batchSize, channels, spatialDim int, input
 
 			unbiasedVar := saveVar[c] / float32(n-1)
 			runningVar[c] = momentum*unbiasedVar + (1-momentum)*float32(runningVar[c])
-		}
+		})
 	}
 
 	return saveMean, saveVar
@@ -1534,7 +1532,7 @@ func (op *BatchNormOp) calculateAlphaAndBetaF32(batchSize, channels, spatialDim 
 	alpha = make([]float32, channels)
 	beta = make([]float32, channels)
 
-	for c := 0; c < channels; c++ {
+	runInParallel(0, channels, func(c int) {
 		var invStd, mean float32
 
 		if op.training {
@@ -1545,9 +1543,9 @@ func (op *BatchNormOp) calculateAlphaAndBetaF32(batchSize, channels, spatialDim 
 			invStd = 1 / math32.Sqrt(runningVar[c]+float32(op.epsilon))
 		}
 
-		alpha[c] = (invStd)
-		beta[c] = -(mean * alpha[c])
-	}
+		alpha[c] = invStd
+		beta[c] = -mean * alpha[c]
+	})
 
 	return alpha, beta
 }
@@ -1564,26 +1562,23 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 		saveMean, saveVar := op.updateStatsF32(batchSize, channels, spatialDim, input)
 		alpha, beta = op.calculateAlphaAndBetaF32(batchSize, channels, spatialDim, saveMean, saveVar)
 	} else {
-		saveMean := make([]float32, channels)
-		saveVar := make([]float32, channels)
-
-		alpha, beta = op.calculateAlphaAndBetaF32(batchSize, channels, spatialDim, saveMean, saveVar)
+		alpha, beta = op.calculateAlphaAndBetaF32(batchSize, channels, spatialDim, nil, nil)
 	}
 
 	// output = input * alpha + beta
 	outputF32s := output.Float32s()
 
 	if spatialDim == 1 {
-		for s := 0; s < batchSize; s++ {
+		runInParallel(0, batchSize, func(s int) {
 			for c := 0; c < channels; c++ {
 				i := s*channels + c
 
 				outputF32s[i] = outputF32s[i]*alpha[c] + beta[c]
 			}
-		}
+		})
 
 	} else {
-		for c := 0; c < channels; c++ {
+		runInParallel(0, channels, func(c int) {
 			for s := 0; s < batchSize; s++ {
 				for d := 0; d < spatialDim; d++ {
 					i := s*channels*spatialDim + c*spatialDim + d
@@ -1591,7 +1586,7 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 					outputF32s[i] = outputF32s[i]*alpha[c] + beta[c]
 				}
 			}
-		}
+		})
 	}
 
 	return nil
@@ -1701,7 +1696,7 @@ func (op *batchnormDiffOp) f64s(input, prealloc, outGrad *tensor.Dense) (err err
 	n := batchSize * spatialDim
 
 	if spatialDim == 1 {
-		for c := 0; c < channels; c++ {
+		runInParallel(0, channels, func(c int) {
 			dotp := float64(0.0)
 			sum := 0.0
 
@@ -1744,9 +1739,9 @@ func (op *batchnormDiffOp) f64s(input, prealloc, outGrad *tensor.Dense) (err err
 					ig[i] = dy[i] * invstd
 				}
 			}
-		}
+		})
 	} else {
-		for c := 0; c < channels; c++ {
+		runInParallel(0, channels, func(c int) {
 			dotp := float64(0.0)
 			sum := 0.0
 
@@ -1788,7 +1783,7 @@ func (op *batchnormDiffOp) f64s(input, prealloc, outGrad *tensor.Dense) (err err
 					}
 				}
 			}
-		}
+		})
 	}
 
 	return nil
@@ -1812,7 +1807,7 @@ func (op *batchnormDiffOp) f32s(input, prealloc, outGrad *tensor.Dense) (err err
 	n := batchSize * spatialDim
 
 	if spatialDim == 1 {
-		for c := 0; c < channels; c++ {
+		runInParallel(0, channels, func(c int) {
 			dotp := float32(0.0)
 			sum := float32(0.0)
 
@@ -1855,9 +1850,9 @@ func (op *batchnormDiffOp) f32s(input, prealloc, outGrad *tensor.Dense) (err err
 					ig[i] = dy[i] * invstd
 				}
 			}
-		}
+		})
 	} else {
-		for c := 0; c < channels; c++ {
+		runInParallel(0, channels, func(c int) {
 			dotp := float32(0.0)
 			sum := float32(0.0)
 
@@ -1899,7 +1894,7 @@ func (op *batchnormDiffOp) f32s(input, prealloc, outGrad *tensor.Dense) (err err
 					}
 				}
 			}
-		}
+		})
 	}
 
 	return nil
