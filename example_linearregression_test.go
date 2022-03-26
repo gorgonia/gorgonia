@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	vecSize = 1000000
+	vecSize = 10000
 )
 
 // manually generate a fake dataset which is y=2x+random
