@@ -34,11 +34,35 @@ func TestSoftMaxFull(t *testing.T) {
 		XInit    InitWFn
 		XShape   tensor.Shape
 		Expected tensor.Tensor
+		IsLog    bool
 	}{
 		{
-			Dtype:  tensor.Float64,
-			XInit:  RangedFromWithStep(0.0, 0.01),
-			XShape: tensor.Shape{2, 3},
+			Dtype:    tensor.Float64,
+			XInit:    RangedFromWithStep(0.0, 0.01),
+			XShape:   tensor.Shape{2, 3},
+			IsLog:    false,
+			Expected: tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{0.49932500041006217, 0.5006749995899378, 0.49730002624369385, 0.502699973756306})),
+		},
+		{
+			Dtype:    tensor.Float32,
+			XInit:    RangedFromWithStep(0.0, 0.01),
+			XShape:   tensor.Shape{2, 3},
+			IsLog:    false,
+			Expected: tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float32{0.49932498, 0.50067496, 0.49730003, 0.5027})),
+		},
+		{
+			Dtype:    tensor.Float64,
+			XInit:    RangedFromWithStep(0.0, 0.01),
+			XShape:   tensor.Shape{2, 3},
+			IsLog:    true,
+			Expected: tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{-0.6944980918096686, -0.6917980918096686, -0.6985617604890871, -0.6877617604890871})),
+		},
+		{
+			Dtype:    tensor.Float32,
+			XInit:    RangedFromWithStep(0.0, 0.01),
+			XShape:   tensor.Shape{2, 3},
+			IsLog:    true,
+			Expected: tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float32{-0.6944981, -0.69179815, -0.6985617, -0.6877617})),
 		},
 	}
 	for i, tC := range testCases {
@@ -50,18 +74,23 @@ func TestSoftMaxFull(t *testing.T) {
 			x := NewTensor(g, tC.Dtype, 2, WithShape(tC.XShape...), WithInit(tC.XInit), WithName("x"))
 			w := NewTensor(g, tC.Dtype, 2, WithShape(tC.XShape...), WithInit(RangedFromWithStep(-0.05, 0.03)), WithName("w"))
 
+			t.Logf("Input: %v", x.Value())
+
 			optim := NewAdamSolver(WithLearnRate(0.1))
 
 			wT := Must(Transpose(w, 1, 0))
-
-			t.Logf("wT: %v", wT.Shape())
 
 			output := Must(Mul(x, wT))
 
 			var fcVal Value
 			Read(output, &fcVal)
 
-			output = Must(SoftMax(output))
+			softMaxFn := SoftMax
+			if tC.IsLog {
+				softMaxFn = LogSoftMax
+			}
+
+			output = Must(softMaxFn(output))
 
 			cost := Must(Mean(output))
 
@@ -75,10 +104,14 @@ func TestSoftMaxFull(t *testing.T) {
 
 			c.NoError(optim.Step(NodesToValueGrads(Nodes{w})))
 
+			t.Logf("wT: %v", wT.Value())
 			t.Logf("output: %v", output.Value())
 			t.Logf("FC Val: %v", fcVal)
 			t.Logf("cost: %v", cost.Value())
 			t.Logf("w: %v", w.Value())
+
+			c.InDeltaSlice(tC.Expected.Data(), output.Value().Data(), 1e-5, "got=%#v\nexpected=%#v", output.Value().Data(), tC.Expected.Data())
+			c.Equal(tC.Expected.Shape(), output.Shape())
 		})
 	}
 }

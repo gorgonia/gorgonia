@@ -11,6 +11,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.6.1
 	github.com/xtgo/set v1.0.0
+	go4.org/unsafe/assume-no-moving-gc v0.0.0-20211027215541-db492cf91b37 // indirect
 	gonum.org/v1/gonum v0.9.3
 	gonum.org/v1/netlib v0.0.0-20201012070519-2390d26c3658
 	gopkg.in/cheggaaa/pb.v1 v1.0.27
