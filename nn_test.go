@@ -366,24 +366,26 @@ func TestBatchNormAll(t *testing.T) {
 
 			y = Must(Mul(y, wT))
 
-			op.SetTraining(true)
-
 			var yVal, scaleVal Value
 			Read(y, &yVal)
 			Read(scale, &scaleVal)
 
 			cost, _ := Mean(y)
 
-			if _, err := Grad(cost, x, scale, bias); err != nil {
+			if _, err := Grad(cost, x, fcWeight, scale, bias); err != nil {
 				t.Fatal(err)
 			}
 
-			m := NewTapeMachine(g, BindDualValues(x, scale, bias), TraceExec(), WithInfWatch())
+			optimizer := NewAdamSolver(WithLearnRate(0.02))
+			m := NewTapeMachine(g, BindDualValues(x, fcWeight, scale, bias), TraceExec(), WithInfWatch(), WithNaNWatch())
 
 			err = m.RunAll()
 			c.NoError(err)
 
 			c.NoError(m.Close())
+
+			err = optimizer.Step(NodesToValueGrads(Nodes{fcWeight, scale, bias}))
+			c.NoError(err)
 
 			// for visual inspection
 			t.Logf("%v input:\n%v", tC.desc, x.Value())
@@ -391,7 +393,12 @@ func TestBatchNormAll(t *testing.T) {
 			t.Logf("%v running var: %v", tC.desc, op.runningVariance)
 			t.Logf("%v output:\n%v", tC.desc, y.Value())
 			t.Logf("%v output grad:\n%v", tC.desc, y.Deriv().Value())
+
+			t.Logf("%v fc weight:\n%v", tC.desc, fcWeight.Value())
+
+			t.Logf("%v scale: %v", tC.desc, scale.Value())
 			t.Logf("%v scale grad: %v", tC.desc, scale.Deriv().Value())
+			t.Logf("%v bias: %v", tC.desc, bias.Value())
 			t.Logf("%v bias grad: %v", tC.desc, bias.Deriv().Value())
 			t.Logf("%v input grad:\n%v", tC.desc, x.Deriv().Value())
 
@@ -411,14 +418,20 @@ func TestBatchNormAll(t *testing.T) {
 
 			t.Logf("-------- Switching to Eval Mode --------")
 
-			m2 := NewTapeMachine(g, TraceExec(), WithInfWatch(), EvalMode())
+			m2 := NewTapeMachine(g, TraceExec(), WithNaNWatch(), WithInfWatch(), EvalMode())
 
 			err = m2.RunAll()
 			c.NoError(err)
 			c.NoError(m2.Close())
 
+			t.Logf("%v output:\n%v", tC.desc, yVal)
 			t.Logf("%v input grad:\n%v", tC.desc, x.Deriv().Value())
+			t.Logf("%v running mean: %v", tC.desc, op.runningMean)
+			t.Logf("%v running var: %v", tC.desc, op.runningVariance)
+			t.Logf("%v bias: %v", tC.desc, bias.Value())
 			t.Logf("%v bias grad: %v", tC.desc, bias.Deriv().Value())
+			t.Logf("%v scale: %v", tC.desc, scale.Value())
+			t.Logf("%v scale grad: %v", tC.desc, scale.Deriv().Value().Data())
 
 			c.True(dawson.AllClose(tC.ExpectedEvalResult, yVal.Data()), "Output doesn't match\ngot=%#v\nexpected=%#v", yVal.Data(), tC.ExpectedEvalResult)
 		})
@@ -517,7 +530,7 @@ func TestBatchNormStacked(t *testing.T) {
 
 			c.NoError(m2.Close())
 
-			c.True(dawson.AllClose(tC.ExpectedEvalResult, yVal.Data()), "Output doesn't match\ngot=%#v\nexpected=%#v", yVal.Data(), tC.ExpectedEvalResult)
+			c.InDeltaSlice(tC.ExpectedEvalResult, yVal.Data(), 1e-5, "Output doesn't match\ngot=%#v\nexpected=%#v", yVal.Data(), tC.ExpectedEvalResult)
 		})
 	}
 }

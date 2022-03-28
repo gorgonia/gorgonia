@@ -386,9 +386,8 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	batches := x.Shape()[0]
+
 	channels := x.Shape()[1]
-	spatialDim := x.Shape().TotalSize() / (channels * batches)
 
 	mean := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	variance := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
@@ -397,18 +396,6 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 	saveVar := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	alpha := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	beta := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
-
-	var uno interface{}
-	switch dt {
-	case Float64:
-		uno = float64(1)
-	case Float32:
-		uno = float32(1)
-	}
-	spatialSumMultiplier := tensor.New(tensor.Of(dt), tensor.WithShape(spatialDim))
-	if err = spatialSumMultiplier.Memset(uno); err != nil {
-		return nil, nil, nil, nil, err
-	}
 
 	g := x.Graph()
 	dims := x.Shape().Dims()
@@ -437,11 +424,12 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 		dims:     x.Dims(),
 	}
 
-	if retVal, err = ApplyOp(op, x, scale, bias); err != nil {
+	if retVal, err = ApplyOp(op, x); err != nil {
 		return nil, nil, nil, nil, err
 	}
 
-	if retVal, err = Auto(BroadcastHadamardProd, scale, retVal); err != nil {
+	retVal, err = Auto(BroadcastHadamardProd, scale, retVal)
+	if err != nil {
 		return nil, nil, nil, nil, err
 	}
 
