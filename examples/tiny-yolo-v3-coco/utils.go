@@ -66,9 +66,9 @@ func resizeImage(img image.Image, width int, height int) image.Image {
 	for (maxY-minY)%width != 0 {
 		maxY--
 	}
-	scaleX := (maxX - minX) / height
-	scaleY := (maxY - minY) / width
-	imgRect := image.Rect(0, 0, height, width)
+	scaleX := (maxX - minX) / width
+	scaleY := (maxY - minY) / height
+	imgRect := image.Rect(0, 0, width, height)
 	resImg := image.NewRGBA(imgRect)
 	draw.Draw(resImg, resImg.Bounds(), &image.Uniform{C: color.White}, image.ZP, draw.Src)
 	for y := 0; y < width; y++ {
@@ -88,8 +88,8 @@ func getAverageColor(img image.Image, minX int, maxX int, minY int, maxY int) co
 	scale := 1.0 / float64((maxX-minX)*(maxY-minY))
 
 	for i := minX; i < maxX; i++ {
-		for k := minY; k < maxY; k++ {
-			r, g, b, a := img.At(i, k).RGBA()
+		for j := minY; j < maxY; j++ {
+			r, g, b, a := img.At(i, j).RGBA()
 			averageRed += float64(r) * scale
 			averageGreen += float64(g) * scale
 			averageBlue += float64(b) * scale
@@ -140,7 +140,7 @@ func MaxFloat32(cl []float32) (float32, int) {
 }
 
 // Rectify Creates rectangle
-func Rectify(x, y, h, w, maxwidth, maxheight int) image.Rectangle {
+func Rectify(x, y, w, h, maxwidth, maxheight int) image.Rectangle {
 	return image.Rect(MaxInt(x-w/2, 0), MaxInt(y-h/2, 0), MinInt(x+w/2+1, maxwidth), MinInt(y+h/2+1, maxheight))
 }
 
