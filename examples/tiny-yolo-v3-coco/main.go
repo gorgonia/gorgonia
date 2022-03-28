@@ -24,7 +24,7 @@ var (
 func main() {
 	g := G.NewGraph()
 
-	input := G.NewTensor(g, tensor.Float32, 4, G.WithShape(1, channels, imgWidth, imgHeight), G.WithName("input"))
+	input := G.NewTensor(g, tensor.Float32, 4, G.WithShape(1, channels, imgHeight, imgWidth), G.WithName("input"))
 	model, err := NewYoloV3Tiny(g, input, len(cocoClasses), boxes, leakyCoef, cfg, weights)
 	if err != nil {
 		fmt.Printf("Can't prepare YOLOv3 network due the error: %s\n", err.Error())
@@ -32,7 +32,7 @@ func main() {
 	}
 	model.Print()
 
-	imgf32, err := GetFloat32Image("data/dog_416x416.jpg", imgHeight, imgWidth)
+	imgf32, err := GetFloat32Image("data/dog_416x416.jpg", imgWidth, imgHeight)
 	if err != nil {
 		fmt.Printf("Can't read []float32 from image due the error: %s\n", err.Error())
 		return
