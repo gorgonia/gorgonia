@@ -32,6 +32,7 @@ const (
 	bwdOnly
 	watchNaN
 	watchInf
+	watchPointer
 	allocVals
 	spare2 // spare2 = trace in tapeVM,
 	spare3 // spare3 = bindDV in tapeVM, manualRootGrad in LispVM
@@ -156,6 +157,21 @@ func WithInfWatch() VMOpt {
 			v.doWatchInf()
 		case *tapeMachine:
 			v.doWatchInf()
+		default:
+			panic(nyi("withInfWatch", v))
+		}
+	}
+	return f
+}
+
+// WithPointerWatch creates a VM that will watch for pointer clashes when executing. This slows the execution down and it's only recommended for gorgonia development.
+func WithPointerWatch() VMOpt {
+	f := func(m VM) {
+		switch v := m.(type) {
+		case *lispMachine:
+			panic("pointer watch not supported by the Lisp Machine yet")
+		case *tapeMachine:
+			v.doWatchPointer()
 		default:
 			panic(nyi("withInfWatch", v))
 		}
