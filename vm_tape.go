@@ -326,7 +326,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 						n := m.p.g.Node(id).(*Node)
 						c := m.p.g.Node(cID).(*Node)
 
-						err := errors.Errorf("Pointer clash found in value. Node: %v(%x) clashed with %v(%x)", n, n.ID(), c, c.ID())
+						err := errors.Errorf("Pointer clash found in value. Node: %v(%x) %s clashed with %v(%x) %s", n, n.ID(), pointerID, c, c.ID(), pointer)
 						errChan <- err
 						return
 					}

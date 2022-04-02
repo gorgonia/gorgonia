@@ -1,10 +1,16 @@
 package gorgonia
 
 import (
+	"fmt"
+	"hash"
+	"hash/fnv"
 	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/require"
+	"gorgonia.org/tensor"
 )
 
 func Test_tapeMachine_Reset(t *testing.T) {
@@ -85,4 +91,82 @@ func Test_tapeMachineEvalMode(t *testing.T) {
 	evalVM := NewTapeMachine(g, EvalMode())
 	err = evalVM.RunAll()
 	c.NoError(err)
+}
+
+type faultyOp struct{}
+
+// Arity returns 1
+func (i faultyOp) Arity() int { return 2 }
+
+func (i faultyOp) Type() hm.Type {
+	a := hm.TypeVariable('a')
+
+	return hm.NewFnType(a, a, a)
+}
+
+func (i faultyOp) InferShape(ds ...DimSizer) (tensor.Shape, error) { return ds[0].(tensor.Shape), nil }
+
+func (i faultyOp) Do(vs ...Value) (Value, error) {
+	return vs[0], nil
+}
+
+func (i faultyOp) ReturnsPtr() bool      { return true }
+func (i faultyOp) CallsExtern() bool     { return false }
+func (i faultyOp) OverwritesInput() int  { return -1 }
+func (i faultyOp) WriteHash(h hash.Hash) { fmt.Fprintf(h, "I") }
+
+func (i faultyOp) Hashcode() uint32 {
+	h := fnv.New32a()
+	i.WriteHash(h)
+	return h.Sum32()
+}
+
+func (i faultyOp) String() string { return "FaultyOp" }
+
+func Test_tapeMachinePointerWatchOk(t *testing.T) {
+	var err error
+
+	c := require.New(t)
+
+	g := NewGraph()
+
+	a := NewTensor(g, Float32, 2, WithShape(2, 2), WithInit(GlorotN(1)), WithName("a"))
+
+	out := Must(Mul(a, a))
+	out = Must(Mul(a, out))
+	out = Must(Mul(a, out))
+
+	trainVM := NewTapeMachine(g, WithPointerWatch())
+
+	for i := 0; i < 3; i++ {
+		err = trainVM.RunAll()
+		c.NoError(err)
+	}
+}
+
+func Test_tapeMachinePointerWatchFail(t *testing.T) {
+	var err error
+
+	c := require.New(t)
+
+	g := NewGraph()
+
+	ts := tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float32{1, 2, 3, 4}))
+
+	a := NewTensor(g, Float32, 2, WithShape(2, 2), WithValue(ts), WithName("a"))
+	b := NewTensor(g, Float32, 2, WithShape(2, 2), WithValue(ts), WithName("b"))
+
+	prod := Must(HadamardProd(a, b))
+	out := Must(ApplyOp(&faultyOp{}, prod, b))
+
+	trainVM := NewTapeMachine(g, WithPointerWatch())
+	err = trainVM.RunAll()
+	c.Error(err)
+	t.Logf("error: %v", err)
+
+	// in this test, prod and out both have the same value which is not right
+	t.Logf("prod: %v", prod.Value())
+	t.Logf("out: %v", out.Value())
+
+	c.True(strings.Contains(err.Error(), "Pointer clash found in value."))
 }
