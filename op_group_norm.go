@@ -55,6 +55,7 @@ type GroupNormOp struct {
 	numGroups, numChannels int
 	epsilon                float64
 
+	// cache
 	mean, rstd *tensor.Dense
 }
 
@@ -103,9 +104,7 @@ func (op *GroupNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, er
 	xT := inputs[0].(*tensor.Dense)
 	xShape := xT.Shape()
 
-	log.Printf("x: %v", xT)
-
-	n := xShape[0]
+	batchSize := xShape[0]
 	channels := xShape[1]
 	imageSize := 1
 	if len(xShape) > 2 {
@@ -115,26 +114,20 @@ func (op *GroupNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, er
 	d := channels / op.numGroups
 	innerSize := d * imageSize
 
-	log.Printf("inner size: %v", innerSize)
-
 	x := xT.Float64s()
 	y := prealloc.(*tensor.Dense).Float64s()
 
 	meanA := op.mean.Float64s()
 	rstdA := op.rstd.Float64s()
 
-	for i := 0; i < op.numGroups*n; i++ {
+	for i := 0; i < op.numGroups*batchSize; i++ { // TODO: parallelize
 		baseIndex := i * innerSize
 		xSection := x[baseIndex : baseIndex+innerSize]
 
 		mean, rstd := op.rowwiseMomentsF64(xSection, innerSize, 0)
 		rstd = 1 / math.Sqrt(math.Max(rstd, 0)+op.epsilon)
 
-		log.Printf("mean: %v rstd: %v", mean, rstd)
-
-		// g := i % op.numGroups
 		for j := 0; j < d; j++ {
-			// c := g*d + j
 			scale := rstd
 			bias := -scale * mean
 
@@ -143,8 +136,7 @@ func (op *GroupNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, er
 			ySection := y[baseIndex : baseIndex+imageSize]
 
 			for k := 0; k < imageSize; k++ {
-				ySection[k] =
-					scale*xSection[k] + bias
+				ySection[k] = scale*xSection[k] + bias
 			}
 		}
 
@@ -152,7 +144,10 @@ func (op *GroupNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, er
 		rstdA[i] = rstd
 	}
 
-	_ = x
+	log.Printf("mean: %v", op.mean)
+	log.Printf("rstd: %v", op.rstd)
+
+	log.Printf("output: %v", prealloc)
 
 	return prealloc, nil
 }
@@ -160,9 +155,7 @@ func (op *GroupNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, er
 func (op *GroupNormOp) rowwiseMomentsF64(x []float64, n int, ddof int) (mean float64, variance float64) {
 	nn := n / groupNormVecSize
 	m := (nn + groupNormChunkSize - 1) / groupNormChunkSize
-	depth := op.ceilLog2(m)
-
-	log.Printf("m: %v depth: %v", m, depth)
+	depth := op.ceilLog2F64(m)
 
 	m0stk := make([]int, depth)
 	m1stk := make([][]float64, depth)
@@ -174,11 +167,7 @@ func (op *GroupNormOp) rowwiseMomentsF64(x []float64, n int, ddof int) (mean flo
 	}
 
 	for i := 0; i < m; i++ {
-		baseIndex := i * groupNormChunkSize * groupNormVecSize
-		xSection1 := x[baseIndex : baseIndex+groupNormVecSize]
-
 		m0 := int(math.Min(groupNormChunkSize, float64(nn-i*groupNormChunkSize)))
-		log.Printf("xint: %v", xSection1)
 
 		// TODO: optimize allocs
 		m1vec := make([]float64, groupNormVecSize)
@@ -207,17 +196,10 @@ func (op *GroupNormOp) rowwiseMomentsF64(x []float64, n int, ddof int) (mean flo
 			vecf64.Add(m2vec, tmp)
 		}
 
-		log.Printf("m1_vec: %v", m1vec)
-		log.Printf("m2_vec: %v", m2vec)
-
 		op.addMomentsVecF64(m0, m1vec, m2vec, &m0stk[0], m1stk[0], m2stk[0])
 
-		log.Printf("AFTER m0stk: %v", m0stk)
-		log.Printf("AFTER m1stk: %v", m1stk)
-		log.Printf("AFTER m2stk: %v", m2stk)
-
 		mask := i + 1
-		for j := 1; j < depth && mask&1 == 0; j++ {
+		for j := 1; j < depth && (mask&1 == 0); j++ {
 			op.addMomentsVecF64(m0stk[j-1], m1stk[j-1], m2stk[j-1], &m0stk[j], m1stk[j], m2stk[j])
 			m0stk[j-1] = 0
 			m1stk[j-1] = make([]float64, groupNormVecSize) // is this optimized by the compiler?
@@ -292,7 +274,7 @@ func (op *GroupNormOp) addMomentsVecF64(m0add int, m1add, m2add []float64, m0 *i
 	*m0 = n
 }
 
-func (op *GroupNormOp) ceilLog2(x int) int {
+func (op *GroupNormOp) ceilLog2F64(x int) int {
 	if x <= 2 {
 		return 1
 	}
@@ -306,22 +288,22 @@ func (op *GroupNormOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) 
 		return fmt.Errorf("GroupNorm.DoDiff needs 1 arguments")
 	}
 
-	// odv := output.boundTo.(*dualValue)
-	// idv := inputs[0].boundTo.(*dualValue)
-	// idvd := idv.d.(*tensor.Dense)
-	// diffOp := &diffOp{op}
+	odv := output.boundTo.(*dualValue)
+	idv := inputs[0].boundTo.(*dualValue)
+	idvd := idv.d.(*tensor.Dense)
+	diffOp := &groupNormDiffOp{op}
 
-	// result, err := diffOp.Do(idv.Value, odv.Value, odv.d)
-	// if err != nil {
-	// 	return err
-	// }
+	result, err := diffOp.Do(idv.Value, odv.Value, odv.d)
+	if err != nil {
+		return err
+	}
 
-	// sum, err := idvd.Add(result.(*tensor.Dense), tensor.UseUnsafe())
-	// if err != nil {
-	// 	return err
-	// }
+	sum, err := idvd.Add(result.(*tensor.Dense), tensor.UseUnsafe())
+	if err != nil {
+		return err
+	}
 
-	// odv.d = sum
+	odv.d = sum
 
 	return nil
 }
@@ -333,14 +315,14 @@ func (op *GroupNormOp) SymDiff(inputs Nodes, output, grad *Node) (Nodes, error) 
 		return nil, err
 	}
 
-	// diffOp := &GroupNormOp{op}
-	nodes := Nodes{
-		inputs[0],
+	diffOp := &groupNormDiffOp{op}
+
+	dy, err := ApplyOp(diffOp, inputs[0], grad)
+	if err != nil {
+		return nil, err
 	}
 
-	// nodes[0], err = ApplyOp(diffOp, inputs[0], output, grad)
-
-	return nodes, err
+	return Nodes{dy, nil, nil}, err
 }
 
 // DiffWRT is an implementation for the SDOp interface
@@ -348,9 +330,177 @@ func (op *GroupNormOp) DiffWRT(inputs int) []bool {
 	return []bool{true}
 }
 
+type groupNormDiffOp struct {
+	*GroupNormOp
+}
+
+func (op *groupNormDiffOp) Arity() int { return 2 }
+
+func (op *groupNormDiffOp) ReturnsPtr() bool { return false }
+
+func (op *groupNormDiffOp) CallsExtern() bool { return false }
+
+func (op *groupNormDiffOp) WriteHash(h hash.Hash) {
+	fmt.Fprintf(h, op.String())
+}
+
+func (op *groupNormDiffOp) Hashcode() uint32 { return simpleHash(op) }
+
+func (op *groupNormDiffOp) String() string {
+	return fmt.Sprintf("groupNormDiff{%d, %v}()", op.numGroups, op.numChannels)
+}
+
+func (op *groupNormDiffOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
+	s := inputs[0].(tensor.Shape).Clone()
+
+	return s, nil
+}
+
+func (op *groupNormDiffOp) Type() hm.Type {
+	a := hm.TypeVariable('a')
+
+	return hm.NewFnType(a, a, a) // f(float64) float64
+}
+
+func (op *groupNormDiffOp) OverwritesInput() int { return -1 }
+
+func (op *groupNormDiffOp) Do(inputs ...Value) (Value, error) {
+	input := inputs[0]
+	grad := inputs[1]
+
+	dy, err := CloneValue(input)
+	if err != nil {
+		return nil, err
+	}
+
+	return op.UsePreallocDo(dy, input, grad)
+}
+
+func (op *groupNormDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
+	var err error
+
+	if err = checkArity(op, len(inputs)); err != nil {
+		return nil, err
+	}
+
+	input := inputs[0].(*tensor.Dense)
+	buffer := prealloc.(*tensor.Dense)
+	outGrad := inputs[1].(*tensor.Dense)
+
+	switch input.Dtype() {
+	case Float64:
+		err = op.f64s(input, buffer, outGrad)
+	case Float32:
+		panic("not supported yet")
+		// err = op.f32s(input, buffer, outGrad)
+	default:
+		return nil, nyi("batchnormDiffOp", "Do")
+	}
+
+	return prealloc, err
+}
+
+func (op *groupNormDiffOp) f64s(input, prealloc, outGrad *tensor.Dense) (err error) {
+	in := input.Float64s()
+	dx := prealloc.Float64s()
+
+	mean := op.mean.Float64s()
+	rstd := op.rstd.Float64s()
+
+	dy := outGrad.Float64s()
+
+	log.Printf("dy: %v", outGrad)
+
+	xShape := input.Shape()
+
+	batchSize := xShape[0]
+	channels := xShape[1]
+	imageSize := 1
+	if len(xShape) > 2 {
+		imageSize = tensor.Shape(xShape[2:]).TotalSize()
+	}
+
+	ds, db := op.computeInternalGradientsF64(batchSize, channels, imageSize, input, outGrad)
+	d := channels / op.numGroups
+	s := 1.0 / float64(d*imageSize)
+
+	for i := 0; i < batchSize*op.numGroups; i++ {
+		baseIndex := i * d
+
+		dsSection := ds[baseIndex : baseIndex+d]
+		dbSection := db[baseIndex : baseIndex+d]
+
+		ds := 0.0
+		db := 0.0
+
+		for j := 0; j < d; j++ {
+			ds += dsSection[j]
+			db += dbSection[j]
+		}
+
+		c1 := rstd[i]
+		c2 := (db*mean[i] - ds) * c1 * c1 * c1 * s
+		c3 := -c2*mean[i] - db*c1*s
+
+		for j := 0; j < d; j++ {
+			baseIndex := (i*d + j) * imageSize
+			xSection := in[baseIndex : baseIndex+imageSize]
+			dySection := dy[baseIndex : baseIndex+imageSize]
+			dxSection := dx[baseIndex : baseIndex+imageSize]
+
+			for k := 0; k < imageSize; k++ {
+				dxSection[k] = c1*dySection[k] + c2*xSection[k] + c3
+			}
+		}
+	}
+
+	return nil
+}
+
+func (op *groupNormDiffOp) computeInternalGradientsF64(batchSize, channels, imageSize int, input, dyT *tensor.Dense) ([]float64, []float64) {
+	in := input.Float64s()
+	dy := dyT.Float64s()
+
+	// FIXME: test large image
+
+	dsA := make([]float64, batchSize*channels)
+	dbA := make([]float64, batchSize*channels)
+
+	for i := 0; i < batchSize*channels; i++ { // TODO: paralellize
+		baseIndex := i * imageSize
+
+		dySection := dy[baseIndex : baseIndex+imageSize]
+		inSection := in[baseIndex : baseIndex+imageSize]
+
+		for j := 0; j < imageSize; j++ {
+			dsA[i] += dySection[j] * inSection[j]
+			dbA[i] += dySection[j]
+		}
+	}
+
+	return dsA, dbA
+}
+
+// DoDiff calculates the diff and sets its value to the output node. Implementation for ADOp interface.
+func (op *groupNormDiffOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
+	return nyi("DoDiff", "groupNormDiffOp")
+}
+
+// SymDiff applies the diff op. Implementation for SDOp interface.
+func (op *groupNormDiffOp) SymDiff(inputs Nodes, output, grad *Node) (Nodes, error) {
+	return nil, nyi("SymDiff", "groupNormDiffOp")
+}
+
+// DiffWRT is an implementation for the SDOp interface
+func (op *groupNormDiffOp) DiffWRT(inputs int) []bool {
+	return []bool{false, false}
+}
+
 // ensure it complies with the Op interface
 var (
 	_ Op   = &GroupNormOp{}
 	_ ADOp = &GroupNormOp{}
 	_ SDOp = &GroupNormOp{}
+
+	_ Op = &groupNormDiffOp{}
 )
