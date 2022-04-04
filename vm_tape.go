@@ -33,10 +33,10 @@ type tapeMachine struct {
 	buf          *bytes.Buffer
 	valueFmt     string
 	tabcount     int
-	logFlags     byte
+	logFlags     uint16
 	closureQueue []func() error
 
-	runFlags byte //  spare2: trace(copy values and put into nodes)
+	runFlags uint16 //  spare2: trace(copy values and put into nodes)
 	evalMode bool
 }
 
@@ -81,37 +81,41 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 	return m
 }
 
-func (m *tapeMachine) logBwd() bool { return (m.logFlags>>bwdOnly)&byte(1) == 1 }
-func (m *tapeMachine) doLogBwd()    { m.logFlags |= byte(1) << bwdOnly }
-func (m *tapeMachine) dontLogBwd()  { m.logFlags &= (^(byte(1) << bwdOnly)) }
+func (m *tapeMachine) logBwd() bool { return (m.logFlags>>bwdOnly)&uint16(1) == 1 }
+func (m *tapeMachine) doLogBwd()    { m.logFlags |= uint16(1) << bwdOnly }
+func (m *tapeMachine) dontLogBwd()  { m.logFlags &= (^(uint16(1) << bwdOnly)) }
 
-func (m *tapeMachine) logFwd() bool { return (m.logFlags>>fwdOnly)&byte(1) == 1 }
-func (m *tapeMachine) doLogFwd()    { m.logFlags |= byte(1) << fwdOnly }
-func (m *tapeMachine) dontLogFwd()  { m.logFlags &= (^(byte(1) << fwdOnly)) }
+func (m *tapeMachine) logFwd() bool { return (m.logFlags>>fwdOnly)&uint16(1) == 1 }
+func (m *tapeMachine) doLogFwd()    { m.logFlags |= uint16(1) << fwdOnly }
+func (m *tapeMachine) dontLogFwd()  { m.logFlags &= (^(uint16(1) << fwdOnly)) }
 
-func (m *tapeMachine) watchNaN() bool { return (m.runFlags>>watchNaN)&byte(1) == 1 }
-func (m *tapeMachine) doWatchNaN()    { m.runFlags |= byte(1) << watchNaN }
-func (m *tapeMachine) dontWatchNaN()  { m.runFlags &= (^(byte(1) << watchNaN)) }
+func (m *tapeMachine) watchNaN() bool { return (m.runFlags>>watchNaN)&uint16(1) == 1 }
+func (m *tapeMachine) doWatchNaN()    { m.runFlags |= uint16(1) << watchNaN }
+func (m *tapeMachine) dontWatchNaN()  { m.runFlags &= (^(uint16(1) << watchNaN)) }
 
-func (m *tapeMachine) watchInf() bool { return (m.runFlags>>watchInf)&byte(1) == 1 }
-func (m *tapeMachine) doWatchInf()    { m.runFlags |= byte(1) << watchInf }
-func (m *tapeMachine) dontWatchInf()  { m.runFlags &= (^(byte(1) << watchInf)) }
+func (m *tapeMachine) watchInf() bool { return (m.runFlags>>watchInf)&uint16(1) == 1 }
+func (m *tapeMachine) doWatchInf()    { m.runFlags |= uint16(1) << watchInf }
+func (m *tapeMachine) dontWatchInf()  { m.runFlags &= (^(uint16(1) << watchInf)) }
 
-func (m *tapeMachine) watchAll() bool { return (m.logFlags>>watchAll)&byte(1) == 1 }
-func (m *tapeMachine) doWatchAll()    { m.logFlags |= (byte(1) << watchAll) }
-func (m *tapeMachine) dontWatchAll()  { m.logFlags &= (^(byte(1) << watchAll)) }
+func (m *tapeMachine) watchPointer() bool { return (m.logFlags>>watchPointer)&uint16(1) == 1 }
+func (m *tapeMachine) doWatchPointer()    { m.logFlags |= uint16(1) << watchPointer }
+func (m *tapeMachine) dontWatchPointer()  { m.logFlags &= (^(uint16(1) << watchPointer)) }
 
-func (m *tapeMachine) alloc() bool { return (m.runFlags>>allocVals)&byte(1) == 1 }
-func (m *tapeMachine) doAlloc()    { m.runFlags |= byte(1) << allocVals }
-func (m *tapeMachine) dontAlloc()  { m.runFlags &= (^(byte(1) << allocVals)) }
+func (m *tapeMachine) watchAll() bool { return (m.logFlags>>watchAll)&uint16(1) == 1 }
+func (m *tapeMachine) doWatchAll()    { m.logFlags |= (uint16(1) << watchAll) }
+func (m *tapeMachine) dontWatchAll()  { m.logFlags &= (^(uint16(1) << watchAll)) }
 
-func (m *tapeMachine) trace() bool { return (m.runFlags>>spare2)&byte(1) == 1 }
-func (m *tapeMachine) doTrace()    { m.runFlags |= byte(1) << spare2 }
-func (m *tapeMachine) dontTrace()  { m.runFlags &= (^(byte(1) << spare2)) }
+func (m *tapeMachine) alloc() bool { return (m.runFlags>>allocVals)&uint16(1) == 1 }
+func (m *tapeMachine) doAlloc()    { m.runFlags |= uint16(1) << allocVals }
+func (m *tapeMachine) dontAlloc()  { m.runFlags &= (^(uint16(1) << allocVals)) }
 
-func (m *tapeMachine) bindDV() bool { return m.runFlags>>spare3&byte(1) == 1 }
-func (m *tapeMachine) doBindDV()    { m.runFlags |= byte(1) << spare3 }
-func (m *tapeMachine) dontBindDV()  { m.runFlags &= (^(byte(1) << spare3)) }
+func (m *tapeMachine) trace() bool { return (m.runFlags>>spare2)&uint16(1) == 1 }
+func (m *tapeMachine) doTrace()    { m.runFlags |= uint16(1) << spare2 }
+func (m *tapeMachine) dontTrace()  { m.runFlags &= (^(uint16(1) << spare2)) }
+
+func (m *tapeMachine) bindDV() bool { return m.runFlags>>spare3&uint16(1) == 1 }
+func (m *tapeMachine) doBindDV()    { m.runFlags |= uint16(1) << spare3 }
+func (m *tapeMachine) dontBindDV()  { m.runFlags &= (^(uint16(1) << spare3)) }
 
 // Reset resets the run state of the machine by changing the instruction pointer back to 0
 // and reseting the registry
@@ -244,6 +248,12 @@ func (m *tapeMachine) RunAll() (err error) {
 }
 
 func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
+	var pointers map[int64]string
+
+	if m.watchPointer() {
+		pointers = make(map[int64]string, len(m.p.instructions))
+	}
+
 	for ; m.pc < len(m.p.instructions); m.pc++ {
 		instr := m.p.instructions[m.pc]
 		m.logf("PC %d", m.pc)
@@ -294,6 +304,35 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 					errChan <- err
 					return
 				}
+			}
+		}
+
+		if m.watchPointer() {
+			writeTo := instr.writes().id
+			id := instr.ID()
+			if writeTo > 0 && id > 0 {
+				v := m.getValue(instr.writes())
+				if v == nil {
+					err := errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchPointer")
+					errChan <- err
+					return
+				}
+
+				pointerID := fmt.Sprintf("%p", v)
+
+				// this checks all previous node pointers. The new one should not be included.
+				for cID, pointer := range pointers {
+					if pointer == pointerID {
+						n := m.p.g.Node(id).(*Node)
+						c := m.p.g.Node(cID).(*Node)
+
+						err := errors.Errorf("Pointer clash found in value. Node: %v(%x) %s clashed with %v(%x) %s", n, n.ID(), pointerID, c, c.ID(), pointer)
+						errChan <- err
+						return
+					}
+				}
+
+				pointers[id] = pointerID
 			}
 		}
 	}
