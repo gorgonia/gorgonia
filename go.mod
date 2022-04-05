@@ -8,7 +8,6 @@ require (
 	github.com/chewxy/hm v1.0.0
 	github.com/chewxy/math32 v1.10.1
 	github.com/go-gota/gota v0.12.0
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/flatbuffers v2.0.6+incompatible // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/leesper/go_rng v0.0.0-20190531154944-a612b043e353
@@ -25,6 +24,7 @@ require (
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
 	gorgonia.org/cu v0.9.4
 	gorgonia.org/dawson v1.2.0
-	gorgonia.org/tensor v0.9.22
+	gorgonia.org/tensor v0.9.23
+	gorgonia.org/vecf32 v0.9.0
 	gorgonia.org/vecf64 v0.9.0
 )
