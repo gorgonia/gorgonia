@@ -646,6 +646,14 @@ func subDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 
 func hadamardProdDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	var dzdx, dzdy *Node
+
+	if !gradZ.Shape().Eq(y.Shape()) {
+		gradZ, err = Reshape(gradZ, y.Shape().Clone())
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if dzdx, err = HadamardProd(y, gradZ); err == nil {
 		dzdy, err = HadamardProd(x, gradZ)
 		if err != nil {
@@ -656,6 +664,7 @@ func hadamardProdDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 		retVal = Nodes{dzdx, dzdy}
 		return
 	}
+
 	return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
 }
 
