@@ -333,6 +333,13 @@ func ReduceAdd(nodes Nodes, opts ...NodeConsOpt) (retVal *Node, err error) {
 	case 1:
 		return nodes[0], nil
 	case 2:
+		if !nodes[0].IsScalar() && !nodes[1].shape.Eq(nodes[0].shape) {
+			nodes[1], err = Reshape(nodes[1], nodes[0].Shape().Clone())
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		if retVal, err = Add(nodes[0], nodes[1]); err == nil {
 			for _, opt := range opts {
 				opt(retVal)
