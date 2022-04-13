@@ -33,17 +33,17 @@ type lispMachine struct {
 	buf       *bytes.Buffer
 	valueFmt  string
 	tabcount  int
-	logFlags  byte
+	logFlags  uint16
 
-	runFlags     byte // supposed to go into state stuff.  Placed here for better compacting of struct
-	checkedRoots bool // supposed to go into state stuff.
+	runFlags     uint16 // supposed to go into state stuff.  Placed here for better compacting of struct
+	checkedRoots bool   // supposed to go into state stuff.
 	evalMode     bool
 }
 
 // NewLispMachine creates a VM that executes the graph as it is traversed. Depending on the VMOpts passed in
 // this VM is also capable of performing automatic differentiation.
 func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
-	runFlags := (byte(0) | (byte(1) << fwdOnly)) | (1 << bwdOnly) // run fwd and backwards
+	runFlags := (uint16(0) | (uint16(1) << fwdOnly)) | (1 << bwdOnly) // run fwd and backwards
 	m := &lispMachine{
 		g:        g,
 		fwd:      -1,
@@ -73,39 +73,39 @@ func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 	return m
 }
 
-func (m *lispMachine) logBwd() bool { return (m.logFlags>>bwdOnly)&byte(1) == 1 }
-func (m *lispMachine) doLogBwd()    { m.logFlags |= byte(1) << bwdOnly }
-func (m *lispMachine) dontLogBwd()  { m.logFlags &= (^(byte(1) << bwdOnly)) }
-func (m *lispMachine) runBwd() bool { return m.runFlags>>bwdOnly&byte(1) == 1 }
-func (m *lispMachine) doExecBwd()   { m.runFlags |= byte(1) << bwdOnly }
-func (m *lispMachine) dontExecBwd() { m.runFlags &= (^(byte(1) << bwdOnly)) }
+func (m *lispMachine) logBwd() bool { return (m.logFlags>>bwdOnly)&uint16(1) == 1 }
+func (m *lispMachine) doLogBwd()    { m.logFlags |= uint16(1) << bwdOnly }
+func (m *lispMachine) dontLogBwd()  { m.logFlags &= (^(uint16(1) << bwdOnly)) }
+func (m *lispMachine) runBwd() bool { return m.runFlags>>bwdOnly&uint16(1) == 1 }
+func (m *lispMachine) doExecBwd()   { m.runFlags |= uint16(1) << bwdOnly }
+func (m *lispMachine) dontExecBwd() { m.runFlags &= (^(uint16(1) << bwdOnly)) }
 
-func (m *lispMachine) logFwd() bool { return (m.logFlags>>fwdOnly)&byte(1) == 1 }
-func (m *lispMachine) doLogFwd()    { m.logFlags |= byte(1) << fwdOnly }
-func (m *lispMachine) dontLogFwd()  { m.logFlags &= (^(byte(1) << fwdOnly)) }
-func (m *lispMachine) runFwd() bool { return m.runFlags>>fwdOnly&byte(1) == 1 }
-func (m *lispMachine) doExecFwd()   { m.runFlags |= byte(1) << fwdOnly }
-func (m *lispMachine) dontExecFwd() { m.runFlags &= (^(byte(1) << fwdOnly)) }
+func (m *lispMachine) logFwd() bool { return (m.logFlags>>fwdOnly)&uint16(1) == 1 }
+func (m *lispMachine) doLogFwd()    { m.logFlags |= uint16(1) << fwdOnly }
+func (m *lispMachine) dontLogFwd()  { m.logFlags &= (^(uint16(1) << fwdOnly)) }
+func (m *lispMachine) runFwd() bool { return m.runFlags>>fwdOnly&uint16(1) == 1 }
+func (m *lispMachine) doExecFwd()   { m.runFlags |= uint16(1) << fwdOnly }
+func (m *lispMachine) dontExecFwd() { m.runFlags &= (^(uint16(1) << fwdOnly)) }
 
-func (m *lispMachine) watchNaN() bool { return (m.runFlags>>watchNaN)&byte(1) == 1 }
-func (m *lispMachine) doWatchNaN()    { m.runFlags |= byte(1) << watchNaN }
-func (m *lispMachine) dontWatchNaN()  { m.runFlags &= (^(byte(1) << watchNaN)) }
+func (m *lispMachine) watchNaN() bool { return (m.runFlags>>watchNaN)&uint16(1) == 1 }
+func (m *lispMachine) doWatchNaN()    { m.runFlags |= uint16(1) << watchNaN }
+func (m *lispMachine) dontWatchNaN()  { m.runFlags &= (^(uint16(1) << watchNaN)) }
 
-func (m *lispMachine) watchInf() bool { return (m.runFlags>>watchInf)&byte(1) == 1 }
-func (m *lispMachine) doWatchInf()    { m.runFlags |= byte(1) << watchInf }
-func (m *lispMachine) dontWatchInf()  { m.runFlags &= (^(byte(1) << watchInf)) }
+func (m *lispMachine) watchInf() bool { return (m.runFlags>>watchInf)&uint16(1) == 1 }
+func (m *lispMachine) doWatchInf()    { m.runFlags |= uint16(1) << watchInf }
+func (m *lispMachine) dontWatchInf()  { m.runFlags &= (^(uint16(1) << watchInf)) }
 
-func (m *lispMachine) watchAll() bool { return (m.logFlags>>watchAll)&byte(1) == 1 }
-func (m *lispMachine) doWatchAll()    { m.logFlags |= (byte(1) << watchAll) }
-func (m *lispMachine) dontWatchAll()  { m.logFlags &= (^(byte(1) << watchAll)) }
+func (m *lispMachine) watchAll() bool { return (m.logFlags>>watchAll)&uint16(1) == 1 }
+func (m *lispMachine) doWatchAll()    { m.logFlags |= (uint16(1) << watchAll) }
+func (m *lispMachine) dontWatchAll()  { m.logFlags &= (^(uint16(1) << watchAll)) }
 
-func (m *lispMachine) dealloc() bool { return (m.runFlags>>allocVals)&byte(1) == 1 }
-func (m *lispMachine) doDealloc()    { m.runFlags |= byte(1) << allocVals }
-func (m *lispMachine) dontDealloc()  { m.runFlags &= (^(byte(1) << allocVals)) }
+func (m *lispMachine) dealloc() bool { return (m.runFlags>>allocVals)&uint16(1) == 1 }
+func (m *lispMachine) doDealloc()    { m.runFlags |= uint16(1) << allocVals }
+func (m *lispMachine) dontDealloc()  { m.runFlags &= (^(uint16(1) << allocVals)) }
 
-func (m *lispMachine) setRootGrad() bool    { return (m.runFlags>>spare3)&byte(1) == 1 }
-func (m *lispMachine) allowSetRootGrad()    { m.runFlags |= byte(1) << spare3 }
-func (m *lispMachine) disallowSetRootGrad() { m.runFlags &= (^(byte(1) << spare3)) }
+func (m *lispMachine) setRootGrad() bool    { return (m.runFlags>>spare3)&uint16(1) == 1 }
+func (m *lispMachine) allowSetRootGrad()    { m.runFlags |= uint16(1) << spare3 }
+func (m *lispMachine) disallowSetRootGrad() { m.runFlags &= (^(uint16(1) << spare3)) }
 
 func (m *lispMachine) Reset() {
 	m.fwd = len(m.sorted) - 1
