@@ -32,7 +32,7 @@ func TestLispMachineBasics(t *testing.T) {
 
 	m = NewLispMachine(g, WithLogger(nil))
 	defer m.Close()
-	assert.NotNil(m.logger)
+	assert.True(m.logger == nil, "logger: %v", m.logger)
 
 	m = NewLispMachine(g, WithValueFmt("%v"))
 	defer m.Close()

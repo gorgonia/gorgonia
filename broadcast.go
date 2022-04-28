@@ -1,6 +1,8 @@
 package gorgonia
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	"gorgonia.org/tensor"
 )
@@ -124,4 +126,18 @@ func Broadcast(a, b *Node, pattern BroadcastPattern) (*Node, *Node, error) {
 		}
 	}
 	return x, y, nil
+}
+
+func autoBroadcastPattern(aShape, bShape tensor.Shape) (leftPattern, rightPattern []byte, err error) {
+	if aShape.Dims() != bShape.Dims() {
+		return nil, nil, fmt.Errorf("shapes %v and %v should have the same dimensions", aShape, bShape)
+	}
+	for i := 0; i < aShape.Dims(); i++ {
+		if aShape[i] > bShape[i] {
+			leftPattern = append(leftPattern, byte(i))
+		} else if aShape[i] < bShape[i] {
+			rightPattern = append(rightPattern, byte(i))
+		}
+	}
+	return
 }

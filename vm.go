@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"bytes"
 	"log"
-	"os"
 
 	"gorgonia.org/tensor"
 )
@@ -56,11 +55,11 @@ func EvalMode() VMOpt {
 	}
 }
 
-// WithLogger creates a VM with the supplied logger. If the logger is nil, a default logger, writing to os.stderr will be created.
+// WithLogger creates a VM with the supplied logger.
 func WithLogger(logger *log.Logger) VMOpt {
 	f := func(m VM) {
 		if logger == nil {
-			logger = log.New(os.Stderr, "", 0)
+			return
 		}
 		switch v := m.(type) {
 		case *lispMachine:
@@ -121,6 +120,8 @@ func WithWatchlist(list ...interface{}) VMOpt {
 				switch i := item.(type) {
 				case int:
 					v.watchRegs = append(v.watchRegs, register{id: i})
+				case NodeID:
+					v.watchNodeIDs = append(v.watchNodeIDs, i)
 				case *Node:
 					v.watchNodes = append(v.watchNodes, i)
 				default:

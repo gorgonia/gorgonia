@@ -618,10 +618,14 @@ func (cg *codegenerator) gen() (*program, map[*Node]register) {
 
 	instructionCount += cg.insertLastFrees()
 
+	r := make(map[int64]*Node)
 	cg.instructions = make(fragment, 0, instructionCount)
 	for _, node := range cg.sorted {
 		instrs := cg.instrMap[node]
 		cg.instructions = append(cg.instructions, instrs...)
+		for _, in := range instrs {
+			r[in.ID()] = node
+		}
 	}
 
 	return &program{
@@ -629,6 +633,7 @@ func (cg *codegenerator) gen() (*program, map[*Node]register) {
 		args:         len(cg.inputs),
 		g:            cg.g,
 		m:            cg.instrMap,
+		r:            r,
 	}, cg.locMap
 }
 

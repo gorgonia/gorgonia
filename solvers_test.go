@@ -431,12 +431,7 @@ func TestAdamSolverPrecision(t *testing.T) {
 				vm.Reset()
 			}
 
-			maxDiff := 1e-15
-			if tC.dtype == tensor.Float32 {
-				maxDiff = 1e-7
-			}
-
-			c.InDeltaSlicef(tC.expectedOutput, weights.Value().Data(), maxDiff, "!=")
+			c.True(dawson.AllClose(tC.expectedOutput, weights.Value().Data()))
 		})
 	}
 }

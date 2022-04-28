@@ -29,6 +29,7 @@ type tapeMachine struct {
 	bindNodesDV  Nodes // nodes that require binding of DV
 	watchNodes   Nodes
 	watchRegs    []register
+	watchNodeIDs []NodeID
 	logger       *log.Logger
 	buf          *bytes.Buffer
 	valueFmt     string
@@ -231,7 +232,7 @@ func (m *tapeMachine) RunAll() (err error) {
 				syncChan <- struct{}{}
 			}
 		case err := <-errChan:
-			return errors.Wrapf(err, "PC: %d", m.pc)
+			return err
 		case <-doneChan:
 			err := m.ExternMetadata.DoWork()
 			if err != nil {
@@ -257,8 +258,14 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	for ; m.pc < len(m.p.instructions); m.pc++ {
 		instr := m.p.instructions[m.pc]
 		m.logf("PC %d", m.pc)
+
 		if err := instr.exec(m); err != nil {
-			err = errors.Wrapf(err, "PC %d. Failed to execute instruction %v", m.pc, instr)
+			errNode := m.nodeFromInstr(instr)
+			err = vmContextualError{
+				error: errors.Wrapf(err, "PC %d. Failed to execute instruction %v", m.pc, instr),
+				instr: m.pc,
+				node:  errNode,
+			}
 			errChan <- err
 			return
 		}
@@ -339,6 +346,8 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	doneChan <- struct{}{}
 }
 
+func (m *tapeMachine) nodeFromInstr(instr tapeInstr) *Node { return m.p.r[instr.ID()] }
+
 func (m *tapeMachine) getValue(r register) Value {
 	switch r.device {
 	case CPU:
@@ -373,25 +382,46 @@ func (m *tapeMachine) watchedLogf(format string, attrs ...interface{}) {
 				}
 			}
 		}
-	}
+		if watched {
+			goto end
+		}
 
-	if !watched {
 		for _, watch := range m.watchRegs {
 			if watch.id == writes.id {
 				watched = true
 				break
 			}
 		}
-	}
 
-	// TODO: Work on watched nodes
+		if watched {
+			goto end
+		}
+
+		n := m.nodeFromInstr(instr)
+		for _, watch := range m.watchNodes {
+			if watch == n {
+				watched = true
+				break
+			}
+		}
+		if watched {
+			goto end
+		}
+
+		for _, watch := range m.watchNodeIDs {
+			if int64(watch) == n.ID() {
+				watched = true
+				break
+			}
+		}
+	}
 	if !watched {
-
+		return
 	}
 
-	if watched {
-		m.logf(format, attrs...)
-	}
+end:
+	m.logf(format, attrs...)
+
 }
 
 func (m *tapeMachine) logf(format string, attrs ...interface{}) {
@@ -456,6 +486,7 @@ type program struct {
 	g            *ExprGraph         // original dag
 	df           *dataflow          // dataflow analysis
 	m            map[*Node]fragment // store which nodes create which instructions
+	r            map[int64]*Node    // reverse of m, storing the instruction ID
 	sorted       Nodes
 }
 

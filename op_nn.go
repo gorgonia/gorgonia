@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"hash"
 	"math"
+	"runtime"
+	"sync"
 	"time"
 
 	"github.com/chewxy/hm"
@@ -22,6 +24,8 @@ var (
 	_ Op   = &BatchNormOp{}
 	_ Op   = &batchnormDiffOp{}
 	_ Op   = &globalAveragePoolOp{}
+
+	_ UsePreallocDoer = im2colOp{}
 )
 
 /*
@@ -209,6 +213,13 @@ func (op im2colOp) Do(inputs ...Value) (retVal Value, err error) {
 	return op.do(prealloc, im)
 }
 
+func (op im2colOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
+	if err := checkArity(op, len(inputs)); err != nil {
+		return nil, err
+	}
+	return op.do(prealloc, inputs[0])
+}
+
 func (op im2colOp) ReturnsPtr() bool     { return false }
 func (op im2colOp) CallsExtern() bool    { return false }
 func (op im2colOp) OverwritesInput() int { return -1 }
@@ -321,10 +332,13 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 	chanStride := h * w
 	inRowStride := inputStrides[2]
 
+	var wg sync.WaitGroup
+	workers := make(chan struct{}, runtime.NumCPU())
 	switch input.Dtype() {
 	case tensor.Float64:
 		imData := input.Data().([]float64)
 		colData := prealloc.Data().([]float64)
+
 		for i := 0; i < b; i++ {
 			imStart := i * batchStrideIm
 			colStart := i * batchStrideCol
@@ -337,8 +351,9 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 			if colEnd >= len(colData) {
 				colEnd = len(colData)
 			}
+			wg.Add(1)
 
-			op.f64s(c, h, w, chanStride, inRowStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd])
+			go op.f64s(c, h, w, chanStride, inRowStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd], &wg, workers)
 		}
 	case tensor.Float32:
 		imData := input.Data().([]float32)
@@ -355,19 +370,20 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 			if colEnd >= len(colData) {
 				colEnd = len(colData)
 			}
+			wg.Add(1)
 
-			op.f32s(c, h, w, chanStride, inRowStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd])
+			go op.f32s(c, h, w, chanStride, inRowStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd], &wg, workers)
 		}
 	default:
 		return nil, errors.Errorf(nyiFail, "im2col", input.Dtype())
 	}
+	wg.Wait()
 	return prealloc, nil
 }
 
-func (op im2colOp) f64s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float64) {
-	colIdx := 0
-	var inputRow int
-	var inputCol int
+func (op im2colOp) f64s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float64, wg *sync.WaitGroup, workers chan struct{}) {
+	workers <- struct{}{}
+	var colIdx, inputRow, inputCol int
 	for outputRow := 0; outputRow < retHeight; outputRow++ {
 		for outputCol := 0; outputCol < retWidth; outputCol++ {
 			for ch := 0; ch < chans; ch++ {
@@ -382,23 +398,23 @@ func (op im2colOp) f64s(chans, height, width, chanStride, inRowStride, retHeight
 						inputCol = -op.padW + kernelCol*op.dilationW + outputCol*op.strideW
 						if inputCol < 0 || inputCol >= width {
 							col[colIdx] = 0
-							colIdx++
 						} else {
 							imIdx := chanStride*ch + inputRow*width + inputCol
 							col[colIdx] = im[imIdx]
-							colIdx++
 						}
+						colIdx++
 					}
 				}
 			}
 		}
 	}
+	<-workers
+	wg.Done()
 }
 
-func (op im2colOp) f32s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float32) {
-	colIdx := 0
-	var inputRow int
-	var inputCol int
+func (op im2colOp) f32s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float32, wg *sync.WaitGroup, workers chan struct{}) {
+	workers <- struct{}{}
+	var colIdx, inputRow, inputCol int
 	for outputRow := 0; outputRow < retHeight; outputRow++ {
 		for outputCol := 0; outputCol < retWidth; outputCol++ {
 			for ch := 0; ch < chans; ch++ {
@@ -413,17 +429,18 @@ func (op im2colOp) f32s(chans, height, width, chanStride, inRowStride, retHeight
 						inputCol = -op.padW + kernelCol*op.dilationW + outputCol*op.strideW
 						if inputCol < 0 || inputCol >= width {
 							col[colIdx] = 0
-							colIdx++
 						} else {
 							imIdx := chanStride*ch + inputRow*width + inputCol
 							col[colIdx] = im[imIdx]
-							colIdx++
 						}
+						colIdx++
 					}
 				}
 			}
 		}
 	}
+	<-workers
+	wg.Done()
 }
 
 type col2imOp struct {
@@ -501,12 +518,15 @@ func (op col2imOp) do(prealloc, input Value) (retVal Value, err error) {
 	imEnd = imStart + batchStrideIm
 	colEnd = colStart + batchStrideCol
 
+	var wg sync.WaitGroup
+	workers := make(chan struct{}, runtime.NumCPU())
 	switch input.Dtype() {
 	case tensor.Float64:
 		colData := input.Data().([]float64)
 		imData := prealloc.Data().([]float64)
 		for i := 0; i < b; i++ {
-			op.f64s(c, retHeight, retWidth, chanStride, h, w, colData[colStart:colEnd], imData[imStart:imEnd])
+			wg.Add(1)
+			go op.f64s(c, retHeight, retWidth, chanStride, h, w, colData[colStart:colEnd], imData[imStart:imEnd], &wg, workers)
 
 			colStart += batchStrideCol
 			colEnd += batchStrideCol
@@ -525,7 +545,8 @@ func (op col2imOp) do(prealloc, input Value) (retVal Value, err error) {
 		colData := input.Data().([]float32)
 		imData := prealloc.Data().([]float32)
 		for i := 0; i < b; i++ {
-			op.f32s(c, retHeight, retWidth, chanStride, h, w, colData[colStart:colEnd], imData[imStart:imEnd])
+			wg.Add(1)
+			go op.f32s(c, retHeight, retWidth, chanStride, h, w, colData[colStart:colEnd], imData[imStart:imEnd], &wg, workers)
 
 			colStart += batchStrideCol
 			colEnd += batchStrideCol
@@ -543,11 +564,12 @@ func (op col2imOp) do(prealloc, input Value) (retVal Value, err error) {
 	default:
 		return nil, errors.Errorf(nyiFail, "col2im", input.Dtype())
 	}
-
+	wg.Wait()
 	return prealloc, nil
 }
 
-func (op col2imOp) f64s(chans, height, width, chanStride, retHeight, retWidth int, col, im []float64) {
+func (op col2imOp) f64s(chans, height, width, chanStride, retHeight, retWidth int, col, im []float64, wg *sync.WaitGroup, workers chan struct{}) {
+	workers <- struct{}{}
 	// memset im to 0
 	for i := 0; i < len(im); i++ {
 		im[i] = 0
@@ -576,9 +598,12 @@ func (op col2imOp) f64s(chans, height, width, chanStride, retHeight, retWidth in
 			}
 		}
 	}
+	<-workers
+	wg.Done()
 }
 
-func (op col2imOp) f32s(chans, height, width, chanStride, retHeight, retWidth int, col, im []float32) {
+func (op col2imOp) f32s(chans, height, width, chanStride, retHeight, retWidth int, col, im []float32, wg *sync.WaitGroup, workers chan struct{}) {
+	workers <- struct{}{}
 	// memset im to 0
 	for i := 0; i < len(im); i++ {
 		im[i] = 0
@@ -607,6 +632,8 @@ func (op col2imOp) f32s(chans, height, width, chanStride, retHeight, retWidth in
 			}
 		}
 	}
+	<-workers
+	wg.Done()
 }
 
 // It's important to note that this op actually produces TWO values - one argmax, which will be used
@@ -1135,8 +1162,10 @@ type BatchNormOp struct {
 
 	// learnables
 	runningMean, runningVariance *tensor.Dense
+	saveMean, saveVariance       *tensor.Dense
 
-	saveMean, saveVariance *tensor.Dense
+	// internal use
+	alpha, beta *tensor.Dense // shape: (channels, )
 
 	// training? if training then update movingMean and movingVar
 	training bool
@@ -1207,6 +1236,7 @@ func (op *BatchNormOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) 
 	xdv, ydv := getDV(inputs[0], output)
 	sdv, bdv := getDV(inputs[1], inputs[2])
 	_, err := diff.UsePreallocDo(xdv.d, xdv.Value, ydv.d, sdv.Value, bdv.Value)
+
 	return err
 }
 
@@ -1244,6 +1274,7 @@ func (op *BatchNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Va
 	}
 
 	return prealloc, err
+
 }
 
 // Stats returns the running mean and running variance
@@ -1309,7 +1340,6 @@ func (op *BatchNormOp) Reset() error {
 	}
 
 	op.runningMean.Zero()
-
 	return nil
 }
 
@@ -1388,8 +1418,8 @@ func (op *BatchNormOp) calculateAlphaAndBetaF64(batchSize, channels, spatialDim 
 	runningVar := op.runningVariance.Float64s()
 	n := spatialDim * batchSize
 
-	alpha = make([]float64, channels)
-	beta = make([]float64, channels)
+	alpha = op.alpha.Float64s()
+	beta = op.beta.Float64s()
 
 	runInParallel(0, channels, func(c int) {
 		var invStd, mean float64
@@ -1421,8 +1451,11 @@ func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
 		saveMean, saveVar := op.updateStatsF64(batchSize, channels, spatialDim, input)
 		alpha, beta = op.calculateAlphaAndBetaF64(batchSize, channels, spatialDim, saveMean, saveVar)
 	} else {
-		saveMean := make([]float64, channels)
-		saveVar := make([]float64, channels)
+
+		op.saveMean.Zero()
+		op.saveVariance.Zero()
+		saveMean := op.saveMean.Float64s()
+		saveVar := op.saveVariance.Float64s()
 
 		alpha, beta = op.calculateAlphaAndBetaF64(batchSize, channels, spatialDim, saveMean, saveVar)
 	}
@@ -1529,8 +1562,8 @@ func (op *BatchNormOp) calculateAlphaAndBetaF32(batchSize, channels, spatialDim 
 
 	n := spatialDim * batchSize
 
-	alpha = make([]float32, channels)
-	beta = make([]float32, channels)
+	alpha = op.alpha.Float32s()
+	beta = op.beta.Float32s()
 
 	runInParallel(0, channels, func(c int) {
 		var invStd, mean float32
@@ -1562,7 +1595,16 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 		saveMean, saveVar := op.updateStatsF32(batchSize, channels, spatialDim, input)
 		alpha, beta = op.calculateAlphaAndBetaF32(batchSize, channels, spatialDim, saveMean, saveVar)
 	} else {
+		/*
+			op.saveMean.Zero()
+			op.saveVariance.Zero()
+			saveMean := op.saveMean.Float32s()
+			saveVar := op.saveVariance.Float32s()
+			alpha, beta = op.calculateAlphaAndBetaF32(batchSize, channels, spatialDim, scale, bias, saveMean, saveVar)
+		*/
+
 		alpha, beta = op.calculateAlphaAndBetaF32(batchSize, channels, spatialDim, nil, nil)
+
 	}
 
 	// output = input * alpha + beta

@@ -76,6 +76,9 @@ func WithL2Reg(l2reg float64) SolverOpt {
 		case *Momentum:
 			st.l2reg = l2reg
 			st.useL2Reg = true
+		case *AdamW:
+			st.l2reg = l2reg
+			st.useL2Reg = true
 		}
 	}
 	return f
@@ -94,6 +97,9 @@ func WithL1Reg(l1reg float64) SolverOpt {
 		case *Momentum:
 			st.l1reg = l1reg
 			st.useL1Reg = true
+		case *AdamW:
+			st.l1reg = l1reg
+			st.useL1Reg = true
 		}
 	}
 	return f
@@ -109,6 +115,8 @@ func WithBatchSize(batch float64) SolverOpt {
 			st.batch = batch
 		case *Momentum:
 			st.batch = batch
+		case *AdamW:
+			st.batch = batch
 		}
 	}
 	return f
@@ -122,6 +130,8 @@ func WithEps(eps float64) SolverOpt {
 			st.eps = eps
 		case *AdamSolver:
 			st.eps = eps
+		case *AdamW:
+			st.ɛ = eps
 		}
 	}
 	return f
@@ -146,6 +156,9 @@ func WithClip(clip float64) SolverOpt {
 		case *Momentum:
 			st.clip = clip
 			st.useClip = true
+		case *AdamW:
+			st.clip = clip
+			st.useClip = true
 		}
 	}
 	return f
@@ -165,6 +178,8 @@ func WithLearnRate(eta float64) SolverOpt {
 			st.eta = eta
 		case *Momentum:
 			st.eta = eta
+		case *AdamW:
+			st.η = eta
 		}
 	}
 	return f
@@ -176,6 +191,8 @@ func WithBeta1(beta1 float64) SolverOpt {
 		switch st := s.(type) {
 		case *AdamSolver:
 			st.beta1 = beta1
+		case *AdamW:
+			st.β1 = beta1
 		}
 	}
 	return f
@@ -187,6 +204,8 @@ func WithBeta2(beta2 float64) SolverOpt {
 		switch st := s.(type) {
 		case *AdamSolver:
 			st.beta2 = beta2
+		case *AdamW:
+			st.β2 = beta2
 		}
 	}
 	return f
@@ -198,6 +217,8 @@ func WithRho(rho float64) SolverOpt {
 		switch st := s.(type) {
 		case *RMSPropSolver:
 			st.decay = rho
+		case *AdamW:
+			st.λ = rho
 		}
 	}
 	return f
@@ -1524,5 +1545,194 @@ func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 		}
 	}
 
+	return nil
+}
+
+type adamwState struct {
+	expMA   tensor.Tensor // exponential moving average
+	expMASq tensor.Tensor
+	denom   tensor.Tensor // a temporary tensor used for computation
+}
+
+// AdamW is a Adam-like solver where the weight decay regularization is decoupled.
+// See also: https://arxiv.org/abs/1711.05101
+type AdamW struct {
+	η     float64 // learn rate
+	ε     float64 // smoothing
+	λ     float64 // weight decay
+	ɛ     float64 // epsilon, a fudge factor
+	β1    float64
+	β2    float64
+	clip  float64 // clip gradients to between -clip and +clip
+	l1reg float64 // l1 regularization parameter
+	l2reg float64 // l2 regularization parameter
+	batch float64 // batch size
+
+	useL1Reg, useL2Reg, useClip bool
+
+	// unsettable
+	iter   float64
+	states map[*Node]*adamwState
+}
+
+func NewAdamW(opts ...SolverOpt) *AdamW {
+	s := &AdamW{
+		η:      0.001,
+		ɛ:      1e-8,
+		λ:      0.01,
+		β1:     0.9,
+		β2:     0.999,
+		states: make(map[*Node]*adamwState),
+	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
+}
+
+func (a *AdamW) Step(model []ValueGrad) (err error) {
+	/*
+	 In the rest of the algorithm, we will use the following symbols for explainersx:
+	 	θ  - the parameter to be updated.
+	        _t - at time step t
+	        m  - the moving average (first moment)
+	        v  - the second momennt (MA squared)
+	*/
+	a.iter++
+	for _, n := range model {
+		n := n.(*Node)
+		var weights, grad Value
+		if weights, grad, err = extractWeightGrad(n); err != nil {
+			return err
+		}
+		w := weights.(tensor.Tensor)
+		g := grad.(tensor.Tensor)
+
+		st, ok := a.states[n]
+		if !ok {
+			st = new(adamwState)
+			st.expMA = tensor.New(tensor.WithShape(grad.Shape().Clone()...), tensor.Of(grad.Dtype()))
+			st.expMASq = tensor.New(tensor.WithShape(grad.Shape().Clone()...), tensor.Of(grad.Dtype()))
+			st.denom = tensor.New(tensor.WithShape(grad.Shape().Clone()...), tensor.Of(grad.Dtype()))
+			a.states[n] = st
+		}
+
+		var decay, a1, a2, b1, b2, b2sqrt, ss, eps interface{}
+		var l1reg, l2reg, clip, negClip interface{}
+		switch weights.Dtype() {
+		case tensor.Float64:
+			lr := a.η
+			wd := a.λ
+			β1 := a.β1
+			β2 := a.β2
+			it := a.iter
+			eps = a.ɛ
+			decay = 1.0 - lr*wd
+			b1f := 1.0 - math.Pow(β1, it) // correction for beta
+			b2f := 1.0 - math.Pow(β2, it)
+			a1 = 1.0 - b1f
+			a2 = 1.0 - b2f // note here b2f is not sqrt'd
+			b1 = b1f
+			b2 = b2f
+			b2sqrt = math.Sqrt(b2f)
+			ss = -(lr / b1f)
+
+			l1reg = a.l1reg
+			l2reg = a.l2reg
+			clip = a.clip
+			negClip = -a.clip
+		case tensor.Float32:
+			lr := float32(a.η)
+			wd := float32(a.λ)
+			β1 := float32(a.β1)
+			β2 := float32(a.β2)
+			it := float32(a.iter)
+			eps = float32(a.ɛ)
+
+			decay = float32(1.0) - lr*wd
+			b1f := float32(1.0) - math32.Pow(β1, it) // correction for beta
+			b2f := float32(1.0) - math32.Pow(β2, it)
+			a1 = float32(1.0) - b1f
+			a2 = float32(1.0) - b2f // note here b2f is not sqrt'd
+			b1 = b1f
+			b2 = b2f
+			b2sqrt = math32.Sqrt(b2f)
+			ss = -(lr / b1f)
+
+			l1reg = a.l1reg
+			l2reg = a.l2reg
+			clip = a.clip
+			negClip = -a.clip
+
+		}
+		// regularization of gradients
+
+		if a.useL1Reg {
+			if err = doL1Reg(w, g, l1reg); err != nil {
+				return errors.Wrapf(err, "Failed to perform L1 regularization on the gradients of %v", n)
+			}
+		}
+		if a.useL2Reg {
+			if err = doL2Reg(w, g, l2reg); err != nil {
+				return errors.Wrapf(err, "Failed to perform L2 regularization on the gradients of %v", n)
+			}
+		}
+		if a.batch > 1 {
+			if err = divBatch(g, a.batch); err != nil {
+				return errors.Wrapf(err, "Failed to divide gradients by batch count of %v", n)
+			}
+		}
+		if a.useClip && a.clip > 0 {
+			if err = clipGrad(g, clip, negClip); err != nil {
+				return errors.Wrapf(err, "Failed to clip gradients of %v to between %v and %v", n, clip, negClip)
+			}
+		}
+
+		var gSq tensor.Tensor
+
+		// θ_t =  (1 - ηλ)θ_t-1
+		if w, err = tensor.Mul(w, decay); err != nil {
+			return err
+		}
+
+		// m_t = = β_1*m_t-1 + (1-β_1)g
+		if st.expMA, err = tensor.Mul(st.expMA, b1, tensor.UseUnsafe()); err != nil {
+			return err
+		}
+		if _, err = tensor.Mul(g, a1, tensor.WithIncr(st.expMA)); err != nil {
+			return err
+		}
+
+		// v_t = β_2*v_t-1 + (1 - β_2)g²
+		if st.expMASq, err = tensor.Mul(st.expMASq, b2, tensor.UseUnsafe()); err != nil {
+			return err
+		}
+		if gSq, err = tensor.Mul(g, g, tensor.UseUnsafe()); err != nil {
+			return err
+		}
+		if _, err = tensor.Mul(gSq, a2, tensor.WithIncr(st.expMASq)); err != nil {
+			return err
+		}
+
+		if st.denom, err = tensor.Sqrt(st.expMASq, tensor.WithReuse(st.denom)); err != nil {
+			return err
+		}
+		if st.denom, err = tensor.Div(st.denom, b2sqrt, tensor.UseUnsafe()); err != nil {
+			return err
+		}
+		if st.denom, err = tensor.Add(st.denom, eps, tensor.UseUnsafe()); err != nil {
+			return err
+		}
+
+		if st.denom, err = tensor.Div(st.expMA, st.denom, tensor.WithReuse(st.denom)); err != nil {
+			return err
+		}
+
+		if w, err = tensor.Mul(st.denom, ss, tensor.WithIncr(w)); err != nil {
+			return err
+		}
+
+		g.(tensor.Tensor).Zero()
+	}
 	return nil
 }
