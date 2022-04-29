@@ -7,6 +7,38 @@ import (
 
 // this file provides utility functions for solvers
 
+func newCachedDV(n ValueGrad, weights, grad Value, zero bool) (cached *dualValue, err error) {
+	cached = new(dualValue)
+	if cached.Value, err = CloneValue(weights); err != nil {
+		if nm, ok := n.(Namer); ok {
+			return nil, errors.Wrapf(err, "Failed to clone weights of %v", nm.Name())
+		}
+		return nil, errors.Wrap(err, "Failed to clone weights")
+	}
+	if cached.d, err = CloneValue(grad); err != nil {
+		if nm, ok := n.(Namer); ok {
+			return nil, errors.Wrapf(err, "Failed to clone grad of %v", nm.Name())
+		}
+		return nil, errors.Wrap(err, "Failed to clone grad")
+	}
+	if zero {
+		cached.Value = ZeroValue(cached.Value)
+		cached.d = ZeroValue(cached.d)
+	}
+	return
+}
+
+func extractWeightGrad(n ValueGrad) (weights, grad Value, err error) {
+	weights = n.Value()
+	if grad, err = n.Grad(); err != nil {
+		if nm, ok := n.(Namer); ok {
+			return weights, nil, errors.Wrapf(err, "No Grad found for %v", nm.Name())
+		}
+		return weights, nil, errors.Wrap(err, "No Grad found")
+	}
+	return
+}
+
 func doL1Reg(w, g tensor.Tensor, l1reg interface{}) (err error) {
 	var l1regs tensor.Tensor
 	if l1regs, err = tensor.Sign(w); err != nil {
@@ -55,4 +87,14 @@ func clipGrad(g tensor.Tensor, clip, negClip interface{}) (err error) {
 		return errors.Wrap(err, clampFail)
 	}
 	return nil
+}
+
+// recv += a*b*scalar
+// unsafe multiplication will be performed on `a`
+func addcmul(recv, a, b *tensor.Dense, scalar interface{}) (err error) {
+	if _, err = a.Mul(b, tensor.UseUnsafe()); err != nil {
+		return errors.Wrap(err, pointWiseMulFail)
+	}
+	_, err = a.MulScalar(scalar, true, tensor.WithIncr(recv))
+	return err
 }

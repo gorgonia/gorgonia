@@ -1,6 +1,8 @@
 package gorgonia
 
 import (
+	"fmt"
+	"log"
 	"math"
 
 	"github.com/chewxy/math32"
@@ -23,38 +25,6 @@ type ValueGrad interface {
 // Namer is anything that has a name
 type Namer interface {
 	Name() string
-}
-
-func newCachedDV(n ValueGrad, weights, grad Value, zero bool) (cached *dualValue, err error) {
-	cached = new(dualValue)
-	if cached.Value, err = CloneValue(weights); err != nil {
-		if nm, ok := n.(Namer); ok {
-			return nil, errors.Wrapf(err, "Failed to clone weights of %v", nm.Name())
-		}
-		return nil, errors.Wrap(err, "Failed to clone weights")
-	}
-	if cached.d, err = CloneValue(grad); err != nil {
-		if nm, ok := n.(Namer); ok {
-			return nil, errors.Wrapf(err, "Failed to clone grad of %v", nm.Name())
-		}
-		return nil, errors.Wrap(err, "Failed to clone grad")
-	}
-	if zero {
-		cached.Value = ZeroValue(cached.Value)
-		cached.d = ZeroValue(cached.d)
-	}
-	return
-}
-
-func extractWeightGrad(n ValueGrad) (weights, grad Value, err error) {
-	weights = n.Value()
-	if grad, err = n.Grad(); err != nil {
-		if nm, ok := n.(Namer); ok {
-			return weights, nil, errors.Wrapf(err, "No Grad found for %v", nm.Name())
-		}
-		return weights, nil, errors.Wrap(err, "No Grad found")
-	}
-	return
 }
 
 // SolverOpt is a function that provides construction options for a Solver
@@ -463,11 +433,11 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 		s.cache = make([]*dualValue, len(model))
 	}
 
-	s.iter++
-	correction1 := (1 - math.Pow(s.beta1, float64(s.iter)))
-	correction2 := (1 - math.Pow(s.beta2, float64(s.iter)))
-
 	for i, n := range model {
+		s.iter++
+		correction1 := (1 - math.Pow(s.beta1, float64(s.iter))) // 1 - β1^t
+		correction2 := (1 - math.Pow(s.beta2, float64(s.iter))) // 1 - β2^t
+
 		var weights, grad Value
 		if weights, grad, err = extractWeightGrad(n); err != nil {
 			return err
@@ -486,12 +456,13 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 
 		switch m := cvm.(type) {
 		case *tensor.Dense:
+
 			g := grad.(*tensor.Dense)
 			w := weights.(*tensor.Dense)
 			v := cvv.(*tensor.Dense)
 
-			var l1reg, l2reg, clip, negClip, beta1, beta2, omβ1, omβ2, eps, negEta, onePerBatch interface{}
-			var correctionV1, correctionV2 interface{}
+			var l1reg, l2reg, clip, negClip, beta1, beta2, omβ1, omβ2, eps, onePerBatch, stepSize interface{}
+			var sqrtC2 interface{}
 			switch m.Dtype() {
 			case tensor.Float64:
 				l1reg = s.l1reg
@@ -502,11 +473,11 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 				beta2 = s.beta2
 				omβ1 = float64(1) - s.beta1
 				omβ2 = float64(1) - s.beta2
-				eps = s.eps
-				negEta = -s.eta
-				onePerBatch = float64(1) / s.batch
-				correctionV1 = float64(1) / float64(correction1)
-				correctionV2 = float64(1) / float64(correction2)
+				sqrtCorrection2 := math.Sqrt(correction2)
+				sqrtC2 = float64(sqrtCorrection2)
+				eps = float64(s.eps * correction2)
+				onePerBatch = float64(1) / float64(s.batch)
+				stepSize = float64((-s.eta * sqrtCorrection2 / correction1))
 			case tensor.Float32:
 				l1reg = float32(s.l1reg)
 				l2reg = float32(s.l2reg)
@@ -516,39 +487,24 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 				beta2 = float32(s.beta2)
 				omβ1 = float32(1) - float32(s.beta1)
 				omβ2 = float32(1) - float32(s.beta2)
-				eps = float32(s.eps)
-				negEta = -float32(s.eta)
+				sqrtCorrection2 := math.Sqrt(correction2)
+				sqrtC2 = float32(sqrtCorrection2)
+				eps = float32(s.eps * correction2)
 				onePerBatch = float32(1) / float32(s.batch)
-				correctionV1 = float32(1) / float32(correction1)
-				correctionV2 = float32(1) / float32(correction2)
+				stepSize = float32((-s.eta * sqrtCorrection2 / correction1))
 			}
 
 			// prep the regularization of gradients
 			if s.useL1Reg {
-				var l1regs tensor.Tensor
-				if l1regs, err = tensor.Sign(w); err != nil {
-					errors.Wrap(err, signFail)
+				if err = doL1Reg(w, g, l1reg); err != nil {
+					return errors.Wrap(err, "l1reg of gradients failed")
 				}
-				if l1regs, err = tensor.Mul(l1reg, l1regs, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
-				}
-				if _, err = tensor.Add(g, l1regs, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, addFail)
-				}
-				defer returnTensor(l1regs)
 			}
 
 			if s.useL2Reg {
-				var l2regs tensor.Tensor
-				if l2regs, err = tensor.Mul(w, l2reg); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
+				if err = doL2Reg(w, g, l2reg); err != nil {
+					return errors.Wrap(err, "L2Reg of gradients failed")
 				}
-
-				if _, err = tensor.Add(g, l2regs, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, addFail)
-				}
-
-				defer returnTensor(l2regs)
 			}
 
 			if s.batch > 1 {
@@ -568,73 +524,227 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 			//		(β_1 * m_t-1) + (1 - β_1)g_t ..................	1
 			//		(β_2 * v_t-1) + (1 - β_2)*(g_t)² .............	2
 
-			// equation(1): t1 = grad * (1 - β_1)
-			t1 := g.Clone().(*tensor.Dense)
-			if _, err = tensor.Mul(t1, omβ1, tensor.UseUnsafe()); err != nil {
+			// equation (1): m *= β1. `m` has been modified
+			if _, err = tensor.Mul(m, beta1, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			// equation(2): g = grad**2 * (1 - β_2)
-			if _, err = tensor.Mul(g, g, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-			if _, err = tensor.Mul(g, omβ2, tensor.UseUnsafe()); err != nil {
+			// equation (1): m += g * (1 - β1). `m` has been modified. `g` hasn't.
+			if _, err = tensor.Mul(g, omβ1, tensor.WithIncr(m)); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			// equation (1): cached = cached * beta1 + t1
-			if _, err = tensor.Mul(m, beta1, tensor.WithIncr(t1), tensor.UseUnsafe()); err != nil {
+			// equation (2): v *= β2. `v` has been modified.
+			if _, err = tensor.Mul(v, beta2, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			// equation (2): v = v * beta2 + g
-			if _, err = tensor.Mul(v, beta2, tensor.WithIncr(g), tensor.UseUnsafe()); err != nil {
+			// equation (2): v += g² * (1 - β2). `v` has been modified. `g` now contains the values of g².
+			if err = addcmul(v, g, g, omβ2); err != nil {
+				return errors.Wrap(err, "v += (g*g) * (1-β2)")
+			}
+
+			if fmt.Sprintf("%v", n) == "w1 :: Matrix float64" || fmt.Sprintf("%v", n) == "w1 :: Matrix float32" {
+				log.Printf("m %v\n%v\nv %v\n%v", n, m, n, v)
+			}
+
+			// compute the denom
+
+			denom, err := tensor.Sqrt(v, tensor.WithReuse(g))
+			if err != nil {
+				return errors.Wrap(err, pointWiseSquareFail)
+			}
+			// if _, err = tensor.Mul(denom, sqrtC2, tensor.UseUnsafe()); err != nil {
+			// 	return errors.Wrap(err, pointWiseMulFail)
+			// }
+			_ = sqrtC2
+			if _, err = tensor.Add(denom, eps, tensor.UseUnsafe()); err != nil {
+				return errors.Wrap(err, "add")
+			}
+			if fmt.Sprintf("%v", n) == "w1 :: Matrix float64" || fmt.Sprintf("%v", n) == "w1 :: Matrix float32" {
+				log.Printf("%v \nm\n%v\ndenom\n%v", n, m, denom)
+			}
+
+			// note:
+			// denom = m/denom
+			// `denom` is the same data structure as `g`
+			// DO NOT REUSE `m`
+			if _, err = tensor.Div(m, denom, tensor.WithReuse(denom)); err != nil {
+				return errors.Wrap(err, "Div")
+			}
+			if fmt.Sprintf("%v", n) == "w1 :: Matrix float64" || fmt.Sprintf("%v", n) == "w1 :: Matrix float32" {
+				log.Printf("%v \ndenom\n%v", n, denom)
+			}
+
+			if _, err = tensor.Mul(denom, stepSize, tensor.WithIncr(w)); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			defer returnTensor(m)
-			defer returnTensor(v)
-			cached.SetValue(t1)
-			cached.SetDeriv(g.Clone().(*tensor.Dense))
-
-			// now deal with the hats
-			mHats := t1.Clone().(*tensor.Dense)
-			vHats := g.Clone().(*tensor.Dense)
-
-			if _, err = tensor.Mul(mHats, correctionV1, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
+			if fmt.Sprintf("%v", n) == "w1 :: Matrix float64" {
+				log.Printf("cached.v\n%v\ncached.d\n%v\n\n", cached.Value, cached.d)
 			}
-
-			if _, err = tensor.Mul(vHats, correctionV2, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-
-			// update := -eta * mHat / (sqrt(vHat) + epsilon)
-			if _, err = tensor.Sqrt(vHats, tensor.UseUnsafe()); err != nil {
-				return // TODO: rewrite this to use InvSqrt
-			}
-
-			if _, err = tensor.Add(vHats, eps, tensor.UseUnsafe()); err != nil {
-				return
-			}
-
-			if _, err = tensor.Mul(mHats, negEta, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-
-			if _, err = tensor.Div(mHats, vHats, tensor.UseUnsafe()); err != nil {
-				return
-			}
-
-			defer returnTensor(vHats)
-			defer returnTensor(mHats)
-
-			if _, err = tensor.Add(w, mHats, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, addFail)
-			}
-
 			g.Zero()
 
+			/*
+				g := grad.(*tensor.Dense)
+				w := weights.(*tensor.Dense)
+				v := cvv.(*tensor.Dense)
+
+				var l1reg, l2reg, clip, negClip, beta1, beta2, omβ1, omβ2, eps, negEta, onePerBatch interface{}
+				var correctionV1, correctionV2 interface{}
+				switch m.Dtype() {
+				case tensor.Float64:
+					l1reg = s.l1reg
+					l2reg = s.l2reg
+					clip = s.clip
+					negClip = -s.clip
+					beta1 = s.beta1
+					beta2 = s.beta2
+					omβ1 = float64(1) - s.beta1
+					omβ2 = float64(1) - s.beta2
+					eps = s.eps
+					negEta = -s.eta
+					onePerBatch = float64(1) / s.batch
+					correctionV1 = float64(1) / float64(correction1)
+					correctionV2 = float64(1) / float64(correction2)
+				case tensor.Float32:
+					l1reg = float32(s.l1reg)
+					l2reg = float32(s.l2reg)
+					clip = float32(s.clip)
+					negClip = -float32(s.clip)
+					beta1 = float32(s.beta1)
+					beta2 = float32(s.beta2)
+					omβ1 = float32(1) - float32(s.beta1)
+					omβ2 = float32(1) - float32(s.beta2)
+					eps = float32(s.eps)
+					negEta = -float32(s.eta)
+					onePerBatch = float32(1) / float32(s.batch)
+					correctionV1 = float32(1) / float32(correction1)
+					correctionV2 = float32(1) / float32(correction2)
+				}
+
+				// prep the regularization of gradients
+				if s.useL1Reg {
+					var l1regs tensor.Tensor
+					if l1regs, err = tensor.Sign(w); err != nil {
+						errors.Wrap(err, signFail)
+					}
+					if l1regs, err = tensor.Mul(l1reg, l1regs, tensor.UseUnsafe()); err != nil {
+						return errors.Wrap(err, pointWiseMulFail)
+					}
+					if _, err = tensor.Add(g, l1regs, tensor.UseUnsafe()); err != nil {
+						return errors.Wrap(err, addFail)
+					}
+					defer returnTensor(l1regs)
+				}
+
+				if s.useL2Reg {
+					var l2regs tensor.Tensor
+					if l2regs, err = tensor.Mul(w, l2reg); err != nil {
+						return errors.Wrap(err, pointWiseMulFail)
+					}
+
+					if _, err = tensor.Add(g, l2regs, tensor.UseUnsafe()); err != nil {
+						return errors.Wrap(err, addFail)
+					}
+
+					defer returnTensor(l2regs)
+				}
+
+				if s.batch > 1 {
+					if _, err = tensor.Mul(g, onePerBatch, tensor.UseUnsafe()); err != nil {
+						return errors.Wrap(err, pointWiseMulFail)
+					}
+				}
+
+				if s.useClip && s.clip > 0 {
+					if _, err = tensor.Clamp(g, negClip, clip, tensor.UseUnsafe()); err != nil {
+						return errors.Wrap(err, clampFail)
+					}
+				}
+
+				// prep done. Now let's apply the formula:
+				// the formula is
+				//		(β_1 * m_t-1) + (1 - β_1)g_t ..................	1
+				//		(β_2 * v_t-1) + (1 - β_2)*(g_t)² .............	2
+
+				// equation(1): t1 = grad * (1 - β_1)
+				t1 := g.Clone().(*tensor.Dense)
+				if _, err = tensor.Mul(t1, omβ1, tensor.UseUnsafe()); err != nil {
+					return errors.Wrap(err, pointWiseMulFail)
+				}
+
+				// equation(2): g = grad**2 * (1 - β_2)
+				if _, err = tensor.Mul(g, g, tensor.UseUnsafe()); err != nil {
+					return errors.Wrap(err, pointWiseMulFail)
+				}
+				if _, err = tensor.Mul(g, omβ2, tensor.UseUnsafe()); err != nil {
+					return errors.Wrap(err, pointWiseMulFail)
+				}
+
+				// equation (1): cached = cached * beta1 + t1
+				if _, err = tensor.Mul(m, beta1, tensor.WithIncr(t1), tensor.UseUnsafe()); err != nil {
+					return errors.Wrap(err, pointWiseMulFail)
+				}
+
+				// equation (2): v = v * beta2 + g
+				if _, err = tensor.Mul(v, beta2, tensor.WithIncr(g), tensor.UseUnsafe()); err != nil {
+					return errors.Wrap(err, pointWiseMulFail)
+				}
+
+				if fmt.Sprintf("%v", n) == "w1 :: Matrix float64" {
+					log.Printf("m %v\n%v\nv %v\n%v", n, t1, n, g)
+
+				}
+
+				defer returnTensor(m)
+				defer returnTensor(v)
+				cached.SetValue(t1)
+				cached.SetDeriv(g.Clone().(*tensor.Dense))
+
+				// now deal with the hats
+				mHats := t1.Clone().(*tensor.Dense)
+				vHats := g.Clone().(*tensor.Dense)
+
+				if _, err = tensor.Mul(mHats, correctionV1, tensor.UseUnsafe()); err != nil {
+					return errors.Wrap(err, pointWiseMulFail)
+				}
+
+				if _, err = tensor.Mul(vHats, correctionV2, tensor.UseUnsafe()); err != nil {
+					return errors.Wrap(err, pointWiseMulFail)
+				}
+
+				// update := -eta * mHat / (sqrt(vHat) + epsilon)
+				if _, err = tensor.Sqrt(vHats, tensor.UseUnsafe()); err != nil {
+					return // TODO: rewrite this to use InvSqrt
+				}
+
+				if _, err = tensor.Add(vHats, eps, tensor.UseUnsafe()); err != nil {
+					return
+				}
+
+				if _, err = tensor.Mul(mHats, negEta, tensor.UseUnsafe()); err != nil {
+					return errors.Wrap(err, pointWiseMulFail)
+				}
+
+				if _, err = tensor.Div(mHats, vHats, tensor.UseUnsafe()); err != nil {
+					return
+				}
+
+				defer returnTensor(vHats)
+				defer returnTensor(mHats)
+
+				if _, err = tensor.Add(w, mHats, tensor.UseUnsafe()); err != nil {
+					return errors.Wrap(err, addFail)
+				}
+
+				if fmt.Sprintf("%v", n) == "w1 :: Matrix float64" {
+					log.Printf("cached.v\n%v\ncached.d\n%v\n\n", cached.Value, cached.d)
+				}
+
+				g.Zero()
+
+			*/
 		case *F32:
 			g := grad.(*F32).any()
 			w := weights.(*F32).any()
