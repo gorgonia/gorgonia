@@ -77,6 +77,15 @@ func TestSlice(t *testing.T) {
 
 	t.Logf("\n%v \n%v \n%v", a, op, b)
 
+	/* PreallocDo */
+	// setup - create preallocated result
+	b = tensor.New(tensor.WithShape(expectedShape...), tensor.Of(tensor.Float64))
+	if b, err = op.PreallocDo(context.Background(), b, a); err != nil {
+		t.Fatalf("Expected Slice{}.PreallocDo to work correctly. Err: %v", err)
+	}
+	assert.Equal(t, expectedType, datatypes.TypeOf(b))
+	assert.True(t, expectedShape.Eq(b.Shape()))
+	assert.Equal(t, correct, b.Data())
 }
 
 func TestSize(t *testing.T) {

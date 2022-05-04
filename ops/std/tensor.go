@@ -174,6 +174,17 @@ func (op Slice) Do(ctx context.Context, vs ...values.Value) (retVal values.Value
 	return v.Slice(op.Slices...)
 }
 
+func (op Slice) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+	if err := gctx.Handle(ctx); err != nil {
+		return nil, err
+	}
+	v := vs[0]
+	if s, ok := v.(tensor.SlicerInto); ok {
+		return s.SliceInto(prealloc.(tensor.Tensor), op.Slices...)
+	}
+	return nil, errors.Errorf("NYI: preallocdo")
+}
+
 func (op Slice) String() string { return fmt.Sprintf("%v", op.Slices) }
 
 type sliceDiff struct{ Slice }
