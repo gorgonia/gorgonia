@@ -185,9 +185,49 @@ func (op Slice) PreallocDo(ctx context.Context, prealloc values.Value, vs ...val
 	return nil, errors.Errorf("NYI: preallocdo")
 }
 
-func (op Slice) String() string { return fmt.Sprintf("%v", op.Slices) }
+func (op Slice) String() string            { return fmt.Sprintf("%v", op.Slices) }
+func (op Slice) DiffWRT(inputs int) []bool { return onetrue }
 
 type sliceDiff struct{ Slice }
+
+func (op sliceDiff) Arity() int { return 2 }
+func (op sliceDiff) Type() hm.Type {
+	a := hm.TypeVariable('a')
+	b := hm.TypeVariable('b')
+	return hm.NewFnType(a, b, a)
+}
+func (op sliceDiff) ShapeExpr() shapes.Expr {
+	a := shapes.Var('a')
+	r := shapes.SliceOf{
+		Slice: op.Slices,
+		A:     a,
+	}
+	return shapes.MakeArrow(a, r, a)
+}
+
+func (op sliceDiff) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+	if err := gctx.Handle(ctx); err != nil {
+		return nil, err
+	}
+
+	t := vs[0]
+	outGrad := vs[1]
+
+	switch t := t.(type) {
+	case *tensor.Dense:
+		grad := tensor.NewDense(t.Dtype(), t.Shape().Clone())
+		var v tensor.View
+		if v, err = grad.Slice(op.Slices...); err != nil {
+			return nil, errors.Wrapf(err, "Failed to perform sliceDiff %v", op.Slices)
+		}
+		tensor.Add(v, outGrad, tensor.UseUnsafe())
+		retVal = grad
+		return
+	default:
+		return nil, errors.Errorf("NYI %T", t)
+	}
+}
+func (op sliceDiff) String() string { return fmt.Sprintf("∂%v", op.Slices) }
 
 type Concat struct{}
 
