@@ -51,9 +51,9 @@ const (
 type Graph struct {
 	tensor.Engine
 	nodes  map[int64]*Node
-	from   map[int64][]int64 // from node to list of nodes. The key is the `from`.
-	to     map[int64][]int64 // to node from a a list of nodes. The key is the `to`
-	groups map[int64]encoding.Groups
+	from   map[int64][]int64         // from node to list of nodes. The key is the `from`.
+	to     map[int64][]int64         // to node from a a list of nodes. The key is the `to`
+	groups map[int64]encoding.Groups // a node (int64) is in these groups (encoding.Groups)
 
 	self, absent float64
 
@@ -131,7 +131,7 @@ func NewGraph(e tensor.Engine) *Graph {
 	if e == nil {
 		e = tensor.StdEng{}
 	}
-	return &Graph{
+	g := &Graph{
 		Engine: e,
 		nodes:  make(map[int64]*Node),
 		from:   make(map[int64][]int64),
@@ -143,6 +143,10 @@ func NewGraph(e tensor.Engine) *Graph {
 
 		nodeIDs: uid.NewSet(),
 	}
+	if s, ok := e.(graphSetter); ok {
+		s.SetGraph(g)
+	}
+	return g
 }
 
 // Get gets the concrete *Node of a nodelike (graph.Node) object.

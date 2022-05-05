@@ -251,7 +251,7 @@ func Backporopagate(g *exprgraph.Graph, outputs, gradOutputs, wrt []*exprgraph.N
 		}
 
 		children := exprgraph.NodesFromNodeIDs(g, g.ChildrenOf(n))
-		childrenGrads, err := op.SymDiff(children, n, gradNode)
+		childrenGrads, err := op.SymDiff(g, children, n, gradNode)
 		if err != nil {
 			return nil, Error{
 				single:    nid,
