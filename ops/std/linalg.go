@@ -69,7 +69,7 @@ func (op MatMul) PreallocDo(ctx context.Context, prealloc values.Value, vs ...va
 func (op MatMul) String() string { return "×" }
 
 // SymDiff performs symbolic differentiation for `MatMul`.
-func (op MatMul) SymDiff(inputs []*exprgraph.Node, output, grade *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+func (op MatMul) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output, grade *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
 	panic("NYI")
 }
 

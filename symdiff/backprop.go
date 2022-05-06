@@ -14,6 +14,7 @@ func forwardDiffAnalysis(g *exprgraph.Graph, outputs, sorted []*exprgraph.Node) 
 	retVal = exprgraph.NodeIDsFromNodes(outputs)
 
 	for _, n := range sorted {
+
 		op, ok := n.Op.(Op)
 		if retVal.Contains(n.NodeID()) && ok { // op == nil ⇒ n is input
 			children := g.ChildrenOf(n)
@@ -31,7 +32,7 @@ func forwardDiffAnalysis(g *exprgraph.Graph, outputs, sorted []*exprgraph.Node) 
 // backwardDiffAnalysis returns a list of Nodes that are affected by differentiating output.
 // Given a list of WRTs, we want to find a list of nodes that will be affected when backpropagating.
 func backwardDiffAnalysis(g *exprgraph.Graph, wrt, sorted []*exprgraph.Node) (retVal exprgraph.NodeIDs, err error) {
-	retVal = exprgraph.NodeIDsFromNodes(sorted)
+	retVal = exprgraph.NodeIDsFromNodes(wrt)
 
 	var (
 		op    Op
@@ -65,6 +66,7 @@ func backwardDiffAnalysis(g *exprgraph.Graph, wrt, sorted []*exprgraph.Node) (re
 				continue
 			}
 
+			// non differentiable op
 			for j, child := range children {
 				c := g.Node(int64(child)).(*exprgraph.Node)
 				parents := g.ParentsOf(c)
@@ -73,9 +75,8 @@ func backwardDiffAnalysis(g *exprgraph.Graph, wrt, sorted []*exprgraph.Node) (re
 					return nil, errors.Errorf("%v is  the %dth child of %v. It is undifferentiable. This makes a portion of the graph unreachable", c, j, n)
 				}
 			}
-
+			continue
 		}
-
 	inner:
 		for j, child := range children {
 			d := diffs[j]
