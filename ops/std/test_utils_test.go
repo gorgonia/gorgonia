@@ -8,6 +8,7 @@ import (
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
+	"log"
 )
 
 func typecheck(op ops.Op, vs ...values.Value) (retType hm.Type, err error) {
@@ -32,6 +33,5 @@ func shapecheck(op ops.Op, vs ...values.Value) (retVal shapes.Shape, err error) 
 			return nil, errors.Wrapf(err, "Unable to infer %v on %dth value. Last inferred shape: %v", op, i, s)
 		}
 	}
-
 	return shapes.ToShape(s)
 }
