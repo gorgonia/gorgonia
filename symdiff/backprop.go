@@ -122,7 +122,7 @@ func backwardDiffAnalysis(g *exprgraph.Graph, wrt, sorted []*exprgraph.Node) (re
 // 	| Step | Visited |                   Action                    |                  Result                   |                            `deriv`                             |
 // 	|------|---------|---------------------------------------------|-------------------------------------------|----------------------------------------------------------------|
 // 	|    0 | x×w+b   | Call +.SymDiff({x×w, b}, x×w+b, grad_x×w+b) | Get {grad_x×w, grad_b} then map it.       | {x×w+b:grad_x×w+b, x×w:grad_x×w, b:grad_b}                     |
-// 	|    1 | x×w     | Call ×.SymDiff({x, w}, x×w, grad_x×w)       | Get {grad_x, grad_w} then map it.         | {x×w+b:grad_x×w+b, x×w:grad_x×w, b:grad_b, w:grad_w, x:grad_x} |
+// 	|    1 | x×w     | Call .SymDiff({x, w}, x×w, grad_x×w)       | Get {grad_x, grad_w} then map it.         | {x×w+b:grad_x×w+b, x×w:grad_x×w, b:grad_b, w:grad_w, x:grad_x} |
 // 	|    2 | b       | No Action.                                  | The gradient is already mapped in Step 0. |                                                                |
 // 	|    3 | w       | No Action.                                  | The gradient is already mapped in Step 1. |                                                                |
 // 	|    4 | x       | No Action.                                  | The gradient is already mapped in Step 1. |                                                                |

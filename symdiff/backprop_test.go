@@ -88,3 +88,33 @@ func TestBackwardDiffAnalysis(t *testing.T) {
 		}
 	}
 }
+
+func TestBackpropagate(t *testing.T) {
+	eng := engines.NewStd()
+	g := exprgraph.NewGraph(eng)
+	x := exprgraph.NewNode(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	y := exprgraph.NewNode(g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
+	z := exprgraph.NewNode(g, "z", tensor.WithShape(), tensor.Of(tensor.Float64))
+	a := exprgraph.NewNode(g, "a", tensor.WithShape(), tensor.Of(tensor.Float64))
+
+	xy, err := MatMul(x, y)
+	if err != nil {
+		t.Fatalf("MatMul Err %v", err)
+	}
+	xypz, err := Add(xy, z)
+	if err != nil {
+		t.Fatalf("Add Err %v", err)
+	}
+	sum := Sum(xypz)
+
+	const1 := exprgraph.NewNode(g, "const 1", tensor.WithShape(), tensor.WiithBacking([]float64{1}))
+	outputs := []*exprgraph.Node{xypz}
+	wrt := []*exprgraph.Node{x, y, z}
+	gradOutputs := []*exprgraph.Node{const1}
+
+	g2, err := Backpropagate(g, outputs, gradOutputs, wrt)
+	if err != nil {
+		t.Fatalf("Backprop %v", err)
+	}
+	_ = g2
+}

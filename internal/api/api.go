@@ -134,3 +134,5 @@ func ReduceAdd(xs []datatypes.Tensor, opts ...tensor.ConsOpt) (retVal datatypes.
 	}
 	return retVal, nil
 }
+
+func Sum(a datatypes.Tensor, along ...int) (retVal datatypes.Tensor, err error) { panic("NY") }
