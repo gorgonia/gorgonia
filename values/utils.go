@@ -1,7 +1,6 @@
 package values
 
 import (
-	"github.com/pkg/errors"
 	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/tensor"
 )
@@ -31,7 +30,8 @@ func makeScalarFromMem(dt tensor.Dtype, mem tensor.Memory) (retVal Value, err er
 			retVal = (*B)(unsafe.Pointer(mem.Uintptr()))
 	*/
 	default:
-		err = errors.Errorf(gerrors.NYITypeFail, "makeScalarFromMem", dt)
+		err = gerrors.NYI(dt)
+		//err = errors.Errorf(gerrors.NYITypeFail, "makeScalarFromMem", dt)
 	}
 	return
 }

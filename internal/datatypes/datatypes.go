@@ -67,7 +67,7 @@ func DtypeOf(t hm.Type) (retVal dtype.Dtype, err error) {
 	case hm.TypeVariable:
 		err = errors.Errorf("instance %v does not have a dtype", p)
 	default:
-		err = errors.Errorf(gerrors.NYITypeFail, "dtypeOf", p)
+		err = gerrors.NYI(p)
 		return
 	}
 

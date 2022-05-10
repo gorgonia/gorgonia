@@ -96,8 +96,7 @@ func MakeFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal Value, er
 	case tensor.Dtype:
 		return makeScalarFromMem(tt, mem)
 	default:
-		err = errors.Errorf(gerrors.NYITypeFail, "MakeValue", tt)
-		return
+		return nil, gerrors.NYI(tt)
 	}
 }
 
@@ -115,8 +114,7 @@ func Make(t hm.Type, s tensor.Shape) (retVal Value, err error) {
 	case types.TensorType:
 		return tensor.New(tensor.Of(dt), tensor.WithShape(s...)), nil
 	default:
-		err = errors.Errorf(gerrors.NYITypeFail, "MakeValue", tt)
-		return
+		return nil, gerrors.NYI(tt)
 	}
 }
 
