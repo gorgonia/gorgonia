@@ -3,12 +3,16 @@ package stdops
 import (
 	"context"
 	"fmt"
+	"runtime/trace"
 
 	"github.com/chewxy/hm"
+	"github.com/pkg/errors"
+	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
+	"gorgonia.org/tensor"
 )
 
 // In general all reductions will reduce the dims
@@ -34,6 +38,16 @@ func reductionTypeExpr(along shapes.Axes) hm.Type {
 	a := hm.TypeVariable('a')
 	d := types.MakeReduct(a, along)
 	return hm.NewFnType(a, d)
+}
+
+func denseReduction(task *trace.Task, ctx context.Context, f func(t *tensor.Dense, along ...int) (*tensor.Dense, error), along []int, input *tensor.Dense) (retVal values.Value, err error) {
+	defer task.End()
+	// TODO: put ctx into input.Engine somehow
+	var ret *tensor.Dense
+	if ret, err = f(t, along); err != nil {
+		return nil, errors.Wrapf(err, "Failed to perform reduction of %v", f)
+	}
+	return ret, err
 }
 
 type Reduction struct {
@@ -72,9 +86,17 @@ func (op *Sum) Type() hm.Type { return reductionTypeExpr(op.along) }
 // ShapeExpr informs the shape operations that the Op will do. A quick primer is given in the README of the shapes package.
 func (op *Sum) ShapeExpr() shapes.Expr { return reductionShapeExpr(op.along) }
 
-/* Machine related */ // Do executes the op.
+// Do executes the op.
 func (op *Sum) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
-	panic("not implemented") // TODO: Implement
+	if err := gctx.Handle(ctx); err != nil {
+		return nil, err
+	}
+
+	switch t := vs[0].(type) {
+	case *tensor.Dense:
+		ctx2, task := trace.NewTask(ctx, op.String())
+		return denseReduction(task, ctx2, (*tensor.Dense).Sum, op.along, t)
+	}
 }
 
 func (op *Sum) String() string { return "∑" }
