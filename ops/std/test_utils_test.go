@@ -8,7 +8,6 @@ import (
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
-	"log"
 )
 
 func typecheck(op ops.Op, vs ...values.Value) (retType hm.Type, err error) {

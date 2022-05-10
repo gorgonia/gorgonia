@@ -32,7 +32,7 @@ func reductionShapeExpr(along shapes.Axes) shapes.Expr {
 
 func reductionTypeExpr(along shapes.Axes) hm.Type {
 	a := hm.TypeVariable('a')
-	d := types.MakeReduction(a, a)
+	d := types.MakeReduct(a, along)
 	return hm.NewFnType(a, d)
 }
 

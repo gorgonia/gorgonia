@@ -9,18 +9,12 @@ import (
 
 // Dependent is a tensor-type like "result" type that is dependent on the previous type.
 type Dependent struct {
-	dim         hm.Type // the Dim of the result is dependent on this given type
-	dtype       hm.Type // the Dtype of the result is dependent of this given type.
-	isReduction bool
+	dim   hm.Type // the Dim of the result is dependent on this given type
+	dtype hm.Type // the Dtype of the result is dependent of this given type.
 }
 
 // MakeDependent creates a new Dependent type. `dim` refers to the type of which the final dims will be reliant on. `dt` refrs to the type of which the final dt will be reliant on.
 func MakeDependent(dim hm.Type, dt hm.Type) Dependent { return Dependent{dim: dim, dtype: dt} }
-
-// MakeReduction creates a new Dependent type, but is flagged as a reduction.
-func MakeReduction(dim hm.Type, dt hm.Type) Dependent {
-	return Dependent{dim: dim, dtype: dt, isReduction: true}
-}
 
 // Apply applies a list of substitutes and returns a copy of itself.
 func (t Dependent) Apply(sub hm.Subs) hm.Substitutable {
@@ -84,9 +78,6 @@ func (t Dependent) ResolveDepends() hm.Type {
 		dim = d.Dims
 	case *TensorType:
 		dim = d.Dims
-	}
-	if t.isReduction {
-		dim--
 	}
 
 	var of hm.Type
