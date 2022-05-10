@@ -79,5 +79,6 @@ func (t Reduct) ResolveDepends() hm.Type {
 	if dims < 0 {
 		panic("Something wrong has happened")
 	}
-	return TensorType{Dims: dims, Of: of}
+	retVal := TensorType{Dims: dims, Of: of}
+	return retVal.Canonical()
 }

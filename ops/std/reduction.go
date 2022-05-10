@@ -8,6 +8,7 @@ import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	gctx "gorgonia.org/gorgonia/internal/context"
+	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
@@ -23,10 +24,8 @@ func reductionShapeExpr(along shapes.Axes) shapes.Expr {
 		reducts.A = shapes.Var('a')
 		reducts.Along = shapes.AllAxes
 	} else {
-		reducts = shapes.ReductOf{shapes.Var('a'), along[0]}
-		for _, a := range along[1:] {
-			reducts = shapes.ReductOf{reducts, a}
-		}
+		reducts = shapes.Reduce(shapes.Var('a'), along)
+
 	}
 	return shapes.Arrow{
 		shapes.Var('a'),
@@ -44,8 +43,8 @@ func denseReduction(task *trace.Task, ctx context.Context, f func(t *tensor.Dens
 	defer task.End()
 	// TODO: put ctx into input.Engine somehow
 	var ret *tensor.Dense
-	if ret, err = f(t, along); err != nil {
-		return nil, errors.Wrapf(err, "Failed to perform reduction of %v", f)
+	if ret, err = f(input, along...); err != nil {
+		return nil, errors.Wrapf(err, "Failed to perform reduction of %v", funcName(f))
 	}
 	return ret, err
 }
@@ -95,8 +94,14 @@ func (op *Sum) Do(ctx context.Context, vs ...values.Value) (retVal values.Value,
 	switch t := vs[0].(type) {
 	case *tensor.Dense:
 		ctx2, task := trace.NewTask(ctx, op.String())
-		return denseReduction(task, ctx2, (*tensor.Dense).Sum, op.along, t)
+		return denseReduction(task, ctx2, (*tensor.Dense).Sum, axesToInts(op.along), t)
+	default:
+		return nil, gerrors.NYI(t)
 	}
 }
 
 func (op *Sum) String() string { return "∑" }
+
+/*
+ UTILITY FUNCTIONS
+*/

@@ -14,3 +14,6 @@ import (
 func one(dt dtype.Dtype) interface{}
 
 func ints2axes(is []int) shapes.Axes { return *(*shapes.Axes)(unsafe.Pointer(&is)) }
+
+//go:linkname axesToInts gorgonia.org/shapes.axesToInts
+func axesToInts(a shapes.Axes) []int

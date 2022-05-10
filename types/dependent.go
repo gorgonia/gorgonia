@@ -90,9 +90,6 @@ func (t Dependent) ResolveDepends() hm.Type {
 		of = t.dtype
 	}
 
-	if dim == 0 {
-		return of
-	}
-
-	return TensorType{Dims: dim, Of: of}
+	retVal := TensorType{Dims: dim, Of: of}
+	return retVal.Canonical()
 }
