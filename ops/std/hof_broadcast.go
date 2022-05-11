@@ -282,3 +282,11 @@ func calcBCShape(shp shapes.Shape, expectedDims int, broadcastAlong []int) (newS
 	}
 	return
 }
+
+/* SYM DIFF */
+
+func (op *Broadcast) DiffWRT(i int) []bool { return onetrue }
+
+func (op *Broadcast) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented") // TODO: Implement
+}

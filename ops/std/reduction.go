@@ -7,6 +7,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/exprgraph"
 	gctx "gorgonia.org/gorgonia/internal/context"
 	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/ops"
@@ -102,6 +103,8 @@ func (op *Sum) Do(ctx context.Context, vs ...values.Value) (retVal values.Value,
 
 func (op *Sum) String() string { return "∑" }
 
-/*
- UTILITY FUNCTIONS
-*/
+func (op *Sum) DiffWRT(inputs int) []bool { return onetrue }
+
+func (op *Sum) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented") // TODO: Implement
+}
