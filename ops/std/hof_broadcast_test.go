@@ -108,3 +108,42 @@ func TestAutoBroadcast(t *testing.T) {
 	}
 
 }
+
+/*
+func TestBroadcast(t *testing.t) {
+	eng := engines.NewStd()
+	g := exprgraph.NewGraph(eng)
+	x := exprgraph.NewNode(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	y := exprgraph.NewNode(g, "y", tensor.WithShape(1, 3), tensor.WithBacking([]float64{100, 1000, 10000}))
+	z := exprgraph.NewNode(g, "z", tensor.WithShape(), tensor.Of(tensor.Float64))
+	a := exprgraph.NewNode(g, "a", tensor.WithShape(), tensor.Of(tensor.Float64))
+
+	op := Mul(x, y)
+
+	const1 := exprgraph.NewNode(g, "const 1", tensor.WithShape(), tensor.WiithBacking([]float64{1}))
+	outputs := []*exprgraph.Node{xypz}
+	wrt := []*exprgraph.Node{x, y, z}
+	gradOutputs := []*exprgraph.Node{const1}
+
+	g2, err := Backpropagate(g, outputs, gradOutputs, wrt)
+	if err != nil {
+		t.Fatalf("Backprop %v", err)
+	}
+	_ = g2
+}
+*/
+
+func TestDevBroadcast(t *testing.T) {
+	a := tensor.New(tensor.WithShape(3, 1), tensor.WithBacking([]float64{1, 2, 3}))
+	b := tensor.New(tensor.WithShape(1, 3), tensor.WithBacking([]float64{10, 100, 1000}))
+	op := Mul(a, b)
+	bcop, err := Auto(op, a, b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := bcop.Do(context.TODO(), a, b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%v", c)
+}

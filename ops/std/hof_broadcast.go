@@ -3,10 +3,12 @@ package stdops
 import (
 	"context"
 	"fmt"
+	"log"
 	"runtime/trace"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/exprgraph"
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/gorgonia/values"
@@ -205,6 +207,7 @@ func (op *Broadcast) do(ctx context.Context, prealloc, newA, newB, a, b values.V
 	}
 	on := op.pattern.on()
 	if len(on[0]) > 0 {
+		log.Printf("left")
 		if err = op.repeat(on[0], newA, a, b); err != nil {
 			return errors.Wrap(err, "While doing Broadcast on left operand")
 		}
@@ -213,6 +216,7 @@ func (op *Broadcast) do(ctx context.Context, prealloc, newA, newB, a, b values.V
 	}
 
 	if len(on[1]) > 0 {
+		log.Printf("right")
 		if err = op.repeat(on[1], newB, b, a); err != nil {
 			return errors.Wrap(err, "While doing Broadcast on right operand")
 		}
@@ -228,6 +232,7 @@ func (op *Broadcast) do(ctx context.Context, prealloc, newA, newB, a, b values.V
 func (op *Broadcast) repeat(along []int, prealloc, toBeRepeated, reference values.Value) (err error) {
 	shp := reference.Shape()
 	for _, ax := range along {
+		log.Printf("repeat along %d\nref:\n%v", ax, toBeRepeated)
 		reps := shp[ax]
 		if prealloc, err = tensor.RepeatReuse(toBeRepeated, prealloc, ax, reps); err != nil {
 			return errors.Wrapf(err, "Cannot repeat along axis %d of %v", ax, toBeRepeated)
@@ -288,5 +293,9 @@ func calcBCShape(shp shapes.Shape, expectedDims int, broadcastAlong []int) (newS
 func (op *Broadcast) DiffWRT(i int) []bool { return onetrue }
 
 func (op *Broadcast) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
-	panic("not implemented") // TODO: Implement
+	log.Printf("inputs %v", inputs)
+	log.Printf("outputs %v", output)
+	log.Printf("grad %v", grad)
+
+	panic("NYI")
 }
