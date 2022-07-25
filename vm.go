@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"bytes"
 	"log"
-	"os"
 
 	"gorgonia.org/tensor"
 )
@@ -32,6 +31,7 @@ const (
 	bwdOnly
 	watchNaN
 	watchInf
+	watchPointer
 	allocVals
 	spare2 // spare2 = trace in tapeVM,
 	spare3 // spare3 = bindDV in tapeVM, manualRootGrad in LispVM
@@ -55,11 +55,11 @@ func EvalMode() VMOpt {
 	}
 }
 
-// WithLogger creates a VM with the supplied logger. If the logger is nil, a default logger, writing to os.stderr will be created.
+// WithLogger creates a VM with the supplied logger.
 func WithLogger(logger *log.Logger) VMOpt {
 	f := func(m VM) {
 		if logger == nil {
-			logger = log.New(os.Stderr, "", 0)
+			return
 		}
 		switch v := m.(type) {
 		case *lispMachine:
@@ -120,6 +120,8 @@ func WithWatchlist(list ...interface{}) VMOpt {
 				switch i := item.(type) {
 				case int:
 					v.watchRegs = append(v.watchRegs, register{id: i})
+				case NodeID:
+					v.watchNodeIDs = append(v.watchNodeIDs, i)
 				case *Node:
 					v.watchNodes = append(v.watchNodes, i)
 				default:
@@ -156,6 +158,21 @@ func WithInfWatch() VMOpt {
 			v.doWatchInf()
 		case *tapeMachine:
 			v.doWatchInf()
+		default:
+			panic(nyi("withInfWatch", v))
+		}
+	}
+	return f
+}
+
+// WithPointerWatch creates a VM that will watch for pointer clashes when executing. This slows the execution down and it's only recommended for gorgonia development.
+func WithPointerWatch() VMOpt {
+	f := func(m VM) {
+		switch v := m.(type) {
+		case *lispMachine:
+			panic("pointer watch not supported by the Lisp Machine yet")
+		case *tapeMachine:
+			v.doWatchPointer()
 		default:
 			panic(nyi("withInfWatch", v))
 		}

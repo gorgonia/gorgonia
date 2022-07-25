@@ -88,7 +88,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	m.enterLogScope()
 	m.watchedLogf(m.valueFmt, v)
 	m.leaveLogScope()
-	// TODO: type and shape checks
+	// TODO: type and sohape checks
 
 	// Write
 	setEngine(v, m.Engine)
@@ -130,8 +130,18 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 				}
 				m.closureQueue = append(m.closureQueue, closure)
 			default:
-				dv := dvUnit(src.boundTo)
+				// TODO HERE
+				/*
+				   e.g. problem
+				   z = y * (x + 1)
 
+				   Here, 1 is a constant. But 1 comes early in the expression graph.
+				   The final gradient is also 1, so 1 will also be the derivOf `z`
+				   But because the graph is sorted, the 1 node will be walked before
+				   the `z` node, and this part will cause a panic, as `z` will have no `Value`
+				   associated with it yet.
+				*/
+				dv := dvUnit(src.boundTo)
 				add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
 
 				if d, err := add.UnsafeDo(dv.d, v); err == nil {

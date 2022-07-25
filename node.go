@@ -15,6 +15,10 @@ import (
 	"gorgonia.org/tensor"
 )
 
+// NodeID represents the ID of a node. In this version
+// it doesn't really do much (except you can pass it into some VMs)
+type NodeID int64
+
 // A Node is a node in the computation graph
 type Node struct {
 	// metadata of the node

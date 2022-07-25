@@ -325,6 +325,25 @@ func (op elemBinOp) UnsafeDo(inputs ...Value) (retVal Value, err error) {
 		return op.Do(inputs...)
 	}
 
+	a := inputs[0]
+	b := inputs[1]
+
+	ashp, bshp := a.Shape(), b.Shape()
+
+	if !ashp.Eq(bshp) && ashp.TotalSize() == bshp.TotalSize() {
+		// temporarily reshape
+		var toReshape tensor.Tensor = b.(tensor.Tensor)
+		as := a
+		backup := b.Shape()
+		if bshp.Dims() < ashp.Dims() {
+			toReshape = a.(tensor.Tensor)
+			as = b
+			backup = a.Shape()
+		}
+		toReshape.Reshape(as.Shape().Clone()...)
+		defer toReshape.Reshape(backup...)
+	}
+
 	if ud, ok := op.ʘBinaryOperator.(unsafeDoerBinOp); ok {
 		return ud.UnsafeDo(op.retSame, inputs...)
 	}

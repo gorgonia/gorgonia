@@ -20,7 +20,7 @@ func TestLispMachineBasics(t *testing.T) {
 	g := NewGraph()
 	m = NewLispMachine(g)
 	defer m.Close()
-	assert.Equal(byte(0x3), m.runFlags)
+	assert.Equal(uint16(0x3), m.runFlags)
 	assert.True(m.runFwd())
 	assert.True(m.runBwd())
 
@@ -28,11 +28,11 @@ func TestLispMachineBasics(t *testing.T) {
 	m = NewLispMachine(g, WithLogger(logger))
 	defer m.Close()
 	assert.Equal(logger, m.logger)
-	assert.Equal(byte(0x0), m.logFlags) // if you pass in a logger without telling which direction to log... nothing gets logged
+	assert.Equal(uint16(0x0), m.logFlags) // if you pass in a logger without telling which direction to log... nothing gets logged
 
 	m = NewLispMachine(g, WithLogger(nil))
 	defer m.Close()
-	assert.NotNil(m.logger)
+	assert.True(m.logger == nil, "logger: %v", m.logger)
 
 	m = NewLispMachine(g, WithValueFmt("%v"))
 	defer m.Close()
@@ -40,45 +40,46 @@ func TestLispMachineBasics(t *testing.T) {
 
 	m = NewLispMachine(g, WithNaNWatch())
 	defer m.Close()
-	assert.Equal(byte(0x7), m.runFlags)
+	assert.Equal(uint16(0x7), m.runFlags)
 	assert.True(m.watchNaN())
 
 	m = NewLispMachine(g, WithInfWatch())
 	defer m.Close()
-	assert.Equal(byte(0xb), m.runFlags)
+	assert.Equal(uint16(0xb), m.runFlags)
 	assert.True(m.watchInf())
 
 	m = NewLispMachine(g, ExecuteFwdOnly())
 	defer m.Close()
-	assert.Equal(byte(0x1), m.runFlags)
+	assert.Equal(uint16(0x1), m.runFlags)
 	assert.True(m.runFwd())
 	assert.False(m.runBwd())
 
 	m = NewLispMachine(g, ExecuteBwdOnly())
 	defer m.Close()
-	assert.Equal(byte(0x2), m.runFlags)
+	assert.Equal(uint16(0x2), m.runFlags)
 	assert.True(m.runBwd())
 	assert.False(m.runFwd())
 
 	m = NewLispMachine(g, LogFwd())
 	defer m.Close()
-	assert.Equal(byte(0x1), m.logFlags)
-	assert.Equal(byte(0x3), m.runFlags)
+	assert.Equal(uint16(0x1), m.logFlags)
+	assert.Equal(uint16(0x3), m.runFlags)
 	assert.True(m.logFwd())
 	assert.False(m.logBwd())
 
 	m = NewLispMachine(g, LogBwd())
 	defer m.Close()
-	assert.Equal(byte(0x2), m.logFlags)
-	assert.Equal(byte(0x3), m.runFlags)
+	assert.Equal(uint16(0x2), m.logFlags)
+	assert.Equal(uint16(0x3), m.runFlags)
 	assert.True(m.logBwd())
 	assert.False(m.logFwd())
 
 	// if you pass in a watchlist, but don't have any logger, well, it's not gonna log anything
 	m = NewLispMachine(g, WithWatchlist())
 	defer m.Close()
-	assert.Equal(byte(0x80), m.logFlags)
-	assert.Equal(byte(0x3), m.runFlags)
+
+	assert.Equal(uint16(0x100), m.logFlags)
+	assert.Equal(uint16(0x3), m.runFlags)
 	assert.True(m.watchAll())
 
 }
