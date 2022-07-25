@@ -68,8 +68,7 @@ func NewYoloV3Tiny(g *gorgonia.ExprGraph, input *gorgonia.Node, classesNumber, b
 	epsilon := float32(0.000001)
 
 	yoloNodes := []*gorgonia.Node{}
-	for i := range blocks {
-		block := blocks[i]
+	for i, block := range blocks {
 		filtersIdx := 0
 		layerType, ok := block["type"]
 		if ok {
