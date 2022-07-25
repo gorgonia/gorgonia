@@ -9,8 +9,17 @@ import (
 	"gorgonia.org/tensor"
 )
 
+// Applies SoftMax to the input x
 func SoftMax(x *Node, axes ...int) (*Node, error) {
 	op := newSoftmaxOp(x.Shape(), axes...)
+
+	return ApplyOp(op, x)
+}
+
+// Applies LogSoftMax to the input x
+func LogSoftMax(x *Node, axes ...int) (*Node, error) {
+	op := newSoftmaxOp(x.Shape(), axes...)
+	op.isLog = true
 
 	return ApplyOp(op, x)
 }
