@@ -20,7 +20,6 @@ func BenchmarkOneMil(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		if err := m.RunAll(); err != nil {
 			b.Fatalf("Failed at n: %d. Error: %v", n, err)
-			break
 		}
 		m.Reset()
 	}
