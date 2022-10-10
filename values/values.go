@@ -32,7 +32,7 @@ type Valuer interface {
 // Zeroer is a Value that can zero itself (here zero is used as a verb).
 type Zeroer interface {
 	Value
-	Zero()
+	//	Zero()
 }
 
 // ZeroValuer is a a Value that can provide the zero-value of its type.
