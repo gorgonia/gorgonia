@@ -12,9 +12,9 @@ import (
 
 // BinaryXent is a convenience function for doing binary crossentropy stuff.
 // The formula is as below:
-// 		-(y * logprob) +  (1-y)(1-logprob)
+// 		-(y * log(prob)) - (1-y)log(1-prob)
 func BinaryXent(output, target *Node) (retVal *Node, err error) {
-	var one *Node
+	var one, oneMore *Node
 	var logO, omt, omo, tLogO *Node
 
 	// which constant one to use?
@@ -26,8 +26,10 @@ func BinaryXent(output, target *Node) (retVal *Node, err error) {
 	switch dt {
 	case Float64:
 		one = onef64
+		oneMore = oneMoref64
 	case Float32:
 		one = onef32
+		oneMore = oneMoref32
 	default:
 		return nil, errors.Errorf(nyiFail, "BinaryXEnt", dt)
 	}
@@ -40,7 +42,7 @@ func BinaryXent(output, target *Node) (retVal *Node, err error) {
 		return nil, errors.Wrap(err, operationError)
 	}
 
-	if omo, err = Sub(one, output); err != nil {
+	if omo, err = Sub(oneMore, output); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
 

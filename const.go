@@ -84,16 +84,18 @@ const (
 var empty struct{}
 
 var (
-	onef32   = NewConstant(float32(1.0))
-	onef64   = NewConstant(float64(1.0))
-	zerof32  = NewConstant(float32(0.0))
-	zerof64  = NewConstant(float64(0.0))
-	twof64   = NewConstant(float64(2.0))
-	twof32   = NewConstant(float32(2.0))
-	threef64 = NewConstant(float64(3.0))
-	threef32 = NewConstant(float32(3.0))
-	ln2f64   = NewConstant(math.Ln2)
-	ln2f32   = NewConstant(float32(math.Ln2))
+	onef32     = NewConstant(float32(1.0))
+	onef64     = NewConstant(float64(1.0))
+	oneMoref32 = NewConstant(float32(1.0 + 1e-16))
+	oneMoref64 = NewConstant(float64(1.0 + 1e-16))
+	zerof32    = NewConstant(float32(0.0))
+	zerof64    = NewConstant(float64(0.0))
+	twof64     = NewConstant(float64(2.0))
+	twof32     = NewConstant(float32(2.0))
+	threef64   = NewConstant(float64(3.0))
+	threef32   = NewConstant(float32(3.0))
+	ln2f64     = NewConstant(math.Ln2)
+	ln2f32     = NewConstant(float32(math.Ln2))
 
 	onef32ConstOp  = onef32.op.(constant)
 	onef64ConstOp  = onef64.op.(constant)
