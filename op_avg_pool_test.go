@@ -30,7 +30,7 @@ func TestAvgPoolOp(t *testing.T) {
 			stride:         []int{1, 1},
 			expectedOutput: []float64{2.5, 3.5, 4.5, 6.5, 7.5, 8.5, 10.5, 11.5, 12.5},
 			expectedShape:  tensor.Shape{1, 1, 3, 3},
-			expectedCost:   6.5,
+			expectedCost:   53.583333333333336,
 			PoolFunc:       AveragePool2D,
 		},
 		{
@@ -44,7 +44,7 @@ func TestAvgPoolOp(t *testing.T) {
 			stride:         []int{1, 1},
 			expectedOutput: []float32{2.5, 3.5, 4.5, 6.5, 7.5, 8.5, 10.5, 11.5, 12.5},
 			expectedShape:  tensor.Shape{1, 1, 3, 3},
-			expectedCost:   float32(6.5),
+			expectedCost:   float32(53.583332),
 			PoolFunc:       AveragePool2D,
 		},
 	}
@@ -65,7 +65,7 @@ func TestAvgPoolOp(t *testing.T) {
 
 			y := NewTensor(g, output.Dtype(), output.Dims(), WithShape(output.Shape()...), WithInit(Ones()))
 
-			cost := Must(Mean(Must((Sub(output, y))))) // MSE
+			cost := Must(Mean(Must(Square(Must(Sub(output, y)))))) // MSE
 
 			_, err = Grad(cost, input)
 			c.NoError(err)
