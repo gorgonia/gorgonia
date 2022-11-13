@@ -214,7 +214,7 @@ func TestMaxPool(t *testing.T) {
 			pad:            []int{0, 0},
 			stride:         []int{1, 1},
 			expectedOutput: []float64{15},
-			expectedCost:   14,
+			expectedCost:   196,
 			expectedShape:  tensor.Shape{1, 1, 1, 1},
 			PoolFunc:       MaxPool2D,
 		},
@@ -236,7 +236,7 @@ func TestMaxPool(t *testing.T) {
 
 			y := NewTensor(g, output.Dtype(), output.Dims(), WithShape(output.Shape()...), WithInit(Ones()))
 
-			cost := Must(Mean(Must((Sub(output, y))))) // MSE
+			cost := Must(Mean(Must(Square(Must(Sub(output, y)))))) // MSE
 
 			_, err = Grad(cost, input)
 			c.NoError(err)

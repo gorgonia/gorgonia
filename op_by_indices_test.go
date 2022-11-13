@@ -145,7 +145,7 @@ func TestByIndicesOpFull(t *testing.T) {
 
 			y := NewTensor(g, tensor.Float64, output.Shape().Dims(), WithName("target"), WithShape(output.Shape().Clone()...), WithValue(tensor.New(tensor.WithShape(tcase.expectedShape.Clone()...), tensor.WithBacking(tcase.expectedOutput))))
 
-			cost := Must(Mean(Must((Sub(output, y))))) // MSE
+			cost := Must(Mean(Must(Square(Must(Sub(output, y)))))) // MSE
 
 			_, err = Grad(cost, input)
 			c.NoError(err)
