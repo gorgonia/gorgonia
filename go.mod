@@ -3,9 +3,7 @@ module gorgonia.org/gorgonia
 go 1.16
 
 require (
-
 	github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40 // indirect
-
 	github.com/awalterschulze/gographviz v2.0.3+incompatible
 	github.com/chewxy/hm v1.0.0
 	github.com/chewxy/math32 v1.10.1
@@ -17,7 +15,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.0
 	github.com/xtgo/set v1.0.0
-	go4.org/unsafe/assume-no-moving-gc v0.0.0-20211027215541-db492cf91b37 // indirect
+	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230525183740-e7c30c78aeb2 // indirect
 	golang.org/x/net v0.0.0-20220401154927-543a649e0bdd // indirect
 	golang.org/x/sys v0.0.0-20220330033206-e17cdc41300f // indirect
 	gonum.org/v1/gonum v0.11.0

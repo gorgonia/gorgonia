@@ -445,3 +445,11 @@ func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β 
 func GlobalAveragePool2D(x *Node) (*Node, error) {
 	return ApplyOp(&globalAveragePoolOp{}, x)
 }
+
+func Embedding(embedding *Node, input *Node) (*Node, error) {
+	if embedding.Shape().Dims() != 2 {
+		return nil, errors.Errorf("Expected embedding to have a shape with dimension 2")
+	}
+
+	return ApplyOp(&embeddingOp{}, embedding, input)
+}
