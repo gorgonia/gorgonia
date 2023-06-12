@@ -19,7 +19,7 @@ func (op embeddingOp) Arity() int {
 
 func (op embeddingOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	return hm.NewFnType(a, a) // f(float64) float64
+	return hm.NewFnType(a, a) // f(float64, int64) float64
 }
 
 func (op embeddingOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
@@ -123,12 +123,13 @@ func (op *embeddingOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) 
 		return fmt.Errorf("dropout diff requires 1 arguments")
 	}
 
-	diff := &dropoutDiffOp{op}
-	xdv, ydv := getDV(inputs[0], output)
+	// diff := &dropoutDiffOp{op}
+	// xdv, ydv := getDV(inputs[0], output)
 
-	_, err := diff.UsePreallocDo(xdv.d, xdv.Value, output.Value(), ydv.d)
+	// _, err := diff.UsePreallocDo(xdv.d, xdv.Value, output.Value(), ydv.d)
 
-	return err
+	// return err
+	return nil
 }
 
 func (op *embeddingOp) DiffWRT(inputs int) []bool {
@@ -145,15 +146,16 @@ func (op *embeddingOp) SymDiff(inputs Nodes, output, grad *Node) (Nodes, error) 
 		return nil, err
 	}
 
-	input := inputs[0]
-	diff := &dropoutDiffOp{op}
+	// input := inputs[0]
+	// diff := &dropoutDiffOp{op}
 
-	ret, err := ApplyOp(diff, input, output, grad)
-	if err != nil {
-		return nil, err
-	}
+	// ret, err := ApplyOp(diff, input, output, grad)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	return Nodes{ret}, nil
+	// return Nodes{ret}, nil
+	return nil, nil
 }
 
 func (op *embeddingOp) SetTraining(isTraining bool) error { return nil }

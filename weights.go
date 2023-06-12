@@ -124,6 +124,15 @@ func RangedFromWithStep(start, increment interface{}) InitWFn {
 				st += incr
 			}
 			return result
+		case tensor.Int64:
+			st := start.(int)
+			incr := increment.(int)
+			result := make([]int64, totalSize)
+			for i := 0; i < totalSize; i++ {
+				result[i] = int64(st)
+				st += incr
+			}
+			return result
 		default:
 			panic(fmt.Sprintf("Dtype %v not yet supported for RangedFromWithStep. Please put a pull request in to support this function", dt))
 		}
