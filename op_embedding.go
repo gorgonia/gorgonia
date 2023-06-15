@@ -27,41 +27,41 @@ func (op *embeddingOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
 	if len(inputs) != 2 {
 		return nil, fmt.Errorf("embedding requires 2 inputs, got %d", len(inputs))
 	}
-	embeddingShape := inputs[0].(tensor.Shape)
-	if embeddingShape.Dims() != 2 {
-		return nil, fmt.Errorf("embedding requires a 2D embedding matrix, got %dD", embeddingShape.Dims())
+	weightShape := inputs[0].(tensor.Shape)
+	if weightShape.Dims() != 2 {
+		return nil, fmt.Errorf("embedding requires a 2D weight matrix, got %dD", weightShape.Dims())
 	}
-	inputShape := inputs[1].(tensor.Shape)
-	outputShape := []int{}
-	outputShape = append(outputShape, inputShape...)
-	outputShape = append(outputShape, embeddingShape[1])
+	indicesShape := inputs[1].(tensor.Shape)
+	var outputShape []int
+	outputShape = append(outputShape, indicesShape...)
+	outputShape = append(outputShape, weightShape[1])
 	return outputShape, nil
 }
 
-func (op *embeddingOp) Do(value ...Value) (Value, error) {
-	embddingTensor, inputTensor, err := op.checkInput(value...)
+func (op *embeddingOp) Do(inputs ...Value) (Value, error) {
+	weightTensor, indicesTensor, err := op.checkInput(inputs...)
 	if err != nil {
-		return nil, fmt.Errorf("can't check Embedding input: %w", err)
+		return nil, fmt.Errorf("can't check embedding input: %w", err)
 	}
-	outputShape, err := op.InferShape(embddingTensor.Shape(), inputTensor.Shape())
+	outputShape, err := op.InferShape(weightTensor.Shape(), indicesTensor.Shape())
 	if err != nil {
-		return nil, fmt.Errorf("can't infer Embedding output shape: %w", err)
+		return nil, fmt.Errorf("can't infer embedding output shape: %w", err)
 	}
-	ret := tensor.New(tensor.WithShape(outputShape...), tensor.Of(embddingTensor.Dtype()))
-	op.do(embddingTensor.Data(), inputTensor.Data(), ret.Data(), outputShape[len(outputShape)-1])
+	ret := tensor.New(tensor.WithShape(outputShape...), tensor.Of(weightTensor.Dtype()))
+	op.do(weightTensor.Data(), indicesTensor.Data(), ret.Data(), outputShape[len(outputShape)-1])
 	return ret, nil
 }
 
-func (op *embeddingOp) UsePreallocDo(prealloc Value, value ...Value) (Value, error) {
-	embddingTensor, inputTensor, err := op.checkInput(value...)
+func (op *embeddingOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
+	weightTensor, indicesTensor, err := op.checkInput(inputs...)
 	if err != nil {
-		return nil, fmt.Errorf("can't check Embedding input: %w", err)
+		return nil, fmt.Errorf("can't check embedding input: %w", err)
 	}
-	outputShape, err := op.InferShape(embddingTensor.Shape(), inputTensor.Shape())
+	outputShape, err := op.InferShape(weightTensor.Shape(), indicesTensor.Shape())
 	if err != nil {
-		return nil, fmt.Errorf("can't infer Embedding output shape: %w", err)
+		return nil, fmt.Errorf("can't infer embedding output shape: %w", err)
 	}
-	op.do(embddingTensor.Data(), inputTensor.Data(), prealloc.Data(), outputShape[len(outputShape)-1])
+	op.do(weightTensor.Data(), indicesTensor.Data(), prealloc.Data(), outputShape[len(outputShape)-1])
 	return prealloc, nil
 }
 
@@ -71,67 +71,67 @@ func (op *embeddingOp) checkInput(inputs ...Value) (tensor.Tensor, tensor.Tensor
 	}
 
 	var (
-		emb tensor.Tensor
-		in  tensor.Tensor
-		ok  bool
+		weight  tensor.Tensor
+		indices tensor.Tensor
+		ok      bool
 	)
 
-	if emb, ok = inputs[0].(tensor.Tensor); !ok {
-		return nil, nil, errors.Errorf("Expected embedding to be a tensor")
+	if weight, ok = inputs[0].(tensor.Tensor); !ok {
+		return nil, nil, errors.Errorf("expected weight to be a tensor")
 	}
-	if in, ok = inputs[1].(tensor.Tensor); !ok {
-		return nil, nil, errors.Errorf("Expected input to be a tensor")
+	if indices, ok = inputs[1].(tensor.Tensor); !ok {
+		return nil, nil, errors.Errorf("expected indices to be a tensor")
 	}
 
-	return emb, in, nil
+	return weight, indices, nil
 }
 
-func (op *embeddingOp) do(embedding, imput, output interface{}, embSize int) {
-	switch v := embedding.(type) {
+func (op *embeddingOp) do(weight, indices, output interface{}, embSize int) {
+	switch v := weight.(type) {
 	case []float32:
-		inputV, ok := imput.([]float32)
+		indicesV, ok := indices.([]float32)
 		if !ok {
-			log.Panicf("Expected input to be a []int32, got %T", imput)
+			log.Panicf("expected indices to be a []float32, got %T", indices)
 		}
 		outputV := output.([]float32)
-		for i, d := range inputV {
+		for i, d := range indicesV {
 			copy(outputV[i*embSize:(i+1)*embSize], v[int(d)*embSize:int(d+1)*embSize])
 		}
 	case []float64:
-		inputV, ok := imput.([]float64)
+		indicesV, ok := indices.([]float64)
 		if !ok {
-			log.Panicf("Expected input to be a []int32, got %T", imput)
+			log.Panicf("expected indices to be a []float64, got %T", indices)
 		}
 		outputV := output.([]float64)
-		for i, d := range inputV {
+		for i, d := range indicesV {
 			copy(outputV[i*embSize:(i+1)*embSize], v[int(d)*embSize:int(d+1)*embSize])
 		}
 	default:
-		log.Panicf("Expected embedding to be a []float32 or []float64, got %T", embedding)
+		log.Panicf("expected weight to be a []float32 or []float64, got %T", weight)
 	}
 }
 
-func (op embeddingOp) ReturnsPtr() bool {
+func (op *embeddingOp) ReturnsPtr() bool {
 	return false
 }
 
-func (op embeddingOp) CallsExtern() bool {
+func (op *embeddingOp) CallsExtern() bool {
 	return false
 }
 
-func (op embeddingOp) OverwritesInput() int {
+func (op *embeddingOp) OverwritesInput() int {
 	return -1
 }
 
-func (op embeddingOp) WriteHash(h hash.Hash) {
+func (op *embeddingOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, op.String())
 }
 
-func (op embeddingOp) Hashcode() uint32 {
+func (op *embeddingOp) Hashcode() uint32 {
 	return simpleHash(op)
 }
 
-func (op embeddingOp) String() string {
+func (op *embeddingOp) String() string {
 	return "Embedding"
 }
 

@@ -13,7 +13,7 @@ import (
 func TestEmbedding(t *testing.T) {
 	var tests = []struct {
 		dt                tensor.Dtype
-		weight            interface{}
+		w                 interface{}
 		expected          interface{}
 		expectedGrad      interface{}
 		expectedInputGrad interface{}
@@ -37,15 +37,19 @@ func TestEmbedding(t *testing.T) {
 	for _, tt := range tests {
 		name := fmt.Sprintf("%v", tt.dt)
 		t.Run(name, func(t *testing.T) {
-			g := NewGraph()
-			weight := NewMatrix(g, tt.dt, WithName("weight"), WithValue(tensor.New(tensor.WithShape(10, 2), tensor.WithBacking(tt.weight))))
-			indices := NewVector(g, tt.dt, WithName("indices"), WithShape(5), WithInit(RangedFromWithStep(0, 2)))
+			var (
+				g *ExprGraph = NewGraph()
+				w *Node
+				x *Node
+			)
+			w = NewMatrix(g, tt.dt, WithName("w"), WithValue(tensor.New(tensor.WithShape(10, 2), tensor.WithBacking(tt.w))))
+			x = NewVector(g, tt.dt, WithName("x"), WithShape(5), WithInit(RangedFromWithStep(0, 2)))
 
-			y, err := ApplyOp(&embeddingOp{}, weight, indices)
+			y, err := ApplyOp(&embeddingOp{}, w, x)
 			assert.NoError(t, err)
 
 			cost, _ := Mean(y)
-			if _, err := Grad(cost, weight); err != nil {
+			if _, err := Grad(cost, w); err != nil {
 				t.Fatal(err)
 			}
 
@@ -60,7 +64,7 @@ func TestEmbedding(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedGrad, yGrad.Data())
 
-			wGrad, err := weight.Grad()
+			wGrad, err := w.Grad()
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedInputGrad, wGrad.Data())
 		})
