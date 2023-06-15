@@ -12,6 +12,11 @@ import (
 )
 
 type embeddingOp struct {
+	arg0, arg1 hm.Type
+}
+
+func newEmbeddingOp(at, bt hm.Type) *embeddingOp {
+	return &embeddingOp{at, bt}
 }
 
 func (op *embeddingOp) Arity() int {
@@ -20,7 +25,24 @@ func (op *embeddingOp) Arity() int {
 
 func (op *embeddingOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	return hm.NewFnType(a, a, a)
+
+	var a0, a1, retType hm.Type
+	switch arg0 := op.arg0.(type) {
+	case TensorType:
+		a0 = makeFromTensorType(arg0, a)
+	default:
+		a0 = a
+	}
+
+	switch arg1 := op.arg1.(type) {
+	case TensorType:
+		a1 = makeFromTensorType(arg1, a)
+		retType = makeTensorType(arg1.Dims+1, a)
+	default:
+		a1 = a
+	}
+
+	return hm.NewFnType(a0, a1, retType)
 }
 
 func (op *embeddingOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
@@ -136,17 +158,17 @@ func (op *embeddingOp) String() string {
 }
 
 func (op *embeddingOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
-	if len(inputs) != 1 {
-		return fmt.Errorf("dropout diff requires 1 arguments")
+	if len(inputs) != 2 {
+		return fmt.Errorf("embedding diff requires 1 arguments")
 	}
 
-	// diff := &dropoutDiffOp{op}
-	// xdv, ydv := getDV(inputs[0], output)
+	diff := &embeddingDiffOp{op}
+	wdv := inputs[0].boundTo.(*dualValue)
+	xdv := inputs[1].boundTo.(*dualValue)
+	ydv := output.boundTo.(*dualValue)
 
-	// _, err := diff.UsePreallocDo(xdv.d, xdv.Value, output.Value(), ydv.d)
-
-	// return err
-	return nil
+	_, err := diff.UsePreallocDo(wdv.d, wdv.Value, xdv.Value, output.Value(), ydv.d)
+	return err
 }
 
 func (op *embeddingOp) DiffWRT(inputs int) []bool {
@@ -163,11 +185,11 @@ func (op *embeddingOp) SymDiff(inputs Nodes, output, grad *Node) (Nodes, error) 
 		return nil, err
 	}
 
-	weights := inputs[0]
+	weight := inputs[0]
 	indices := inputs[1]
 	diff := &embeddingDiffOp{op}
 
-	ret, err := ApplyOp(diff, weights, indices, output, grad)
+	ret, err := ApplyOp(diff, weight, indices, output, grad)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +197,7 @@ func (op *embeddingOp) SymDiff(inputs Nodes, output, grad *Node) (Nodes, error) 
 	return Nodes{ret, nil}, nil
 }
 
-func (op *embeddingOp) SetTraining(isTraining bool) error { return nil }
+func (op *embeddingOp) SetTraining(bool) error { return nil }
 
 type embeddingDiffOp struct {
 	*embeddingOp
@@ -190,30 +212,30 @@ func (op *embeddingDiffOp) Type() hm.Type {
 	return hm.NewFnType(t, t, t, t, t)
 }
 
-func (op *embeddingDiffOp) InferShape(ds ...DimSizer) (tensor.Shape, error) {
-	return ds[0].(tensor.Shape), nil
+func (op *embeddingDiffOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
+	return inputs[0].(tensor.Shape), nil
 }
 
 func (op *embeddingDiffOp) Do(values ...Value) (Value, error) {
-	weights := values[0].(*tensor.Dense)
+	weight := values[0].(*tensor.Dense)
 	indices := values[1].(*tensor.Dense)
 	output := values[2].(*tensor.Dense)
 	grad := values[3].(*tensor.Dense)
 
-	dy := ZeroValue(weights)
-	v, err := op.UsePreallocDo(dy, weights, indices, output, grad)
+	dy := ZeroValue(weight)
+	v, err := op.UsePreallocDo(dy, weight, indices, output, grad)
 
 	return v, err
 }
 
 func (op *embeddingDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
-	weights := inputs[0].(*tensor.Dense)
+	weight := inputs[0].(*tensor.Dense)
 	indices := inputs[1].(*tensor.Dense)
 	outGrad := inputs[3].(*tensor.Dense)
 	result := prealloc.(*tensor.Dense)
-	embSize := weights.Shape()[1]
+	embSize := weight.Shape()[1]
 
-	switch weights.Dtype() {
+	switch weight.Dtype() {
 	case Float64:
 		indicesA := indices.Float64s()
 		dy := outGrad.Float64s()
@@ -239,11 +261,11 @@ func (op *embeddingDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVa
 	return prealloc, nil
 }
 
-func (op embeddingDiffOp) ReturnsPtr() bool {
+func (op *embeddingDiffOp) ReturnsPtr() bool {
 	return true
 }
 
-func (op embeddingDiffOp) CallsExtern() bool {
+func (op *embeddingDiffOp) CallsExtern() bool {
 	return false
 }
 

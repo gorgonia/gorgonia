@@ -446,10 +446,10 @@ func GlobalAveragePool2D(x *Node) (*Node, error) {
 	return ApplyOp(&globalAveragePoolOp{}, x)
 }
 
-func Embedding(embedding *Node, input *Node) (*Node, error) {
-	if embedding.Shape().Dims() != 2 {
-		return nil, errors.Errorf("Expected embedding to have a shape with dimension 2")
+func Embedding(weight *Node, indices *Node) (*Node, error) {
+	if weight.Shape().Dims() != 2 {
+		return nil, errors.Errorf("expected weight to have a shape with dimension 2")
 	}
 
-	return ApplyOp(&embeddingOp{}, embedding, input)
+	return ApplyOp(newEmbeddingOp(weight.t, indices.t), weight, indices)
 }
