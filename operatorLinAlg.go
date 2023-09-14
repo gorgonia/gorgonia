@@ -446,7 +446,7 @@ func batchedMatMul(a, b, c tensor.Tensor, transA, transB, incr bool) (retVal ten
 	}
 
 	if c == nil {
-		newShape := append(outer, innerA[0], innerB[1])
+		newShape := append(outer.Clone(), innerA[0], innerB[1])
 		c = tensor.New(tensor.Of(a.Dtype()), tensor.WithShape(newShape...), tensor.WithEngine(a.Engine()))
 	}
 
