@@ -420,6 +420,18 @@ func batchedMatMulDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node)
 	panic("unreachable")
 }
 
+func reshape(name string, t tensor.Tensor, shape ...int) error {
+	if t.Shape().Eq(shape) {
+		return nil
+	}
+	if t.DataOrder().IsContiguous() {
+		if err := t.Reshape(shape...); err != nil {
+			return errors.Wrapf(err, "Reshaping slice for %s failed", name)
+		}
+	}
+	return nil
+}
+
 func batchedMatMul(a, b, c tensor.Tensor, transA, transB, incr bool) (retVal tensor.Tensor, err error) {
 	shapeA := a.Shape().Clone()
 	shapeB := b.Shape().Clone()
@@ -451,11 +463,29 @@ func batchedMatMul(a, b, c tensor.Tensor, transA, transB, incr bool) (retVal ten
 			return nil, errors.Wrapf(err, "Slicing %v from c failed", ss)
 		}
 
+		// Reshape the result matrix slice in case matrices like 1x1 will be converted to scalar which results in
+		// not satisfying matrix multiplication dimension requirements.
+		if err := reshape("a", as, innerA...); err != nil {
+			return nil, err
+		}
+		if err := reshape("b", bs, innerB...); err != nil {
+			return nil, err
+		}
+
+		if err := reshape("c", cs, innerA[0], innerB[1]); err != nil {
+			return nil, err
+		}
 		if transA {
 			as.T()
+			if err := reshape("aT", as, innerA[1], innerA[0]); err != nil {
+				return nil, err
+			}
 		}
 		if transB {
 			bs.T()
+			if err := reshape("bT", bs, innerB[1], innerB[0]); err != nil {
+				return nil, err
+			}
 		}
 
 		var fo tensor.FuncOpt

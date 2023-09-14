@@ -16,6 +16,14 @@ func ExampleBatchedMatMul() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	d := NewTensor(g, Float64, 3, WithShape(10, 1, 1), WithInit(RangedFrom(1)), WithName("d"))
+	e := NewTensor(g, Float64, 3, WithShape(10, 1, 10), WithInit(RangedFrom(11)), WithName("e"))
+	f, err := BatchedMatMul(d, e)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	x := NewTensor(g, Float64, 4, WithShape(3, 2, 2, 3), WithInit(RangedFrom(1)), WithName("x"))
 	y := NewTensor(g, Float64, 4, WithShape(3, 2, 3, 2), WithInit(RangedFrom(37)), WithName("y"))
 	z, err := BatchedMatMul(x, y)
@@ -31,6 +39,9 @@ func ExampleBatchedMatMul() {
 	fmt.Printf("a: %v\n%v\n", a.Value().Shape(), a.Value().Data())
 	fmt.Printf("b: %v\n%v\n", b.Value().Shape(), b.Value().Data())
 	fmt.Printf("c: %v\n%v\n", c.Value().Shape(), c.Value().Data())
+	fmt.Printf("d: %v\n%v\n", d.Value().Shape(), d.Value().Data())
+	fmt.Printf("e: %v\n%v\n", e.Value().Shape(), e.Value().Data())
+	fmt.Printf("f: %v\n%v\n", f.Value().Shape(), f.Value().Data())
 	fmt.Printf("x: %v\n%v\n", x.Value().Shape(), x.Value().Data())
 	fmt.Printf("y: %v\n%v\n", y.Value().Shape(), y.Value().Data())
 	fmt.Printf("z: %v\n%v\n", z.Value().Shape(), z.Value().Data())
@@ -42,6 +53,12 @@ func ExampleBatchedMatMul() {
 	// [13 14 15 16 17 18 19 20 21 22 23 24]
 	// c: (2, 2, 2)
 	// [94 100 229 244 508 532 697 730]
+	// d: (10, 1, 1)
+	// [1 2 3 4 5 6 7 8 9 10]
+	// e: (10, 1, 10)
+	// [11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110]
+	// f: (10, 1, 10)
+	// [11 12 13 14 15 16 17 18 19 20 42 44 46 48 50 52 54 56 58 60 93 96 99 102 105 108 111 114 117 120 164 168 172 176 180 184 188 192 196 200 255 260 265 270 275 280 285 290 295 300 366 372 378 384 390 396 402 408 414 420 497 504 511 518 525 532 539 546 553 560 648 656 664 672 680 688 696 704 712 720 819 828 837 846 855 864 873 882 891 900 1010 1020 1030 1040 1050 1060 1070 1080 1090 1100]
 	// x: (3, 2, 2, 3)
 	// [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36]
 	// y: (3, 2, 3, 2)
