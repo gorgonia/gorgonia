@@ -23,6 +23,17 @@ func ExampleBatchedMatMul() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	h, err := BatchedMatMul(e, d, true, true)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	i := NewTensor(g, Float64, 4, WithShape(1, 3, 2, 4), WithInit(RangedFrom(1)), WithName("i"))
+	j := NewTensor(g, Float64, 4, WithShape(1, 3, 4, 2), WithInit(ValuesOf(10.0)), WithName("j"))
+	k, err := BatchedMatMul(i, j)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	x := NewTensor(g, Float64, 4, WithShape(3, 2, 2, 3), WithInit(RangedFrom(1)), WithName("x"))
 	y := NewTensor(g, Float64, 4, WithShape(3, 2, 3, 2), WithInit(RangedFrom(37)), WithName("y"))
@@ -42,6 +53,10 @@ func ExampleBatchedMatMul() {
 	fmt.Printf("d: %v\n%v\n", d.Value().Shape(), d.Value().Data())
 	fmt.Printf("e: %v\n%v\n", e.Value().Shape(), e.Value().Data())
 	fmt.Printf("f: %v\n%v\n", f.Value().Shape(), f.Value().Data())
+	fmt.Printf("h: %v\n%v\n", h.Value().Shape(), h.Value().Data())
+	fmt.Printf("i: %v\n%v\n", i.Value().Shape(), i.Value().Data())
+	fmt.Printf("j: %v\n%v\n", j.Value().Shape(), j.Value().Data())
+	fmt.Printf("k: %v\n%v\n", k.Value().Shape(), k.Value().Data())
 	fmt.Printf("x: %v\n%v\n", x.Value().Shape(), x.Value().Data())
 	fmt.Printf("y: %v\n%v\n", y.Value().Shape(), y.Value().Data())
 	fmt.Printf("z: %v\n%v\n", z.Value().Shape(), z.Value().Data())
@@ -59,6 +74,14 @@ func ExampleBatchedMatMul() {
 	// [11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110]
 	// f: (10, 1, 10)
 	// [11 12 13 14 15 16 17 18 19 20 42 44 46 48 50 52 54 56 58 60 93 96 99 102 105 108 111 114 117 120 164 168 172 176 180 184 188 192 196 200 255 260 265 270 275 280 285 290 295 300 366 372 378 384 390 396 402 408 414 420 497 504 511 518 525 532 539 546 553 560 648 656 664 672 680 688 696 704 712 720 819 828 837 846 855 864 873 882 891 900 1010 1020 1030 1040 1050 1060 1070 1080 1090 1100]
+	// h: (10, 10, 1)
+	// [11 12 13 14 15 16 17 18 19 20 42 44 46 48 50 52 54 56 58 60 93 96 99 102 105 108 111 114 117 120 164 168 172 176 180 184 188 192 196 200 255 260 265 270 275 280 285 290 295 300 366 372 378 384 390 396 402 408 414 420 497 504 511 518 525 532 539 546 553 560 648 656 664 672 680 688 696 704 712 720 819 828 837 846 855 864 873 882 891 900 1010 1020 1030 1040 1050 1060 1070 1080 1090 1100]
+	// i: (1, 3, 2, 4)
+	// [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24]
+	// j: (1, 3, 4, 2)
+	// [10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10]
+	// k: (1, 3, 2, 2)
+	// [100 100 260 260 420 420 580 580 740 740 900 900]
 	// x: (3, 2, 2, 3)
 	// [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36]
 	// y: (3, 2, 3, 2)
