@@ -477,15 +477,24 @@ func batchedMatMul(a, b, c tensor.Tensor, transA, transB, incr bool) (retVal ten
 		}
 		if transA {
 			as.T()
-			if err := reshape("aT", as, innerA[1], innerA[0]); err != nil {
-				return nil, err
-			}
+			innerA[0], innerA[1] = innerA[1], innerA[0]
 		}
 		if transB {
 			bs.T()
-			if err := reshape("bT", bs, innerB[1], innerB[0]); err != nil {
-				return nil, err
-			}
+			innerB[0], innerB[1] = innerB[1], innerB[0]
+		}
+
+		// Reshape the result matrix slice in case matrices like 1x1 will be converted to scalar which results in
+		// not satisfying matrix multiplication dimension requirements.
+		if err := reshape("a", as, innerA...); err != nil {
+			return nil, err
+		}
+		if err := reshape("b", bs, innerB...); err != nil {
+			return nil, err
+		}
+
+		if err := reshape("c", cs, innerA[0], innerB[1]); err != nil {
+			return nil, err
 		}
 
 		var fo tensor.FuncOpt
