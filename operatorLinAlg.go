@@ -463,18 +463,6 @@ func batchedMatMul(a, b, c tensor.Tensor, transA, transB, incr bool) (retVal ten
 			return nil, errors.Wrapf(err, "Slicing %v from c failed", ss)
 		}
 
-		// Reshape the result matrix slice in case matrices like 1x1 will be converted to scalar which results in
-		// not satisfying matrix multiplication dimension requirements.
-		if err := reshape("a", as, innerA...); err != nil {
-			return nil, err
-		}
-		if err := reshape("b", bs, innerB...); err != nil {
-			return nil, err
-		}
-
-		if err := reshape("c", cs, innerA[0], innerB[1]); err != nil {
-			return nil, err
-		}
 		if transA {
 			as.T()
 			innerA[0], innerA[1] = innerA[1], innerA[0]
