@@ -6,7 +6,6 @@ import (
 
 	"github.com/chewxy/math32"
 	"gorgonia.org/tensor"
-	"gorgonia.org/tensor/native"
 )
 
 var (
@@ -60,9 +59,9 @@ func (tiny *TinyYOLOv2Net) ProcessOutput() (Detections, error) {
 	// TODO: Check the error returned by Reshape?
 	err := outDense.Reshape((tiny.classesNum+5)*tiny.boxesPerCell, 13, 13)
 	if err != nil {
-	      return nil, err
-	 }
-	data, err := native.Tensor3F32(outDense)
+		return nil, err
+	}
+	data, err := dense.Tensor3(outDense)
 	if err != nil {
 		return nil, err
 	}

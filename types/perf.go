@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/chewxy/hm"
-	"gorgonia.org/tensor"
+	"gorgonia.org/dtype"
 )
 
 var tensorTypePool = &sync.Pool{
@@ -37,7 +37,7 @@ func ReturnType(t hm.Type) {
 		returnTensorType(tt)
 	case TensorType:
 		// do nothing
-	case tensor.Dtype:
+	case dtype.Dtype:
 		// do nothing
 	case *hm.FunctionType:
 		hm.ReturnFnType(tt)

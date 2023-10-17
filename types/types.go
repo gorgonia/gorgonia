@@ -4,32 +4,32 @@ import (
 	"fmt"
 
 	"github.com/chewxy/hm"
-	"gorgonia.org/tensor"
+	"gorgonia.org/dtype"
 )
 
 var (
 	// Represents the types that Nodes can take in Gorgonia
 
-	Float64 = tensor.Float64
-	Float32 = tensor.Float32
-	Int     = tensor.Int
-	Int64   = tensor.Int64
-	Int32   = tensor.Int32
-	Byte    = tensor.Uint8
-	Bool    = tensor.Bool
+	Float64 = dtype.Float64
+	Float32 = dtype.Float32
+	Int     = dtype.Int
+	Int64   = dtype.Int64
+	Int32   = dtype.Int32
+	Byte    = dtype.Uint8
+	Bool    = dtype.Bool
 
-	Ptr = tensor.UnsafePointer // equivalent to interface{}. Ugh Ugh Ugh
+	Ptr = dtype.UnsafePointer // equivalent to interface{}. Ugh Ugh Ugh
 
-	vecF64  = &TensorType{Dims: 1, Of: tensor.Float64}
-	vecF32  = &TensorType{Dims: 1, Of: tensor.Float32}
-	matF64  = &TensorType{Dims: 2, Of: tensor.Float64}
-	matF32  = &TensorType{Dims: 2, Of: tensor.Float32}
-	ten3F64 = &TensorType{Dims: 3, Of: tensor.Float64}
-	ten3F32 = &TensorType{Dims: 3, Of: tensor.Float32}
+	vecF64  = &TensorType{Dims: 1, Of: dtype.Float64}
+	vecF32  = &TensorType{Dims: 1, Of: dtype.Float32}
+	matF64  = &TensorType{Dims: 2, Of: dtype.Float64}
+	matF32  = &TensorType{Dims: 2, Of: dtype.Float32}
+	ten3F64 = &TensorType{Dims: 3, Of: dtype.Float64}
+	ten3F32 = &TensorType{Dims: 3, Of: dtype.Float32}
 
 	// removes the need for type checking
-	f64T hm.Type = tensor.Float64
-	f32T hm.Type = tensor.Float32
+	f64T hm.Type = dtype.Float64
+	f32T hm.Type = dtype.Float32
 )
 
 /*Tensor Type*/
@@ -37,7 +37,8 @@ var (
 // TensorType is a type constructor for tensors.
 //
 // Think of it as  something like this:
-//		data Tensor a = Tensor d a
+//
+//	data Tensor a = Tensor d a
 //
 // The shape of the Tensor is not part of TensorType.
 // Shape checking is relegated to the dynamic part of the program run

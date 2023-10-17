@@ -90,11 +90,18 @@ func scalarClose(a, b Scalar) bool {
 }
 */
 
-func tensorClose(a, b tensor.Tensor) bool {
-	aDt := a.Dtype()
-	bDt := b.Dtype()
-	if aDt != bDt {
+func tensorClose[DT float32 | float64](a, b tensor.Basic[DT]) bool {
+
+	aFs := a.Data()
+	bFs := b.Data()
+
+	if len(aFs) != len(bFs) {
 		return false
+	}
+	aFs = aFs[:len(aFs)]
+	bFs = bFs[:len(aFs)]
+	for i := range aFs {
+		// TODO update dawson to have generics
 	}
 
 	switch aDt {
