@@ -1,17 +1,18 @@
 package values
 
 import (
+	"gorgonia.org/dtype"
 	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/tensor"
 )
 
-func tensorInfo(t tensor.Tensor) (dt tensor.Dtype, dim int) {
+func tensorInfo(t tensor.Desc) (dt dtype.Dtype, dim int) {
 	dt = t.Dtype()
 	dim = t.Dims()
 	return
 }
 
-func makeScalarFromMem(dt tensor.Dtype, mem tensor.Memory) (retVal Value, err error) {
+func makeScalarFromMem(dt dtype.Dtype, mem tensor.Memory) (retVal Value, err error) {
 	switch dt {
 	/*
 		case tensor.Float64:

@@ -11,7 +11,9 @@ import (
 	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/internal/memutils"
 	"gorgonia.org/gorgonia/types"
+	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 )
 
 // AnyToScalar converts any primitive type into a scalar type, and the dtype.
@@ -80,7 +82,7 @@ func Zero(dt dtype.Dtype) Scalar { return MakeScalar(nativeZero(dt)) }
 // linkname'd in various other subpackages.
 func nativeZero(dt dtype.Dtype) interface{} { return reflect.Zero(dt.Type).Interface() }
 
-func MakeFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal Value, err error) {
+func MakeFromMem(t hm.Type, s shapes.Shape, mem tensor.Memory) (retVal Value, err error) {
 	var dt dtype.Dtype
 	if dt, err = datatypes.DtypeOf(t); err != nil {
 		return
@@ -92,7 +94,7 @@ func MakeFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal Value, er
 	switch tt := t.(type) {
 	case types.TensorType:
 		memsize := memutils.MemSize(dt, s)
-		return tensor.New(tensor.Of(dt), tensor.WithShape(s...), tensor.FromMemory(mem.Uintptr(), uintptr(memsize))), nil
+		return dense.NewOf(dt, tensor.WithShape(s...), tensor.FromMemory(mem.Uintptr(), uintptr(memsize)))
 	case dtype.Dtype:
 		return makeScalarFromMem(tt, mem)
 	default:
@@ -100,7 +102,7 @@ func MakeFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal Value, er
 	}
 }
 
-func Make(t hm.Type, s tensor.Shape) (retVal Value, err error) {
+func Make(t hm.Type, s shapes.Shape) (retVal Value, err error) {
 	var dt dtype.Dtype
 	if dt, err = datatypes.DtypeOf(t); err != nil {
 		return
@@ -112,7 +114,7 @@ func Make(t hm.Type, s tensor.Shape) (retVal Value, err error) {
 
 	switch tt := t.(type) {
 	case types.TensorType:
-		return tensor.New(tensor.Of(dt), tensor.WithShape(s...)), nil
+		return dense.NewOf(dt, tensor.WithShape(s...))
 	default:
 		return nil, gerrors.NYI(tt)
 	}
@@ -121,7 +123,7 @@ func Make(t hm.Type, s tensor.Shape) (retVal Value, err error) {
 // TypeOf returns the Type of the value
 func TypeOf(v Value) hm.Type {
 	switch t := v.(type) {
-	case tensor.Tensor:
+	case tensor.DescWithStorage:
 		dt, dim := tensorInfo(t)
 		return types.MakeTensorType(dim, dt)
 	case Scalar:
@@ -241,10 +243,10 @@ func Copy(dest, src Value) (Value, error) {
 // SetEngine sets the engine of the given value.
 func SetEngine(v Value, e tensor.Engine) {
 	switch vv := v.(type) {
-	case tensor.Tensor:
-		tensor.WithEngine(e)(vv)
 	case engineSetter:
 		vv.SetEngine(e)
+	default:
+		panic(fmt.Sprintf("Cannot  set engine for value of %T", v))
 	}
 }
 
@@ -253,5 +255,5 @@ type engineSetter interface {
 }
 
 type denseShallowCloner interface {
-	ShallowClone() *tensor.Dense
+	ShallowClone() tensor.Dense
 }
