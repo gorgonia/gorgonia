@@ -16,7 +16,7 @@ import (
 // There are some performance tradeoffs made in this decision, but ultimately this is better than having to manually manage blocks of memory
 type Value interface {
 	// datatypes.Tensor
-	tensor.Tensor
+	tensor.DescWithStorage
 }
 
 // Typer is anything that knows its own type
@@ -24,7 +24,7 @@ type Typer interface {
 	Type() hm.Type
 }
 
-// // Valuer is any type that can return a Value.
+// Valuer is any type that can return a Value.
 type Valuer interface {
 	Value() Value
 }

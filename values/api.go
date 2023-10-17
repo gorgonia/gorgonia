@@ -15,7 +15,7 @@ import (
 )
 
 // AnyToScalar converts any primitive type into a scalar type, and the dtype.
-func AnyToScalar(any interface{}) (Scalar, tensor.Dtype) {
+func AnyToScalar(any interface{}) (Scalar, dtype.Dtype) {
 	switch at := any.(type) {
 	case Scalar:
 		return at, at.Dtype()
@@ -39,7 +39,7 @@ func AnyToScalar(any interface{}) (Scalar, tensor.Dtype) {
 }
 
 // AnyToValue converts any known type into a Value. It also returns the Type and Dtype.
-func AnyToValue(any interface{}) (val Value, t hm.Type, dt tensor.Dtype, err error) {
+func AnyToValue(any interface{}) (val Value, t hm.Type, dt dtype.Dtype, err error) {
 	switch a := any.(type) {
 	case Value:
 		val = a
@@ -57,14 +57,14 @@ func AnyToValue(any interface{}) (val Value, t hm.Type, dt tensor.Dtype, err err
 }
 
 // One creates a Value of the given Dtype with the equivalent value of 1.
-func One(dt tensor.Dtype) Scalar {
+func One(dt dtype.Dtype) Scalar {
 	return MakeScalar(nativeOne(dt))
 }
 
 // nativeOne generates the given "1" value and returns it as an interface.
 // The reason for abstracting out this function is because this function is
 // linkname'd in various other subpackages.
-func nativeOne(dt tensor.Dtype) interface{} {
+func nativeOne(dt dtype.Dtype) interface{} {
 	r, err := dtype.FromInt(dt, 1)
 	if err != nil {
 		panic(err)
@@ -73,15 +73,15 @@ func nativeOne(dt tensor.Dtype) interface{} {
 }
 
 // Zero creates a Value of the given Dtype with the equivalent value of 0.
-func Zero(dt tensor.Dtype) Scalar { return MakeScalar(nativeZero(dt)) }
+func Zero(dt dtype.Dtype) Scalar { return MakeScalar(nativeZero(dt)) }
 
 // nativeZero generates the given "0" value and returns it as an interface.
 // The reason for abstracting out this function is because this function is
 // linkname'd in various other subpackages.
-func nativeZero(dt tensor.Dtype) interface{} { return reflect.Zero(dt.Type).Interface() }
+func nativeZero(dt dtype.Dtype) interface{} { return reflect.Zero(dt.Type).Interface() }
 
 func MakeFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal Value, err error) {
-	var dt tensor.Dtype
+	var dt dtype.Dtype
 	if dt, err = datatypes.DtypeOf(t); err != nil {
 		return
 	}
@@ -93,7 +93,7 @@ func MakeFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal Value, er
 	case types.TensorType:
 		memsize := memutils.MemSize(dt, s)
 		return tensor.New(tensor.Of(dt), tensor.WithShape(s...), tensor.FromMemory(mem.Uintptr(), uintptr(memsize))), nil
-	case tensor.Dtype:
+	case dtype.Dtype:
 		return makeScalarFromMem(tt, mem)
 	default:
 		return nil, gerrors.NYI(tt)
@@ -101,7 +101,7 @@ func MakeFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal Value, er
 }
 
 func Make(t hm.Type, s tensor.Shape) (retVal Value, err error) {
-	var dt tensor.Dtype
+	var dt dtype.Dtype
 	if dt, err = datatypes.DtypeOf(t); err != nil {
 		return
 	}

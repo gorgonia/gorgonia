@@ -13,8 +13,8 @@ import (
 )
 
 // Tensor represents values that are acceptable in Gorgonia. At this point, it is implemented by:
-// 	- tensor.Tensor
-// 	- exprgraph.Node
+//   - tensor.DescWithStorage
+//   - exprgraph.Node
 //
 // There is an overlap with values.Value. The reason is semantic clarity. Values are Tensors. Tensors are Values.
 type Tensor interface {
@@ -25,7 +25,6 @@ type Tensor interface {
 	Dims() int
 	Size() int
 	DataSize() int
-	Data() interface{}
 
 	// type overloading methods
 	IsScalar() bool
@@ -43,7 +42,7 @@ type Tensor interface {
 // TypeOf returns the type of a given Tensor
 func TypeOf(t Tensor) hm.Type {
 	switch tt := t.(type) {
-	case tensor.Tensor:
+	case tensor.DescWithStorage:
 		if tt.Shape().IsScalar() {
 			return tt.Dtype()
 		}
