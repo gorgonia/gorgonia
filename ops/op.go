@@ -9,15 +9,8 @@ import (
 	"gorgonia.org/shapes"
 )
 
-// An Op is a symbolic representation of an operation
-// Think of them as functions, taking an input (or multiple), and outputting something
-//
-// All Ops have type signatures that look like this:
-//
-//	OpName :: (Floats a) ⇒ Tensor a → Tensor a → Tensor a
-//
-// All Ops need to know somethings about themselves - there is no support for generic Ops.
-type Op interface {
+// Desc represents a description of an operation
+type Desc interface {
 	/* Graph Building Related Methods */
 
 	// Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime.
@@ -29,27 +22,41 @@ type Op interface {
 	// ShapeExpr informs the shape operations that the Op will do. A quick primer is given in the README of the shapes package.
 	ShapeExpr() shapes.Expr
 
-	/* Machine related */
-
-	// Do executes the op.
-	Do(ctx context.Context, vs ...values.V) (retVal values.V, err error)
-
-	/* Operational stuff */
-
 	fmt.Stringer
 }
 
+// An Op is a symbolic representation of an operation
+// Think of them as functions, taking an input (or multiple), and outputting something
+//
+// All Ops have type signatures that look like this:
+//
+//	OpName :: (Floats a) ⇒ Tensor a → Tensor a → Tensor a
+//
+// All Ops need to know somethings about themselves - there is no support for generic Ops.
+type Op[DT any, T values.Value[DT]] interface {
+	Desc
+
+	// Do executes the op.
+	Do(ctx context.Context, vs ...T) (retVal T, err error)
+}
+
+// HKOp is a special kind of op
+type HKOp[DT1, DT2 any, T values.Value[DT1], U values.Value[DT2]] interface {
+	Desc
+	Do(ctx context.Context, vs ...T) (retVal U, err error)
+}
+
 // PreallocOp represents and Op that has a PreallocDo() method. The PreallocDo method is exactly the same as Do() except it also requres a previously preallocated value.
-type PreallocOp interface {
-	Op
+type PreallocOp[DT any, T values.Value[DT]] interface {
+	Op[DT, T]
 
 	// PreallocDo performs the Op with the return value passed in as a preallocated value.
-	PreallocDo(ctx context.Context, prealloc values.V, vs ...values.V) (retVal values.V, err error)
+	PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error)
 }
 
 // AnalyzableOp is any Op that provides enough intensionality for analysis during compilation phase.
-type AnalyzableOp interface {
-	Op
+type AnalyzableOp[DT any, T values.Value[DT]] interface {
+	Op[DT, T]
 
 	// CallsExtern informs if an op potentially call external (cgo or cuda) functions (thereby requiring extra overhead for Go's trampolining thing)
 	CallsExtern() bool
