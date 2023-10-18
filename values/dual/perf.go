@@ -1,12 +1,6 @@
 package dual
 
-import (
-	"sync"
-
-	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/tensor"
-)
-
+/*
 var dvpool = &sync.Pool{
 	New: func() interface{} { return new(Dual) },
 }
@@ -29,3 +23,4 @@ func returnValue(v values.Value) {
 		tensor.ReturnTensor(t)
 	}
 }
+*/

@@ -6,49 +6,49 @@ import (
 	"gorgonia.org/gorgonia/values"
 )
 
-// New creates a new *Dual.
+// New creates a new *Dual[DT].
 //
 // Its behaviour is a little different from what Gophers might be used to.
-// If the value passed in is itself a *Dual, then it returns itself.
-// Otherwise it returns a new *Dual.
+// If the value passed in is itself a *Dual[DT], then it returns itself.
+// Otherwise it returns a new *Dual[DT].
 //
 // New assumes that the value that is passed in is to be treated as a
-// constant, hence the Deriv() is going to be 0. If it is desired that a *Dual
+// constant, hence the Deriv() is going to be 0. If it is desired that a *Dual[DT]
 // is created for a variable (i.e. the default derivative is 1), then use NewVar.
 //
 // Additional notes: this is analogous to `unit` or `pure` in Haskell.
-// A *Dual is a monadic representation of a dual value.
-func New(v values.Value) *Dual {
+// A *Dual[DT] is a monadic representation of a dual value.
+func New[DT any, T values.Value[DT]](v values.Value[DT]) *Dual[DT, T] {
 	// formerly known as dvUnit
-	if dv, ok := v.(*Dual); ok {
+	if dv, ok := v.(*Dual[DT, T]); ok {
 		return dv
 	}
-	return constantDV(v)
+	return constantDV[DT, T](v)
 }
 
-// NewVar creates a new *Dual assuming that the provided value is to be treated as a variable.
+// NewVar creates a new *Dual[DT] assuming that the provided value is to be treated as a variable.
 //
 // Other behaviours from New() is preserved.
-func NewVar(v values.Value) *Dual {
+func NewVar[DT any, T values.Value[DT]](v values.Value[DT]) *Dual[DT, T] {
 	// formerly known as dvUnitVar
-	if dv, ok := v.(*Dual); ok {
+	if dv, ok := v.(*Dual[DT, T]); ok {
 		return dv
 	}
-	return variableDV(v)
+	return variableDV[DT, T](v)
 }
 
-// BindVar performs the operation on the inputs. The result is a *Dual that assumes that it is a variable value.
-func BindVar(op Op, inputs ...*Dual) (retVal *Dual, err error) {
-	var ret values.Value
+// BindVar performs the operation on the inputs. The result is a *Dual[DT,T] that assumes that it is a variable value.
+func BindVar[DT any, T values.Value[DT]](op Op, inputs ...*Dual[DT, T]) (retVal *Dual[DT, T], err error) {
+	var ret values.Value[DT]
 	if ret, err = op(idValue(inputs)...); err != nil {
 		return nil, errors.Wrap(err, gerrors.OpDoFail)
 	}
-	return NewVar(ret), nil
+	return NewVar[DT, T](ret), nil
 }
 
-// Bind0 performs the operation using a preallocated *Dual. The resulting deriv is not set.
-func Bind0(op PreallocOp, retVal *Dual, inputs ...*Dual) (*Dual, error) {
-	prealloc := retVal.Value
+// Bind0 performs the operation using a preallocated *Dual[DT,T]. The resulting deriv is not set.
+func Bind0[DT any, T values.Value[DT]](op PreallocOp, retVal *Dual[DT, T], inputs ...*Dual[DT, T]) (*Dual[DT, T], error) {
+	prealloc := retVal.v
 
 	ret, err := op(prealloc, idValue(inputs)...)
 	if err != nil {
@@ -61,40 +61,40 @@ func Bind0(op PreallocOp, retVal *Dual, inputs ...*Dual) (*Dual, error) {
 	return retVal, err
 }
 
-// Bind performs the operation on the inputs. The result is a *Dual with the d value set by the provided DualOp.
-func Bind(op DualOp, inputs ...*Dual) (retVal *Dual, err error) {
-	var ret values.Value
+// Bind performs the operation on the inputs. The result is a *Dual[DT,T] with the d value set by the provided DualOp.
+func Bind[DT any, T values.Value[DT]](op DualOp[DT, T], inputs ...*Dual[DT, T]) (retVal *Dual[DT, T], err error) {
+	var ret values.Value[DT]
 	if ret, err = op.Do(idValue(inputs)...); err != nil {
 		return nil, errors.Wrap(err, gerrors.OpDoFail)
 	}
-	var deriv values.Value
+	var deriv values.Value[DT]
 	if deriv, err = op.Dual(inputs...); err != nil {
 		return nil, errors.Wrap(err, "Unable to perform dual bindings")
 	}
-	retVal = New(ret)
+	retVal = New[DT, T](ret)
 	err = retVal.SetDeriv(deriv) // TODO: copy values? or Set?
 	return
 
 }
 
-// LiftVar transforms a Op into a function that takes the equivalent in *Duals.
-func LiftVar(op Op) func(values ...*Dual) (*Dual, error) {
-	return func(inputs ...*Dual) (retVal *Dual, err error) {
+// LiftVar transforms a Op into a function that takes the equivalent in *Dual[DT,T]s.
+func LiftVar[DT any, T values.Value[DT]](op Op) func(values ...*Dual[DT, T]) (*Dual[DT, T], error) {
+	return func(inputs ...*Dual[DT, T]) (retVal *Dual[DT, T], err error) {
 		return BindVar(op, inputs...)
 	}
 }
 
-// Lift transforms a DualOp into a function that takes the equivalent in *Duals
-func Lift(op DualOp) func(values ...*Dual) (*Dual, error) {
-	return func(inputs ...*Dual) (*Dual, error) { return Bind(op, inputs...) }
+// Lift transforms a DualOp into a function that takes the equivalent in *Dual[DT,T]s
+func Lift[DT any, T values.Value[DT]](op DualOp[DT, T]) func(values ...*Dual[DT, T]) (*Dual[DT, T], error) {
+	return func(inputs ...*Dual[DT, T]) (*Dual[DT, T], error) { return Bind(op, inputs...) }
 }
 
-// All checks that all values.Value are *Dual. It returns a list of *Dual, and a bool indicating if it's all *Dual.
+// All checks that all values.Value[DT] are *Dual[DT,T]. It returns a list of *Dual[DT,T], and a bool indicating if it's all *Dual[DT,T].
 // If not, the list will be empty.
-func All(vals ...values.Value) ([]*Dual, bool) {
-	retVal := make([]*Dual, len(vals))
+func All[DT any, T values.Value[DT]](vals ...values.Value[DT]) ([]*Dual[DT, T], bool) {
+	retVal := make([]*Dual[DT, T], len(vals))
 	for i := range vals {
-		d, ok := vals[i].(*Dual)
+		d, ok := vals[i].(*Dual[DT, T])
 		if !ok {
 			return nil, false
 		}
@@ -103,5 +103,7 @@ func All(vals ...values.Value) ([]*Dual, bool) {
 	return retVal, true
 }
 
-// NewAlike is a function that clones the given *Dual. However, the values and deriv are zeroed out.
-func NewAlike(a *Dual) (retVal *Dual, err error) { return a.clone0() }
+// NewAlike is a function that clones the given *Dual[DT,T]. However, the values and deriv are zeroed out.
+func NewAlike[DT any, T values.Value[DT]](a *Dual[DT, T]) (retVal *Dual[DT, T], err error) {
+	return a.clone0()
+}

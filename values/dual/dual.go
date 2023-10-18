@@ -5,69 +5,100 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
-	"gorgonia.org/gorgonia/internal/datatypes"
+	"gorgonia.org/dtype"
 	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 )
 
-var _ datatypes.Tensor = &Dual{}
+//var _ datatypes.Tensor[float64] = &Dual[float64]{}
 
 // Op is a function that takes an arbitrary number of Values and returns a Value
-type Op func(vals ...values.Value) (values.Value, error)
+type Op func(vals ...values.V) (values.V, error)
 
 // PreallocOp is a function that has the return value specified and preallocated, then takes an arbitrary number of Values and returns a Value.
-type PreallocOp func(prealloc values.Value, inputs ...values.Value) (values.Value, error)
+type PreallocOp func(prealloc values.V, inputs ...values.V) (values.V, error)
 
 // DualOp is any op that can perform its forwards operation on *Dual.
-type DualOp interface {
-	Do(vals ...values.Value) (values.Value, error)
-	Dual(vals ...*Dual) (values.Value, error)
+type DualOp[DT any, T values.Value[DT]] interface {
+	Do(vals ...values.V) (values.V, error)
+	Dual(vals ...*Dual[DT, T]) (values.Value[DT], error)
 }
 
 // Dual represents a dual value. In this instance, a dual value usually holds the value and a gradient value.
-type Dual struct {
-	values.Value
-	d values.Value
+type Dual[DT any, T interface {
+	values.Value[DT]
+	values.Cloner[T]
+}] struct {
+	v T
+	d T
 }
 
+/* implement values.Value because you can no longer embed a generic type into a struct. Grr */
+
+// tensor.Desc
+
+func (dv *Dual[DT, T]) Dtype() dtype.Dtype  { return dv.v.Dtype() }
+func (dv *Dual[DT, T]) Shape() shapes.Shape { return dv.v.Shape() }
+func (dv *Dual[DT, T]) Strides() []int      { return dv.v.Strides() }
+func (dv *Dual[DT, T]) Dims() int           { return dv.v.Dims() }
+func (dv *Dual[DT, T]) Size() int           { return dv.v.Size() }
+func (dv *Dual[DT, T]) Info() *tensor.AP    { return dv.v.Info() }
+
+// tensor.DataSizer
+
+func (dv *Dual[DT, T]) DataSize() int { return dv.v.DataSize() }
+
+// implementing tensor.Memory
+
+func (dv *Dual[DT, T]) MemSize() uintptr { return dv.v.MemSize() }
+func (dv *Dual[DT, T]) Uintptr() uintptr { return dv.v.Uintptr() }
+
+// implementing tensor.Engineer
+
+func (dv *Dual[DT, T]) Engine() tensor.Engine { return dv.v.Engine() }
+
+// implementing tensor.RawAccessor[DT]
+
+func (dv *Dual[DT, T]) Data() []DT { return dv.v.Data() }
+
+// implementing tensor.ValueSetter[DT]
+
+func (dv *Dual[DT, T]) SetAt(v DT, coord ...int) error { return dv.v.SetAt(v, coord...) }
+func (dv *Dual[DT, T]) Memset(v DT) error              { return dv.v.Memset(v) }
+func (dv *Dual[DT, T]) Zero()                          { dv.v.Zero() }
+
 // SetDeriv sets the derivative value
-func (dv *Dual) SetDeriv(d values.Value) error {
-	if t, ok := d.(tensor.Tensor); ok && t.IsScalar() {
-		d, _ = values.AnyToScalar(t.ScalarValue())
-	}
+func (dv *Dual[DT, T]) SetDeriv(d T) error {
 	dv.d = d
 
 	return dv.sanity()
 }
 
 // SetValue sets the value.
-func (dv *Dual) SetValue(v values.Value) error {
-	dv.Value = v
+func (dv *Dual[DT, T]) SetValue(v T) error {
+	dv.v = v
 	return dv.sanity()
 }
 
 // SetEngine sets the engine.
-func (dv *Dual) SetEngine(e tensor.Engine) {
-	values.SetEngine(dv.Value, e)
-	values.SetEngine(dv.d, e)
+func (dv *Dual[DT, T]) SetEngine(e tensor.Engine) {
+	values.SetEngine[DT](dv.v, e)
+	values.SetEngine[DT](dv.d, e)
 }
 
 // Deriv returns the derivative value.
-func (dv *Dual) Deriv() values.Value { return dv.d }
+func (dv *Dual[DT, T]) Deriv() values.Value[DT] { return dv.d }
 
-// Clone clones a *Dual.
-func (dv *Dual) Clone() (retVal interface{}) {
-	var v, d values.Value
+// Clone clones a *Dual[DT,T].
+func (dv *Dual[DT, T]) Clone() *Dual[DT, T] {
+	var v, d T
 	var err error
-	if v, err = values.Clone(dv.Value); err != nil {
-		panic(errors.Wrap(err, gerrors.CloneFail))
-	}
+	v = values.Clone(dv.T)
 
 	if dv.d != nil {
-		if d, err = values.Clone(dv.d); err != nil {
-			panic(errors.Wrap(err, gerrors.CloneFail))
-		}
+		d = values.Clone(dv.d)
 	}
 
 	dv2 := borrowDV()
@@ -77,16 +108,13 @@ func (dv *Dual) Clone() (retVal interface{}) {
 	return
 }
 
-// Type returns the type of the values in the *Dual.
-func (dv *Dual) Type() hm.Type { return values.TypeOf(dv.Value) }
+// Type returns the type of the values in the *Dual[DT,T].
+func (dv *Dual[DT, T]) Type() hm.Type { return values.TypeOf(dv.Value) }
 
-// Dtype returns the Dtype of the values in the *Dual.
-func (dv *Dual) Dtype() tensor.Dtype { return dv.Value.Dtype() }
-
-// ValueEq implements values.ValueEqer, which states that Values can be compared.
-func (dv *Dual) ValueEq(a values.Value) bool {
+// ValueEq implements values.Value[DT]Eqer, which states that Values can be compared.
+func (dv *Dual[DT, T]) ValueEq(a values.Value[DT]) bool {
 	switch at := a.(type) {
-	case *Dual:
+	case *Dual[DT, T]:
 		if at == dv {
 			return true
 		}
@@ -100,9 +128,9 @@ func (dv *Dual) ValueEq(a values.Value) bool {
 	}
 }
 
-func (dv *Dual) String() string { return fmt.Sprintf("%#+v", dv.Value) }
+func (dv *Dual[DT, T]) String() string { return fmt.Sprintf("%#+v", dv.Value) }
 
-func (dv *Dual) Format(s fmt.State, c rune) {
+func (dv *Dual[DT, T]) Format(s fmt.State, c rune) {
 	isScalar := dv.Value.Shape().Eq(tensor.ScalarShape())
 	if s.Flag('#') {
 		if isScalar {
@@ -116,16 +144,16 @@ func (dv *Dual) Format(s fmt.State, c rune) {
 	fmt.Fprintf(s, "%v", dv.Value)
 }
 
-// CopyFrom copies the values from a values.Value to the first value of the *Dual. The deriv is untouched.
-func (dv *Dual) CopyFrom(src interface{}) error {
-	if v, ok := src.(values.Value); ok {
+// CopyFrom copies the values from a values.Value[DT] to the first value of the *Dual[DT,T]. The deriv is untouched.
+func (dv *Dual[DT, T]) CopyFrom(src interface{}) error {
+	if v, ok := src.(values.Value[DT]); ok {
 		_, err := values.Copy(dv.Value, v)
 		return err
 	}
 	return errors.Errorf("Unable to CopyFrom %T", src)
 }
 
-func (dv *Dual) sanity() error {
+func (dv *Dual[DT, T]) sanity() error {
 	// check that d and v are the same type
 
 	// dvv := typeCheckTypeOf(dv.Value)
@@ -142,8 +170,8 @@ func (dv *Dual) sanity() error {
 }
 
 // clones the dualValue and zeroes out the ndarrays
-func (dv *Dual) clone0() (retVal *Dual, err error) {
-	var v, d values.Value
+func (dv *Dual[DT, T]) clone0() (retVal *Dual[DT, T], err error) {
+	var v, d values.Value[DT]
 	if v, err = values.Clone(dv.Value); err != nil {
 		return nil, errors.Wrap(err, gerrors.CloneFail)
 	}
@@ -167,7 +195,7 @@ func (dv *Dual) clone0() (retVal *Dual, err error) {
 // The original implementation was to have a constantDualValue type. This would lead to waaay less allocations of matrices
 // but as it turns out, as I waws working, the constants turn out to be not so constant afterall.
 // Is this a problem with the graph that leads to derivation of constant values? I don't quite know. TO CHECK
-func constantDV(val values.Value) *Dual {
+func constantDV[DT any, T values.Value[DT]](val values.Value[DT]) *Dual[DT, T] {
 	enterLogScope()
 	defer leaveLogScope()
 
@@ -185,7 +213,7 @@ func constantDV(val values.Value) *Dual {
 }
 
 // the derivative of x is 1.
-func variableDV(val values.Value) *Dual {
+func variableDV[DT any, T values.Value[DT]](val values.Value[DT]) *Dual[DT, T] {
 	// retVal := &dualValue{Value: val}
 	retVal := borrowDV()
 	retVal.Value = val
@@ -206,12 +234,12 @@ func variableDV(val values.Value) *Dual {
 
 /*
 // dvUnitManaged does dvUnit for values whose memories are manually managed
-func dvUnitManaged(v values.Value, op ExternalOp) (*Dual, error) {
+func dvUnitManaged(v values.Value[DT], op ExternalOp) (*Dual[DT,T], error) {
 	if op.Device() == execution.CPU {
 		return New(v), nil
 	}
 
-	if dv, ok := v.(*Dual); ok {
+	if dv, ok := v.(*Dual[DT,T]); ok {
 		return dv, nil
 	}
 
@@ -237,7 +265,7 @@ func dvUnitManaged(v values.Value, op ExternalOp) (*Dual, error) {
 }
 
 
-func dvUnitVarManaged(v values.Value, op ExternalOp) (*Dual, error) {
+func dvUnitVarManaged(v values.Value[DT], op ExternalOp) (*Dual[DT,T], error) {
 	dv, err := dvUnitManaged(v, op)
 	if err != nil {
 		return dv, err
@@ -273,25 +301,25 @@ func dvUnitVarManaged(v values.Value, op ExternalOp) (*Dual, error) {
 }
 */
 
-// helper to unpack from []*Dual
-func idValue(inputs []*Dual) (retVals []values.Value) {
-	retVals = make([]values.Value, len(inputs))
+// helper to unpack from []*Dual[DT,T]
+func idValue[DT any, T values.Value[DT]](inputs []*Dual[DT, T]) (retVals []T) {
+	retVals = make([]T, len(inputs))
 	for i, input := range inputs {
-		retVals[i] = input.Value
+		retVals[i] = input.v
 	}
 	return
 }
 
 /*
 
-// dvBind applies an op to the inputs, and returns a *Dual
-func dvBind(op Op, inputs []*Dual) (retVal *Dual, err error) {
+// dvBind applies an op to the inputs, and returns a *Dual[DT,T]
+func dvBind(op Op, inputs []*Dual[DT,T]) (retVal *Dual[DT,T], err error) {
 	enterLogScope()
 	defer leaveLogScope()
 
 	vals := idValue(inputs)
 
-	var ret values.Value
+	var ret values.Value[DT]
 	if ret, err = op.Do(vals...); err != nil {
 		return nil, errors.Wrap(err, gerrors.OpDoFail)
 	}
@@ -303,10 +331,10 @@ func dvBind(op Op, inputs []*Dual) (retVal *Dual, err error) {
 
 // dvBindVar returns a dvUnitVar instead of dvUnit (which zeroes the derivative).
 // The default derivative of a variable wrt itself is 1 (dx/dx == 1)
-func dvBindVar(op Op, inputs []*Dual) (retVal *Dual, err error) {
+func dvBindVar(op Op, inputs []*Dual[DT,T]) (retVal *Dual[DT,T], err error) {
 	vals := idValue(inputs)
 
-	var ret values.Value
+	var ret values.Value[DT]
 	if ret, err = op.Do(vals...); err != nil {
 		return nil, errors.Wrap(err, gerrors.OpDoFail)
 	}
@@ -319,11 +347,11 @@ func dvBindVar(op Op, inputs []*Dual) (retVal *Dual, err error) {
 //TODO test vecvecdot divBind0
 
 // doesn't alloc a dualValue, and reuses whatever that is there, and zeroes out the deriv
-func dvBind0(op Op, retVal *Dual, inputs []*Dual) (err error) {
+func dvBind0(op Op, retVal *Dual[DT,T], inputs []*Dual[DT,T]) (err error) {
 	prealloc := retVal.Value
 	vals := idValue(inputs)
 
-	var ret values.Value
+	var ret values.Value[DT]
 	if pd, ok := op.(UsePreallocDoer); ok {
 		if ret, err = pd.UsePreallocDo(prealloc, vals...); err == nil {
 			goto next
@@ -346,12 +374,12 @@ next:
 	return
 }
 
-func dvBindVar0(op Op, retVal *Dual, inputs []*Dual) (err error) {
+func dvBindVar0(op Op, retVal *Dual[DT,T], inputs []*Dual[DT,T]) (err error) {
 	prealloc := retVal.Value
 
 	vals := idValue(inputs)
 
-	var ret values.Value
+	var ret values.Value[DT]
 	if pd, ok := op.(UsePreallocDoer); ok {
 		ret, err = pd.UsePreallocDo(prealloc, vals...)
 	} else {

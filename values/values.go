@@ -5,18 +5,34 @@ import (
 	"gorgonia.org/tensor"
 )
 
+type V interface {
+	tensor.Desc
+	tensor.DataSizer
+	tensor.Memory
+	tensor.Engineer
+}
+
 // Value represents a value that Gorgonia accepts. At this point it is implemented by:
-// 		- *tensor.Dense
-// 		- *dualValue
+//   - *dense.Dense
+//   - scalar.Scalar
+//   - *dualValue
 //
 // A Value is essentially any thing that knows its own type and shape.
 // Most importantly though, a Value is a pointer - and can be converted into a tensor.Memory.
 // This is done for the sake of interoperability with external devices like cgo or CUDA or OpenCL.
 // This also means for the most part most Values will be allocated on the heap.
 // There are some performance tradeoffs made in this decision, but ultimately this is better than having to manually manage blocks of memory
-type Value interface {
+type Value[DT any] interface {
 	// datatypes.Tensor
-	tensor.DescWithStorage
+	tensor.Desc
+	tensor.DataSizer
+	// tensor.Zeroer  // not all Values need to be able to zero themselves
+
+	tensor.Memory
+	tensor.Engineer
+
+	tensor.RawAccessor[DT]
+	tensor.ValueSetter[DT]
 }
 
 // Typer is anything that knows its own type
@@ -25,60 +41,64 @@ type Typer interface {
 }
 
 // Valuer is any type that can return a Value.
-type Valuer interface {
-	Value() Value
+type Valuer[DT any] interface {
+	Value() Value[DT]
 }
 
 // Zeroer is a Value that can zero itself (here zero is used as a verb).
-type Zeroer interface {
-	Value
-	//	Zero()
+type Zeroer[DT any] interface {
+	Value[DT]
+	// Zero()
 }
 
 // ZeroValuer is a a Value that can provide the zero-value of its type.
-type ZeroValuer interface {
-	Value
-	ZeroValue() Value
+type ZeroValuer[DT any, T Value[DT]] interface {
+	Value[DT]
+	ZeroValue() T
 }
 
 // Oner is a Value that can set itself to 1.
-type Oner interface {
-	Value
+type Oner[DT any] interface {
+	Value[DT]
 	One()
 }
 
 // OneValuer is a value that can provide the one-value of its type.
-type OneValuer interface {
-	Value
-	OneValue() Value
+type OneValuer[DT any] interface {
+	Value[DT]
+	OneValue() Value[DT]
 }
 
 // ValueEqualer represents any type that can perform a equal value check
-type ValueEqualer interface {
-	ValueEq(Value) bool
+type ValueEqualer[DT any] interface {
+	ValueEq(Value[DT]) bool
 }
 
 // ValueCloser represents any type that can perform a close-value check
-type ValueCloser interface {
-	ValueClose(interface{}) bool
+type ValueCloser[DT float32 | float64, T Value[DT]] interface {
+	ValueClose(T) bool
 }
 
 // Cloner represents any type that can clone itself.
-type Cloner interface {
-	Clone() interface{}
+type Cloner[T any] interface {
+	Clone() T
 }
 
 // CloneErrorer represents any type that can clone itself and return an error if necessary
-type CloneErrorer interface {
-	Clone() (interface{}, error)
+type CloneErrorer[T any] interface {
+	Clone() (T, error)
 }
 
 // CopierTo represents any type that can copy data to the destination.
-type CopierTo interface {
-	CopyTo(dest interface{}) error
+type CopierTo[T any] interface {
+	CopyTo(dest T) error
 }
 
 // CopierFrom represents any type that can copy data from the source provided.
-type CopierFrom interface {
-	CopyFrom(src interface{}) error
+type CopierFrom[T any] interface {
+	CopyFrom(src T) error
+}
+
+type ShallowCloner[T any] interface {
+	ShallowClone() T
 }

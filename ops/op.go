@@ -13,7 +13,8 @@ import (
 // Think of them as functions, taking an input (or multiple), and outputting something
 //
 // All Ops have type signatures that look like this:
-//		OpName :: (Floats a) ⇒ Tensor a → Tensor a → Tensor a
+//
+//	OpName :: (Floats a) ⇒ Tensor a → Tensor a → Tensor a
 //
 // All Ops need to know somethings about themselves - there is no support for generic Ops.
 type Op interface {
@@ -31,7 +32,7 @@ type Op interface {
 	/* Machine related */
 
 	// Do executes the op.
-	Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error)
+	Do(ctx context.Context, vs ...values.V) (retVal values.V, err error)
 
 	/* Operational stuff */
 
@@ -43,7 +44,7 @@ type PreallocOp interface {
 	Op
 
 	// PreallocDo performs the Op with the return value passed in as a preallocated value.
-	PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error)
+	PreallocDo(ctx context.Context, prealloc values.V, vs ...values.V) (retVal values.V, err error)
 }
 
 // AnalyzableOp is any Op that provides enough intensionality for analysis during compilation phase.

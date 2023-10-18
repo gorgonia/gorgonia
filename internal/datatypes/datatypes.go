@@ -8,7 +8,6 @@ import (
 	"gorgonia.org/dtype"
 	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/types"
-	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 )
 
@@ -17,32 +16,14 @@ import (
 //   - exprgraph.Node
 //
 // There is an overlap with values.Value. The reason is semantic clarity. Values are Tensors. Tensors are Values.
-type Tensor interface {
-	// info about the ndarrayN
-	Shape() shapes.Shape
-	Strides() []int
-	Dtype() dtype.Dtype
-	Dims() int
-	Size() int
-	DataSize() int
-
-	// type overloading methods
-	IsScalar() bool
-	ScalarValue() interface{}
-
-	// engine/memory related stuff
-	// all Tensors should be able to be expressed of as a slab of memory
-	// Note: the size of each element can be acquired by T.Dtype().Size()
-	tensor.Memory
-	Engine() tensor.Engine      // Engine can be nil
-	IsNativelyAccessible() bool // Can Go access the memory
-	IsManuallyManaged() bool    // Must Go manage the memory
+type Tensor[DT any] interface {
+	tensor.Basic[DT]
 }
 
 // TypeOf returns the type of a given Tensor
-func TypeOf(t Tensor) hm.Type {
+func TypeOf[DT any](t Tensor[DT]) hm.Type {
 	switch tt := t.(type) {
-	case tensor.DescWithStorage:
+	case tensor.Basic[DT]:
 		if tt.Shape().IsScalar() {
 			return tt.Dtype()
 		}

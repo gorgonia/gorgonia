@@ -19,8 +19,8 @@ var (
 )
 
 // Node is a tuple of a Tensor, ID, and name.
-type Node struct {
-	Tensor
+type Node[DT any] struct {
+	Tensor[DT]
 	id   int64
 	name string
 	Op   ops.Op
@@ -31,7 +31,7 @@ type Node struct {
 }
 
 // Name returns the name of the node
-func (n *Node) Name() string {
+func (n *Node[DT]) Name() string {
 	if n == nil {
 		return "<nil>"
 	}
@@ -39,7 +39,7 @@ func (n *Node) Name() string {
 }
 
 // NewNode in a given graph.
-func NewNode(g *Graph, name string, opts ...tensor.ConsOpt) *Node {
+func NewNode(g *Graph, name string, opts ...tensor.ConsOpt) *Node[DT] {
 	t := tensor.New(append(opts, tensor.WithEngine(g.Engine))...)
 	n, err := Cons(g, name, t)
 	if err != nil {
@@ -48,8 +48,8 @@ func NewNode(g *Graph, name string, opts ...tensor.ConsOpt) *Node {
 	return n
 }
 
-// NewSymbolic creates a new symbolic Tensor (*Node itself).
-func NewSymbolic(g *Graph, name string, dt dtype.Dtype, shape shapes.Shape) (*Node, error) {
+// NewSymbolic creates a new symbolic Tensor (*Node[DT] itself).
+func NewSymbolic(g *Graph, name string, dt dtype.Dtype, shape shapes.Shape) (*Node[DT], error) {
 	hdr := newHeader(g, dt, shape)
 	if g != nil {
 		return cons(g, name, hdr)
@@ -59,7 +59,7 @@ func NewSymbolic(g *Graph, name string, dt dtype.Dtype, shape shapes.Shape) (*No
 
 // Cons constructs a Node. It should be used very carefully.
 // If the provided graph is nil, then Cons simply constructs the node by itself. No node will be added to the graph.
-func Cons(g *Graph, name string, t tensor.Tensor) (*Node, error) {
+func Cons(g *Graph, name string, t tensor.Tensor) (*Node[DT], error) {
 	if g != nil {
 		return cons(g, name, t)
 	}
@@ -67,7 +67,7 @@ func Cons(g *Graph, name string, t tensor.Tensor) (*Node, error) {
 }
 
 // cons is Cons but with the graph guaranteed to not be nil
-func cons(g *Graph, name string, t Tensor) (*Node, error) {
+func cons(g *Graph, name string, t Tensor) (*Node[DT], error) {
 	nm := g.NodeOf(t)
 	if nm == nil {
 		nm = g.newNode()
@@ -86,7 +86,7 @@ func cons(g *Graph, name string, t Tensor) (*Node, error) {
 }
 
 // ID allows Node  to implement gonum.org/graph.Node
-func (n *Node) ID() int64 {
+func (n *Node[DT]) ID() int64 {
 	if n == nil {
 		return -1
 	}
@@ -94,7 +94,7 @@ func (n *Node) ID() int64 {
 }
 
 // NodeID returns the ID as a NodeID of the node.
-func (n *Node) NodeID() NodeID { return NodeID(n.ID()) }
+func (n *Node[DT]) NodeID() NodeID { return NodeID(n.ID()) }
 
 // Format of the node
 func (n Node) Format(f fmt.State, c rune) {
@@ -114,7 +114,7 @@ func (n Node) Format(f fmt.State, c rune) {
 }
 
 // Value returns the value stored in a node. If the node represents a symbolic value, it will be converted into an actual value.
-func (n *Node) Value() values.Value {
+func (n *Node[DT]) Value() values.Value {
 	switch t := n.Tensor.(type) {
 	case values.Value:
 		return t
@@ -136,11 +136,11 @@ func (n *Node) Value() values.Value {
 	}
 }
 
-func (n *Node) AddWaiting() { atomic.AddInt32(&n.waiting, 1) }
+func (n *Node[DT]) AddWaiting() { atomic.AddInt32(&n.waiting, 1) }
 
-func (n *Node) Waiting() int {
+func (n *Node[DT]) Waiting() int {
 	retVal := atomic.LoadInt32(&n.waiting)
 	return int(retVal)
 }
 
-func (n *Node) ZeroWaiting() { atomic.StoreInt32(&n.waiting, int32(0)) }
+func (n *Node[DT]) ZeroWaiting() { atomic.StoreInt32(&n.waiting, int32(0)) }

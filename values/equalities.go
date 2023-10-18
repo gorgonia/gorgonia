@@ -1,7 +1,6 @@
 package values
 
 import (
-	"gorgonia.org/dawson"
 	"gorgonia.org/tensor"
 )
 
@@ -91,50 +90,50 @@ func scalarClose(a, b Scalar) bool {
 */
 
 func tensorClose[DT float32 | float64](a, b tensor.Basic[DT]) bool {
+	panic("NYI")
+	// aFs := a.Data()
+	// bFs := b.Data()
 
-	aFs := a.Data()
-	bFs := b.Data()
+	// if len(aFs) != len(bFs) {
+	// 	return false
+	// }
+	// aFs = aFs[:len(aFs)]
+	// bFs = bFs[:len(aFs)]
+	// for i := range aFs {
+	// 	// TODO update dawson to have generics
+	// }
 
-	if len(aFs) != len(bFs) {
-		return false
-	}
-	aFs = aFs[:len(aFs)]
-	bFs = bFs[:len(aFs)]
-	for i := range aFs {
-		// TODO update dawson to have generics
-	}
-
-	switch aDt {
-	case tensor.Float64:
-		aFs := a.Data().([]float64)
-		bFs := b.Data().([]float64)
-		if len(aFs) != len(bFs) {
-			return false
-		}
-		aFs = aFs[:len(aFs)]
-		bFs = bFs[:len(aFs)]
-		for i, v := range aFs {
-			if !dawson.CloseF64(v, bFs[i]) {
-				return false
-			}
-		}
-		return true
-	case tensor.Float32:
-		aFs := a.Data().([]float32)
-		bFs := b.Data().([]float32)
-		if len(aFs) != len(bFs) {
-			return false
-		}
-		aFs = aFs[:len(aFs)]
-		bFs = bFs[:len(aFs)]
-		for i, v := range aFs {
-			if !dawson.CloseF32(v, bFs[i]) {
-				return false
-			}
-		}
-		return true
-	default:
-		return a.Eq(b)
-	}
+	// switch aDt {
+	// case tensor.Float64:
+	// 	aFs := a.Data().([]float64)
+	// 	bFs := b.Data().([]float64)
+	// 	if len(aFs) != len(bFs) {
+	// 		return false
+	// 	}
+	// 	aFs = aFs[:len(aFs)]
+	// 	bFs = bFs[:len(aFs)]
+	// 	for i, v := range aFs {
+	// 		if !dawson.CloseF64(v, bFs[i]) {
+	// 			return false
+	// 		}
+	// 	}
+	// 	return true
+	// case tensor.Float32:
+	// 	aFs := a.Data().([]float32)
+	// 	bFs := b.Data().([]float32)
+	// 	if len(aFs) != len(bFs) {
+	// 		return false
+	// 	}
+	// 	aFs = aFs[:len(aFs)]
+	// 	bFs = bFs[:len(aFs)]
+	// 	for i, v := range aFs {
+	// 		if !dawson.CloseF32(v, bFs[i]) {
+	// 			return false
+	// 		}
+	// 	}
+	// 	return true
+	// default:
+	// 	return a.Eq(b)
+	// }
 
 }
