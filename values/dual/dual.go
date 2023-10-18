@@ -9,31 +9,31 @@ import (
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
-	"gorgonia.org/tensor/scalar"
+	"gorgonia.org/tensor/dense"
 )
 
 //var _ datatypes.Tensor[float64] = &Dual[float64]{}
 
 // Op is a function that takes an arbitrary number of Values and returns a Value
-type Op[DT comparable, T Value[DT, T]] func(vals ...T) (T, error)
+type Op[DT tensor.Num, T Value[DT, T]] func(vals ...T) (T, error)
 
 // PreallocOp is a function that has the return value specified and preallocated, then takes an arbitrary number of Values and returns a Value.
-type PreallocOp[DT comparable, T Value[DT, T]] func(prealloc T, inputs ...T) (T, error)
+type PreallocOp[DT tensor.Num, T Value[DT, T]] func(prealloc T, inputs ...T) (T, error)
 
 // DualOp is any op that can perform its forwards operation on *Dual.
-type DualOp[DT comparable, T Value[DT, T]] interface {
+type DualOp[DT tensor.Num, T Value[DT, T]] interface {
 	Do(vals ...T) (T, error)
 	Dual(vals ...*Dual[DT, T]) (T, error)
 }
 
-type Value[DT comparable, T values.Value[DT]] interface {
+type Value[DT tensor.Num, T values.Value[DT]] interface {
 	values.Value[DT]
 	values.Cloner[T]
 	comparable
 }
 
 // Dual represents a dual value. In this instance, a dual value usually holds the value and a gradient value.
-type Dual[DT comparable, T Value[DT, T]] struct {
+type Dual[DT tensor.Num, T Value[DT, T]] struct {
 	v T
 	d T
 }
@@ -192,7 +192,7 @@ func (dv *Dual[DT, T]) clone0() (retVal *Dual[DT, T], err error) {
 // The original implementation was to have a constantDualValue type. This would lead to waaay less allocations of matrices
 // but as it turns out, as I waws working, the constants turn out to be not so constant afterall.
 // Is this a problem with the graph that leads to derivation of constant values? I don't quite know. TO CHECK
-func constantDV[DT comparable, T Value[DT, T]](val T) *Dual[DT, T] {
+func constantDV[DT tensor.Num, T Value[DT, T]](val T) *Dual[DT, T] {
 	enterLogScope()
 	defer leaveLogScope()
 
@@ -206,18 +206,18 @@ func constantDV[DT comparable, T Value[DT, T]](val T) *Dual[DT, T] {
 }
 
 // the derivative of x is 1.
-func variableDV[DT comparable, T Value[DT, T]](val values.Value[DT]) *Dual[DT, T] {
+func variableDV[DT tensor.Num, T Value[DT, T]](val values.Value[DT]) *Dual[DT, T] {
 	// retVal := &dualValue{Value: val}
 	retVal := new(Dual[DT, T])
 	retVal.v = val.(T)
 
 	switch v := val.(type) {
-	case scalar.Scalar[DT]:
-		retVal.d = values.One[DT]()
+	// case scalar.Scalar[DT]:
+	// 	retVal.d = values.One[DT]()
 	case tensor.Basic[DT]:
 		shp := v.Shape()
-		dt := v.Dtype()
-		retVal.d = tensor.Ones(dt, shp...)
+		//dt := v.Dtype()
+		retVal.d = any(dense.Ones[DT](shp...)).(T)
 	default:
 		panic(fmt.Sprintf("%v(%T) not handled yet", v, v))
 	}
@@ -295,7 +295,7 @@ func dvUnitVarManaged(v values.Value[DT], op ExternalOp) (*Dual[DT,T], error) {
 */
 
 // helper to unpack from []*Dual[DT,T]
-func idValue[DT comparable, T Value[DT, T]](inputs []*Dual[DT, T]) (retVals []T) {
+func idValue[DT tensor.Num, T Value[DT, T]](inputs []*Dual[DT, T]) (retVals []T) {
 	retVals = make([]T, len(inputs))
 	for i, input := range inputs {
 		retVals[i] = input.v
