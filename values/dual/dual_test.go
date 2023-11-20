@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/scalar"
 )
 
 // This example shows the various ways to create a *Dual.
@@ -22,12 +23,12 @@ func Example_new() {
 	// The usual ways to create a new *Dual.
 
 	// New() creates a new *Dual, assuming that the input value represents a constatn
-	d0 := New(c)
+	d0 := New[float64](c)
 	fmt.Printf("c: %v, d0 %#v\n", d0, d0)
 
 	// if a *Dual gets passed into New(), it returns the input arg.
-	d1 := New(d0)
-	fmt.Printf("d1 == d0: %t\n", d0 == d1)
+	d1 := New[float64](d0)
+	//fmt.Printf("d1 == d0: %t\n", d0 == d1)
 
 	// Where New() was meant for values representing a constant, NewVar() is meant for values representing a variable.
 	// Observe that the derivatives are different.

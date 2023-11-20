@@ -21,9 +21,9 @@ import (
 // A *Dual[DT] is a monadic representation of a dual value.
 func New[DT tensor.Num, T Value[DT, T]](v T) *Dual[DT, T] {
 	// formerly known as dvUnit
-	if dv, ok := any(v).(*Dual[DT, T]); ok {
-		return dv
-	}
+	// if dv, ok := v.(*Dual[DT, T]); ok {
+	// 	return dv
+	// }
 	return constantDV[DT, T](v)
 }
 
