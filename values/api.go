@@ -16,7 +16,8 @@ import (
 
 // AnyToScalar converts any primitive type into a scalar type, and the dtype.
 func AnyToScalar[DT any](x DT) (scalar.Scalar[DT], dtype.Dtype) {
-	panic("NYI")
+	retVal := scalar.S(x)
+	return retVal, retVal.Dtype()
 	// switch at := any.(type) {
 	// case Scalar:
 	// 	return at, at.Dtype()
@@ -144,22 +145,26 @@ func TypeOf(v any) hm.Type {
 }
 
 // ValueEq is the equality function for values
-func ValueEq[DT any, T Value[DT]](a, b T) bool {
-	panic("NYI")
-	// if a == nil && b == nil {
-	// 	return true
-	// }
-	// switch at := a.(type) {
-	// case tensor.Basic[DT]:
-	// 	if bt, ok := b.(tensor.Basic[DT]); ok {
-	// 		return at.Eq(bt)
-	// 	}
-	// 	return false
-	// case ValueEqualer[DT]:
-	// 	return at.ValueEq(b)
-	// default:
-	// 	panic(fmt.Sprintf("Not implemented yet, %T", a))
-	// }
+func ValueEq[DT comparable](a, b Value[DT]) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	switch at := a.(type) {
+	case ValueEqualer[DT]:
+		return at.ValueEq(b)
+	case scalar.Scalar[DT]:
+		if bt, ok := b.(scalar.Scalar[DT]); ok {
+			return at.V == bt.V
+		}
+		return false
+	case *dense.Dense[DT]:
+		if bt, ok := b.(*dense.Dense[DT]); ok {
+			return at.Eq(bt)
+		}
+		return false
+	}
+	panic("Unreachable")
+
 }
 
 // ValueClose checks whether two values are close to one another. It's predominantly used as an alternative equality test for floats
@@ -197,16 +202,15 @@ func ShallowClone[T ShallowCloner[T]](v T) T {
 
 // ZeroValue returns the zero value of a type
 func ZeroValue[DT any](v Value[DT]) Value[DT] {
-	panic("NYI")
-	// switch vt := v.(type) {
-	// case tensor.Basic[DT]:
-	// 	vt.Zero()
-	// 	return vt
-	// case ZeroValuer:
-	// 	return vt.ZeroValue()
-	// default:
-	// 	panic(fmt.Sprintf("Cannot return zero value of %T", v))
-	// }
+	switch vt := v.(type) {
+	case scalar.Scalar[DT]:
+		return scalar.Scalar[DT]{}
+	case tensor.Basic[DT]:
+		vt.Zero()
+		return vt
+	default:
+		panic(fmt.Sprintf("Cannot return zero value of %T", v))
+	}
 }
 
 // Copy copies the src values into dest values. For scalars, it just returns itself
@@ -243,7 +247,7 @@ func SetEngine[DT any](v Value[DT], e tensor.Engine) {
 	case engineSetter:
 		vv.SetEngine(e)
 	default:
-		panic(fmt.Sprintf("Cannot  set engine for value of %T", v))
+
 	}
 }
 

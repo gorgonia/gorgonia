@@ -52,9 +52,9 @@ func Example_new() {
 	fmt.Printf("d5: %#v\n", d5)
 
 	// New() and NewVar() works on all Values, that includes tensor.Tensor
-	a := dense.New[float64](tensor.WithShape(2, 2), tensor.WithBacking([]float32{1, 2, 3, 4}))
-	a2 := New[float64](a)
-	a3 := NewVar[float64](a)
+	a := dense.New[float32](tensor.WithShape(2, 2), tensor.WithBacking([]float32{1, 2, 3, 4}))
+	a2 := New[float32](a)
+	a3 := NewVar[float32](a)
 	fmt.Printf("a:\n%va2:%#v\na3:%#v", a, a2, a3)
 
 	// Output:
@@ -90,7 +90,7 @@ func Example_new() {
 // This example shows how to use *Dual.
 // See  the related exampled of Lift
 func Example_bindVar() {
-	times := func(vals ...scalar.Scalar[float64]) (scalar.Scalar[float64], error) {
+	times := func(vals ...values.Value[float64]) (values.Value[float64], error) {
 		if len(vals) != 2 {
 			return scalar.Scalar[float64]{}, errors.New("Expected 2")
 		}
@@ -108,7 +108,7 @@ func Example_bindVar() {
 	threetimestwo, err := BindVar(times, NewVar[float64](three), NewVar[float64](two))
 	fmt.Printf("Using BindVar: 3 × 2 = %#v. Err: %v\n", threetimestwo, err)
 
-	preallocTimes := func(prealloc scalar.Scalar[float64], inputs ...scalar.Scalar[float64]) (scalar.Scalar[float64], error) {
+	preallocTimes := func(prealloc values.Value[float64], inputs ...values.Value[float64]) (values.Value[float64], error) {
 		ret, err := times(inputs...)
 		return ret, err
 	}
@@ -125,13 +125,13 @@ func Example_bindVar() {
 
 // TestBindVar  tests the failure modes not covered in ExampleBind
 func TestBindVar(t *testing.T) {
-	times := func(vals ...scalar.Scalar[float64]) (scalar.Scalar[float64], error) {
+	times := func(vals ...values.Value[float64]) (values.Value[float64], error) {
 		if len(vals) != 2 {
 			return scalar.Scalar[float64]{}, errors.New("Expected 2")
 		}
 
-		a := vals[0].V
-		b := vals[1].V
+		a := vals[0].Data()[0]
+		b := vals[1].Data()[0]
 		retVal, _ := values.AnyToScalar(a * b)
 		return retVal, nil
 	}
@@ -144,7 +144,7 @@ func TestBindVar(t *testing.T) {
 		t.Errorf("Expected an error.")
 	}
 
-	preallocTimes := func(prealloc scalar.Scalar[float64], inputs ...scalar.Scalar[float64]) (scalar.Scalar[float64], error) {
+	preallocTimes := func(prealloc values.Value[float64], inputs ...values.Value[float64]) (values.Value[float64], error) {
 		_, err := times(inputs...)
 		return prealloc, err
 	}
@@ -158,13 +158,13 @@ func TestBindVar(t *testing.T) {
 }
 
 func Example_lift() {
-	times := func(vals ...scalar.Scalar[float64]) (scalar.Scalar[float64], error) {
+	times := func(vals ...values.Value[float64]) (values.Value[float64], error) {
 		if len(vals) != 2 {
 			return scalar.Scalar[float64]{}, errors.New("Expected 2")
 		}
 
-		a := vals[0].V
-		b := vals[1].V
+		a := vals[0].Data()[0]
+		b := vals[1].Data()[0]
 		retVal, _ := values.AnyToScalar(a * b)
 		return retVal, nil
 	}

@@ -3,6 +3,7 @@ package dual_test
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
@@ -36,15 +37,25 @@ func valueToGoScalar[DT tensor.Num](v values.Value[DT]) DT {
 }
 
 // singlesMul is the kernel of the op (i.e. the actual algorithm for multiplicatoin)
-func singlesMul[DT tensor.Num, T values.Value[DT]](vals ...T) (T, error) {
-	var z T
-	switch any(z).(type) {
-	case scalar.Scalar[DT]:
-		return scalar.S[DT](valueToGoScalar(vals[0]) * valueToGoScalar(vals[1])), nil
-	case *dense.Dense[DT]:
-		return dense.Mul(vals[0].(*dense.Dense[DT]), vals[1].(*dense.Dense[DT])), nil
+func singlesMul[DT tensor.Num](vals ...values.Value[DT]) (retVal values.Value[DT], err error) {
+	if len(vals) != 2 {
+		return nil, errors.Errorf("Expected only two inputs")
 	}
-	panic("Unreachable")
+	switch v0 := vals[0].(type) {
+	case scalar.Scalar[DT]:
+		switch v1 := vals[1].(type) {
+		case scalar.Scalar[DT]:
+			return scalar.S[DT](v0.V * v1.V), nil
+		case *dense.Dense[DT]:
+		}
+	case *dense.Dense[DT]:
+		switch v1 := vals[1].(type) {
+		case scalar.Scalar[DT]:
+		case *dense.Dense[DT]:
+			return v0.Mul(v1)
+		}
+	}
+	panic("NYI")
 }
 
 func Mul[DT tensor.Num](vals ...values.Value[DT]) (values.Value[DT], error) {
@@ -76,7 +87,7 @@ func Mul2[DT tensor.Num](vals ...values.Value[DT]) (values.Value[DT], error) {
 	if !ok {
 		return singlesMul(vals...)
 	}
-	return dual.Bind[float64](mul(singlesMul[DT]), ds...)
+	return dual.Bind[DT](mul[DT](singlesMul[DT]), ds...)
 }
 
 func MulRevAD[DT tensor.Num](vals ...values.Value[DT]) (values.Value[DT], error) {

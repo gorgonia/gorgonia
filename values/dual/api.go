@@ -39,19 +39,19 @@ func NewVar[DT tensor.Num](v values.Value[DT]) *Dual[DT] {
 }
 
 // BindVar performs the operation on the inputs. The result is a *Dual[DT,T] that assumes that it is a variable value.
-func BindVar[DT tensor.Num, T Value[DT, T]](op Op[DT, T], inputs ...*Dual[DT]) (retVal *Dual[DT], err error) {
+func BindVar[DT tensor.Num](op Op[DT], inputs ...*Dual[DT]) (retVal *Dual[DT], err error) {
 	var ret values.Value[DT]
-	if ret, err = op(idValue[DT, T](inputs)...); err != nil {
+	if ret, err = op(idValue(inputs)...); err != nil {
 		return nil, errors.Wrap(err, gerrors.OpDoFail)
 	}
 	return NewVar[DT](ret), nil
 }
 
 // Bind0 performs the operation using a preallocated *Dual[DT,T]. The resulting deriv is not set.
-func Bind0[DT tensor.Num, T Value[DT, T]](op PreallocOp[DT, T], retVal *Dual[DT], inputs ...*Dual[DT]) (*Dual[DT], error) {
+func Bind0[DT tensor.Num](op PreallocOp[DT], retVal *Dual[DT], inputs ...*Dual[DT]) (*Dual[DT], error) {
 	prealloc := retVal.Value
 
-	ret, err := op(prealloc.(T), idValue[DT, T](inputs)...)
+	ret, err := op(prealloc, idValue(inputs)...)
 	if err != nil {
 		return nil, errors.Wrap(err, gerrors.OpDoFail)
 	}
@@ -63,12 +63,12 @@ func Bind0[DT tensor.Num, T Value[DT, T]](op PreallocOp[DT, T], retVal *Dual[DT]
 }
 
 // Bind performs the operation on the inputs. The result is a *Dual[DT,T] with the d value set by the provided DualOp.
-func Bind[DT tensor.Num, T Value[DT, T]](op DualOp[DT, T], inputs ...*Dual[DT]) (retVal *Dual[DT], err error) {
-	var ret T
-	if ret, err = op.Do(idValue[DT, T](inputs)...); err != nil {
+func Bind[DT tensor.Num](op DualOp[DT], inputs ...*Dual[DT]) (retVal *Dual[DT], err error) {
+	var ret values.Value[DT]
+	if ret, err = op.Do(idValue[DT](inputs)...); err != nil {
 		return nil, errors.Wrap(err, gerrors.OpDoFail)
 	}
-	var deriv T
+	var deriv values.Value[DT]
 	if deriv, err = op.Dual(inputs...); err != nil {
 		return nil, errors.Wrap(err, "Unable to perform dual bindings")
 	}
@@ -79,14 +79,14 @@ func Bind[DT tensor.Num, T Value[DT, T]](op DualOp[DT, T], inputs ...*Dual[DT]) 
 }
 
 // LiftVar transforms a Op into a function that takes the equivalent in *Dual[DT,T]s.
-func LiftVar[DT tensor.Num, T Value[DT, T]](op Op[DT, T]) func(values ...*Dual[DT]) (*Dual[DT], error) {
+func LiftVar[DT tensor.Num](op Op[DT]) func(values ...*Dual[DT]) (*Dual[DT], error) {
 	return func(inputs ...*Dual[DT]) (retVal *Dual[DT], err error) {
 		return BindVar(op, inputs...)
 	}
 }
 
 // Lift transforms a DualOp into a function that takes the equivalent in *Dual[DT,T]s
-func Lift[DT tensor.Num, T Value[DT, T]](op DualOp[DT, T]) func(values ...*Dual[DT]) (*Dual[DT], error) {
+func Lift[DT tensor.Num](op DualOp[DT]) func(values ...*Dual[DT]) (*Dual[DT], error) {
 	return func(inputs ...*Dual[DT]) (*Dual[DT], error) { return Bind(op, inputs...) }
 }
 

@@ -14,15 +14,15 @@ import (
 //var _ datatypes.Tensor[float64] = &Dual[float64]{}
 
 // Op is a function that takes an arbitrary number of Values and returns a Value
-type Op[DT tensor.Num, T Value[DT, T]] func(vals ...T) (T, error)
+type Op[DT tensor.Num] func(vals ...values.Value[DT]) (values.Value[DT], error)
 
 // PreallocOp is a function that has the return value specified and preallocated, then takes an arbitrary number of Values and returns a Value.
-type PreallocOp[DT tensor.Num, T Value[DT, T]] func(prealloc T, inputs ...T) (T, error)
+type PreallocOp[DT tensor.Num] func(prealloc values.Value[DT], inputs ...values.Value[DT]) (values.Value[DT], error)
 
 // DualOp is any op that can perform its forwards operation on *Dual.
-type DualOp[DT tensor.Num, T Value[DT, T]] interface {
-	Do(vals ...T) (T, error)
-	Dual(vals ...*Dual[DT]) (T, error)
+type DualOp[DT tensor.Num] interface {
+	Do(vals ...values.Value[DT]) (values.Value[DT], error)
+	Dual(vals ...*Dual[DT]) (values.Value[DT], error)
 }
 
 type Value[DT tensor.Num, T values.Value[DT]] interface {
@@ -93,6 +93,15 @@ func (dv *Dual[DT]) ValueEq(a values.Value[DT]) bool {
 	default:
 		return false
 	}
+}
+
+func (dv *Dual[DT]) Eq(other *Dual[DT]) bool {
+	if dv == other {
+		return true
+	}
+	veq := values.ValueEq[DT](dv.Value, other.Value)
+	deq := values.ValueEq[DT](dv.d, other.d)
+	return veq && deq
 }
 
 func (dv *Dual[DT]) String() string { return fmt.Sprintf("%#+v", dv.Value) }
@@ -260,10 +269,10 @@ func dvUnitVarManaged(v values.Value[DT], op ExternalOp) (*Dual[DT,T], error) {
 */
 
 // helper to unpack from []*Dual[DT,T]
-func idValue[DT tensor.Num, T Value[DT, T]](inputs []*Dual[DT]) (retVals []T) {
-	retVals = make([]T, len(inputs))
+func idValue[DT tensor.Num](inputs []*Dual[DT]) (retVals []values.Value[DT]) {
+	retVals = make([]values.Value[DT], len(inputs))
 	for i, input := range inputs {
-		retVals[i] = input.Value.(T)
+		retVals[i] = input.Value
 	}
 	return
 }
