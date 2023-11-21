@@ -18,26 +18,6 @@ import (
 func AnyToScalar[DT any](x DT) (scalar.Scalar[DT], dtype.Dtype) {
 	retVal := scalar.S(x)
 	return retVal, retVal.Dtype()
-	// switch at := any.(type) {
-	// case Scalar:
-	// 	return at, at.Dtype()
-	// case float64:
-	// 	return MakeScalar(any), Float64
-	// case float32:
-	// 	return MakeScalar(any), Float32
-	// case int:
-	// 	return MakeScalar(any), Int
-	// case int32:
-	// 	return MakeScalar(any), Int32
-	// case int64:
-	// 	return MakeScalar(any), Int64
-	// case byte:
-	// 	return MakeScalar(any), Byte
-	// case bool:
-	// 	return MakeScalar(any), Bool
-	// default:
-	// 	panic(fmt.Sprintf("%v(%T) not scalar/not handled", any, any))
-	// }
 }
 
 // AnyToValue converts any known type into a Value. It also returns the Type and Dtype.

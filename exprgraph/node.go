@@ -14,12 +14,12 @@ import (
 
 // constraints
 var (
-	_ Tensor   = &Node{}
-	_ Nodelike = &Node{}
+	_ Tensor   = &Node[float64]{}
+	_ Nodelike = &Node[float64]{}
 )
 
 // Node is a tuple of a Tensor, ID, and name.
-type Node[DT any] struct {
+type Node[T any] struct {
 	Tensor[DT]
 	id   int64
 	name string
@@ -39,7 +39,7 @@ func (n *Node[DT]) Name() string {
 }
 
 // NewNode in a given graph.
-func NewNode(g *Graph, name string, opts ...tensor.ConsOpt) *Node[DT] {
+func NewNode[DT any](g *Graph, name string, opts ...tensor.ConsOpt) *Node[DT] {
 	t := tensor.New(append(opts, tensor.WithEngine(g.Engine))...)
 	n, err := Cons(g, name, t)
 	if err != nil {
@@ -49,25 +49,25 @@ func NewNode(g *Graph, name string, opts ...tensor.ConsOpt) *Node[DT] {
 }
 
 // NewSymbolic creates a new symbolic Tensor (*Node[DT] itself).
-func NewSymbolic(g *Graph, name string, dt dtype.Dtype, shape shapes.Shape) (*Node[DT], error) {
+func NewSymbolic[DT any](g *Graph, name string, dt dtype.Dtype, shape shapes.Shape) (*Node[DT], error) {
 	hdr := newHeader(g, dt, shape)
 	if g != nil {
-		return cons(g, name, hdr)
+		return cons[DT](g, name, hdr)
 	}
-	return &Node{Tensor: hdr, name: name, id: 0, Op: nil}, nil
+	return &Node[DT]{Tensor: hdr, name: name, id: 0, Op: nil}, nil
 }
 
 // Cons constructs a Node. It should be used very carefully.
 // If the provided graph is nil, then Cons simply constructs the node by itself. No node will be added to the graph.
-func Cons(g *Graph, name string, t tensor.Tensor) (*Node[DT], error) {
+func Cons[DT any](g *Graph, name string, t tensor.Tensor) (*Node[DT], error) {
 	if g != nil {
 		return cons(g, name, t)
 	}
-	return &Node{Tensor: t, name: name, id: 0, Op: nil}, nil
+	return &Node[DT]{Tensor: t, name: name, id: 0, Op: nil}, nil
 }
 
 // cons is Cons but with the graph guaranteed to not be nil
-func cons(g *Graph, name string, t Tensor) (*Node[DT], error) {
+func cons[DT any](g *Graph, name string, t Tensor) (*Node[DT], error) {
 	nm := g.NodeOf(t)
 	if nm == nil {
 		nm = g.newNode()
