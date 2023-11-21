@@ -9,6 +9,7 @@ import (
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 	"gorgonia.org/tensor/dense"
+	"gorgonia.org/tensor/scalar"
 )
 
 //var _ datatypes.Tensor[float64] = &Dual[float64]{}
@@ -186,8 +187,8 @@ func variableDV[DT tensor.Num](val values.Value[DT]) *Dual[DT] {
 	retVal.Value = val
 
 	switch v := val.(type) {
-	// case scalar.Scalar[DT]:
-	// 	retVal.d = values.One[DT]()
+	case scalar.Scalar[DT]:
+		retVal.d = values.One[DT]()
 	case tensor.Basic[DT]:
 		shp := v.Shape()
 		//dt := v.Dtype()

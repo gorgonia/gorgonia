@@ -176,7 +176,7 @@ func Example_lift() {
 	fmt.Printf("Using lifttedTimes %T: 3 × 2 = %#v. Err: %v\n", liftedTimes, threetimestwo, err)
 
 	// Output:
-	// Using lifttedTimes func(...*dual.Dual) (*dual.Dual, error): 3 × 2 = {6 | 1}. Err: <nil>
+	// Using lifttedTimes func(...*dual.Dual[float64]) (*dual.Dual[float64], error): 3 × 2 = {6 | 1}. Err: <nil>
 
 }
 
@@ -206,8 +206,8 @@ func TestNewAlike(t *testing.T) {
 	fds2, err := NewAlike(fds)
 
 	assert.Nil(err)
-	assert.Equal(0.0, fds2.Value.Data())
-	assert.Equal(0.0, fds2.Deriv().Data())
+	assert.Equal(0.0, fds2.Value.Data()[0])
+	assert.Equal(0.0, fds2.Deriv().Data()[0])
 	assert.False(fds.ValueEq(fds2), "Should be different values: fds %v | fds2 %v", fds, fds2)
 	if fds == fds2 {
 		t.Error("Cloned values should never be the same pointer!")
