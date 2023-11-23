@@ -1,23 +1,125 @@
 package exprgraph
 
 import (
-	"errors"
-	"fmt"
 	"sync/atomic"
 
+	"github.com/chewxy/hm"
+	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/dtype"
 	"gorgonia.org/gorgonia/ops"
+	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 )
 
 // constraints
 var (
-	_ Tensor   = &Node[float64]{}
-	_ Nodelike = &Node[float64]{}
+	_ Nodelike = Value[float64, *dense.Dense[float64]]{}
 )
 
+// Node is a description of a tensor that has a name and an ID.
+//
+// There are two possible definition of a Node:
+//   - Value[DT, T]
+//   - Symbolic[DT]
+//
+// It's an interface instead of a constraint because it's more useful as an interface.
+type Node interface {
+	graph.Node // ID() int64
+	tensor.Desc
+	Name() string
+}
+
+// desc represents the common things that a Value and a Symbolic node have
+type desc struct {
+	id      int64
+	name    string
+	waiting int32 // atomic updates only
+}
+
+func (n desc) ID() int64 { return n.id }
+
+func (n *desc) AddWaiting() { atomic.AddInt32(&n.waiting, 1) }
+
+func (n *desc) Waiting() int {
+	retVal := atomic.LoadInt32(&n.waiting)
+	return int(retVal)
+}
+
+func (n *desc) ZeroWaiting() { atomic.StoreInt32(&n.waiting, int32(0)) }
+
+// Value represents a node that has a value.
+type Value[DT any, T tensor.Tensor[DT, T]] struct {
+	tensor.Basic[DT] // note this is the interface, not the constraint
+	desc
+
+	Op         ops.Op[DT, T]
+	beforeLift tensor.Basic[DT]
+}
+
+// Name returns the name of a node that holds a Value.
+func (n *Value[DT, T]) Name() string {
+	if n == nil {
+		return "<nil>"
+	}
+	return n.name
+}
+
+func (n *Value[DT, T]) Value() values.V { return n.Basic }
+
+func (n *Value[DT, T]) prelift() values.V { return n.beforeLift }
+
+func (n *Value[DT, T]) setLifted(lifted, original values.V) {
+	n.Basic = lifted.(tensor.Basic[DT])
+	n.beforeLift = original.(tensor.Basic[DT])
+}
+
+// Symbolic represents a symbolic node. It needs a graph as an engine.
+type Symbolic[DT any] struct {
+	tensor.AP
+	desc
+	dt     dtype.Dtype
+	engine *Graph
+}
+
+func (n *Symbolic[DT]) Name() string {
+	if n == nil {
+		return "<nil>"
+	}
+	return n.name
+}
+
+func (n *Symbolic[DT]) Dtype() dtype.Dtype { return n.dt }
+
+func (n *Symbolic[DT]) Info() *tensor.AP { return &n.AP }
+
+// Type returns the type of the *header. This implements hm.Typer.
+func (n *Symbolic[DT]) Type() hm.Type {
+	if n.Shape().IsScalar() {
+		return n.dt
+	}
+	return types.TensorType{Dims: n.Shape().Dims(), Of: n.dt}
+}
+
+func (n *Symbolic[DT]) Engine() tensor.Engine { return n.engine } // TODO maybe instantiate
+
+// liftNode lifts a node if its engine is a lifter
+func liftNode(n Node) Node {
+	nx, ok := n.(valuelifter)
+	if !ok {
+		return n
+	}
+	v := nx.Value()
+	e := v.Engine()
+	if l, ok := e.(Lifter); ok {
+		lifted := l.Lift(v).(values.V)
+		nx.setLifted(lifted, v)
+	}
+	return n
+}
+
+/*
 // Node is a tuple of a Tensor, ID, and name.
 type Node[T any] struct {
 	Tensor[DT]
@@ -144,3 +246,4 @@ func (n *Node[DT]) Waiting() int {
 }
 
 func (n *Node[DT]) ZeroWaiting() { atomic.StoreInt32(&n.waiting, int32(0)) }
+*/

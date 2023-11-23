@@ -6,7 +6,7 @@ import (
 
 // IterNodes is an iterator over a slice of *Node
 type IterNodes struct {
-	ns []*Node
+	ns []Node
 	i  int
 }
 
@@ -30,7 +30,7 @@ func (n *IterNodes) Reset() { n.i = -1 }
 
 // Nodes returns all the remaining nodes in the iterator and advances
 // the iterator. The order of nodes within the returned slice is not specified.
-func (ns *IterNodes) Nodes() []*Node {
+func (ns *IterNodes) Nodes() []Node {
 	if ns.i < 0 {
 		ns.i = 0
 	}
@@ -47,7 +47,7 @@ func (ns *IterNodes) NodeIDs() NodeIDs {
 	}
 	retVal := make([]NodeID, 0, len(ns.ns)-ns.i+1)
 	for _, n := range ns.ns {
-		retVal = append(retVal, NodeID(n.id))
+		retVal = append(retVal, NodeID(n.ID()))
 	}
 	ns.i = len(ns.ns)
 	return retVal
@@ -58,18 +58,18 @@ func (ns *IterNodes) NodeIDs() NodeIDs {
 // of edges, a map of to-node IDs to graph.WeightedEdge, that can be
 // traversed to reach the nodes that the NodesByEdge will iterate
 // over.
-func IterNodesFromNodes(ns []*Node) *IterNodes { return &IterNodes{ns: ns, i: -1} }
+func IterNodesFromNodes(ns []Node) *IterNodes { return &IterNodes{ns: ns, i: -1} }
 
-// IterNodesFromIDs creates a *Nodes (an iterator) from a list of int64 IDs.
+// IterNodesFromIDs creates a Nodes (an iterator) from a list of int64 IDs.
 func IterNodesFromIDs(g *Graph, ns []int64) *IterNodes {
-	nodes := make([]*Node, 0, len(ns))
+	nodes := make([]Node, 0, len(ns))
 	for _, id := range ns {
 		nodes = append(nodes, g.nodes[id])
 	}
 	return IterNodesFromNodes(nodes)
 }
 
-// IterNodesFromNodeIDs creates a *Nodes (an iterator) from a list of NodeIDs.
+// IterNodesFromNodeIDs creates a Nodes (an iterator) from a list of NodeIDs.
 func IterNodesFromNodeIDs(g *Graph, ns []NodeID) *IterNodes {
 	return IterNodesFromIDs(g, nodeIDs2IDs(ns))
 }
@@ -96,18 +96,18 @@ func (ns NodeIDs) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
 
 /* Utility functions */
 
-// NodeIDsFromNodes returns a NodeIDs given a slice of *Nodes.
-func NodeIDsFromNodes(ns []*Node) NodeIDs {
+// NodeIDsFromNodes returns a NodeIDs given a slice of Nodes.
+func NodeIDsFromNodes(ns []Node) NodeIDs {
 	retVal := make(NodeIDs, 0, len(ns))
 	for _, n := range ns {
-		retVal = append(retVal, NodeID(n.id))
+		retVal = append(retVal, NodeID(n.ID()))
 	}
 	return retVal
 }
 
-// NodesFromNodeIDs creates a slice of *Node given a slice of NodeIDs and a *Graph.
-func NodesFromNodeIDs(g *Graph, ns []NodeID) []*Node {
-	retVal := make([]*Node, 0, len(ns))
+// NodesFromNodeIDs creates a slice of Node given a slice of NodeIDs and a *Graph.
+func NodesFromNodeIDs(g *Graph, ns []NodeID) []Node {
+	retVal := make([]Node, 0, len(ns))
 	for _, n := range ns {
 		retVal = append(retVal, g.getByID(n.ID()))
 	}

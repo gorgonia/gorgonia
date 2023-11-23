@@ -12,7 +12,7 @@ import (
 // nodes are sorted using gonum's SortStabilized function.
 //
 // see https://godoc.org/gonum.org/v1/gonum/graph/topo#SortStabilized for more info
-func Sort(g *Graph) (sorted []*Node, err error) {
+func Sort(g *Graph) (sorted []Node, err error) {
 	var sortedN []graph.Node
 
 	if sortedN, err = topo.SortStabilized(g, reverseLexical); err != nil {
@@ -20,7 +20,7 @@ func Sort(g *Graph) (sorted []*Node, err error) {
 	}
 
 	for _, n := range sortedN {
-		sorted = append(sorted, n.(*Node))
+		sorted = append(sorted, n.(Node))
 	}
 	return sorted, nil
 }

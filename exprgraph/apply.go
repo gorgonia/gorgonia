@@ -6,11 +6,12 @@ import (
 	"gorgonia.org/gorgonia/internal/datatypes"
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/gorgonia/types"
+	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
 )
 
 // Apply creates a new *Node
-func (g *Graph) Apply(op ops.Op, newname string, children ...*Node) (*Node, error) {
+func Apply[DT any, T values.Value[DT]](g *Graph, op ops.Op[DT, T], newname string, children ...*Node) (*Node, error) {
 	s := op.ShapeExpr()
 	t := op.Type()
 

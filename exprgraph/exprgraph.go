@@ -9,6 +9,7 @@ import (
 	"gorgonia.org/gorgonia/exprgraph/internal/uid"
 	"gorgonia.org/gorgonia/internal/encoding"
 	"gorgonia.org/tensor"
+	stdeng "gorgonia.org/tensor/engines"
 )
 
 // constraints
@@ -27,9 +28,12 @@ const (
 
 // Graph is a representation of an expression graph.
 // For example, if a graph were to represent the following expression:
-// 	c = a (OP) b
+//
+//	c = a (OP) b
+//
 // then the graph would look like this:
-// 	c → a
+//
+//	c → a
 //	c → b
 //
 // Internally, the graph is destructured into several smaller data structures, to aid with
@@ -38,19 +42,22 @@ const (
 // The `nodes` map is a container holding all the Nodes and mapping them to their ID.
 //
 // The `from` map maps an ID to a list of IDs. So the example above will look like this:
-// 	from: map[int64][]int64 {
+//
+//	from: map[int64][]int64 {
 //		c.ID(): []int64{a.ID(), b.ID()}
 //	}
+//
 // The slice index represents the order of things (i.e. `a` comes before `b`)
 //
 // The `to` map maps an ID to a list of IDs that came from it. So the example above will look like this:
+//
 //	to: map[int64][]int64{
 //		a.ID(): []int64{c.ID()},
 //		b.ID(): []int64{c.ID()},
 //	}
 type Graph struct {
 	tensor.Engine
-	nodes  map[int64]*Node
+	nodes  map[int64]Node
 	from   map[int64][]int64         // from node to list of nodes. The key is the `from`.
 	to     map[int64][]int64         // to node from a a list of nodes. The key is the `to`
 	groups map[int64]encoding.Groups // a node (int64) is in these groups (encoding.Groups)
@@ -70,7 +77,7 @@ func (g *Graph) NameOf(t Tensor) (string, error) {
 	if n == nil {
 		return "", errors.Wrapf(ErrNotFoundInGraph, "Cannot find name of %v", t)
 	}
-	return n.name, nil
+	return n.Name(), nil
 }
 
 // IDOf returns the ID of the given Tensor.
@@ -80,46 +87,51 @@ func (g *Graph) IDOf(t Tensor) (NodeID, error) {
 	if n == nil {
 		return -1, errors.Wrapf(ErrNotFoundInGraph, "Cannot find ID of %v", t)
 	}
-	return NodeID(n.id), nil
+	return NodeID(n.ID()), nil
 }
 
 // NodeOf returns the node of the given Tensor.
 // it returns nil if the node is not found
-func (g *Graph) NodeOf(t Tensor) *Node { return g.find(t) }
+func (g *Graph) NodeOf(t Tensor) Node { return g.find(t) }
 
-func (g *Graph) find(t Tensor) *Node {
+func (g *Graph) find(t Tensor) Node {
 	if t == nil {
 		return nil
 	}
-	if n, ok := t.(*Node); ok {
+	if n, ok := t.(Node); ok {
 		return n
 	}
 
 	// search backwards because it's more probable that you're using newer created nodes
 	for _, n := range g.nodes {
-		// this little trick here (to inspect the internal structure - i.e g.nodes[i].Tensor == t)
-		// is the real reason why you cannot really create Node{Node{Node{...}}}
-		// without doing it explicitly
-		if tt, ok := n.Tensor.(Tensor); ok {
+		switch nx := n.(type) {
+		case valuelifter:
+			// this little trick here (to inspect the internal structure - i.e g.nodes[i].Tensor == t)
+			// is the real reason why you cannot really create Node{Node{Node{...}}}
+			// without doing it explicitly
+			tt := nx.Value().(Tensor)
 			if t == tt {
 				return n
 			}
-		}
-		if n.beforeLift != nil {
-			if tt, ok := n.beforeLift.(Tensor); ok {
+			b4 := nx.prelift()
+			if b4 != nil {
+				tt := b4.(Tensor)
 				if t == tt {
 					return n
 				}
 			}
+		default:
+			if t == n {
+				return n
+			}
+
 		}
-		if t == n {
-			return n
-		}
+
 	}
 	return nil
 }
 
-func (g *Graph) getByID(id int64) *Node {
+func (g *Graph) getByID(id int64) Node {
 	if n, ok := g.nodes[id]; ok {
 		return n
 	}
@@ -129,11 +141,11 @@ func (g *Graph) getByID(id int64) *Node {
 // NewGraph with default values
 func NewGraph(e tensor.Engine) *Graph {
 	if e == nil {
-		e = tensor.StdEng{}
+		e = stdeng.Gen{}
 	}
 	g := &Graph{
 		Engine: e,
-		nodes:  make(map[int64]*Node),
+		nodes:  make(map[int64]Node),
 		from:   make(map[int64][]int64),
 		to:     make(map[int64][]int64),
 		groups: make(map[int64]encoding.Groups),
@@ -149,14 +161,14 @@ func NewGraph(e tensor.Engine) *Graph {
 	return g
 }
 
-// Get gets the concrete *Node of a nodelike (graph.Node) object.
-func (g *Graph) Get(n Nodelike) *Node { return g.getByID(n.ID()) }
+// Get gets the concrete Node of a nodelike (graph.Node) object.
+func (g *Graph) Get(n Nodelike) Node { return g.getByID(n.ID()) }
 
 // Node returns the node with the given ID, if it exists. Nil otherwise.
 func (g *Graph) Node(id int64) graph.Node {
 	n := g.getByID(id)
-	// This weird bit here is necessary because (*Node)(nil) ≠ nil (untyped)
-	if n == nil { // (*Node)(nil)
+	// This weird bit here is necessary because (Node)(nil) ≠ nil (untyped)
+	if n == nil { // (Node)(nil)
 		return nil // untyped nil
 	}
 	return n
@@ -168,11 +180,11 @@ func (g *Graph) Nodes() graph.Nodes {
 		return graph.Empty
 	}
 
-	ordered := make([]*Node, 0, len(g.nodes))
+	ordered := make([]Node, 0, len(g.nodes))
 	for _, n := range g.nodes {
 		ordered = append(ordered, n)
 	}
-	sort.Slice(ordered, func(i, j int) bool { return ordered[i].id < ordered[j].id })
+	sort.Slice(ordered, func(i, j int) bool { return ordered[i].ID() < ordered[j].ID() })
 	return IterNodesFromNodes(ordered)
 }
 
@@ -229,7 +241,7 @@ func (g *Graph) To(id int64) graph.Nodes {
 
 // newNode creates a new Node with a unique
 // arbitrary ID and default values.
-func (g *Graph) newNode() *Node {
+func (g *Graph) newNode() Node {
 	if len(g.nodes) == 0 {
 		return &Node{
 			id: MinNodeID,
@@ -245,25 +257,21 @@ func (g *Graph) newNode() *Node {
 
 // AddNode adds a node to the graph. AddNode panics if
 // the added node ID matches an existing node ID.
-func (g *Graph) AddNode(n *Node) error {
+func (g *Graph) AddNode(n Node) error {
 	if n.ID() < MinNodeID {
 		return errors.New("Cannot add a node with an ID less than MinNodeID")
 	}
 	if _, exists := g.nodes[n.ID()]; exists {
 		return fmt.Errorf("simple: node ID collision: %d", n.ID())
 	}
-	if l, ok := n.Tensor.Engine().(Lifter); ok {
-		t := n.Tensor
-		n.beforeLift = t
-		n.Tensor = l.Lift(t)
-	}
+	n = liftNode(n)
 	g.nodes[n.ID()] = n
 	g.nodeIDs.Use(n.ID())
 	return nil
 }
 
 // createEdge creates an edge.
-func (g *Graph) createEdge(from, to *Node) error {
+func (g *Graph) createEdge(from, to Node) error {
 	if from == to || from.ID() == to.ID() {
 		return errors.New("Adding self-edge")
 	}
@@ -300,7 +308,7 @@ func (g *Graph) createEdge(from, to *Node) error {
 // AddChildren creates weighted edges betwen n and children.
 // The function returns an error if a child is not present in the graph
 // or if any link betwen n and one of children already exists
-func (g *Graph) AddChildren(n *Node, children ...*Node) error {
+func (g *Graph) AddChildren(n Node, children ...Node) error {
 	if _, ok := g.nodes[n.ID()]; !ok {
 		return fmt.Errorf("%q: %w", n, ErrNotFoundInGraph)
 	}
@@ -319,7 +327,7 @@ func (g *Graph) AddChildren(n *Node, children ...*Node) error {
 }
 
 // Roots returns the roots of a graph.
-func (g *Graph) Roots() (retVal []*Node) {
+func (g *Graph) Roots() (retVal []Node) {
 	for id, n := range g.nodes {
 		if len(g.to[id]) == 0 {
 			retVal = append(retVal, n)
@@ -331,13 +339,14 @@ func (g *Graph) Roots() (retVal []*Node) {
 // SetGroup sets the group of the given node.
 func (g *Graph) SetGroup(t Tensor, group encoding.Group) {
 	n := g.find(t)
-	g.groups[n.id] = g.groups[n.id].Upsert(group)
+	id := n.ID()
+	g.groups[id] = g.groups[id].Upsert(group)
 }
 
 // GroupsOf returns the groups that a tensor belongs to.
 func (g *Graph) GroupsOf(t Tensor) encoding.Groups {
 	n := g.find(t)
-	return g.groups[n.id]
+	return g.groups[n.ID()]
 }
 
 /* UTILITY API METHODS FOR PERFORMANCE */
@@ -348,10 +357,10 @@ func (g *Graph) GroupsOf(t Tensor) encoding.Groups {
    	iterChildren := g.From(n.ID())
         childNodes := iterChildren.NodeIDs()
 
-   Here you will note that `g.From` allocates a *IterNodes (which allocates a []*Node).
+   Here you will note that `g.From` allocates a *IterNodes (which allocates a []Node).
    Then `.NodeIDs` will allocate a `[]NodeID`.
    If we're only ever going to use a slice of NodeID, then the intermediary allocation
-   of `[]*Node` (in the *IterNodes) is a wasted allocation.
+   of `[]Node` (in the *IterNodes) is a wasted allocation.
 */
 
 // edgesOf gets an edge of a Nodelike. You must provide a map of edges (usually g.to or g.from).
@@ -365,7 +374,7 @@ func (g *Graph) edgesOf(t Nodelike, whichEdges map[int64][]int64) []int64 {
 		return nil
 	}
 
-	return whichEdges[n.id]
+	return whichEdges[n.ID()]
 }
 
 // ChildrenOf finds the children of a given tensor. The result is returned as a NodeIDs.
@@ -384,13 +393,13 @@ func (g *Graph) ChildrenOf(t Nodelike) NodeIDs {
 }
 
 // ChildrenOfAsNodes finds the children of a given tensor. The result is returned as a NodeIDs.
-func (g *Graph) ChildrenOfAsNodes(t Nodelike) []*Node {
+func (g *Graph) ChildrenOfAsNodes(t Nodelike) []Node {
 	children := g.edgesOf(t, g.from)
 	if len(children) == 0 {
 		return nil
 	}
 
-	retVal := make([]*Node, 0, len(children))
+	retVal := make([]Node, 0, len(children))
 	for _, child := range children {
 		retVal = append(retVal, g.getByID(child))
 	}
@@ -410,14 +419,14 @@ func (g *Graph) ParentsOf(t Nodelike) NodeIDs {
 	return retVal
 }
 
-// ParentsOfAsNodes returns the parents of a given tensor as a []*Node.
-func (g *Graph) ParentsOfAsNodes(t Nodelike) []*Node {
+// ParentsOfAsNodes returns the parents of a given tensor as a []Node.
+func (g *Graph) ParentsOfAsNodes(t Nodelike) []Node {
 	parents := g.edgesOf(t, g.to)
 	if len(parents) == 0 {
 		return nil
 	}
 
-	retVal := make([]*Node, 0, len(parents))
+	retVal := make([]Node, 0, len(parents))
 	for _, p := range parents {
 		retVal = append(retVal, g.getByID(p))
 	}

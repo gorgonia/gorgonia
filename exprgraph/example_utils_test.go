@@ -35,18 +35,18 @@ type Queueer interface {
 }
 
 // matmul is an Op
-type matmul struct{}
+type matmul[DT tensor.Num, T tensor.Tensor[DT, T]] struct{}
 
 // Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime.
-func (op matmul) Arity() int { return 2 }
+func (op matmul[DT, T]) Arity() int { return 2 }
 
 // Type informs the type of the Op (not the node). This will be used by the type system to infer the final type of the node.
-func (op matmul) Type() hm.Type {
+func (op matmul[DT, T]) Type() hm.Type {
 	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'))
 }
 
 // ShapeExpr informs the shape operations that the Op will do. A quick primer is given in the README of the shapes package.
-func (op matmul) ShapeExpr() shapes.Expr {
+func (op matmul[DT, T]) ShapeExpr() shapes.Expr {
 	a := shapes.Var('a')
 	b := shapes.Var('b')
 	c := shapes.Var('c')
@@ -58,15 +58,15 @@ func (op matmul) ShapeExpr() shapes.Expr {
 }
 
 // Do executes the op.
-func (op matmul) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
+func (op matmul[DT, T]) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
 	a := vs[0].(tensor.Tensor)
 	b := vs[1].(tensor.Tensor)
 	return tensor.MatMul(a, b)
 }
 
-func (op matmul) String() string { return "×" }
+func (op matmul[DT, T]) String() string { return "×" }
 
-func (op matmul) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
+func (op matmul[DT, T]) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
 	if ctx != nil {
 		select {
 		case <-ctx.Done():
@@ -80,7 +80,7 @@ func (op matmul) PreallocDo(ctx context.Context, prealloc values.Value, vs ...va
 	return tensor.MatMul(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx))
 }
 
-func (op matmul) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
+func (op matmul[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
 	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
 	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
 	cdv := exprgraph.T2T(output).(*dual.Dual)

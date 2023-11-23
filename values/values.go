@@ -6,7 +6,7 @@ import (
 )
 
 type V interface {
-	tensor.Desc
+	tensor.DescWithStorage
 	tensor.DataSizer
 	tensor.Memory
 	tensor.Engineer
@@ -23,16 +23,7 @@ type V interface {
 // This also means for the most part most Values will be allocated on the heap.
 // There are some performance tradeoffs made in this decision, but ultimately this is better than having to manually manage blocks of memory
 type Value[DT any] interface {
-	// datatypes.Tensor
-	tensor.Desc
-	tensor.DataSizer
-	// tensor.Zeroer  // not all Values need to be able to zero themselves
-
-	tensor.Memory
-	tensor.Engineer
-
-	tensor.RawAccessor[DT]
-	tensor.ValueSetter[DT]
+	tensor.Basic[DT]
 }
 
 // Typer is anything that knows its own type

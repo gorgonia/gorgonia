@@ -1,14 +1,6 @@
 package exprgraph
 
-import (
-	"fmt"
-	"unsafe"
-
-	"github.com/chewxy/hm"
-	"gorgonia.org/gorgonia/types"
-	"gorgonia.org/tensor"
-)
-
+/*
 var _ Tensor = &header{}
 
 // header is a representation of a header of tensor - it has no data
@@ -77,3 +69,4 @@ func (t *header) Type() hm.Type {
 	}
 	return types.TensorType{Dims: t.Shape().Dims(), Of: t.dt}
 }
+*/

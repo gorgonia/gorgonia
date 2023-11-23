@@ -12,7 +12,7 @@ import (
 )
 
 // Tensor represents values that are acceptable in Gorgonia. At this point, it is implemented by:
-//   - tensor.DescWithStorage
+//   - tensor.Basic[DT]
 //   - exprgraph.Node
 //
 // There is an overlap with values.Value. The reason is semantic clarity. Values are Tensors. Tensors are Values.

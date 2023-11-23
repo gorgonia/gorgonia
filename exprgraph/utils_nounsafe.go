@@ -1,3 +1,4 @@
+//go:build nounsafe
 // +build nounsafe
 
 package exprgraph

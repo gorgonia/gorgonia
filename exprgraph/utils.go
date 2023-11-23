@@ -10,21 +10,16 @@ import (
 
 // T2T tries to find a `tensor.Tensor` from a Tensor
 // it returns nil if no tensor is found
-func T2T(a Tensor) tensor.Tensor {
+func T2T[DT tensor.Num](a Tensor) tensor.Basic[DT] {
 	switch t := a.(type) {
-	case *Node:
-		if t.Tensor == nil {
-			return nil
+	case Node:
+		if v, ok := t.(valuelifter); ok {
+			return v.Value().(tensor.Basic[DT])
 		}
-		switch t.Tensor.(type) {
-		case *header:
-			return nil
-		default:
-			return T2T(t.Tensor)
-		}
-	case *dual.Dual:
+		return nil
+	case *dual.Dual[DT]:
 		return t
-	case tensor.Tensor:
+	case tensor.Basic[DT]:
 		return t
 	default:
 		return nil
