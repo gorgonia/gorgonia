@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/chewxy/hm"
+	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
 )
@@ -24,6 +26,15 @@ func T2T[DT tensor.Num](a Tensor) tensor.Basic[DT] {
 	default:
 		return nil
 	}
+}
+
+func typeof(n Node) hm.Type {
+	dt := n.Dtype()
+	shp := n.Shape()
+	if shp.IsScalar() {
+		return dt
+	}
+	return types.MakeTensorType(shp.Dims(), dt)
 }
 
 func consFmtStr(a fmt.State, c rune) string {

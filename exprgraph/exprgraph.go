@@ -239,21 +239,32 @@ func (g *Graph) To(id int64) graph.Nodes {
 	return IterNodesFromIDs(g, g.to[id])
 }
 
-// newNode creates a new Node with a unique
-// arbitrary ID and default values.
-func (g *Graph) newNode() Node {
+// newNodeID is to be called to get a new ID for nodes
+func (g *Graph) newNodeID() NodeID {
 	if len(g.nodes) == 0 {
-		return &Node{
-			id: MinNodeID,
-		}
+		return MinNodeID
 	}
 	if int64(len(g.nodes)) == uid.Max {
 		panic("simple: cannot allocate node: no slot")
 	}
-	return &Node{
-		id: g.nodeIDs.NewID(),
-	}
+	return NodeID(g.nodeIDs.NewID())
 }
+
+// // newNode creates a new Node with a unique
+// // arbitrary ID and default values.
+// func (g *Graph) newNode() Node {
+// 	if len(g.nodes) == 0 {
+// 		return &Node{
+// 			id: MinNodeID,
+// 		}
+// 	}
+// 	if int64(len(g.nodes)) == uid.Max {
+// 		panic("simple: cannot allocate node: no slot")
+// 	}
+// 	return &Node{
+// 		id: g.nodeIDs.NewID(),
+// 	}
+// }
 
 // AddNode adds a node to the graph. AddNode panics if
 // the added node ID matches an existing node ID.

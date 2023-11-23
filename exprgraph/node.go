@@ -9,6 +9,7 @@ import (
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 	"gorgonia.org/tensor/dense"
 )
@@ -33,12 +34,12 @@ type Node interface {
 
 // desc represents the common things that a Value and a Symbolic node have
 type desc struct {
-	id      int64
+	id      NodeID
 	name    string
 	waiting int32 // atomic updates only
 }
 
-func (n desc) ID() int64 { return n.id }
+func (n desc) ID() int64 { return int64(n.id) }
 
 func (n *desc) AddWaiting() { atomic.AddInt32(&n.waiting, 1) }
 
@@ -81,6 +82,25 @@ type Symbolic[DT any] struct {
 	desc
 	dt     dtype.Dtype
 	engine *Graph
+	Op     any // tmp
+}
+
+func NewSymbolic[DT any](g *Graph, shape shapes.Shape, name string) (*Symbolic[DT], error) {
+	strides := tensor.CalcStrides(shape)
+	ap := tensor.MakeAP(shape, strides, 0, 0)
+	dt := dtype.Datatype[DT]{}
+	retVal := &Symbolic[DT]{
+		AP: ap,
+		desc: desc{
+			name: name,
+		},
+		dt:     dt,
+		engine: g,
+	}
+	if err := g.AddNode(retVal); err != nil {
+		return nil, err
+	}
+	return retVal, nil
 }
 
 func (n *Symbolic[DT]) Name() string {
