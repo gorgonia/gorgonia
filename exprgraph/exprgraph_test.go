@@ -13,7 +13,7 @@ import (
 
 type testGraphFields struct {
 	Engine  tensor.Engine
-	nodes   map[int64]*Node
+	nodes   map[int64]Node
 	from    map[int64][]int64
 	to      map[int64][]int64
 	self    float64
@@ -24,7 +24,7 @@ type testGraphFields struct {
 func graphFromFields(fields testGraphFields) *Graph {
 	nodes := fields.nodes
 	if nodes == nil {
-		nodes = make(map[int64]*Node)
+		nodes = make(map[int64]Node)
 	}
 	from := fields.from
 	if from == nil {
@@ -48,15 +48,17 @@ func graphFromFields(fields testGraphFields) *Graph {
 
 // simpleTestGraph returns the partial graph representation
 // of the expression
-// 	c = a + b
+//
+//	c = a + b
+//
 // "partial" because the `Op` in the node is nil.
-func simpleTestGraph() (f testGraphFields, a, b, c *Node) {
+func simpleTestGraph() (f testGraphFields, a, b, c Node) {
 	a = &Node{id: 0, name: "a"}
 	b = &Node{id: 1, name: "b"}
 	c = &Node{id: 2, name: "c"}
 
 	return testGraphFields{
-		nodes: map[int64]*Node{
+		nodes: map[int64]Node{
 			0: a,
 			1: b,
 			2: c,
@@ -88,7 +90,7 @@ func TestNewGraph(t *testing.T) {
 			},
 			&Graph{
 				Engine:  &tensor.StdEng{},
-				nodes:   make(map[int64]*Node),
+				nodes:   make(map[int64]Node),
 				from:    make(map[int64][]int64),
 				to:      make(map[int64][]int64),
 				groups:  make(map[int64]encoding.Groups),
@@ -120,7 +122,7 @@ func TestGraph_Node(t *testing.T) {
 		{
 			"node exists",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					1: {},
 				},
 			},
@@ -132,7 +134,7 @@ func TestGraph_Node(t *testing.T) {
 		{
 			"node does not exists",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					1: {},
 				},
 			},
@@ -155,8 +157,8 @@ func TestGraph_Node(t *testing.T) {
 
 func TestGraph_AddChildren(t *testing.T) {
 	type args struct {
-		n        *Node
-		children []*Node
+		n        Node
+		children []Node
 	}
 	tests := []struct {
 		name    string
@@ -167,7 +169,7 @@ func TestGraph_AddChildren(t *testing.T) {
 		{
 			"main node is not found",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: {},
 				},
 			},
@@ -181,7 +183,7 @@ func TestGraph_AddChildren(t *testing.T) {
 		{
 			"child node is not found",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: {
 						id: 0,
 					},
@@ -191,7 +193,7 @@ func TestGraph_AddChildren(t *testing.T) {
 				n: &Node{
 					id: 0,
 				},
-				children: []*Node{
+				children: []Node{
 					{
 						id: 1,
 					},
@@ -202,7 +204,7 @@ func TestGraph_AddChildren(t *testing.T) {
 		{
 			"child of itself",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: {
 						id: 0,
 					},
@@ -212,7 +214,7 @@ func TestGraph_AddChildren(t *testing.T) {
 				n: &Node{
 					id: 0,
 				},
-				children: []*Node{
+				children: []Node{
 					{
 						id: 0,
 					},
@@ -223,7 +225,7 @@ func TestGraph_AddChildren(t *testing.T) {
 		{
 			"all ok",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: {
 						id: 0,
 					},
@@ -238,7 +240,7 @@ func TestGraph_AddChildren(t *testing.T) {
 				n: &Node{
 					id: 0,
 				},
-				children: []*Node{
+				children: []Node{
 					{
 						id: 1,
 					},
@@ -291,7 +293,7 @@ func TestGraph_NameOf(t *testing.T) {
 		{
 			"not found",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: {},
 				},
 			},
@@ -304,7 +306,7 @@ func TestGraph_NameOf(t *testing.T) {
 		{
 			"tensor found",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: {
 						name:   "test",
 						Tensor: sampleTensor,
@@ -320,7 +322,7 @@ func TestGraph_NameOf(t *testing.T) {
 		{
 			"tensor lifted found",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: sampleNodeLifted,
 				},
 			},
@@ -333,7 +335,7 @@ func TestGraph_NameOf(t *testing.T) {
 		{
 			"node found",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: sampleNode,
 				},
 			},
@@ -385,7 +387,7 @@ func TestGraph_IDOf(t *testing.T) {
 		{
 			"not found",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: {},
 				},
 			},
@@ -398,7 +400,7 @@ func TestGraph_IDOf(t *testing.T) {
 		{
 			"tensor found",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: {
 						name:   "test",
 						Tensor: sampleTensor,
@@ -414,7 +416,7 @@ func TestGraph_IDOf(t *testing.T) {
 		{
 			"tensor lifted found",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: sampleNodeLifted,
 				},
 			},
@@ -427,7 +429,7 @@ func TestGraph_IDOf(t *testing.T) {
 		{
 			"node found",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: sampleNode,
 				},
 			},
@@ -474,7 +476,7 @@ func TestGraph_NodeOf(t *testing.T) {
 		name   string
 		fields testGraphFields
 		args   args
-		want   *Node
+		want   Node
 	}{
 		{
 			"not found",
@@ -487,7 +489,7 @@ func TestGraph_NodeOf(t *testing.T) {
 		{
 			"tensor found",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: {
 						name:   "test",
 						Tensor: sampleTensor,
@@ -505,7 +507,7 @@ func TestGraph_NodeOf(t *testing.T) {
 		{
 			"node found",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: sampleNode,
 				},
 			},
@@ -517,7 +519,7 @@ func TestGraph_NodeOf(t *testing.T) {
 		{
 			"lift",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: sampleNodeLifted,
 				},
 			},
@@ -533,9 +535,9 @@ func TestGraph_NodeOf(t *testing.T) {
 			nil,
 		},
 		{
-			"(*Node)(nil)",
+			"(Node)(nil)",
 			testGraphFields{},
-			args{t: (*Node)(nil)},
+			args{t: (Node)(nil)},
 			nil,
 		},
 		// TODO: Add test cases.
@@ -583,7 +585,7 @@ func TestGraph_createEdge(t *testing.T) {
 			{
 				"from node not found",
 				fields{
-					nodes: map[int64]*Node{
+					nodes: map[int64]Node{
 						1: {
 							id: 1,
 						},
@@ -606,7 +608,7 @@ func TestGraph_createEdge(t *testing.T) {
 			{
 				"to node not found",
 				fields{
-					nodes: map[int64]*Node{
+					nodes: map[int64]Node{
 						0: {
 							id: 0,
 						},
@@ -630,7 +632,7 @@ func TestGraph_createEdge(t *testing.T) {
 		{
 			"ok, overriding existing links",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: {
 						id: 0,
 					},
@@ -656,7 +658,7 @@ func TestGraph_createEdge(t *testing.T) {
 		{
 			"ok, new fresh link",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: {
 						id: 0,
 					},
@@ -684,7 +686,7 @@ func TestGraph_createEdge(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := graphFromFields(tt.fields)
-			if err := g.createEdge(tt.args.e.From().(*Node), tt.args.e.To().(*Node)); (err != nil) != tt.wantErr {
+			if err := g.createEdge(tt.args.e.From().(Node), tt.args.e.To().(Node)); (err != nil) != tt.wantErr {
 				t.Errorf("Graph.setWeightedEdge() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -701,7 +703,7 @@ func TestGraph_Graph(t *testing.T) {
 			"simple",
 			testGraphFields{},
 			&Graph{
-				nodes: map[int64]*Node{},
+				nodes: map[int64]Node{},
 				from:  map[int64][]int64{},
 				to:    map[int64][]int64{},
 			},
@@ -736,11 +738,11 @@ func TestGraph_Nodes(t *testing.T) {
 		{
 			"one node",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: first,
 				},
 			},
-			&IterNodes{[]*Node{first}, -1},
+			&IterNodes{[]Node{first}, -1},
 		},
 	}
 	for _, tt := range tests {
@@ -925,7 +927,7 @@ func TestGraph_HasEdgeFromTo(t *testing.T) {
 
 func TestGraph_AddNode(t *testing.T) {
 	type args struct {
-		n *Node
+		n Node
 	}
 	tests := []struct {
 		name    string
@@ -946,7 +948,7 @@ func TestGraph_AddNode(t *testing.T) {
 		{
 			"node collision",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					MinNodeID + 1: {},
 				},
 			},
@@ -960,7 +962,7 @@ func TestGraph_AddNode(t *testing.T) {
 		{
 			"node ok",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					MinNodeID + 1: {},
 				},
 				nodeIDs: uid.NewSet(),
@@ -976,7 +978,7 @@ func TestGraph_AddNode(t *testing.T) {
 		{
 			"node lifter ok",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					MinNodeID + 1: {},
 				},
 				nodeIDs: uid.NewSet(),
@@ -1038,8 +1040,8 @@ func TestGraph_Edge(t *testing.T) {
 				0, 1,
 			},
 			&WeightedEdge{
-				F: (*Node)(nil),
-				T: (*Node)(nil),
+				F: (Node)(nil),
+				T: (Node)(nil),
 			},
 		},
 		{
@@ -1091,13 +1093,13 @@ func TestGraph_To(t *testing.T) {
 			"simple, to a",
 			simple,
 			args{a.ID()},
-			&IterNodes{ns: []*Node{c}, i: -1},
+			&IterNodes{ns: []Node{c}, i: -1},
 		},
 		{
 			"simple, to b",
 			simple,
 			args{b.ID()},
-			&IterNodes{ns: []*Node{c}, i: -1},
+			&IterNodes{ns: []Node{c}, i: -1},
 		},
 		{
 			"simple, to c",
@@ -1124,8 +1126,8 @@ func TestGraph_Roots(t *testing.T) {
 	tests := []struct {
 		name    string
 		fields  testGraphFields
-		want    []*Node
-		altWant []*Node // alternative results due to random ordering when iterating thru map
+		want    []Node
+		altWant []Node // alternative results due to random ordering when iterating thru map
 	}{
 		{
 			"nil graph",
@@ -1136,13 +1138,13 @@ func TestGraph_Roots(t *testing.T) {
 		{
 			"simple",
 			simple,
-			[]*Node{cnode},
-			[]*Node{cnode},
+			[]Node{cnode},
+			[]Node{cnode},
 		},
 		{
 			"simple2",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: anode,
 					1: bnode,
 					2: cnode,
@@ -1156,8 +1158,8 @@ func TestGraph_Roots(t *testing.T) {
 					1: {2},
 				},
 			},
-			[]*Node{cnode, dnode},
-			[]*Node{dnode, cnode},
+			[]Node{cnode, dnode},
+			[]Node{dnode, cnode},
 		},
 	}
 
@@ -1201,9 +1203,9 @@ func TestGraph_ChildrenOf(t *testing.T) {
 			nil,
 		},
 		{
-			"nil graph, want: (*Node)(nil)",
+			"nil graph, want: (Node)(nil)",
 			testGraphFields{},
-			args{(*Node)(nil)},
+			args{(Node)(nil)},
 			nil,
 		},
 		{
@@ -1213,7 +1215,7 @@ func TestGraph_ChildrenOf(t *testing.T) {
 			NodeIDs{0, 1},
 		},
 		{
-			"c = a + b, want: c (as *Node)",
+			"c = a + b, want: c (as Node)",
 			simple,
 			args{cnode},
 			NodeIDs{0, 1},
@@ -1270,9 +1272,9 @@ func TestGraph_ParentsOf(t *testing.T) {
 			nil,
 		},
 		{
-			"nil graph, want: (*Node)(nil)",
+			"nil graph, want: (Node)(nil)",
 			testGraphFields{},
-			args{(*Node)(nil)},
+			args{(Node)(nil)},
 			nil,
 		},
 		{
@@ -1282,14 +1284,14 @@ func TestGraph_ParentsOf(t *testing.T) {
 			NodeIDs{2},
 		},
 		{
-			"c = a + b, want: b (as *Node)",
+			"c = a + b, want: b (as Node)",
 			simple,
 			args{bnode},
 			NodeIDs{2},
 		},
 
 		{
-			"c = a + b, want: c (as *Node)",
+			"c = a + b, want: c (as Node)",
 			simple,
 			args{cnode},
 			nil,
@@ -1316,7 +1318,7 @@ func TestGraph_ParentsOfAsNodes(t *testing.T) {
 		name   string
 		fields testGraphFields
 		args   args
-		want   []*Node
+		want   []Node
 	}{
 		{
 			"nil graph, want: nodeID(100)",
@@ -1334,26 +1336,26 @@ func TestGraph_ParentsOfAsNodes(t *testing.T) {
 			nil,
 		},
 		{
-			"nil graph, want: (*Node)(nil)",
+			"nil graph, want: (Node)(nil)",
 			testGraphFields{},
-			args{(*Node)(nil)},
+			args{(Node)(nil)},
 			nil,
 		},
 		{
 			"c = a + b, want: a (as NodeID)",
 			simple,
 			args{anode.NodeID()},
-			[]*Node{cnode},
+			[]Node{cnode},
 		},
 		{
-			"c = a + b, want: b (as *Node)",
+			"c = a + b, want: b (as Node)",
 			simple,
 			args{bnode},
-			[]*Node{cnode},
+			[]Node{cnode},
 		},
 
 		{
-			"c = a + b, want: c (as *Node)",
+			"c = a + b, want: c (as Node)",
 			simple,
 			args{cnode},
 			nil,

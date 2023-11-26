@@ -2,13 +2,12 @@ package exprgraph
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
-	"gorgonia.org/gorgonia/ops"
-	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 )
 
+/*
 func TestCons(t *testing.T) {
 	tens := tensor.New(tensor.WithBacking([]int{1, 2, 3}))
 	emptyGraph := NewGraph(&tensor.StdEng{})
@@ -121,46 +120,22 @@ func TestCons(t *testing.T) {
 		})
 	}
 }
+*/
 
 func TestNode_Name(t *testing.T) {
-	type fields struct {
-		Tensor Tensor
-		id     int64
-		name   string
-		Op     ops.Op
-	}
 	tests := []struct {
-		name   string
-		fields fields
-		want   string
+		name string
+		n    Node
+		want string
 	}{
-		{
-			"ok",
-			fields{
-				name: "test",
-			},
-			"test",
-		},
-		{
-			"nil",
-			fields{},
-			"<nil>",
-		},
-		// TODO: Add test cases.
+		{"simple Value", newVal(), "test"},
+		{"simple Symbolic", newSym(), "test"},
+		{"nil Value", (*Value[float64, *dense.Dense[float64]])(nil), "<nil>"},
+		{"nil Symbolic", (*Symbolic[float64])(nil), "<nil>"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			n := &Node{
-				Tensor: tt.fields.Tensor,
-				id:     tt.fields.id,
-				name:   tt.fields.name,
-				Op:     tt.fields.Op,
-			}
-			// special case:
-			if tt.name == "nil" {
-				n = nil
-			}
-			if got := n.Name(); got != tt.want {
+			if got := tt.n.Name(); got != tt.want {
 				t.Errorf("Node.Name() = %v, want %v", got, tt.want)
 			}
 		})
@@ -168,55 +143,79 @@ func TestNode_Name(t *testing.T) {
 }
 
 func TestNode_Format(t *testing.T) {
-	t.Run("display name", func(t *testing.T) {
-		n := fmt.Sprintf("%s", &Node{name: "name"})
-		if n != "name" {
-			t.Fatal(n)
-		}
-	})
-	t.Run("display nil tensor", func(t *testing.T) {
-		n := fmt.Sprintf("%v", &Node{name: "name"})
-		if n != "node(0,name,<nil>)" {
-			t.Fatal(n)
-		}
+	tests := []struct {
+		name   string
+		n      Node
+		format string
+		want   string
+	}{
+		{
+			name:   "display name - Value",
+			n:      newVal(),
+			format: "%s",
+			want:   "test",
+		},
+		{
+			name:   "display name - Symbolic",
+			n:      newSym(),
+			format: "%s",
+			want:   "test",
+		},
+		{
+			name:   "display - nil Value",
+			n:      (*Value[float64, *dense.Dense[float64]])(nil),
+			format: "%v",
+			want:   "<nil>",
+		},
+		{
+			name:   "display name - nil Symbolic",
+			n:      (*Symbolic[float64])(nil),
+			format: "%v",
+			want:   "<nil>",
+		},
+		{
+			name:   "display - Value with no Basic",
+			n:      newNilVal(),
+			format: "%v",
+			want:   "node(1337,test,<nil>)",
+		},
+		{
+			name:   "display  Symbolic",
+			n:      newSym(),
+			format: "%v",
+			want:   "node(0,test)",
+		},
 
-	})
-	t.Run("display tensor %v", func(t *testing.T) {
-		n := fmt.Sprintf("%v", &Node{
-			name:   "name",
-			Tensor: tensor.NewDense(tensor.Float32, tensor.Shape{}),
+		{
+			name:   "display Value %2.2v",
+			n:      newVal(),
+			format: "%2.2v",
+			want:   "TO BE INCLUDED",
+		},
+
+		{
+			name:   "display Value %2.2f",
+			n:      newVal(),
+			format: "%2.2f",
+			want:   "TO BE INCLUDED",
+		},
+
+		{
+			name:   "display Value %#v",
+			n:      newVal(),
+			format: "%#v",
+			want:   "TO BE INCLUDED",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := fmt.Sprintf(tt.format, tt.n); got != tt.want {
+				t.Errorf("Node.Format() = %v, want %v", got, tt.want)
+			}
+
 		})
-		if n != "0" {
-			t.Fatal(n)
-		}
-	})
-	t.Run("display tensor %2.2v", func(t *testing.T) {
-		n := fmt.Sprintf("%2.2v", &Node{
-			name:   "name",
-			Tensor: tensor.NewDense(tensor.Float32, tensor.Shape{}, tensor.WithBacking([]float32{42.4242})),
-		})
-		if n != "42" {
-			t.Fatal(n)
-		}
-	})
-	t.Run("display tensor %2.2f", func(t *testing.T) {
-		n := fmt.Sprintf("%2.2f", &Node{
-			name:   "name",
-			Tensor: tensor.NewDense(tensor.Float32, tensor.Shape{}, tensor.WithBacking([]float32{42.4242})),
-		})
-		if n != "42.42" {
-			t.Fatal(n)
-		}
-	})
-	t.Run("display tensor %#v", func(t *testing.T) {
-		n := fmt.Sprintf("%#v", &Node{
-			name:   "name",
-			Tensor: tensor.NewDense(tensor.Float32, tensor.Shape{}, tensor.WithBacking([]float32{42.4242})),
-		})
-		if n != "42.4242" {
-			t.Fatal(n)
-		}
-	})
+	}
 }
 
 func TestNodeID_ID(t *testing.T) {

@@ -6,69 +6,38 @@ import (
 
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 )
 
 func TestT2T(t *testing.T) {
-	sampleTensor := tensor.NewDense(tensor.Float32, []int{1})
-	sampleDV := dual.New(tensor.NewDense(tensor.Float32, []int{1}))
-	type args struct {
-		a Tensor
-	}
+	sampleTensor := dense.New[float32](tensor.WithShape(1))
+	sampleDV := dual.New[float32](dense.New[float32](tensor.WithShape(1)))
+
 	tests := []struct {
 		name string
-		args args
-		want tensor.Tensor
+		n    Node
+		want tensor.Basic[float32]
 	}{
 		{
 			"*Node with dual value",
-			args{
-				&Node{
-					Tensor: sampleDV,
-				},
+			&Value[float32, *dense.Dense[float32]]{
+				Basic: sampleDV,
 			},
 			sampleDV,
 		},
 		{
 			"*Node",
-			args{
-				&Node{
-					Tensor: sampleTensor,
-				},
+			&Value[float32, *dense.Dense[float32]]{
+				Basic: sampleTensor,
 			},
 			sampleTensor,
 		},
-		{
-			"*Node without tensor",
-			args{
-				&Node{},
-			},
-			nil,
-		},
-		{
-			"nil value",
-			args{
-				nil,
-			},
-			nil,
-		},
-		{
-			"tensor value",
-			args{
-				sampleTensor,
-			},
-			sampleTensor,
-		},
-		{
-			"dual value",
-			args{
-				sampleDV,
-			},
-			sampleDV,
-		},
+		{"Value without tensor", newNilVal(), nil},
+		{"nil Node", nil, nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := T2T(tt.args.a); !reflect.DeepEqual(got, tt.want) {
+			if got := T2T[float32](tt.n); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("T2T() = %v, want %v", got, tt.want)
 			}
 		})

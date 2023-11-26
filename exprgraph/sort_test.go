@@ -6,18 +6,18 @@ import (
 )
 
 func TestSort(t *testing.T) {
-	anode := &Node{id: 0, name: "a"}
-	bnode := &Node{id: 1, name: "b"}
-	cnode := &Node{id: 2, name: "c"}
+	anode := newSym(withID(0), withName("a"))
+	bnode := newSym(withID(1), withName("b"))
+	cnode := newSym(withID(2), withName("c"))
 
-	anode2 := &Node{id: 5, name: "a2"}
-	bnode2 := &Node{id: 4, name: "b2"}
-	cnode2 := &Node{id: 3, name: "c2"}
+	anode2 := newSym(withID(5), withName("a2"))
+	bnode2 := newSym(withID(4), withName("b2"))
+	cnode2 := newSym(withID(3), withName("c2"))
 
 	tests := []struct {
 		name    string
 		fields  testGraphFields
-		want    []*Node
+		want    []Node
 		willErr bool
 	}{
 		{
@@ -29,7 +29,7 @@ func TestSort(t *testing.T) {
 		{
 			"simple",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: anode,
 					1: bnode,
 					2: cnode,
@@ -42,14 +42,14 @@ func TestSort(t *testing.T) {
 					1: {2},
 				},
 			},
-			[]*Node{cnode, bnode, anode},
+			[]Node{cnode, bnode, anode},
 			false,
 		},
 
 		{
 			"simple, but something went wrong with the numbering of nodes",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					5: anode2,
 					4: bnode2,
 					3: cnode2,
@@ -62,14 +62,14 @@ func TestSort(t *testing.T) {
 					4: {3},
 				},
 			},
-			[]*Node{cnode2, anode2, bnode2},
+			[]Node{cnode2, anode2, bnode2},
 			false,
 		},
 
 		{
 			"two roots, disjoint subgraphs",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: anode,
 					1: bnode,
 					2: cnode,
@@ -88,14 +88,14 @@ func TestSort(t *testing.T) {
 					1: {2},
 				},
 			},
-			[]*Node{cnode2, anode2, bnode2, cnode, bnode, anode},
+			[]Node{cnode2, anode2, bnode2, cnode, bnode, anode},
 			false,
 		},
 
 		{
 			"two roots",
 			testGraphFields{
-				nodes: map[int64]*Node{
+				nodes: map[int64]Node{
 					0: anode,
 					1: bnode,
 					2: cnode,
@@ -110,7 +110,7 @@ func TestSort(t *testing.T) {
 					1: {2, 3},
 				},
 			},
-			[]*Node{cnode2, cnode, bnode, anode},
+			[]Node{cnode2, cnode, bnode, anode},
 			false,
 		},
 	}

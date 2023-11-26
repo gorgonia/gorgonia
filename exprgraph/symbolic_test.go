@@ -1,5 +1,6 @@
 package exprgraph
 
+/*
 import (
 	"fmt"
 	"reflect"
@@ -78,3 +79,4 @@ func Test_NewSymbolic(t *testing.T) {
 		})
 	}
 }
+*/

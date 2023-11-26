@@ -7,18 +7,15 @@ import (
 	"testing/quick"
 
 	"gonum.org/v1/gonum/graph"
-	"gorgonia.org/dtype"
-	"gorgonia.org/shapes"
-	"gorgonia.org/tensor"
 )
 
 type testIterNodesFields struct {
-	ns []*Node
+	ns []Node
 	i  int
 }
 
 func (n *IterNodes) Generate(r *rand.Rand, size int) reflect.Value {
-	ns := make([]*Node, size)
+	ns := make([]Node, size)
 	i := r.Int()
 	nn := &IterNodes{
 		ns: ns,
@@ -64,14 +61,14 @@ func Test_nodeIDs_Contains(t *testing.T) {
 }
 
 func TestNodes_NodeSlice(t *testing.T) {
-	n0 := &Node{id: 0}
-	n1 := &Node{id: 1}
-	n2 := &Node{id: 2}
+	n0 := newSym(withID(0))
+	n1 := newSym(withID(1))
+	n2 := newSym(withID(2))
 
 	tests := []struct {
 		name   string
 		fields testIterNodesFields
-		want   []*Node
+		want   []Node
 	}{
 		{
 			"nil length Nodes",
@@ -84,18 +81,18 @@ func TestNodes_NodeSlice(t *testing.T) {
 		{
 			"all Nodes",
 			testIterNodesFields{
-				ns: []*Node{n0, n1, n2},
+				ns: []Node{n0, n1, n2},
 				i:  -1,
 			},
-			[]*Node{n0, n1, n2},
+			[]Node{n0, n1, n2},
 		},
 		{
 			"all Nodes, used iterator",
 			testIterNodesFields{
-				ns: []*Node{n0, n1, n2},
+				ns: []Node{n0, n1, n2},
 				i:  0,
 			},
-			[]*Node{n1, n2},
+			[]Node{n1, n2},
 		},
 		// TODO: Add test cases.
 	}
@@ -143,7 +140,7 @@ func TestNodes_Next(t *testing.T) {
 		{
 			"exhausted iterator",
 			testIterNodesFields{
-				ns: make([]*Node, 2),
+				ns: make([]Node, 2),
 				i:  2,
 			},
 			false,
@@ -151,7 +148,7 @@ func TestNodes_Next(t *testing.T) {
 		{
 			"usual use",
 			testIterNodesFields{
-				ns: make([]*Node, 2),
+				ns: make([]Node, 2),
 				i:  -1,
 			},
 			true,
@@ -171,8 +168,8 @@ func TestNodes_Next(t *testing.T) {
 }
 
 func TestNodes_Node(t *testing.T) {
-	n0 := &Node{id: 0, name: "foo"}
-	n1 := &Node{id: 1, name: "bar"}
+	n0 := newSym(withID(0), withName("foo"))
+	n1 := newSym(withID(1), withName("bar"))
 	tests := []struct {
 		name   string
 		fields testIterNodesFields
@@ -190,7 +187,7 @@ func TestNodes_Node(t *testing.T) {
 		{
 			"usual",
 			testIterNodesFields{
-				ns: []*Node{n0, n1},
+				ns: []Node{n0, n1},
 				i:  0, // this must be advanced by .Next(), but in this test case it's hard coded
 			},
 			n0,
@@ -211,11 +208,13 @@ func TestNodes_Node(t *testing.T) {
 
 func TestTensorsFromNodeIDs(t *testing.T) {
 	g := NewGraph(nil)
-	a := NewNode(g, "a", tensor.WithShape(2), tensor.Of(dtype.Float64))
-	b, err := NewSymbolic(g, "b", dtype.Float64, shapes.Shape{2})
-	if err != nil {
-		t.Fatal(err)
-	}
+	a := newVal(withShape(2), inGraph(g), withName("a"))
+	b := newSym(withName("b"), inGraph(g), withShape(2))
+	//a := NewNode(g, "a", tensor.WithShape(2), tensor.Of(dtype.Float64))
+	// b, err := NewSymbolic(g, "b", dtype.Float64, shapes.Shape{2})
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 	ns := NodeIDs{a.NodeID(), b.NodeID()}
 	ts := TensorsFromNodeIDs(g, ns)
 

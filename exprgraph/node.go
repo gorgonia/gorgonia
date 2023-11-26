@@ -1,6 +1,7 @@
 package exprgraph
 
 import (
+	"fmt"
 	"sync/atomic"
 
 	"github.com/chewxy/hm"
@@ -30,6 +31,8 @@ type Node interface {
 	graph.Node // ID() int64
 	tensor.Desc
 	Name() string
+
+	isnode() // seals the interface to this package
 }
 
 // desc represents the common things that a Value and a Symbolic node have
@@ -38,6 +41,8 @@ type desc struct {
 	name    string
 	waiting int32 // atomic updates only
 }
+
+func (n desc) NodeID() NodeID { return n.id }
 
 func (n desc) ID() int64 { return int64(n.id) }
 
@@ -50,6 +55,8 @@ func (n *desc) Waiting() int {
 
 func (n *desc) ZeroWaiting() { atomic.StoreInt32(&n.waiting, int32(0)) }
 
+func (n *desc) isnode() {}
+
 // Value represents a node that has a value.
 type Value[DT any, T tensor.Tensor[DT, T]] struct {
 	tensor.Basic[DT] // note this is the interface, not the constraint
@@ -57,6 +64,31 @@ type Value[DT any, T tensor.Tensor[DT, T]] struct {
 
 	Op         ops.Op[DT, T]
 	beforeLift tensor.Basic[DT]
+}
+
+// NewValue creates a new value node. It is the most basic way to create a node.
+func NewValue[DT any, T tensor.Tensor[DT, T]](name string, v T) *Value[DT, T] {
+	retVal := &Value[DT, T]{
+		Basic: v,
+		desc: desc{
+			name: name,
+		},
+	}
+	return retVal
+}
+
+func NewValueInGraph[DT any, T tensor.Tensor[DT, T]](g *Graph, name string, v T) *Value[DT, T] {
+	// TODO check that v has g as engine
+	retVal := &Value[DT, T]{
+		Basic: v,
+		desc: desc{
+			name: name,
+		},
+	}
+	if g != nil {
+		g.AddNode(retVal)
+	}
+	return retVal
 }
 
 // Name returns the name of a node that holds a Value.
@@ -68,6 +100,26 @@ func (n *Value[DT, T]) Name() string {
 }
 
 func (n *Value[DT, T]) Value() values.V { return n.Basic }
+
+func (n *Value[DT, T]) Format(f fmt.State, c rune) {
+	if n == nil {
+		fmt.Fprintf(f, "<nil>")
+		return
+	}
+	switch c {
+	case 's':
+		fmt.Fprintf(f, "%s", n.name)
+	default:
+		switch t := n.Basic.(type) {
+		case *dense.Dense[DT]:
+			str := consFmtStr(f, c)
+			fmt.Fprintf(f, str, t)
+		default:
+			fmt.Fprintf(f, "node(%v,%s,%v)",
+				n.id, n.name, t)
+		}
+	}
+}
 
 func (n *Value[DT, T]) prelift() values.V { return n.beforeLift }
 
@@ -97,8 +149,10 @@ func NewSymbolic[DT any](g *Graph, shape shapes.Shape, name string) (*Symbolic[D
 		dt:     dt,
 		engine: g,
 	}
-	if err := g.AddNode(retVal); err != nil {
-		return nil, err
+	if g != nil {
+		if err := g.AddNode(retVal); err != nil {
+			return nil, err
+		}
 	}
 	return retVal, nil
 }
@@ -123,6 +177,22 @@ func (n *Symbolic[DT]) Type() hm.Type {
 }
 
 func (n *Symbolic[DT]) Engine() tensor.Engine { return n.engine } // TODO maybe instantiate
+
+func (n *Symbolic[DT]) Format(f fmt.State, c rune) {
+	if n == nil {
+		fmt.Fprintf(f, "<nil>")
+		return
+	}
+	switch c {
+	case 's':
+		fmt.Fprintf(f, "%s", n.name)
+
+	default:
+		fmt.Fprintf(f, "node(%v,%s)",
+			n.id, n.name)
+
+	}
+}
 
 // liftNode lifts a node if its engine is a lifter
 func liftNode(n Node) Node {

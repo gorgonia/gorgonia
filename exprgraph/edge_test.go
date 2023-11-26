@@ -5,10 +5,10 @@ import (
 )
 
 func TestWeightedEdge(t *testing.T) {
-	from := &Node{
+	from := &desc{
 		id: 0,
 	}
-	to := &Node{
+	to := &desc{
 		id: 1,
 	}
 	we := WeightedEdge{
