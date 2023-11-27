@@ -5,11 +5,13 @@ import (
 
 	"gorgonia.org/gorgonia/exprgraph"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
+	stdeng "gorgonia.org/tensor/engines"
 )
 
 // SymbolicEngine is a engine that performs symbolic operations.
 type SymbolicEngine struct {
-	tensor.StdEng
+	stdeng.Gen
 	g *exprgraph.Graph
 }
 
@@ -23,9 +25,9 @@ func Example_symbolicEngine() {
 	g := exprgraph.NewGraph(engine)
 	engine.g = g
 
-	x := exprgraph.NewNode(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	y := exprgraph.NewNode(g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
-	z := exprgraph.NewNode(g, "z", tensor.WithShape(), tensor.Of(tensor.Float64))
+	x := exprgraph.New[float64](g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	y := exprgraph.New[float64](g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
+	z := exprgraph.New[float64](g, "z", tensor.WithShape())
 
 	xy, err := MatMul(x, y)
 	if err != nil {
@@ -53,9 +55,9 @@ func Example_symbolicEngine() {
 func Example_symbolicEngineUsingTensorAPI() {
 	g := exprgraph.NewGraph(nil)
 
-	x := tensor.New(tensor.WithEngine(g), tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	y := tensor.New(tensor.WithEngine(g), tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
-	z := tensor.New(tensor.WithEngine(g), tensor.WithShape(), tensor.WithBacking([]float64{1}))
+	x := dense.New[float64](tensor.WithEngine(g), tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	y := dense.New[float64](tensor.WithEngine(g), tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
+	z := dense.New[float64](tensor.WithEngine(g), tensor.WithShape(), tensor.WithBacking([]float64{1}))
 
 	xy, err := MatMul(x, y)
 	if err != nil {

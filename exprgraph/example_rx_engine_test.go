@@ -7,9 +7,9 @@ import (
 
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/exprgraph"
-	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 )
 
 type obs struct {
-	n      *exprgraph.Node
+	n      exprgraph.Node
 	ctx    context.Context
 	cancel context.CancelFunc
 }
@@ -115,7 +115,7 @@ func (e *RxEngine) loop() {
 // Given a node, it computes the results of the parent node(s).
 // If the parent node(s) themselves have parent node(s), those parent nodes will
 // be placed into the queue.
-func (e *RxEngine) flowUp(ctx context.Context, n *exprgraph.Node) int {
+func (e *RxEngine) flowUp(ctx context.Context, n exprgraph.Node) int {
 	parents := e.g.ParentsOfAsNodes(n)
 
 	var nonRootParents int
@@ -134,8 +134,8 @@ func (e *RxEngine) flowUp(ctx context.Context, n *exprgraph.Node) int {
 }
 
 // flowDown recomputes the value of `n`, and recomputes any of the children if need be.
-// The criteria for recomputation is in the .Waiting() method of a `*Node`.
-func (e *RxEngine) flowDown(ctx context.Context, n *exprgraph.Node) error {
+// The criteria for recomputation is in the .Waiting() method of a `Node`.
+func (e *RxEngine) flowDown(ctx context.Context, n exprgraph.Node) error {
 	children := e.g.ChildrenOfAsNodes(n)
 
 	// Depth first search.
@@ -172,7 +172,7 @@ func (e *RxEngine) flowDown(ctx context.Context, n *exprgraph.Node) error {
 func LetRx(a gorgonia.Tensor, v values.Value) {
 	// do Let
 	switch at := a.(type) {
-	case *exprgraph.Node:
+	case exprgraph.Node:
 		av := at.Value()
 		values.Copy(av, v) // in real life you gotta return error
 	case values.Value:
@@ -194,9 +194,9 @@ func LetRx(a gorgonia.Tensor, v values.Value) {
 func Example_rx_engine() {
 	engine := NewRx(nil, nil)
 	g := engine.Graph()
-	x := exprgraph.NewNode(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	y := exprgraph.NewNode(g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
-	z := exprgraph.NewNode(g, "z", tensor.WithShape(), tensor.WithBacking([]float64{1}))
+	x := exprgraph.New[float64](g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	y := exprgraph.New[float64](g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
+	z := exprgraph.New[float64](g, "z", tensor.WithShape(), tensor.WithBacking([]float64{1}))
 
 	xy, err := MatMul(x, y)
 	if err != nil {
@@ -210,9 +210,9 @@ func Example_rx_engine() {
 	fmt.Printf("x:\n%v\ny:\n%v\nxy:\n%v\nxy+z:\n%v\n", x, y, xy, xypz)
 
 	// Update
-	xv := tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{100, 200, 300, 400, 500, 600}))
-	yv := tensor.New(tensor.WithShape(3, 2), tensor.WithBacking([]float64{60, 50, 40, 30, 20, 10}))
-	zv := tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{1010}))
+	xv := dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{100, 200, 300, 400, 500, 600}))
+	yv := dense.New[float64](tensor.WithShape(3, 2), tensor.WithBacking([]float64{60, 50, 40, 30, 20, 10}))
+	zv := dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{1010}))
 	LetRx(x, xv)
 	LetRx(y, yv)
 	LetRx(z, zv)
@@ -264,9 +264,9 @@ func Example_rx_engine_composed() {
 	fwd.g = g
 	engine := NewRx(fwd, g)
 
-	x := exprgraph.NewNode(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	y := exprgraph.NewNode(g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
-	z := exprgraph.NewNode(g, "z", tensor.WithShape(), tensor.WithBacking([]float64{1}))
+	x := exprgraph.New[float64](g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	y := exprgraph.New[float64](g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
+	z := exprgraph.New[float64](g, "z", tensor.WithShape(), tensor.WithBacking([]float64{1}))
 
 	xy, err := MatMul(x, y)
 	if err != nil {
@@ -281,9 +281,9 @@ func Example_rx_engine_composed() {
 	fmt.Printf("dx:\n%v\ndy:\n%v\ndxy:\n%v\ndxy+z:\n%v\n", getDeriv(x), getDeriv(y), getDeriv(xy), getDeriv(xypz))
 
 	// Update
-	xv := tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{100, 200, 300, 400, 500, 600}))
-	yv := tensor.New(tensor.WithShape(3, 2), tensor.WithBacking([]float64{60, 50, 40, 30, 20, 10}))
-	zv := tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{1010}))
+	xv := dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{100, 200, 300, 400, 500, 600}))
+	yv := dense.New[float64](tensor.WithShape(3, 2), tensor.WithBacking([]float64{60, 50, 40, 30, 20, 10}))
+	zv := dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{1010}))
 	LetRx(x, xv)
 	LetRx(y, yv)
 	LetRx(z, zv)

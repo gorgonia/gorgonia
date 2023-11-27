@@ -36,6 +36,38 @@ type Node interface {
 	isnode() // seals the interface to this package
 }
 
+func New[DT any](g *Graph, name string, opts ...tensor.ConsOpt) Node {
+	c := new(tensor.Constructor)
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	// symbolic or value?
+	if c.Data == nil {
+		retVal, err := NewSymbolic[DT](g, c.Shape, name)
+		if err != nil {
+			panic(err)
+		}
+		return retVal
+	}
+
+	// get tensor... which could be in c.Data
+	var bas *dense.Dense[DT]
+	switch d := c.Data.(type) {
+	case *dense.Dense[DT]:
+		bas = d
+	case []DT:
+		bas = dense.New[DT](opts...)
+	default:
+		panic("NYI")
+	}
+
+	if g != nil {
+		return NewValueInGraph[DT](g, name, bas)
+	}
+	return NewValue[DT](name, bas)
+}
+
 // desc represents the common things that a Value and a Symbolic node have
 type desc struct {
 	id      NodeID

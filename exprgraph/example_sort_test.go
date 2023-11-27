@@ -12,9 +12,9 @@ func ExampleSort() {
 	g := exprgraph.NewGraph(engine)
 	engine.g = g
 
-	x := exprgraph.NewNode(g, "x", tensor.WithShape(2, 3), tensor.Of(tensor.Float64))
-	w := exprgraph.NewNode(g, "w", tensor.WithShape(3, 2), tensor.Of(tensor.Float64))
-	b := exprgraph.NewNode(g, "b", tensor.WithShape(), tensor.Of(tensor.Float64))
+	x := exprgraph.New[float64](g, "x", tensor.WithShape(2, 2))
+	w := exprgraph.New[float64](g, "w", tensor.WithShape(2, 2))
+	b := exprgraph.New[float64](g, "b", tensor.WithShape())
 
 	xw, err := MatMul(x, w)
 	if err != nil {

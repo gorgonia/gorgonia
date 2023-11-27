@@ -10,7 +10,6 @@ import (
 	"gorgonia.org/gorgonia/exprgraph"
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 )
