@@ -11,7 +11,7 @@ import (
 
 func TestT2T(t *testing.T) {
 	sampleTensor := dense.New[float32](tensor.WithShape(1))
-	sampleDV := dual.New[float32](dense.New[float32](tensor.WithShape(1)))
+	sampleDV := dual.New[float32, *dense.Dense[float32]](dense.New[float32](tensor.WithShape(1)))
 
 	tests := []struct {
 		name string

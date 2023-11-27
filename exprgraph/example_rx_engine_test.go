@@ -7,6 +7,7 @@ import (
 
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/exprgraph"
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 	"gorgonia.org/tensor/dense"

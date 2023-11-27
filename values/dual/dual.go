@@ -24,10 +24,11 @@ type DualOp[DT tensor.Num, T tensor.Tensor[DT, T]] interface {
 	Dual(vals ...*Dual[DT, T]) (T, error)
 }
 
-type Value[DT tensor.Num, T values.Value[DT]] interface {
-	values.Value[DT]
-	values.Cloner[T]
-	comparable
+// Value represents a *Dual, but without the structure (T) defined.
+type Value[DT tensor.Num] interface {
+	tensor.Basic[DT]
+	V() tensor.Basic[DT]
+	DV() tensor.Basic[DT]
 }
 
 // Dual represents a dual value. In this instance, a dual value usually holds the value and a gradient value.
@@ -55,10 +56,17 @@ func (dv *Dual[DT, T]) SetEngine(e tensor.Engine) {
 	values.SetEngine[DT](dv.d, e)
 }
 
+// Value returns the value of the dual value.
 func (dv *Dual[DT, T]) Value() T { return dv.Tensor.(T) }
+
+// V returns the value of the dual value as a tensor.Basic.
+func (dv *Dual[DT, T]) V() tensor.Basic[DT] { return dv.Tensor }
 
 // Deriv returns the derivative value.
 func (dv *Dual[DT, T]) Deriv() T { return dv.d.(T) }
+
+// DV returns the derivative value as a tensor.Basic.
+func (dv *Dual[DT, T]) DV() tensor.Basic[DT] { return dv.d }
 
 // Clone clones a *Dual[DT,T].
 func (dv *Dual[DT, T]) Clone() *Dual[DT, T] {

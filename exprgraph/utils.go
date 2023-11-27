@@ -19,7 +19,7 @@ func T2T[DT tensor.Num](a Tensor) tensor.Basic[DT] {
 			return v.Value().(tensor.Basic[DT])
 		}
 		return nil
-	case *dual.Dual[DT]:
+	case dual.Value[DT]:
 		return t
 	case tensor.Basic[DT]:
 		return t

@@ -14,7 +14,7 @@ import (
 // There is an overlap with values.Value. The reason is semantic clarity. Values are Tensors. Tensors are Values.
 // There is clearly one issue with this though: *exprgraph.Symbolic.
 // *Symbolic is a "fake" tensor, and cannot be lifted as a *dual.Dual.
-type Tensor tensor.Desc
+type Tensor tensor.DescWithStorage
 
 type hashWriter interface {
 	WriteHash(hash.Hash)

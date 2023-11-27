@@ -18,3 +18,7 @@ type valuelifter interface {
 
 	setLifted(lifted, original values.V)
 }
+
+type valuer[T any] interface {
+	Value() T
+}

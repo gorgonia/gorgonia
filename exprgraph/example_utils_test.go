@@ -10,6 +10,7 @@ import (
 	"gorgonia.org/gorgonia/exprgraph"
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 )
@@ -57,7 +58,7 @@ func (op matmul[DT, T]) ShapeExpr() shapes.Expr {
 }
 
 // Do executes the op.
-func (op matmul[DT, T]) Do(ctx context.Context, vs ...values.Value) (values.Value, error) {
+func (op matmul[DT, T]) Do(ctx context.Context, vs ...T) (T, error) {
 	a := vs[0].(tensor.Tensor)
 	b := vs[1].(tensor.Tensor)
 	return tensor.MatMul(a, b)
@@ -65,11 +66,11 @@ func (op matmul[DT, T]) Do(ctx context.Context, vs ...values.Value) (values.Valu
 
 func (op matmul[DT, T]) String() string { return "×" }
 
-func (op matmul[DT, T]) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (values.Value, error) {
+func (op matmul[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if ctx != nil {
 		select {
 		case <-ctx.Done():
-			return nil, NoOp{}
+			return retVal, NoOp{}
 		default:
 		}
 
@@ -80,9 +81,9 @@ func (op matmul[DT, T]) PreallocDo(ctx context.Context, prealloc values.Value, v
 }
 
 func (op matmul[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+	adv := exprgraph.T2T[DT](inputs[0]).(*dual.Dual[DT, T])
+	bdv := exprgraph.T2T[DT](inputs[1]).(*dual.Dual[DT, T])
+	cdv := exprgraph.T2T[DT](output).(*dual.Dual[DT, T])
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
@@ -98,44 +99,40 @@ func (op matmul[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, ou
 	defer adv.Value.UT()
 
 	// dA = C×B'
-	if _, err := op.PreallocDo(ctx, advd, cdv.Value, bdv.Value); err != nil {
+	if _, err := op.PreallocDo(ctx, advd, cdv.Value(), bdv.Value()); err != nil {
 		return err
 	}
 
 	// dB = A'×C
-	if _, err := op.PreallocDo(ctx, bdvd, adv.Value, cdv.Value); err != nil {
+	if _, err := op.PreallocDo(ctx, bdvd, adv.Value(), cdv.Value()); err != nil {
 		return err
 	}
 	return nil
 }
 
-func MatMul(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
+func MatMul[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 	eng, ok := a.Engine().(GraphEngine)
 	if !ok {
 		eng, ok = b.Engine().(GraphEngine)
 	}
 
-	op := matmul{}
+	op := matmul[DT, T]{}
 	if ok {
 		// do symbolic stuff
 		g := eng.Graph()
 
 		var aname, bname string
-		var anode, bnode *exprgraph.Node
+		var anode, bnode exprgraph.Node
 
 		if aname, err = g.NameOf(a); err != nil {
 			// create a node
 			aname = randomName(a)
-			if anode, err = exprgraph.Cons(g, aname, a.(tensor.Tensor)); err != nil {
-				return nil, err
-			}
+			anode = exprgraph.New[DT](g, aname, tensor.WithBacking(a))
 		}
 		if bname, err = g.NameOf(b); err != nil {
 			// create b node
 			bname = randomName(b)
-			if bnode, err = exprgraph.Cons(g, bname, b.(tensor.Tensor)); err != nil {
-				return nil, err
-			}
+			bnode = exprgraph.New[DT](g, bname, tensor.WithBacking(b))
 		}
 		cname := aname + op.String() + bname
 
@@ -166,19 +163,18 @@ func MatMul(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 		}
 	}
 	// do the values stuff
-	at := exprgraph.T2T(a)
-	bt := exprgraph.T2T(b)
-	var ct tensor.Tensor
+	at := exprgraph.T2T[DT](a)
+	bt := exprgraph.T2T[DT](b)
+	var ct T
 
 	switch {
 	case at != nil && bt != nil && retVal != nil:
 		// both a and b  are values, so we can "materialize" c
-		ct = retVal.(*exprgraph.Node).Value() // Value will "lift" *header into a proper tensor.Dense
+		ct = retVal.(*exprgraph.Value[DT, T]).Value() // Value will "lift" *header into a proper tensor.Dense
 	case at != nil && bt != nil && retVal == nil:
 		// we'd have to create one ourselves
 		shp := tensor.Shape{a.Shape()[0], b.Shape()[1]}
-		dt := a.Dtype()
-		ct = tensor.New(tensor.WithEngine(a.Engine()), tensor.WithShape(shp...), tensor.Of(dt))
+		ct = ct.Alike(tensor.WithEngine(a.Engine()), tensor.WithShape(shp...))
 	default:
 		// one of a or b is not a value tensor
 		return retVal, nil

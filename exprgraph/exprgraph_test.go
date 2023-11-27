@@ -243,7 +243,7 @@ func TestGraph_AddChildren(t *testing.T) {
 func TestGraph_NameOf(t *testing.T) {
 	sampleTensor := dense.New[float32](tensor.WithShape(1, 1))
 	sampleNode := NewValue[float32]("test", sampleTensor)
-	sampleDV := dual.New[float32](sampleTensor)
+	sampleDV := dual.New[float32, *dense.Dense[float32]](sampleTensor)
 	sampleNodeLifted := &Value[float32, *dense.Dense[float32]]{
 		desc:       desc{name: "test"},
 		Basic:      sampleDV,
@@ -338,7 +338,7 @@ func TestGraph_NameOf(t *testing.T) {
 func TestGraph_IDOf(t *testing.T) {
 	sampleTensor := dense.New[float32](tensor.WithShape(1, 1))
 	sampleNode := NewValue[float32]("test", sampleTensor)
-	sampleDV := dual.New[float32](sampleTensor)
+	sampleDV := dual.New[float32, *dense.Dense[float32]](sampleTensor)
 	sampleNodeLifted := &Value[float32, *dense.Dense[float32]]{
 		desc:       desc{name: "test"},
 		Basic:      sampleDV,
@@ -427,7 +427,7 @@ func TestGraph_IDOf(t *testing.T) {
 func TestGraph_NodeOf(t *testing.T) {
 	sampleTensor := dense.New[float32](tensor.WithShape(1, 1))
 	sampleNode := NewValue[float32]("test", sampleTensor)
-	sampleDV := dual.New[float32](sampleTensor)
+	sampleDV := dual.New[float32, *dense.Dense[float32]](sampleTensor)
 	sampleNodeLifted := &Value[float32, *dense.Dense[float32]]{
 		desc:       desc{name: "test"},
 		Basic:      sampleDV,

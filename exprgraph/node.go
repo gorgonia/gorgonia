@@ -96,7 +96,7 @@ type Value[DT any, T tensor.Tensor[DT, T]] struct {
 	desc
 
 	Op         ops.Op[DT, T]
-	beforeLift tensor.Basic[DT]
+	beforeLift T
 }
 
 // NewValue creates a new value node. It is the most basic way to create a node.
@@ -132,7 +132,16 @@ func (n *Value[DT, T]) Name() string {
 	return n.name
 }
 
-func (n *Value[DT, T]) Value() values.V { return n.Basic }
+func (n *Value[DT, T]) Value() T {
+	switch b := n.Basic.(type) {
+	case T:
+		return b
+	case valuer[T]:
+		return b.Value()
+	default:
+		panic("Cannot get Value")
+	}
+}
 
 func (n *Value[DT, T]) Format(f fmt.State, c rune) {
 	if n == nil {
@@ -144,7 +153,7 @@ func (n *Value[DT, T]) Format(f fmt.State, c rune) {
 		fmt.Fprintf(f, "%s", n.name)
 	default:
 		switch t := n.Basic.(type) {
-		case *dense.Dense[DT]:
+		case T:
 			str := consFmtStr(f, c)
 			fmt.Fprintf(f, str, t)
 		default:
@@ -157,8 +166,8 @@ func (n *Value[DT, T]) Format(f fmt.State, c rune) {
 func (n *Value[DT, T]) prelift() values.V { return n.beforeLift }
 
 func (n *Value[DT, T]) setLifted(lifted, original values.V) {
-	n.Basic = lifted.(tensor.Basic[DT])
-	n.beforeLift = original.(tensor.Basic[DT])
+	n.Basic = lifted.(T)
+	n.beforeLift = original.(T)
 }
 
 // Symbolic represents a symbolic node. It needs a graph as an engine.
