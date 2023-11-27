@@ -28,7 +28,8 @@ var (
 //
 // It's an interface instead of a constraint because it's more useful as an interface.
 type Node interface {
-	graph.Node // ID() int64
+	graph.Node      // ID() int64
+	NodeID() NodeID // alternative to ID()
 	tensor.Desc
 	Name() string
 

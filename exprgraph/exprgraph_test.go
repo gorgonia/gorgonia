@@ -9,6 +9,8 @@ import (
 	"gorgonia.org/gorgonia/internal/encoding"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
+	stdeng "gorgonia.org/tensor/engines"
 )
 
 type testGraphFields struct {
@@ -53,9 +55,9 @@ func graphFromFields(fields testGraphFields) *Graph {
 //
 // "partial" because the `Op` in the node is nil.
 func simpleTestGraph() (f testGraphFields, a, b, c Node) {
-	a = &Node{id: 0, name: "a"}
-	b = &Node{id: 1, name: "b"}
-	c = &Node{id: 2, name: "c"}
+	a = newSym(withID(0), withName("a"))
+	b = newSym(withID(1), withName("b"))
+	c = newSym(withID(2), withName("c"))
 
 	return testGraphFields{
 		nodes: map[int64]Node{
@@ -86,10 +88,10 @@ func TestNewGraph(t *testing.T) {
 		{
 			"simple",
 			args{
-				&tensor.StdEng{},
+				stdeng.Gen{},
 			},
 			&Graph{
-				Engine:  &tensor.StdEng{},
+				Engine:  stdeng.Gen{},
 				nodes:   make(map[int64]Node),
 				from:    make(map[int64][]int64),
 				to:      make(map[int64][]int64),
@@ -123,19 +125,19 @@ func TestGraph_Node(t *testing.T) {
 			"node exists",
 			testGraphFields{
 				nodes: map[int64]Node{
-					1: {},
+					1: newSym(),
 				},
 			},
 			args{
 				1,
 			},
-			&Node{},
+			newSym(),
 		},
 		{
 			"node does not exists",
 			testGraphFields{
 				nodes: map[int64]Node{
-					1: {},
+					1: newSym(),
 				},
 			},
 			args{
@@ -170,13 +172,11 @@ func TestGraph_AddChildren(t *testing.T) {
 			"main node is not found",
 			testGraphFields{
 				nodes: map[int64]Node{
-					0: {},
+					0: newSym(),
 				},
 			},
 			args{
-				n: &Node{
-					id: 1,
-				},
+				n: newSym(withID(1)),
 			},
 			true,
 		},
@@ -184,19 +184,13 @@ func TestGraph_AddChildren(t *testing.T) {
 			"child node is not found",
 			testGraphFields{
 				nodes: map[int64]Node{
-					0: {
-						id: 0,
-					},
+					0: newSym(),
 				},
 			},
 			args{
-				n: &Node{
-					id: 0,
-				},
+				n: newSym(),
 				children: []Node{
-					{
-						id: 1,
-					},
+					newSym(withID(1)),
 				},
 			},
 			true,
@@ -205,19 +199,13 @@ func TestGraph_AddChildren(t *testing.T) {
 			"child of itself",
 			testGraphFields{
 				nodes: map[int64]Node{
-					0: {
-						id: 0,
-					},
+					0: newSym(),
 				},
 			},
 			args{
-				n: &Node{
-					id: 0,
-				},
+				n: newSym(withID(1)),
 				children: []Node{
-					{
-						id: 0,
-					},
+					newSym(),
 				},
 			},
 			true,
@@ -226,24 +214,16 @@ func TestGraph_AddChildren(t *testing.T) {
 			"all ok",
 			testGraphFields{
 				nodes: map[int64]Node{
-					0: {
-						id: 0,
-					},
-					1: {
-						id: 1,
-					},
+					0: newSym(),
+					1: newSym(withID(1)),
 				},
 				from: make(map[int64][]int64),
 				to:   make(map[int64][]int64),
 			},
 			args{
-				n: &Node{
-					id: 0,
-				},
+				n: newSym(),
 				children: []Node{
-					{
-						id: 1,
-					},
+					newSym(withID(1)),
 				},
 			},
 			false,
@@ -261,15 +241,12 @@ func TestGraph_AddChildren(t *testing.T) {
 }
 
 func TestGraph_NameOf(t *testing.T) {
-	sampleTensor := tensor.NewDense(tensor.Float32, tensor.Shape{1, 1})
-	sampleNode := &Node{
-		name:   "test",
-		Tensor: sampleTensor,
-	}
-	sampleDV := dual.New(sampleTensor)
-	sampleNodeLifted := &Node{
-		name:       "test",
-		Tensor:     sampleDV,
+	sampleTensor := dense.New[float32](tensor.WithShape(1, 1))
+	sampleNode := NewValue[float32]("test", sampleTensor)
+	sampleDV := dual.New[float32](sampleTensor)
+	sampleNodeLifted := &Value[float32, *dense.Dense[float32]]{
+		desc:       desc{name: "test"},
+		Basic:      sampleDV,
 		beforeLift: sampleTensor,
 	}
 
@@ -294,11 +271,11 @@ func TestGraph_NameOf(t *testing.T) {
 			"not found",
 			testGraphFields{
 				nodes: map[int64]Node{
-					0: {},
+					0: newSym(),
 				},
 			},
 			args{
-				t: tensor.NewDense(tensor.Float32, tensor.Shape{1, 1}),
+				t: dense.New[float32](tensor.WithShape(1, 1)),
 			},
 			"",
 			true,
@@ -307,10 +284,7 @@ func TestGraph_NameOf(t *testing.T) {
 			"tensor found",
 			testGraphFields{
 				nodes: map[int64]Node{
-					0: {
-						name:   "test",
-						Tensor: sampleTensor,
-					},
+					0: NewValue[float32]("test", sampleTensor),
 				},
 			},
 			args{
@@ -362,15 +336,12 @@ func TestGraph_NameOf(t *testing.T) {
 }
 
 func TestGraph_IDOf(t *testing.T) {
-	sampleTensor := tensor.NewDense(tensor.Float32, tensor.Shape{1, 1})
-	sampleNode := &Node{
-		name:   "test",
-		Tensor: sampleTensor,
-	}
-	sampleDV := dual.New(sampleTensor)
-	sampleNodeLifted := &Node{
-		name:       "test",
-		Tensor:     sampleDV,
+	sampleTensor := dense.New[float32](tensor.WithShape(1, 1))
+	sampleNode := NewValue[float32]("test", sampleTensor)
+	sampleDV := dual.New[float32](sampleTensor)
+	sampleNodeLifted := &Value[float32, *dense.Dense[float32]]{
+		desc:       desc{name: "test"},
+		Basic:      sampleDV,
 		beforeLift: sampleTensor,
 	}
 
@@ -388,11 +359,11 @@ func TestGraph_IDOf(t *testing.T) {
 			"not found",
 			testGraphFields{
 				nodes: map[int64]Node{
-					0: {},
+					0: newSym(),
 				},
 			},
 			args{
-				t: tensor.NewDense(tensor.Float32, tensor.Shape{1, 1}),
+				t: dense.New[float32](tensor.WithShape(1, 1)),
 			},
 			NodeID(-1),
 			true,
@@ -401,10 +372,7 @@ func TestGraph_IDOf(t *testing.T) {
 			"tensor found",
 			testGraphFields{
 				nodes: map[int64]Node{
-					0: {
-						name:   "test",
-						Tensor: sampleTensor,
-					},
+					0: NewValue[float32]("test", sampleTensor),
 				},
 			},
 			args{
@@ -457,15 +425,12 @@ func TestGraph_IDOf(t *testing.T) {
 }
 
 func TestGraph_NodeOf(t *testing.T) {
-	sampleTensor := tensor.NewDense(tensor.Float32, tensor.Shape{1, 1})
-	sampleNode := &Node{
-		name:   "test",
-		Tensor: sampleTensor,
-	}
-	sampleDV := dual.New(sampleTensor)
-	sampleNodeLifted := &Node{
-		name:       "test",
-		Tensor:     sampleDV,
+	sampleTensor := dense.New[float32](tensor.WithShape(1, 1))
+	sampleNode := NewValue[float32]("test", sampleTensor)
+	sampleDV := dual.New[float32](sampleTensor)
+	sampleNodeLifted := &Value[float32, *dense.Dense[float32]]{
+		desc:       desc{name: "test"},
+		Basic:      sampleDV,
 		beforeLift: sampleTensor,
 	}
 
@@ -482,7 +447,7 @@ func TestGraph_NodeOf(t *testing.T) {
 			"not found",
 			testGraphFields{},
 			args{
-				t: tensor.NewDense(tensor.Float32, tensor.Shape{1, 1}),
+				t: dense.New[float32](tensor.WithShape(1, 1)),
 			},
 			nil,
 		},
@@ -490,19 +455,13 @@ func TestGraph_NodeOf(t *testing.T) {
 			"tensor found",
 			testGraphFields{
 				nodes: map[int64]Node{
-					0: {
-						name:   "test",
-						Tensor: sampleTensor,
-					},
+					0: NewValue[float32]("test", sampleTensor),
 				},
 			},
 			args{
 				t: sampleTensor,
 			},
-			&Node{
-				name:   "test",
-				Tensor: sampleTensor,
-			},
+			sampleNode,
 		},
 		{
 			"node found",
@@ -570,12 +529,8 @@ func TestGraph_createEdge(t *testing.T) {
 			},
 			args{
 				e: WeightedEdge{
-					F: &Node{
-						id: 0,
-					},
-					T: &Node{
-						id: 0,
-					},
+					F: newSym(),
+					T: newSym(),
 				},
 			},
 			true,
@@ -633,24 +588,16 @@ func TestGraph_createEdge(t *testing.T) {
 			"ok, overriding existing links",
 			testGraphFields{
 				nodes: map[int64]Node{
-					0: {
-						id: 0,
-					},
-					1: {
-						id: 1,
-					},
+					0: newSym(),
+					1: newSym(withID(1)),
 				},
 				from: make(map[int64][]int64),
 				to:   make(map[int64][]int64),
 			},
 			args{
 				e: WeightedEdge{
-					F: &Node{
-						id: 0,
-					},
-					T: &Node{
-						id: 1,
-					},
+					F: newSym(),
+					T: newSym(withID(1)),
 				},
 			},
 			false,
@@ -659,24 +606,16 @@ func TestGraph_createEdge(t *testing.T) {
 			"ok, new fresh link",
 			testGraphFields{
 				nodes: map[int64]Node{
-					0: {
-						id: 0,
-					},
-					1: {
-						id: 1,
-					},
+					0: newSym(),
+					1: newSym(withID(1)),
 				},
 				from: make(map[int64][]int64),
 				to:   make(map[int64][]int64),
 			},
 			args{
 				e: WeightedEdge{
-					F: &Node{
-						id: 0,
-					},
-					T: &Node{
-						id: 1,
-					},
+					F: newSym(),
+					T: newSym(withID(1)),
 				},
 			},
 			false,
@@ -721,10 +660,7 @@ func TestGraph_Graph(t *testing.T) {
 }
 
 func TestGraph_Nodes(t *testing.T) {
-	first := &Node{
-		id:   0,
-		name: "First",
-	}
+	first := newSym(withName("first"))
 	tests := []struct {
 		name   string
 		fields testGraphFields
@@ -938,59 +874,39 @@ func TestGraph_AddNode(t *testing.T) {
 		{
 			"invalid node id",
 			testGraphFields{},
-			args{
-				&Node{
-					id: -1,
-				},
-			},
+			args{newSym(withID(-1))},
 			true,
 		},
 		{
 			"node collision",
 			testGraphFields{
 				nodes: map[int64]Node{
-					MinNodeID + 1: {},
+					MinNodeID + 1: newSym(),
 				},
 			},
-			args{
-				&Node{
-					id: MinNodeID + 1,
-				},
-			},
+			args{newSym(withID(MinNodeID + 1))},
 			true,
 		},
 		{
 			"node ok",
 			testGraphFields{
 				nodes: map[int64]Node{
-					MinNodeID + 1: {},
+					MinNodeID + 1: newSym(),
 				},
 				nodeIDs: uid.NewSet(),
 			},
-			args{
-				&Node{
-					Tensor: tensor.NewDense(tensor.Float32, tensor.Shape{1, 1}),
-					id:     MinNodeID + 2,
-				},
-			},
+			args{newVal(withID(MinNodeID + 2))},
 			false,
 		},
 		{
 			"node lifter ok",
 			testGraphFields{
 				nodes: map[int64]Node{
-					MinNodeID + 1: {},
+					MinNodeID + 1: newSym(),
 				},
 				nodeIDs: uid.NewSet(),
 			},
-			args{
-				&Node{
-					Tensor: tensor.NewDense(tensor.Float32, tensor.Shape{1, 1},
-						tensor.WithEngine(&dummyLifter{}),
-					),
-					id: MinNodeID + 2,
-				},
-			},
+			args{NewValue[float32]("test", dense.New[float32](dense.WithEngine(&dummyLifter{}), dense.WithShape(1, 1)))},
 			false,
 		},
 		// TODO: Add test cases.
@@ -1008,11 +924,11 @@ func TestGraph_AddNode(t *testing.T) {
 var _ Lifter = &dummyLifter{}
 
 type dummyLifter struct {
-	tensor.StdEng
+	stdeng.Gen
 }
 
 func (*dummyLifter) Lift(t Tensor) Tensor {
-	return t.(tensor.Tensor).Clone().(tensor.Tensor)
+	panic("NYI")
 }
 
 func TestGraph_Edge(t *testing.T) {
@@ -1120,7 +1036,7 @@ func TestGraph_To(t *testing.T) {
 }
 
 func TestGraph_Roots(t *testing.T) {
-	dnode := &Node{id: 3, name: "d"}
+	dnode := newSym(withID(3), withName("d"))
 	simple, anode, bnode, cnode := simpleTestGraph()
 
 	tests := []struct {
