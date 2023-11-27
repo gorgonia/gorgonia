@@ -8,22 +8,20 @@ import (
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
-	"gorgonia.org/tensor/dense"
-	"gorgonia.org/tensor/scalar"
 )
 
 //var _ datatypes.Tensor[float64] = &Dual[float64]{}
 
 // Op is a function that takes an arbitrary number of Values and returns a Value
-type Op[DT tensor.Num] func(vals ...values.Value[DT]) (values.Value[DT], error)
+type Op[DT tensor.Num, T tensor.Tensor[DT, T]] func(vals ...T) (T, error)
 
 // PreallocOp is a function that has the return value specified and preallocated, then takes an arbitrary number of Values and returns a Value.
-type PreallocOp[DT tensor.Num] func(prealloc values.Value[DT], inputs ...values.Value[DT]) (values.Value[DT], error)
+type PreallocOp[DT tensor.Num, T tensor.Tensor[DT, T]] func(prealloc T, inputs ...T) (T, error)
 
 // DualOp is any op that can perform its forwards operation on *Dual.
-type DualOp[DT tensor.Num] interface {
-	Do(vals ...values.Value[DT]) (values.Value[DT], error)
-	Dual(vals ...*Dual[DT]) (values.Value[DT], error)
+type DualOp[DT tensor.Num, T tensor.Tensor[DT, T]] interface {
+	Do(vals ...T) (T, error)
+	Dual(vals ...*Dual[DT, T]) (T, error)
 }
 
 type Value[DT tensor.Num, T values.Value[DT]] interface {
@@ -33,104 +31,105 @@ type Value[DT tensor.Num, T values.Value[DT]] interface {
 }
 
 // Dual represents a dual value. In this instance, a dual value usually holds the value and a gradient value.
-type Dual[DT tensor.Num] struct {
-	values.Value[DT]
-	d values.Value[DT]
+type Dual[DT tensor.Num, T tensor.Tensor[DT, T]] struct {
+	tensor.Tensor[DT, T]
+	d tensor.Tensor[DT, T]
 }
 
 // SetDeriv sets the derivative value
-func (dv *Dual[DT]) SetDeriv(d values.Value[DT]) error {
-	dv.d = d
+func (dv *Dual[DT, T]) SetDeriv(d values.Value[DT]) error {
+	dv.d = d.(T)
 
 	return dv.sanity()
 }
 
 // SetValue sets the value.
-func (dv *Dual[DT]) SetValue(v values.Value[DT]) error {
-	dv.Value = v
+func (dv *Dual[DT, T]) SetValue(v values.Value[DT]) error {
+	dv.Tensor = v.(T)
 	return dv.sanity()
 }
 
 // SetEngine sets the engine.
-func (dv *Dual[DT]) SetEngine(e tensor.Engine) {
-	values.SetEngine[DT](dv.Value, e)
+func (dv *Dual[DT, T]) SetEngine(e tensor.Engine) {
+	values.SetEngine[DT](dv.Tensor, e)
 	values.SetEngine[DT](dv.d, e)
 }
 
+func (dv *Dual[DT, T]) Value() T { return dv.Tensor.(T) }
+
 // Deriv returns the derivative value.
-func (dv *Dual[DT]) Deriv() values.Value[DT] { return dv.d }
+func (dv *Dual[DT, T]) Deriv() T { return dv.d.(T) }
 
 // Clone clones a *Dual[DT,T].
-func (dv *Dual[DT]) Clone() *Dual[DT] {
-	var v, d values.Value[DT]
-	v = clone(dv.Value)
+func (dv *Dual[DT, T]) Clone() *Dual[DT, T] {
+	var v, d T
+	v = dv.Tensor.Clone()
 
-	var z values.Value[DT]
-	if dv.d != z {
-		d = clone(dv.d)
+	if dv.d != nil {
+		d = dv.d.Clone()
 	}
 
-	dv2 := new(Dual[DT])
-	dv2.Value = v
+	dv2 := new(Dual[DT, T])
+	dv2.Tensor = v
 	dv2.d = d
 	return dv2
 }
 
 // Type returns the type of the values in the *Dual[DT,T].
-func (dv *Dual[DT]) Type() hm.Type { return values.TypeOf(dv.Value) }
+func (dv *Dual[DT, T]) Type() hm.Type { return values.TypeOf(dv.Tensor) }
 
 // ValueEq implements values.Value[DT]Eqer, which states that Values can be compared.
-func (dv *Dual[DT]) ValueEq(a values.Value[DT]) bool {
+func (dv *Dual[DT, T]) ValueEq(a values.Value[DT]) bool {
 	switch at := a.(type) {
-	case *Dual[DT]:
+	case *Dual[DT, T]:
 		if at == dv {
 			return true
 		}
-		veq := values.ValueEq[DT](at.Value, dv.Value)
-		deq := values.ValueEq[DT](at.d, dv.d)
+		veq := at.Tensor.Eq(dv.Tensor.(T))
+		deq := at.d.Eq(dv.d.(T))
 		return veq && deq
 	// case Value:
-	// 	return ValueEq(at, dv.Value)
+	// 	return ValueEq(at, dv.Tensor)
 	default:
 		return false
 	}
 }
 
-func (dv *Dual[DT]) Eq(other *Dual[DT]) bool {
+func (dv *Dual[DT, T]) Eq(other *Dual[DT, T]) bool {
 	if dv == other {
 		return true
 	}
-	veq := values.ValueEq[DT](dv.Value, other.Value)
-	deq := values.ValueEq[DT](dv.d, other.d)
+	veq := dv.Tensor.Eq(other.Tensor.(T))
+	deq := dv.d.Eq(other.d.(T))
 	return veq && deq
 }
 
-func (dv *Dual[DT]) String() string { return fmt.Sprintf("%#+v", dv.Value) }
+func (dv *Dual[DT, T]) String() string { return fmt.Sprintf("%#+v", dv.Tensor) }
 
-func (dv *Dual[DT]) Format(s fmt.State, c rune) {
+func (dv *Dual[DT, T]) Format(s fmt.State, c rune) {
 	isScalar := dv.Shape().Eq(shapes.ScalarShape())
 	if s.Flag('#') {
 		if isScalar {
-			fmt.Fprintf(s, "{%v | %v}", dv.Value, dv.d)
+			fmt.Fprintf(s, "{%v | %v}", dv.Tensor, dv.d)
 		} else {
-			fmt.Fprintf(s, "{\nvalue:\n%v---\nderiv:\n%v}", dv.Value, dv.d)
+			fmt.Fprintf(s, "{\nvalue:\n%v---\nderiv:\n%v}", dv.Tensor, dv.d)
 		}
 		return
 	}
 
-	fmt.Fprintf(s, "%v", dv.Value)
+	fmt.Fprintf(s, "%v", dv.Tensor)
 }
 
 // CopyFrom copies the values from a values.Value[DT] to the first value of the *Dual[DT,T]. The deriv is untouched.
-func (dv *Dual[DT]) CopyFrom(src interface{}) error {
+func (dv *Dual[DT, T]) CopyFrom(src interface{}) error {
 	if v, ok := src.(values.Value[DT]); ok {
-		_, err := values.Copy[DT](dv.Value, v)
+		_, err := values.Copy[DT](dv.Tensor, v)
 		return err
 	}
 	return errors.Errorf("Unable to CopyFrom %T", src)
 }
 
-func (dv *Dual[DT]) sanity() error {
+func (dv *Dual[DT, T]) sanity() error {
 	// check that d and v are the same type
 
 	// dvv := typeCheckTypeOf(dv.v)
@@ -147,16 +146,16 @@ func (dv *Dual[DT]) sanity() error {
 }
 
 // clones the dualValue and zeroes out the ndarrays
-func (dv *Dual[DT]) clone0() (retVal *Dual[DT], err error) {
-	var v, d values.Value[DT]
-	v = clone(dv.Value)
-	d = clone(dv.d)
+func (dv *Dual[DT, T]) clone0() (retVal *Dual[DT, T], err error) {
+	var v, d T
+	v = dv.Tensor.Clone()
+	d = dv.d.Clone()
 
-	v = values.ZeroValue[DT](v)
-	d = values.ZeroValue[DT](d)
+	v.Zero()
+	d.Zero()
 
-	dv2 := new(Dual[DT])
-	dv2.Value = v
+	dv2 := new(Dual[DT, T])
+	dv2.Tensor = v
 	dv2.d = d
 	retVal = dv2
 	return
@@ -167,36 +166,29 @@ func (dv *Dual[DT]) clone0() (retVal *Dual[DT], err error) {
 // The original implementation was to have a constantDualValue type. This would lead to waaay less allocations of matrices
 // but as it turns out, as I waws working, the constants turn out to be not so constant afterall.
 // Is this a problem with the graph that leads to derivation of constant values? I don't quite know. TO CHECK
-func constantDV[DT tensor.Num](val values.Value[DT]) *Dual[DT] {
+func constantDV[DT tensor.Num, T tensor.Tensor[DT, T]](val values.Value[DT]) *Dual[DT, T] {
 	enterLogScope()
 	defer leaveLogScope()
 
-	// retVal := &dualValue{Value: val}
-	retVal := new(Dual[DT])
-	retVal.Value = val
+	v := val.(T)
 
-	retVal.d = clone(val)
-	retVal.d = values.ZeroValue[DT](retVal.d)
+	// retVal := &dualValue{Value: val}
+	retVal := new(Dual[DT, T])
+	retVal.Tensor = v
+
+	retVal.d = v.Clone()
+	retVal.d.Zero()
 	return retVal
 }
 
 // the derivative of x is 1.
-func variableDV[DT tensor.Num](val values.Value[DT]) *Dual[DT] {
+func variableDV[DT tensor.Num, T tensor.Tensor[DT, T]](val values.Value[DT]) *Dual[DT, T] {
+	v := val.(T)
 	// retVal := &dualValue{Value: val}
-	retVal := new(Dual[DT])
-	retVal.Value = val
-
-	switch v := val.(type) {
-	case scalar.Scalar[DT]:
-		retVal.d = values.One[DT]()
-	case tensor.Basic[DT]:
-		shp := v.Shape()
-		//dt := v.Dtype()
-		retVal.d = dense.Ones[DT](shp...)
-	default:
-		panic(fmt.Sprintf("%v(%T) not handled yet", v, v))
-	}
-
+	retVal := new(Dual[DT, T])
+	retVal.Tensor = v
+	retVal.d = v.Clone()
+	retVal.d.Memset(1)
 	return retVal
 }
 
@@ -270,10 +262,10 @@ func dvUnitVarManaged(v values.Value[DT], op ExternalOp) (*Dual[DT,T], error) {
 */
 
 // helper to unpack from []*Dual[DT,T]
-func idValue[DT tensor.Num](inputs []*Dual[DT]) (retVals []values.Value[DT]) {
-	retVals = make([]values.Value[DT], len(inputs))
+func idValue[DT tensor.Num, T tensor.Tensor[DT, T]](inputs []*Dual[DT, T]) (retVals []T) {
+	retVals = make([]T, len(inputs))
 	for i, input := range inputs {
-		retVals[i] = input.Value
+		retVals[i] = input.Tensor.(T)
 	}
 	return
 }

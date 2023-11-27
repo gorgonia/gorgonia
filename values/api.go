@@ -15,8 +15,8 @@ import (
 )
 
 // AnyToScalar converts any primitive type into a scalar type, and the dtype.
-func AnyToScalar[DT any](x DT) (scalar.Scalar[DT], dtype.Dtype) {
-	retVal := scalar.S(x)
+func AnyToScalar[DT any](x DT) (Value[DT], dtype.Dtype) {
+	retVal := dense.New[DT](tensor.WithShape(), tensor.WithBacking([]DT{x}))
 	return retVal, retVal.Dtype()
 }
 

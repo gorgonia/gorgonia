@@ -25,36 +25,36 @@ func Example_new() {
 	// The usual ways to create a new *Dual.
 
 	// New() creates a new *Dual, assuming that the input value represents a constatn
-	d0 := New[float64](c)
+	d0 := New[float64, *dense.Dense[float64]](c)
 	fmt.Printf("c: %v, d0 %#v\n", d0, d0)
 
 	// if a *Dual gets passed into New(), it returns the input arg.
-	d1 := New[float64](d0)
+	d1 := New[float64, *dense.Dense[float64]](d0)
 	fmt.Printf("d1 == d0: %t\n", d0 == d1)
 
 	// Where New() was meant for values representing a constant, NewVar() is meant for values representing a variable.
 	// Observe that the derivatives are different.
-	d2 := New[float64](v)
-	d3 := NewVar[float64](v)
+	d2 := New[float64, *dense.Dense[float64]](v)
+	d3 := NewVar[float64, *dense.Dense[float64]](v)
 	fmt.Printf("v: %v d2 %#v, d3 %#v\n", v, d2, d3)
 
 	// NewVar() is like New() - if you pass in a *Dual, it returns the input.
-	d4 := NewVar[float64](d0)
+	d4 := NewVar[float64, *dense.Dense[float64]](d0)
 	fmt.Printf("d4 == d0: %t\n", d4 == d0)
 
 	// using new() is another way to construct a *Dual.
 	// In this scenario, you would want to use the .SetValue() and .SetDeriv() methods to set a value.
 	//
 	// This is generally not used as often.
-	d5 := new(Dual[float64])
+	d5 := new(Dual[float64, *dense.Dense[float64]])
 	d5.SetValue(v)
 	d5.SetDeriv(c)
 	fmt.Printf("d5: %#v\n", d5)
 
 	// New() and NewVar() works on all Values, that includes tensor.Tensor
 	a := dense.New[float32](tensor.WithShape(2, 2), tensor.WithBacking([]float32{1, 2, 3, 4}))
-	a2 := New[float32](a)
-	a3 := NewVar[float32](a)
+	a2 := New[float32, *dense.Dense[float32]](a)
+	a3 := NewVar[float32, *dense.Dense[float32]](a)
 	fmt.Printf("a:\n%va2:%#v\na3:%#v", a, a2, a3)
 
 	// Output:
@@ -90,32 +90,32 @@ func Example_new() {
 // This example shows how to use *Dual.
 // See  the related exampled of Lift
 func Example_bindVar() {
-	times := func(vals ...values.Value[float64]) (values.Value[float64], error) {
+	times := func(vals ...*dense.Dense[float64]) (*dense.Dense[float64], error) {
 		if len(vals) != 2 {
-			return scalar.Scalar[float64]{}, errors.New("Expected 2")
+			return nil, errors.New("Expected 2")
 		}
 
 		a := vals[0].Data()[0]
 		b := vals[1].Data()[0]
 		retVal, _ := values.AnyToScalar(a * b)
-		return retVal, nil
+		return retVal.(*dense.Dense[float64]), nil
 	}
 
 	three, _ := values.AnyToScalar(3.0)
 	two, _ := values.AnyToScalar(2.0)
 	five, _ := values.AnyToScalar(5.0)
 
-	threetimestwo, err := BindVar(times, NewVar[float64](three), NewVar[float64](two))
+	threetimestwo, err := BindVar(times, NewVar[float64, *dense.Dense[float64]](three), NewVar[float64, *dense.Dense[float64]](two))
 	fmt.Printf("Using BindVar: 3 × 2 = %#v. Err: %v\n", threetimestwo, err)
 
-	preallocTimes := func(prealloc values.Value[float64], inputs ...values.Value[float64]) (values.Value[float64], error) {
+	preallocTimes := func(prealloc *dense.Dense[float64], inputs ...*dense.Dense[float64]) (*dense.Dense[float64], error) {
 		ret, err := times(inputs...)
 		return ret, err
 	}
-	custom := new(Dual[float64])
+	custom := new(Dual[float64, *dense.Dense[float64]])
 	custom.SetValue(three)
 	custom.SetDeriv(five)
-	threetimestwo, err = Bind0(preallocTimes, custom, NewVar[float64](three), NewVar[float64](two))
+	threetimestwo, err = Bind0(preallocTimes, custom, NewVar[float64, *dense.Dense[float64]](three), NewVar[float64, *dense.Dense[float64]](two))
 	fmt.Printf("Using Bind0: 3 × 2 = %#v. Err: %v\n", threetimestwo, err)
 
 	// Output:
@@ -125,58 +125,58 @@ func Example_bindVar() {
 
 // TestBindVar  tests the failure modes not covered in ExampleBind
 func TestBindVar(t *testing.T) {
-	times := func(vals ...values.Value[float64]) (values.Value[float64], error) {
+	times := func(vals ...*dense.Dense[float64]) (*dense.Dense[float64], error) {
 		if len(vals) != 2 {
-			return scalar.Scalar[float64]{}, errors.New("Expected 2")
+			return nil, errors.New("Expected 2")
 		}
 
 		a := vals[0].Data()[0]
 		b := vals[1].Data()[0]
 		retVal, _ := values.AnyToScalar(a * b)
-		return retVal, nil
+		return retVal.(*dense.Dense[float64]), nil
 	}
 
 	three, _ := values.AnyToScalar(3.0)
 	two, _ := values.AnyToScalar(2.0)
 	five, _ := values.AnyToScalar(5.0)
 
-	if _, err := BindVar(times, New[float64](three), New[float64](two), New[float64](three)); err == nil {
+	if _, err := BindVar(times, New[float64, *dense.Dense[float64]](three), New[float64, *dense.Dense[float64]](two), New[float64, *dense.Dense[float64]](three)); err == nil {
 		t.Errorf("Expected an error.")
 	}
 
-	preallocTimes := func(prealloc values.Value[float64], inputs ...values.Value[float64]) (values.Value[float64], error) {
+	preallocTimes := func(prealloc *dense.Dense[float64], inputs ...*dense.Dense[float64]) (*dense.Dense[float64], error) {
 		_, err := times(inputs...)
 		return prealloc, err
 	}
-	custom := new(Dual[float64])
+	custom := new(Dual[float64, *dense.Dense[float64]])
 	custom.SetValue(three)
 	custom.SetDeriv(five)
-	if _, err := Bind0(preallocTimes, custom, NewVar[float64](three), NewVar[float64](two), New[float64](two)); err == nil {
+	if _, err := Bind0(preallocTimes, custom, NewVar[float64, *dense.Dense[float64]](three), NewVar[float64, *dense.Dense[float64]](two), New[float64, *dense.Dense[float64]](two)); err == nil {
 		t.Errorf("Expected an error.")
 	}
 
 }
 
-func Example_lift() {
-	times := func(vals ...values.Value[float64]) (values.Value[float64], error) {
+func Example_liftVar() {
+	times := func(vals ...*dense.Dense[float64]) (*dense.Dense[float64], error) {
 		if len(vals) != 2 {
-			return scalar.Scalar[float64]{}, errors.New("Expected 2")
+			return nil, errors.New("Expected 2")
 		}
 
 		a := vals[0].Data()[0]
 		b := vals[1].Data()[0]
 		retVal, _ := values.AnyToScalar(a * b)
-		return retVal, nil
+		return retVal.(*dense.Dense[float64]), nil
 	}
 
 	three, _ := values.AnyToScalar(3.0)
 	two, _ := values.AnyToScalar(2.0)
 	liftedTimes := LiftVar[float64](times)
-	threetimestwo, err := liftedTimes(NewVar[float64](three), NewVar[float64](two))
+	threetimestwo, err := liftedTimes(NewVar[float64, *dense.Dense[float64]](three), NewVar[float64, *dense.Dense[float64]](two))
 	fmt.Printf("Using lifttedTimes %T: 3 × 2 = %#v. Err: %v\n", liftedTimes, threetimestwo, err)
 
 	// Output:
-	// Using lifttedTimes func(...*dual.Dual[float64]) (*dual.Dual[float64], error): 3 × 2 = {6 | 1}. Err: <nil>
+	// Using lifttedTimes func(...*dual.Dual[float64,*gorgonia.org/tensor/dense.Dense[float64]]) (*dual.Dual[float64,*gorgonia.org/tensor/dense.Dense[float64]], error): 3 × 2 = {6 | 1}. Err: <nil>
 
 }
 
@@ -184,7 +184,7 @@ func TestClone(t *testing.T) {
 	assert := assert.New(t)
 
 	f, _ := values.AnyToScalar(3.14)
-	fds := New[float64](f)
+	fds := New[float64, *dense.Dense[float64]](f)
 	fds2 := fds.Clone()
 
 	assert.True(fds.ValueEq(fds2))
@@ -193,7 +193,7 @@ func TestClone(t *testing.T) {
 	}
 
 	T := dense.New[float32](tensor.WithShape(3, 4), tensor.WithBacking([]float32{1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6}))
-	Tds := NewVar[float32](T)
+	Tds := NewVar[float32, *dense.Dense[float32]](T)
 	Tds2 := Tds.Clone()
 	assert.True(Tds.ValueEq(Tds2))
 
@@ -202,11 +202,11 @@ func TestClone(t *testing.T) {
 func TestNewAlike(t *testing.T) {
 	assert := assert.New(t)
 	f, _ := values.AnyToScalar(3.14)
-	fds := NewVar[float64](f)
+	fds := NewVar[float64, *dense.Dense[float64]](f)
 	fds2, err := NewAlike(fds)
 
 	assert.Nil(err)
-	assert.Equal(0.0, fds2.Value.Data()[0])
+	assert.Equal(0.0, fds2.Data()[0])
 	assert.Equal(0.0, fds2.Deriv().Data()[0])
 	assert.False(fds.ValueEq(fds2), "Should be different values: fds %v | fds2 %v", fds, fds2)
 	if fds == fds2 {
@@ -214,7 +214,7 @@ func TestNewAlike(t *testing.T) {
 	}
 
 	T := dense.New[float32](tensor.WithShape(3, 4), tensor.WithBacking([]float32{1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6}))
-	Tds := NewVar[float32](T)
+	Tds := NewVar[float32, *dense.Dense[float32]](T)
 	Tds2, err := NewAlike(Tds)
 	assert.Nil(err)
 	assert.False(Tds.ValueEq(Tds2), "Should be different values: Tds %v | Tds2 %v", Tds, Tds2)
@@ -222,6 +222,6 @@ func TestNewAlike(t *testing.T) {
 
 func TestSetEngine(t *testing.T) {
 	f, _ := values.AnyToScalar(3.14)
-	fds := NewVar[float64](f)
+	fds := NewVar[float64, *dense.Dense[float64]](f)
 	fds.SetEngine(stdeng.StdEng[float64, scalar.Scalar[float64]]{}) // should not panic
 }
