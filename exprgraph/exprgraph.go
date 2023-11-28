@@ -281,6 +281,21 @@ func (g *Graph) AddNode(n Node) error {
 	return nil
 }
 
+func (g *Graph) replaceNode(n Node) error {
+	if n.ID() < MinNodeID {
+		return errors.New("Cannot add a node with an ID less than MinNodeID")
+	}
+	if _, exists := g.nodes[n.ID()]; exists {
+		g.nodes[n.ID()] = nil // set to nil to signal to signal that the node is not in the graph
+	}
+
+	n = liftNode(n)
+	g.nodes[n.ID()] = n
+	g.nodeIDs.Use(n.ID())
+	return nil
+
+}
+
 // createEdge creates an edge.
 func (g *Graph) createEdge(from, to Node) error {
 	if from == to || from.ID() == to.ID() {

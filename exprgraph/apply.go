@@ -10,7 +10,7 @@ import (
 )
 
 // Apply creates a new Symbolic[DT] node.
-func Apply[DT any, T values.Value[DT]](g *Graph, op ops.Op[DT, T], newname string, children ...Node) (Node, error) {
+func Apply[DT any, T values.Value[DT]](g *Graph, op ops.Op[DT, T], newname string, children ...Node) (*Symbolic[DT], error) {
 	s := op.ShapeExpr()
 	t := op.Type()
 

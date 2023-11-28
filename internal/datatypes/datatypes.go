@@ -16,18 +16,43 @@ import (
 //   - exprgraph.Node
 //
 // There is an overlap with values.Value. The reason is semantic clarity. Values are Tensors. Tensors are Values.
-type Tensor[DT any] interface {
-	tensor.Basic[DT]
+type Tensor interface {
+	tensor.Desc
+	tensor.DataSizer
+
+	// Flags returns the memory flags of the underlying data array.
+	//Flags() tensor.MemoryFlag
+	// DataOrder returns the data order of the underlying data array.
+	//DataOrder() tensor.DataOrder
+
+	// Some basic operations that does not need knowledge of datatype
+
+	// A basic tensor should be able to reshape itself
+	//Reshape(shape ...int) error
+
+	// A basic tensor should be able to unsqueeze itself
+	//Unsqueeze(axis int) error
+
+	// A Basic tensor should be able to zero itself out
+	//tensor.Zeroer
+
+	// Data access related methods
+
+	//RequiresIterator() bool
+	//Iterator() tensor.Iterator
+	//IsMaterializable() bool
+
+	// Memory and operation related methods
+
+	//tensor.Memory
+	tensor.Engineer
+	//IsNativelyAccessible() bool // Can Go access the memory?
+	//IsManuallyManaged() bool    // Must Go manage the memory
 }
 
 // TypeOf returns the type of a given Tensor
-func TypeOf[DT any](t Tensor[DT]) hm.Type {
+func TypeOf[DT any](t Tensor) hm.Type {
 	switch tt := t.(type) {
-	case tensor.Basic[DT]:
-		if tt.Shape().IsScalar() {
-			return tt.Dtype()
-		}
-		return types.MakeTensorType(tt.Dims(), tt.Dtype())
 	case hm.Typer:
 		return tt.Type()
 	default:

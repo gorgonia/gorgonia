@@ -7,6 +7,7 @@ import (
 	"github.com/chewxy/hm"
 	"gonum.org/v1/gonum/graph"
 	"gorgonia.org/dtype"
+	"gorgonia.org/gorgonia/internal/datatypes"
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
@@ -28,6 +29,8 @@ var (
 //
 // It's an interface instead of a constraint because it's more useful as an interface.
 type Node interface {
+	datatypes.Tensor
+
 	graph.Node      // ID() int64
 	NodeID() NodeID // alternative to ID()
 	tensor.Desc
@@ -120,6 +123,20 @@ func NewValueInGraph[DT any, T tensor.Tensor[DT, T]](g *Graph, name string, v T)
 	}
 	if g != nil {
 		g.AddNode(retVal)
+	}
+	return retVal
+}
+
+func replaceValueInGraph[DT any, T tensor.Tensor[DT, T]](g *Graph, name string, id NodeID, v T) *Value[DT, T] {
+	retVal := &Value[DT, T]{
+		Basic: v,
+		desc: desc{
+			name: name,
+			id:   id,
+		},
+	}
+	if g != nil {
+		g.replaceNode(retVal)
 	}
 	return retVal
 }
@@ -236,6 +253,11 @@ func (n *Symbolic[DT]) Format(f fmt.State, c rune) {
 	}
 }
 
+// weird bits that are required in the gorgonia.Tensor interface
+
+// DataSize returns the size of the data in bytes.
+func (n *Symbolic[DT]) DataSize() int { return n.Shape().TotalSize() }
+
 // liftNode lifts a node if its engine is a lifter
 func liftNode(n Node) Node {
 	nx, ok := n.(valuelifter)
@@ -249,6 +271,17 @@ func liftNode(n Node) Node {
 		nx.setLifted(lifted, v)
 	}
 	return n
+}
+
+// SymToVal converts a symbolic node to a value node. It is a convenience function.
+func SymToVal[DT any, T tensor.Tensor[DT, T]](n *Symbolic[DT]) *Value[DT, T] {
+	var d T
+	d = d.Alike(tensor.WithShape(n.Shape()...), tensor.WithEngine(n.engine))
+	retVal := replaceValueInGraph[DT, T](n.engine, n.name, n.id, d)
+	retVal.Op = n.Op.(ops.Op[DT, T])
+	n.engine = nil
+	n.Op = nil
+	return retVal
 }
 
 /*
