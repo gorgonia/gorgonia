@@ -67,6 +67,9 @@ type Graph struct {
 	nodeIDs uid.Set
 }
 
+// Workhorse returns the tensor.Engine used by the graph.
+func (g *Graph) Workhorse() tensor.Engine { return g.Engine }
+
 // Graph returns itself.
 func (g *Graph) Graph() *Graph { return g }
 
@@ -109,7 +112,7 @@ func (g *Graph) find(t Tensor) Node {
 			// this little trick here (to inspect the internal structure - i.e g.nodes[i].Tensor == t)
 			// is the real reason why you cannot really create Node{Node{Node{...}}}
 			// without doing it explicitly
-			tt := nx.Value().(Tensor)
+			tt := nx.v().(Tensor)
 			if t == tt {
 				return n
 			}
@@ -273,7 +276,7 @@ func (g *Graph) AddNode(n Node) error {
 		return errors.New("Cannot add a node with an ID less than MinNodeID")
 	}
 	if _, exists := g.nodes[n.ID()]; exists {
-		return fmt.Errorf("simple: node ID collision: %d", n.ID())
+		return CollisionError{node: n.ID()}
 	}
 	n = liftNode(n)
 	g.nodes[n.ID()] = n
@@ -299,7 +302,7 @@ func (g *Graph) replaceNode(n Node) error {
 // createEdge creates an edge.
 func (g *Graph) createEdge(from, to Node) error {
 	if from == to || from.ID() == to.ID() {
-		return errors.New("Adding self-edge")
+		return fmt.Errorf("adding self-edge: %d -> %d", from.ID(), to.ID())
 	}
 
 	// this check is not necessary because createEdge is only called by AddChildren

@@ -128,8 +128,8 @@ func MatMul(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 	}
 
 	// do the values stuff
-	at := exprgraph.T2T(a)
-	bt := exprgraph.T2T(b)
+	at := exprgraph.T2B(a)
+	bt := exprgraph.T2B(b)
 	var ct tensor.Tensor
 
 	switch {
@@ -255,8 +255,8 @@ func Add(a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 	}
 
 	// do the values stuff'
-	at := exprgraph.T2T(a)
-	bt := exprgraph.T2T(b)
+	at := exprgraph.T2B(a)
+	bt := exprgraph.T2B(b)
 	var ct tensor.Tensor
 	switch {
 	case at != nil && bt != nil && retVal != nil:

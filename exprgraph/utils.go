@@ -10,13 +10,13 @@ import (
 	"gorgonia.org/tensor"
 )
 
-// T2T tries to find a `tensor.Tensor` from a Tensor
+// T2B tries to find a `tensor.Tensor` from a Tensor
 // it returns nil if no tensor is found
-func T2T[DT tensor.Num](a Tensor) tensor.Basic[DT] {
+func T2B[DT tensor.Num](a Tensor) tensor.Basic[DT] {
 	switch t := a.(type) {
 	case Node:
 		if v, ok := t.(valuelifter); ok {
-			return v.Value().(tensor.Basic[DT])
+			return v.v().(tensor.Basic[DT])
 		}
 		return nil
 	case dual.Value[DT]:
@@ -25,6 +25,17 @@ func T2T[DT tensor.Num](a Tensor) tensor.Basic[DT] {
 		return t
 	default:
 		return nil
+	}
+}
+
+func T2T[DT tensor.Num, T tensor.Tensor[DT, T]](a Tensor) (retVal T, ok bool) {
+	switch t := a.(type) {
+	case valuer[T]:
+		return t.Value(), true
+	case T:
+		return t, true
+	default:
+		return retVal, false
 	}
 }
 

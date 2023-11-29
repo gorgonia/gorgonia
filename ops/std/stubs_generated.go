@@ -11,9 +11,9 @@ import (
 
 // DoDiff is the method that allows automatic differentiation of `sub` g.
 func (op subOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) error {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+	adv := exprgraph.T2B(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2B(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2B(output).(*dual.Dual)
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
@@ -24,9 +24,9 @@ func (op subOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) erro
 
 // DoDiff is the method that allows automatic differentiation of `mul` g.
 func (op mulOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) error {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+	adv := exprgraph.T2B(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2B(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2B(output).(*dual.Dual)
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
@@ -37,9 +37,9 @@ func (op mulOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) erro
 
 // DoDiff is the method that allows automatic differentiation of `div` g.
 func (op divOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) error {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+	adv := exprgraph.T2B(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2B(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2B(output).(*dual.Dual)
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
@@ -55,9 +55,9 @@ func (op powOp) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *ex
 
 // DoDiff is the method that allows automatic differentiation of `pow` g.
 func (op powOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) error {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+	adv := exprgraph.T2B(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2B(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2B(output).(*dual.Dual)
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
@@ -73,9 +73,9 @@ func (op expOp) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *ex
 
 // DoDiff is the method that allows automatic differentiation of `exp` g.
 func (op expOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) error {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+	adv := exprgraph.T2B(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2B(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2B(output).(*dual.Dual)
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
@@ -91,9 +91,9 @@ func (op lnOp) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *exp
 
 // DoDiff is the method that allows automatic differentiation of `ln` g.
 func (op lnOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) error {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+	adv := exprgraph.T2B(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2B(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2B(output).(*dual.Dual)
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
@@ -109,9 +109,9 @@ func (op log2Op) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *e
 
 // DoDiff is the method that allows automatic differentiation of `log2` g.
 func (op log2Op) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) error {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+	adv := exprgraph.T2B(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2B(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2B(output).(*dual.Dual)
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
@@ -127,9 +127,9 @@ func (op negOp) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *ex
 
 // DoDiff is the method that allows automatic differentiation of `neg` g.
 func (op negOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) error {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+	adv := exprgraph.T2B(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2B(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2B(output).(*dual.Dual)
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
@@ -145,9 +145,9 @@ func (op squareOp) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output 
 
 // DoDiff is the method that allows automatic differentiation of `square` g.
 func (op squareOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) error {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+	adv := exprgraph.T2B(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2B(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2B(output).(*dual.Dual)
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
@@ -163,9 +163,9 @@ func (op sqrtOp) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *e
 
 // DoDiff is the method that allows automatic differentiation of `sqrt` g.
 func (op sqrtOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) error {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+	adv := exprgraph.T2B(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2B(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2B(output).(*dual.Dual)
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
@@ -181,9 +181,9 @@ func (op invOp) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *ex
 
 // DoDiff is the method that allows automatic differentiation of `inv` g.
 func (op invOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) error {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+	adv := exprgraph.T2B(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2B(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2B(output).(*dual.Dual)
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
@@ -199,9 +199,9 @@ func (op invSqrtOp) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output
 
 // DoDiff is the method that allows automatic differentiation of `invSqrt` g.
 func (op invSqrtOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) error {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+	adv := exprgraph.T2B(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2B(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2B(output).(*dual.Dual)
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
@@ -217,9 +217,9 @@ func (op cubeOp) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *e
 
 // DoDiff is the method that allows automatic differentiation of `cube` g.
 func (op cubeOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) error {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+	adv := exprgraph.T2B(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2B(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2B(output).(*dual.Dual)
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
@@ -235,9 +235,9 @@ func (op tanhOp) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *e
 
 // DoDiff is the method that allows automatic differentiation of `tanh` g.
 func (op tanhOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) error {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+	adv := exprgraph.T2B(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2B(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2B(output).(*dual.Dual)
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()

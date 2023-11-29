@@ -13,7 +13,7 @@ type graphSetter interface {
 }
 
 type valuelifter interface {
-	Value() values.V
+	v() values.V
 	prelift() values.V
 
 	setLifted(lifted, original values.V)

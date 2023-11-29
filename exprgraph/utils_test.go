@@ -9,7 +9,7 @@ import (
 	"gorgonia.org/tensor/dense"
 )
 
-func TestT2T(t *testing.T) {
+func TestT2B(t *testing.T) {
 	sampleTensor := dense.New[float32](tensor.WithShape(1))
 	sampleDV := dual.New[float32, *dense.Dense[float32]](dense.New[float32](tensor.WithShape(1)))
 
@@ -37,7 +37,7 @@ func TestT2T(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := T2T[float32](tt.n); !reflect.DeepEqual(got, tt.want) {
+			if got := T2B[float32](tt.n); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("T2T() = %v, want %v", got, tt.want)
 			}
 		})

@@ -51,7 +51,15 @@ func newSym(opts ...testopt) *Symbolic[float32] {
 	for _, opt := range opts {
 		opt(c)
 	}
-	retVal, _ := NewSymbolic[float32](c.g, c.shape, c.name)
+	retVal, err := NewSymbolic[float32](c.g, c.shape, c.name)
+	if _, ok := err.(CollisionError); ok {
+		retVal.id = NodeID(c.id)
+		err = retVal.engine.AddNode(retVal)
+	}
+	if err != nil {
+		panic(err)
+	}
+
 	retVal.id = NodeID(c.id)
 	return retVal
 }

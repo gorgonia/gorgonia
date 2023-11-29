@@ -3,6 +3,7 @@ package exprgraph_test
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia"
@@ -11,6 +12,10 @@ import (
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
 	"gorgonia.org/tensor/dense"
+)
+
+var (
+	_ tensor.BLA[float64, *dense.Dense[float64]] = &BwdEngine[float64, *dense.Dense[float64]]{}
 )
 
 type adInstr[DT any, T tensor.Tensor[DT, T]] struct {
@@ -24,7 +29,7 @@ func (ad adInstr[DT, T]) do(ctx context.Context) error { return ad.DoDiff(ctx, a
 
 // BwdEngine is an Engine that performs backwards mode diffentiation.
 type BwdEngine[DT tensor.Num, T tensor.Tensor[DT, T]] struct {
-	tensor.Engine
+	dense.StdFloat64Engine[*dense.Dense[float64]]
 	g *exprgraph.Graph
 
 	q []adInstr[DT, T]
@@ -44,35 +49,33 @@ func (e *BwdEngine[DT, T]) Lift(a exprgraph.Tensor) exprgraph.Tensor {
 	panic("Unreachable")
 }
 
-/*
-func (e *BwdEngine[DT, T]) MatMul(ctx context.Context, a, b, c T) error {
-
-
-	var av, bv, cv tensor.Tensor
-	switch at := a.(type) {
-	case *dual.Dual:
-		av = at.Value
-	case tensor.Tensor:
-		av = at
-	}
-
-	switch bt := b.(type) {
-	case *dual.Dual:
-		bv = bt.Value
-	case tensor.Tensor:
-		bv = bt
-	}
-
-	switch ct := c.(type) {
-	case *dual.Dual:
-		cv = ct.Value
-	case tensor.Tensor:
-		cv = ct
-	}
-
-	return e.StdEng.MatMul(ctx, av, bv, cv)
+func (e *BwdEngine[DT, T]) Inner(ctx context.Context, a, b T) (DT, error) {
+	return 0, errors.New("NYI")
 }
 
+func (e *BwdEngine[DT, T]) FMA(ctx context.Context, a, x, retVal T) error {
+	return errors.New("NYI")
+}
+
+func (e *BwdEngine[DT, T]) MatVecMul(ctx context.Context, a, b, retVal T, incr []DT) error {
+	return errors.New("NYI")
+}
+
+func (e *BwdEngine[DT, T]) Outer(ctx context.Context, a, b, retVal T, incr []DT) error {
+	return errors.New("NYI")
+}
+
+func (e *BwdEngine[DT, T]) MatMul(ctx context.Context, a, b, c T, incr []DT) error {
+	mm, ok := e.Engine.(tensor.BLA[DT, T])
+	if !ok {
+		return errors.New("Expected BLA")
+	}
+	err := mm.MatMul(ctx, a, b, c, incr)
+	log.Printf("err in MatMul %v", err)
+	return err
+}
+
+/*
 func (e *BwdEngine[DT, T]) AddScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (tensor.Tensor, error) {
 	fo := tensor.ParseFuncOpts(opts...)
 	reuse := fo.Reuse()
@@ -128,6 +131,9 @@ func Example_backward_differentiation_engine() {
 	g := exprgraph.NewGraph(engine)
 	engine.g = g
 
+	_, ok := g.Engine.(tensor.BLA[float64, *dense.Dense[float64]])
+	log.Printf("g is a BLA? ok %v", ok)
+
 	x := exprgraph.New[float64](g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
 	y := exprgraph.New[float64](g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
 	z := exprgraph.New[float64](g, "z", tensor.WithShape(), tensor.WithBacking([]float64{1}))
@@ -136,6 +142,7 @@ func Example_backward_differentiation_engine() {
 		fmt.Printf("Matmul failed: Err: %v\n", err)
 		return
 	}
+	log.Printf("xy %v xy==nil %v | %v", xy, xy == nil, err)
 
 	xypz, err := Add[float64, *dense.Dense[float64]](xy, z)
 	if err != nil {

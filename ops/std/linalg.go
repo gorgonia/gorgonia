@@ -75,9 +75,9 @@ func (op MatMul) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output, g
 
 // DoDiff allows automatic differentiation for `MatMul`.
 func (op MatMul) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) (err error) {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+	adv := exprgraph.T2B(inputs[0]).(*dual.Dual)
+	bdv := exprgraph.T2B(inputs[1]).(*dual.Dual)
+	cdv := exprgraph.T2B(output).(*dual.Dual)
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()

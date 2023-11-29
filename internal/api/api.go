@@ -36,8 +36,8 @@ func Add(a, b datatypes.Tensor) (retVal datatypes.Tensor, err error) {
 	}
 
 	// do the values stuff
-	at := exprgraph.T2T(a)
-	bt := exprgraph.T2T(b)
+	at := exprgraph.T2B(a)
+	bt := exprgraph.T2B(b)
 	var ct tensor.Tensor
 	switch {
 	case at != nil && bt != nil && retVal != nil:
@@ -82,8 +82,8 @@ func MatMul(a, b datatypes.Tensor) (retVal datatypes.Tensor, err error) {
 		}
 	}
 	// do the values stuff
-	at := exprgraph.T2T(a)
-	bt := exprgraph.T2T(b)
+	at := exprgraph.T2B(a)
+	bt := exprgraph.T2B(b)
 	var ct tensor.Tensor
 
 	switch {

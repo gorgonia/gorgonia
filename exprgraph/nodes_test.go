@@ -209,7 +209,7 @@ func TestNodes_Node(t *testing.T) {
 func TestTensorsFromNodeIDs(t *testing.T) {
 	g := NewGraph(nil)
 	a := newVal(withShape(2), inGraph(g), withName("a"))
-	b := newSym(withName("b"), inGraph(g), withShape(2))
+	b := newSym(withName("b"), inGraph(g), withShape(2), withID(1))
 	//a := NewNode(g, "a", tensor.WithShape(2), tensor.Of(dtype.Float64))
 	// b, err := NewSymbolic(g, "b", dtype.Float64, shapes.Shape{2})
 	// if err != nil {
