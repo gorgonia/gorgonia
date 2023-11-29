@@ -2,7 +2,6 @@ package exprgraph
 
 import (
 	"fmt"
-	"log"
 	"sync/atomic"
 
 	"github.com/chewxy/hm"
@@ -71,9 +70,9 @@ func New[DT any](g *Graph, name string, opts ...tensor.ConsOpt) Node {
 	}
 
 	if g != nil {
-		return NewValueInGraph[DT](g, name, bas)
+		return newValueInGraph[DT](g, name, bas)
 	}
-	return NewValue[DT](name, bas)
+	return newValue[DT](name, bas)
 }
 
 // desc represents the common things that a Value and a Symbolic node have
@@ -107,8 +106,8 @@ type Value[DT any, T tensor.Tensor[DT, T]] struct {
 	beforeLift T
 }
 
-// NewValue creates a new value node. It is the most basic way to create a node.
-func NewValue[DT any, T tensor.Tensor[DT, T]](name string, v T) *Value[DT, T] {
+// newValue creates a new value node. It is the most basic way to create a node.
+func newValue[DT any, T tensor.Tensor[DT, T]](name string, v T) *Value[DT, T] {
 	retVal := &Value[DT, T]{
 		Basic: v,
 		desc: desc{
@@ -118,12 +117,13 @@ func NewValue[DT any, T tensor.Tensor[DT, T]](name string, v T) *Value[DT, T] {
 	return retVal
 }
 
-func NewValueInGraph[DT any, T tensor.Tensor[DT, T]](g *Graph, name string, v T) *Value[DT, T] {
+func newValueInGraph[DT any, T tensor.Tensor[DT, T]](g *Graph, name string, v T) *Value[DT, T] {
 	// TODO check that v has g as engine
 	retVal := &Value[DT, T]{
 		Basic: v,
 		desc: desc{
 			name: name,
+			id:   g.newNodeID(),
 		},
 	}
 	if g != nil {
@@ -284,7 +284,6 @@ func liftNode(n Node) Node {
 
 // SymToVal converts a symbolic node to a value node. It is a convenience function.
 func SymToVal[DT any, T tensor.Tensor[DT, T]](n *Symbolic[DT]) *Value[DT, T] {
-	log.Printf("SymToVal: %v", n)
 	var d T
 	d = d.Alike(tensor.WithShape(n.Shape()...), tensor.WithEngine(n.engine))
 	retVal := replaceValueInGraph[DT, T](n.engine, n.name, n.id, d)

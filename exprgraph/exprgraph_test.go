@@ -242,7 +242,7 @@ func TestGraph_AddChildren(t *testing.T) {
 
 func TestGraph_NameOf(t *testing.T) {
 	sampleTensor := dense.New[float32](tensor.WithShape(1, 1))
-	sampleNode := NewValue[float32]("test", sampleTensor)
+	sampleNode := newValue[float32]("test", sampleTensor)
 	sampleDV := dual.New[float32, *dense.Dense[float32]](sampleTensor)
 	sampleNodeLifted := &Value[float32, *dense.Dense[float32]]{
 		desc:       desc{name: "test"},
@@ -284,7 +284,7 @@ func TestGraph_NameOf(t *testing.T) {
 			"tensor found",
 			testGraphFields{
 				nodes: map[int64]Node{
-					0: NewValue[float32]("test", sampleTensor),
+					0: newValue[float32]("test", sampleTensor),
 				},
 			},
 			args{
@@ -337,7 +337,7 @@ func TestGraph_NameOf(t *testing.T) {
 
 func TestGraph_IDOf(t *testing.T) {
 	sampleTensor := dense.New[float32](tensor.WithShape(1, 1))
-	sampleNode := NewValue[float32]("test", sampleTensor)
+	sampleNode := newValue[float32]("test", sampleTensor)
 	sampleDV := dual.New[float32, *dense.Dense[float32]](sampleTensor)
 	sampleNodeLifted := &Value[float32, *dense.Dense[float32]]{
 		desc:       desc{name: "test"},
@@ -372,7 +372,7 @@ func TestGraph_IDOf(t *testing.T) {
 			"tensor found",
 			testGraphFields{
 				nodes: map[int64]Node{
-					0: NewValue[float32]("test", sampleTensor),
+					0: newValue[float32]("test", sampleTensor),
 				},
 			},
 			args{
@@ -426,7 +426,7 @@ func TestGraph_IDOf(t *testing.T) {
 
 func TestGraph_NodeOf(t *testing.T) {
 	sampleTensor := dense.New[float32](tensor.WithShape(1, 1))
-	sampleNode := NewValue[float32]("test", sampleTensor)
+	sampleNode := newValue[float32]("test", sampleTensor)
 	sampleDV := dual.New[float32, *dense.Dense[float32]](sampleTensor)
 	sampleNodeLifted := &Value[float32, *dense.Dense[float32]]{
 		desc:       desc{name: "test"},
@@ -455,7 +455,7 @@ func TestGraph_NodeOf(t *testing.T) {
 			"tensor found",
 			testGraphFields{
 				nodes: map[int64]Node{
-					0: NewValue[float32]("test", sampleTensor),
+					0: newValue[float32]("test", sampleTensor),
 				},
 			},
 			args{
@@ -906,7 +906,7 @@ func TestGraph_AddNode(t *testing.T) {
 				},
 				nodeIDs: uid.NewSet(),
 			},
-			args{NewValue[float32]("test", dense.New[float32](dense.WithEngine(&dummyLifter{}), dense.WithShape(1, 1)))},
+			args{newValue[float32]("test", dense.New[float32](dense.WithEngine(&dummyLifter{}), dense.WithShape(1, 1)))},
 			false,
 		},
 		// TODO: Add test cases.

@@ -53,19 +53,25 @@ func Example_symbolicEngine() {
 
 // Example_symbolicEngineUsingTensorAPI demonstrates how the tensor package's API may be used with a symbolic engine.
 func Example_symbolicEngineUsingTensorAPI() {
+	// this function is only required because in these examples, a global "randomizer" is used
+	// to create "random" names.
+	// we expect this test to be run concurrently, so to get the correct results we'd have to reset the
+	// random counter.
+	resetRnd()
+
 	g := exprgraph.NewGraph(nil)
 
-	x := dense.New[float64](tensor.WithEngine(g), tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	y := dense.New[float64](tensor.WithEngine(g), tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
-	z := dense.New[float64](tensor.WithEngine(g), tensor.WithShape(), tensor.WithBacking([]float64{1}))
+	x := dense.New[float64](tensor.WithEngine(g), tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6})) // 0
+	y := dense.New[float64](tensor.WithEngine(g), tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1})) // 1
+	z := dense.New[float64](tensor.WithEngine(g), tensor.WithShape(), tensor.WithBacking([]float64{1}))                    // 3
 
-	xy, err := MatMul[float64, *dense.Dense[float64]](x, y)
+	xy, err := MatMul[float64, *dense.Dense[float64]](x, y) // 2
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	xypz, err := Add[float64, *dense.Dense[float64]](xy, z)
+	xypz, err := Add[float64, *dense.Dense[float64]](xy, z) // 4
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -84,8 +90,8 @@ func Example_symbolicEngineUsingTensorAPI() {
 	// ⎣2  1⎦
 	//
 	// xy:
-	// node(2,Random_2×Random_3,Random_2×Random_3)
+	// node(2,Random_1×Random_2)
 	// xy+z:
-	// node(4,Random_2×Random_3+Random_4,Random_2×Random_3+Random_4)
+	// node(4,Random_1×Random_2+Random_3)
 
 }

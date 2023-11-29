@@ -3,6 +3,7 @@ package exprgraph_test
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -147,18 +148,20 @@ func MatMul[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal
 
 		var aname, bname string
 		var anode, bnode exprgraph.Node
-
 		if aname, err = g.NameOf(a); err != nil {
 			// create a node
 			aname = randomName(a)
 			anode = exprgraph.New[DT](g, aname, tensor.WithBacking(a))
 		}
+
 		if bname, err = g.NameOf(b); err != nil {
 			// create b node
 			bname = randomName(b)
 			bnode = exprgraph.New[DT](g, bname, tensor.WithBacking(b))
 		}
+
 		cname := aname + op.String() + bname
+		err = nil
 
 		// construct node
 		if anode == nil {
@@ -325,6 +328,7 @@ func Add[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal go
 			bnode = exprgraph.New[DT](g, bname, tensor.WithBacking(b))
 		}
 		cname := aname + op.String() + bname
+		err = nil
 
 		// construct node
 		if anode == nil {
@@ -402,10 +406,19 @@ func Example_operations() {
 }
 
 var rndCounter int
+var rndLock sync.Mutex
 
 func randomName(a gorgonia.Tensor) string {
+	rndLock.Lock()
+	defer rndLock.Unlock()
 	rndCounter++
 	return fmt.Sprintf("Random_%d", rndCounter)
+}
+
+func resetRnd() {
+	rndLock.Lock()
+	rndCounter = 0
+	rndLock.Unlock()
 }
 
 // getDeriv is a utility function

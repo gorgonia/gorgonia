@@ -76,9 +76,9 @@ func newVal(opts ...testopt) *Value[float64, *dense.Dense[float64]] {
 	}
 	var retVal *Value[float64, *dense.Dense[float64]]
 	if c.g != nil {
-		retVal = NewValueInGraph[float64, *dense.Dense[float64]](c.g, c.name, dense.New[float64](dense.WithShape(c.shape...), dense.WithBacking(backing), dense.WithEngine(c.g)))
+		retVal = newValueInGraph[float64, *dense.Dense[float64]](c.g, c.name, dense.New[float64](dense.WithShape(c.shape...), dense.WithBacking(backing), dense.WithEngine(c.g)))
 	} else {
-		retVal = NewValue[float64, *dense.Dense[float64]](c.name, dense.New[float64](dense.WithShape(c.shape...), dense.WithBacking(backing)))
+		retVal = newValue[float64, *dense.Dense[float64]](c.name, dense.New[float64](dense.WithShape(c.shape...), dense.WithBacking(backing)))
 	}
 
 	retVal.id = NodeID(c.id)
