@@ -190,28 +190,34 @@ func TestNode_Format(t *testing.T) {
 			name:   "display Value %2.2v",
 			n:      newVal(),
 			format: "%2.2v",
-			want:   "TO BE INCLUDED",
+			want: `⎡1e+02  2e+02⎤
+⎣  3.1      4⎦
+`,
 		},
 
 		{
 			name:   "display Value %2.2f",
 			n:      newVal(),
 			format: "%2.2f",
-			want:   "TO BE INCLUDED",
+			want: `⎡100.00  200.00⎤
+⎣  3.14    4.00⎦
+`,
 		},
 
 		{
 			name:   "display Value %#v",
 			n:      newVal(),
 			format: "%#v",
-			want:   "TO BE INCLUDED",
+			want: `⎡    100      200⎤
+⎣3.14159        4⎦
+`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := fmt.Sprintf(tt.format, tt.n); got != tt.want {
-				t.Errorf("Node.Format() = %v, want %v", got, tt.want)
+				t.Errorf("Node.Format() =\n%v, want\n%v", got, tt.want)
 			}
 
 		})

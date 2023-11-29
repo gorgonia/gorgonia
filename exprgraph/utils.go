@@ -15,8 +15,11 @@ import (
 func T2B[DT tensor.Num](a Tensor) tensor.Basic[DT] {
 	switch t := a.(type) {
 	case Node:
-		if v, ok := t.(valuelifter); ok {
-			return v.v().(tensor.Basic[DT])
+		if vl, ok := t.(valuelifter); ok {
+			v := vl.v()
+			if v != nil {
+				return v.(tensor.Basic[DT])
+			}
 		}
 		return nil
 	case dual.Value[DT]:

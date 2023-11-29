@@ -29,7 +29,7 @@ func (ad adInstr[DT, T]) do(ctx context.Context) error { return ad.DoDiff(ctx, a
 
 // BwdEngine is an Engine that performs backwards mode diffentiation.
 type BwdEngine[DT tensor.Num, T tensor.Tensor[DT, T]] struct {
-	dense.StdFloat64Engine[*dense.Dense[float64]]
+	tensor.Engine
 	g *exprgraph.Graph
 
 	q []adInstr[DT, T]

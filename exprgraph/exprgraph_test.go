@@ -928,7 +928,7 @@ type dummyLifter struct {
 }
 
 func (*dummyLifter) Lift(t Tensor) Tensor {
-	panic("NYI")
+	return t
 }
 
 func TestGraph_Edge(t *testing.T) {

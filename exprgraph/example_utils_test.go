@@ -3,7 +3,6 @@ package exprgraph_test
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -140,7 +139,6 @@ func MatMul[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal
 	if !ok {
 		eng, ok = b.Engine().(GraphEngine)
 	}
-	log.Printf("eng %T, ok %t", eng, ok)
 
 	op := matmul[DT, T]{}
 	if ok {
@@ -177,19 +175,16 @@ func MatMul[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal
 		// shape checks are done here
 		cnode, err := exprgraph.Apply[DT, T](g, op, cname, anode, bnode)
 		if err != nil {
-			log.Printf("Apply failed")
 			return nil, err
 		}
 		retVal = cnode
 	}
 
 	// check if engine supports MatMul. If not, return
-	if _, ok := eng.Workhorse().(tensor.BLA[DT, T]); !ok {
-		log.Printf("This engine %T | %Tdoesn't support BLA", a.Engine(), b.Engine())
+	if _, ok := a.Engine().Workhorse().(tensor.BLA[DT, T]); !ok {
 		return
 
 	}
-	log.Printf("Do the values stuff")
 	// do the values stuff
 	at, aok := exprgraph.T2T[DT, T](a)
 	bt, bok := exprgraph.T2T[DT, T](b)
@@ -207,11 +202,9 @@ func MatMul[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal
 		ct = ct.Alike(tensor.WithEngine(a.Engine()), tensor.WithShape(shp...))
 	default:
 		// one of a or b is not a value tensor
-		log.Printf("either a or b is not a value tensor| %T", retVal)
 		return retVal, nil
 	}
 
-	log.Printf("Prealloc Do %T", op)
 	if ct, err = op.PreallocDo(nil, ct, at, bt); err != nil {
 		return nil, err
 	}
@@ -230,12 +223,12 @@ func MatMul[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal
 		// do queue stuff here
 		err = q.Q(op, []gorgonia.Tensor{a, b}, retVal)
 	}
-	log.Printf("retVal %T", retVal)
 	return
 }
 
-type adder[T any] interface {
+type adder[DT, T any] interface {
 	Add(T, ...tensor.FuncOpt) (T, error)
+	AddScalar(s DT, scalarOnLeft bool, opts ...tensor.FuncOpt) (T, error)
 }
 
 // add is addition with a scalar on the right
@@ -259,7 +252,7 @@ func (op add[DT, T]) ShapeExpr() shapes.Expr {
 func (op add[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	a := vs[0]
 	b := vs[1]
-	mm, ok := any(a).(adder[T])
+	mm, ok := any(a).(adder[DT, T])
 	if !ok {
 		return retVal, errors.Errorf("expected %T to have a Add method", a)
 	}
@@ -280,11 +273,11 @@ func (op add[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVa
 
 	a := vs[0]
 	b := vs[1]
-	mm, ok := any(a).(adder[T])
+	mm, ok := any(a).(adder[DT, T])
 	if !ok {
 		return retVal, errors.Errorf("expected %T to have a Add method", a)
 	}
-	return mm.Add(b, tensor.WithReuse(prealloc))
+	return mm.AddScalar(b.Data()[0], true, tensor.WithReuse(prealloc))
 }
 
 func (op add[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
@@ -373,7 +366,8 @@ func Add[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal go
 		ct = rv.Value()
 	case aok && bok && retVal == nil:
 		// we'd have to create one ourselves
-		shp := tensor.Shape{a.Shape()[0], b.Shape()[1]}
+		// NOTICE: This example assumes that `Add` adds a matrix to a scalar.
+		shp := a.Shape()
 		ct = ct.Alike(tensor.WithEngine(a.Engine()), tensor.WithShape(shp...))
 	default:
 		// one of a or b is not a value tensor
