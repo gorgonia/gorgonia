@@ -9,7 +9,6 @@ import (
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/exprgraph"
 	"gorgonia.org/gorgonia/ops"
-	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
@@ -39,6 +38,10 @@ type Queueer[DT any, T tensor.Tensor[DT, T]] interface {
 	Q(op ops.Op[DT, T], inputs []gorgonia.Tensor, output gorgonia.Tensor) error
 }
 
+type matmuler[T any] interface {
+	MatMul(u T, opts ...tensor.FuncOpt) (T, error)
+}
+
 // matmul is an Op
 type matmul[DT tensor.Num, T tensor.Tensor[DT, T]] struct{}
 
@@ -63,10 +66,22 @@ func (op matmul[DT, T]) ShapeExpr() shapes.Expr {
 }
 
 // Do executes the op.
-func (op matmul[DT, T]) Do(ctx context.Context, vs ...T) (T, error) {
+func (op matmul[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+	if ctx != nil {
+		select {
+		case <-ctx.Done():
+			return retVal, NoOp{}
+		default:
+		}
+
+	}
 	a := vs[0]
 	b := vs[1]
-	return tensor.MatMul(a, b)
+	mm, ok := any(a).(matmuler[T])
+	if !ok {
+		return retVal, errors.Errorf("expected %T to have a MatMul method", a)
+	}
+	return mm.MatMul(b)
 }
 
 func (op matmul[DT, T]) String() string { return "×" }
@@ -82,10 +97,14 @@ func (op matmul[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (re
 	}
 	a := vs[0]
 	b := vs[1]
-	return tensor.MatMul(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx))
+	mm, ok := any(a).(matmuler[T])
+	if !ok {
+		return retVal, errors.Errorf("expected %T to have a MatMul method", a)
+	}
+	return mm.MatMul(b, tensor.WithReuse(prealloc))
 }
 
-func (op matmul[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
+func (op matmul[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) (err error) {
 	adv := exprgraph.T2T[DT](inputs[0]).(*dual.Dual[DT, T])
 	bdv := exprgraph.T2T[DT](inputs[1]).(*dual.Dual[DT, T])
 	cdv := exprgraph.T2T[DT](output).(*dual.Dual[DT, T])
@@ -94,22 +113,21 @@ func (op matmul[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, ou
 	bdvd := bdv.Deriv()
 
 	// temporary transpose
-	if err := bdv.Value.T(); err != nil {
+	var bdvT, advT T
+	if bdvT, err = bdv.Value().T(); err != nil {
 		return err
 	}
-	if err := adv.Value.T(); err != nil {
+	if advT, err = adv.Value().T(); err != nil {
 		return err
 	}
-	defer bdv.Value.UT()
-	defer adv.Value.UT()
 
 	// dA = C×B'
-	if _, err := op.PreallocDo(ctx, advd, cdv.Value(), bdv.Value()); err != nil {
+	if _, err := op.PreallocDo(ctx, advd, cdv.Value(), bdvT); err != nil {
 		return err
 	}
 
 	// dB = A'×C
-	if _, err := op.PreallocDo(ctx, bdvd, adv.Value(), cdv.Value()); err != nil {
+	if _, err := op.PreallocDo(ctx, bdvd, advT, cdv.Value()); err != nil {
 		return err
 	}
 	return nil
@@ -209,6 +227,10 @@ func MatMul[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal
 	return
 }
 
+type adder[T any] interface {
+	Add(T, ...tensor.FuncOpt) (T, error)
+}
+
 // add is addition with a scalar on the right
 type add[DT tensor.Num, T tensor.Tensor[DT, T]] struct{}
 
@@ -227,10 +249,14 @@ func (op add[DT, T]) ShapeExpr() shapes.Expr {
 }
 
 // Do executes the op.
-func (op add[DT, T]) Do(ctx context.Context, vs ...T) (T, error) {
+func (op add[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	a := vs[0]
 	b := vs[1]
-	return tensor.Add[DT](a, b)
+	mm, ok := any(a).(adder[T])
+	if !ok {
+		return retVal, errors.Errorf("expected %T to have a Add method", a)
+	}
+	return mm.Add(b)
 }
 
 func (op add[DT, T]) String() string { return "+" }
@@ -247,7 +273,11 @@ func (op add[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVa
 
 	a := vs[0]
 	b := vs[1]
-	return tensor.Add[DT](a, b, tensor.WithReuse(prealloc))
+	mm, ok := any(a).(adder[T])
+	if !ok {
+		return retVal, errors.Errorf("expected %T to have a Add method", a)
+	}
+	return mm.Add(b, tensor.WithReuse(prealloc))
 }
 
 func (op add[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
@@ -256,12 +286,17 @@ func (op add[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, outpu
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
-	if _, err := tensor.Add[DT](advd, 1.0, tensor.UseUnsafe); err != nil {
-		return err
+	// this should be replaced with a kernel call somewhere
+	data := advd.Data()
+	for i := range data {
+		data[i] += 1
 	}
-	if _, err := tensor.Add[DT](bdvd, 1.0, tensor.UseUnsafe); err != nil {
-		return err
+
+	data = bdvd.Data()
+	for i := range data {
+		data[i] += 1
 	}
+
 	return nil
 }
 

@@ -5,6 +5,7 @@ import (
 
 	"gorgonia.org/gorgonia/exprgraph"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 )
 
 func ExampleSort() {
@@ -16,11 +17,11 @@ func ExampleSort() {
 	w := exprgraph.New[float64](g, "w", tensor.WithShape(2, 2))
 	b := exprgraph.New[float64](g, "b", tensor.WithShape())
 
-	xw, err := MatMul(x, w)
+	xw, err := MatMul[float64, *dense.Dense[float64]](x, w)
 	if err != nil {
 		fmt.Println(err)
 	}
-	_, err = Add(xw, b)
+	_, err = Add[float64, *dense.Dense[float64]](xw, b)
 	if err != nil {
 		fmt.Println(err)
 	}

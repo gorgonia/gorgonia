@@ -12,13 +12,13 @@ func Example_nograph() {
 	x := dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
 	y := dense.New[float64](tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
 	z := dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{1}))
-	xy, err := MatMul(x, y)
+	xy, err := MatMul[float64, *dense.Dense[float64]](x, y)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	xypz, err := Add(xy, z)
+	xypz, err := Add[float64, *dense.Dense[float64]](xy, z)
 	if err != nil {
 		fmt.Println(err)
 		return

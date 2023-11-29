@@ -6,6 +6,7 @@ import (
 	"gorgonia.org/gorgonia/exprgraph"
 	"gorgonia.org/gorgonia/internal/encoding"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 )
 
 func Example_encoding() {
@@ -17,11 +18,11 @@ func Example_encoding() {
 	y := exprgraph.New[float64](g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
 	z := exprgraph.New[float64](g, "z", tensor.WithShape())
 
-	xy, err := MatMul(x, y)
+	xy, err := MatMul[float64, *dense.Dense[float64]](x, y)
 	if err != nil {
 		fmt.Println(err)
 	}
-	xypz, err := Add(xy, z)
+	xypz, err := Add[float64, *dense.Dense[float64]](xy, z)
 	if err != nil {
 		fmt.Println(err)
 	}
