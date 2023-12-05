@@ -8,12 +8,17 @@ type Lifter interface {
 	Lift(oldTensorType Tensor) (newTensorType Tensor)
 }
 
+type ValueNode interface {
+	Node
+	V() values.V
+}
+
 type graphSetter interface {
 	SetGraph(g *Graph)
 }
 
 type valuelifter interface {
-	v() values.V
+	V() values.V
 	prelift() values.V
 
 	setLifted(lifted, original values.V)

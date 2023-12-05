@@ -3,7 +3,6 @@ package exprgraph_test
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia"
@@ -29,11 +28,13 @@ func (ad adInstr[DT, T]) do(ctx context.Context) error { return ad.DoDiff(ctx, a
 
 // BwdEngine is an Engine that performs backwards mode diffentiation.
 type BwdEngine[DT tensor.Num, T tensor.Tensor[DT, T]] struct {
-	tensor.Engine
+	StandardEngine[DT, T]
 	g *exprgraph.Graph
 
 	q []adInstr[DT, T]
 }
+
+func (e *BwdEngine[DT, T]) Workhorse() tensor.Engine { return e.StandardEngine }
 
 func (e *BwdEngine[DT, T]) Graph() *exprgraph.Graph { return e.g }
 
@@ -49,6 +50,7 @@ func (e *BwdEngine[DT, T]) Lift(a exprgraph.Tensor) exprgraph.Tensor {
 	panic("Unreachable")
 }
 
+/*
 func (e *BwdEngine[DT, T]) Inner(ctx context.Context, a, b T) (DT, error) {
 	return 0, errors.New("NYI")
 }
@@ -70,11 +72,11 @@ func (e *BwdEngine[DT, T]) MatMul(ctx context.Context, a, b, c T, incr []DT) err
 	if !ok {
 		return errors.New("Expected BLA")
 	}
-	err := mm.MatMul(ctx, a, b, c, incr)
+	err := e.StandardEngine.MatMul(ctx, a, b, c, incr)
 	log.Printf("err in MatMul %v", err)
 	return err
 }
-
+*/
 /*
 func (e *BwdEngine[DT, T]) AddScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (tensor.Tensor, error) {
 	fo := tensor.ParseFuncOpts(opts...)
@@ -127,12 +129,9 @@ func (e *BwdEngine[DT, T]) Backwards(ctx context.Context) error {
 }
 
 func Example_backward_differentiation_engine() {
-	engine := &BwdEngine[float64, *dense.Dense[float64]]{Engine: dense.StdFloat64Engine[*dense.Dense[float64]]{}}
+	engine := &BwdEngine[float64, *dense.Dense[float64]]{StandardEngine: dense.StdFloat64Engine[*dense.Dense[float64]]{}}
 	g := exprgraph.NewGraph(engine)
 	engine.g = g
-
-	_, ok := g.Engine.(tensor.BLA[float64, *dense.Dense[float64]])
-	log.Printf("g is a BLA? ok %v", ok)
 
 	x := exprgraph.New[float64](g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
 	y := exprgraph.New[float64](g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
@@ -142,7 +141,6 @@ func Example_backward_differentiation_engine() {
 		fmt.Printf("Matmul failed: Err: %v\n", err)
 		return
 	}
-	log.Printf("xy %v xy==nil %v | %v", xy, xy == nil, err)
 
 	xypz, err := Add[float64, *dense.Dense[float64]](xy, z)
 	if err != nil {
@@ -150,7 +148,7 @@ func Example_backward_differentiation_engine() {
 		return
 	}
 
-	if err := engine.Backwards(nil); err != nil {
+	if err := engine.Backwards(context.Background()); err != nil {
 		fmt.Printf("Backwards failed. Err: %v\n", err)
 		return
 	}

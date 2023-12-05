@@ -174,23 +174,27 @@ func (n *Value[DT, T]) Format(f fmt.State, c rune) {
 	case 's':
 		fmt.Fprintf(f, "%s", n.name)
 	default:
-		switch t := n.Basic.(type) {
-		case T:
-			str := consFmtStr(f, c)
-			fmt.Fprintf(f, str, t)
-		default:
-			fmt.Fprintf(f, "node(%v,%s,%v)",
-				n.id, n.name, t)
+		if n.Basic == nil {
+			fmt.Fprintf(f, "node(%v,%s,%v)", n.id, n.name, n.Basic)
+			return
 		}
+		str := consFmtStr(f, c)
+		fmt.Fprintf(f, str, n.Basic)
+		// switch t := n.Basic.(type) {
+		// case T:
+
+		// default:
+
+		// }
 	}
 }
 
-func (n *Value[DT, T]) v() values.V { return n.Basic }
+func (n *Value[DT, T]) V() values.V { return n.Basic }
 
 func (n *Value[DT, T]) prelift() values.V { return n.beforeLift }
 
 func (n *Value[DT, T]) setLifted(lifted, original values.V) {
-	n.Basic = lifted.(T)
+	n.Basic = any(lifted).(tensor.Basic[DT])
 	n.beforeLift = original.(T)
 }
 
@@ -273,8 +277,8 @@ func liftNode(n Node) Node {
 	if !ok {
 		return n
 	}
-	v := nx.v()
-	e := v.Engine()
+	v := nx.V()
+	e := v.Engine().Workhorse()
 	if l, ok := e.(Lifter); ok {
 		lifted := l.Lift(v).(values.V)
 		nx.setLifted(lifted, v)

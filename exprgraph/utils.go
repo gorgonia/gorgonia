@@ -16,7 +16,7 @@ func T2B[DT tensor.Num](a Tensor) tensor.Basic[DT] {
 	switch t := a.(type) {
 	case Node:
 		if vl, ok := t.(valuelifter); ok {
-			v := vl.v()
+			v := vl.V()
 			if v != nil {
 				return v.(tensor.Basic[DT])
 			}

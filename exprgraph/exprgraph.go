@@ -112,7 +112,7 @@ func (g *Graph) find(t Tensor) Node {
 			// this little trick here (to inspect the internal structure - i.e g.nodes[i].Tensor == t)
 			// is the real reason why you cannot really create Node{Node{Node{...}}}
 			// without doing it explicitly
-			tt := nx.v().(Tensor)
+			tt := nx.V().(Tensor)
 			if t == tt {
 				return n
 			}

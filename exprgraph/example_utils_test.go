@@ -3,6 +3,7 @@ package exprgraph_test
 import (
 	"context"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/chewxy/hm"
@@ -29,6 +30,13 @@ type GraphEngine interface {
 	tensor.Engine
 	Workhorse() tensor.Engine
 	Graph() *exprgraph.Graph
+}
+
+type StandardEngine[DT any, T tensor.Tensor[DT, T]] interface {
+	tensor.Engine
+	tensor.SpecializedFuncOptHandler[DT, T]
+	tensor.BLA[DT, T]
+	tensor.Adder[DT, T]
 }
 
 type ADOp[DT any, T tensor.Tensor[DT, T]] interface {
@@ -107,6 +115,7 @@ func (op matmul[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (re
 }
 
 func (op matmul[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) (err error) {
+
 	adv := exprgraph.T2B[DT](inputs[0]).(*dual.Dual[DT, T])
 	bdv := exprgraph.T2B[DT](inputs[1]).(*dual.Dual[DT, T])
 	cdv := exprgraph.T2B[DT](output).(*dual.Dual[DT, T])
@@ -209,6 +218,7 @@ func MatMul[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal
 	}
 
 	if ct, err = op.PreallocDo(nil, ct, at, bt); err != nil {
+		log.Printf("MatMul PreallocDo failed %v", err)
 		return nil, err
 	}
 	if retVal == nil {
@@ -218,9 +228,9 @@ func MatMul[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal
 	// check if engine is backwards (i.e. requires a queue)
 	// if not, return.
 	var q Queueer[DT, T]
-	q, ok = a.Engine().(Queueer[DT, T])
+	q, ok = a.Engine().Workhorse().(Queueer[DT, T])
 	if !ok {
-		q, ok = b.Engine().(Queueer[DT, T])
+		q, ok = b.Engine().Workhorse().(Queueer[DT, T])
 	}
 	if q != nil {
 		// do queue stuff here
@@ -350,9 +360,9 @@ func Add[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal go
 		retVal = cnode
 	}
 
-	// check if engine supports MatMul. If not, return
-	if _, ok := a.Engine().(tensor.Adder[DT, T]); !ok {
-		if _, ok := b.Engine().(tensor.Adder[DT, T]); !ok {
+	// check if engine supports Add. If not, return
+	if _, ok := a.Engine().Workhorse().(tensor.Adder[DT, T]); !ok {
+		if _, ok := b.Engine().Workhorse().(tensor.Adder[DT, T]); !ok {
 			return
 		}
 	}
@@ -387,9 +397,9 @@ func Add[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal go
 	// check if engine is backwards (i.e. requires a queue)
 	// if not, return.
 	var q Queueer[DT, T]
-	q, ok = a.Engine().(Queueer[DT, T])
+	q, ok = a.Engine().Workhorse().(Queueer[DT, T])
 	if !ok {
-		q, ok = b.Engine().(Queueer[DT, T])
+		q, ok = b.Engine().Workhorse().(Queueer[DT, T])
 	}
 	if q != nil {
 		// do queue stuff here
