@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/exprgraph"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 )
 
 // FwdEngine is a Engine that performs forwards mode differentiation
@@ -14,31 +16,47 @@ import (
 // Here the implementation is done by means of implementing MatMul and AddScalar
 // Obviously in the real world situation, Add also needs to be implemented, but in this example
 // we are not going to call Add, only AddScalar.
-type FwdEngine struct {
-	tensor.StdEng
+type FwdEngine[DT tensor.Num, T tensor.Tensor[DT, T]] struct {
+	StandardEngine[DT, T]
 	g *exprgraph.Graph
 }
 
-func (e *FwdEngine) Graph() *exprgraph.Graph { return e.g }
+func (e *FwdEngine[DT, T]) Graph() *exprgraph.Graph { return e.g }
 
-func (e *FwdEngine) SetGraph(g *exprgraph.Graph) { e.g = g }
+func (e *FwdEngine[DT, T]) SetGraph(g *exprgraph.Graph) { e.g = g }
 
-func (e *FwdEngine) Lift(a exprgraph.Tensor) exprgraph.Tensor {
+func (e *FwdEngine[DT, T]) Lift(a exprgraph.Tensor) exprgraph.Tensor {
 	switch t := a.(type) {
-	case *dual.Dual:
+	case *dual.Dual[DT, T]:
 		return a
-	case tensor.Tensor:
-		return dual.New(t)
+	case T:
+		return dual.New[DT, T](t)
 	}
 	panic("Unreachable")
 }
 
-func (e *FwdEngine) MatMul(ctx context.Context, a, b, c tensor.Tensor) error {
-	adv := a.(*dual.Dual)
-	bdv := b.(*dual.Dual)
-	cdv := c.(*dual.Dual)
+func (e *FwdEngine[DT, T]) Inner(ctx context.Context, a, b T) (DT, error) {
+	return 0, errors.New("NYI")
+}
 
-	if err := e.StdEng.MatMul(ctx, adv.Value, bdv.Value, cdv.Value); err != nil {
+func (e *FwdEngine[DT, T]) FMA(ctx context.Context, a, x, retVal T) error {
+	return errors.New("NYI")
+}
+
+func (e *FwdEngine[DT, T]) MatVecMul(ctx context.Context, a, b, retVal T, incr []DT) error {
+	return errors.New("NYI")
+}
+
+func (e *FwdEngine[DT, T]) Outer(ctx context.Context, a, b, retVal T, incr []DT) error {
+	return errors.New("NYI")
+}
+
+func (e *FwdEngine[DT, T]) MatMul(ctx context.Context, a, b, c T, incr []DT) error {
+	adv := a.(*dual.Dual[DT, T])
+	bdv := b.(*dual.Dual[DT, T])
+	cdv := c.(*dual.Dual[DT, T])
+
+	if err := e.StandardEngine.MatMul(ctx, adv.Value, bdv.Value, cdv.Value); err != nil {
 		return err
 	}
 
@@ -50,7 +68,7 @@ func (e *FwdEngine) MatMul(ctx context.Context, a, b, c tensor.Tensor) error {
 	}
 
 	// dA = C×B'
-	if err := e.StdEng.MatMul(ctx, cdv.Value, bdv.Value, advd); err != nil {
+	if err := e.StandardEngine.MatMul(ctx, cdv.Value, bdv.Value, advd); err != nil {
 		return err
 	}
 
@@ -59,7 +77,7 @@ func (e *FwdEngine) MatMul(ctx context.Context, a, b, c tensor.Tensor) error {
 	}
 
 	// dB = A'×C
-	if err := e.StdEng.MatMul(ctx, adv.Value, cdv.Value, bdvd); err != nil {
+	if err := e.StandardEngine.MatMul(ctx, adv.Value, cdv.Value, bdvd); err != nil {
 		return err
 	}
 
@@ -70,7 +88,8 @@ func (e *FwdEngine) MatMul(ctx context.Context, a, b, c tensor.Tensor) error {
 	return nil
 }
 
-func (e *FwdEngine) AddScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (tensor.Tensor, error) {
+/*
+func (e *FwdEngine[DT, T]) AddScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (tensor.Tensor, error) {
 	adv := a.(*dual.Dual)
 	bdv := b.(*dual.Dual)
 	fo := tensor.ParseFuncOpts(opts...)
@@ -99,26 +118,26 @@ func (e *FwdEngine) AddScalar(a tensor.Tensor, b interface{}, leftTensor bool, o
 	bdvd.Memset(1.0)
 	return c, nil
 }
-
+*/
 // FwdEngine is a Engine that performs forwards mode differentiation
 //
 // Here the implementation is done by means of implementing MatMul and AddScalar
 // Obviously in the real world situation, Add also needs to be implemented, but in this example
 // we are not going to call Add, only AddScalar.
 func Example_forward_differentiation_engine() {
-	engine := &FwdEngine{}
+	engine := &FwdEngine[float64, *dense.Dense[float64]]{StandardEngine: dense.StdFloat64Engine[*dense.Dense[float64]]{}}
 	g := exprgraph.NewGraph(engine)
 	engine.g = g
 
-	x := exprgraph.NewNode(g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	y := exprgraph.NewNode(g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
-	z := exprgraph.NewNode(g, "z", tensor.WithShape(), tensor.WithBacking([]float64{1}))
-	xy, err := MatMul(x, y)
+	x := exprgraph.New[float64](g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	y := exprgraph.New[float64](g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
+	z := exprgraph.New[float64](g, "z", tensor.WithShape(), tensor.WithBacking([]float64{1}))
+	xy, err := MatMul[float64](x, y)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	xypz, err := Add(xy, z)
+	xypz, err := Add[float64](xy, z)
 	if err != nil {
 		fmt.Println(err)
 		return
