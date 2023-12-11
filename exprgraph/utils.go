@@ -37,6 +37,9 @@ func T2T[DT tensor.Num, T tensor.Tensor[DT, T]](a Tensor) (retVal T, ok bool) {
 		return t.Value(), true
 	case T:
 		return t, true
+	case valuelifter:
+		retVal, ok = t.V().(T)
+		return retVal, ok
 	default:
 		return retVal, false
 	}

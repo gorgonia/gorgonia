@@ -2,6 +2,7 @@ package exprgraph
 
 import (
 	"fmt"
+	"log"
 	"sync/atomic"
 
 	"github.com/chewxy/hm"
@@ -289,6 +290,7 @@ func liftNode(n Node) Node {
 // SymToVal converts a symbolic node to a value node. It is a convenience function.
 func SymToVal[DT any, T tensor.Tensor[DT, T]](n *Symbolic[DT]) *Value[DT, T] {
 	var d T
+	log.Printf("Type of d is %T", d)
 	d = d.Alike(tensor.WithShape(n.Shape()...), tensor.WithEngine(n.engine))
 	retVal := replaceValueInGraph[DT, T](n.engine, n.name, n.id, d)
 	retVal.Op = n.Op.(ops.Op[DT, T])

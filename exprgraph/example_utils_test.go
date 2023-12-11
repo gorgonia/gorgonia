@@ -107,11 +107,16 @@ func (op matmul[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (re
 	}
 	a := vs[0]
 	b := vs[1]
-	mm, ok := any(a).(matmuler[T])
-	if !ok {
-		return retVal, errors.Errorf("expected %T to have a MatMul method", a)
+	switch mm := any(a).(type) {
+	case matmuler[T]:
+		return mm.MatMul(b, tensor.WithReuse(prealloc))
+	default:
+		var ret tensor.Basic[DT]
+		if ret, err = tensor.MatMul[DT](a, b, tensor.WithReuse(prealloc)); err != nil {
+			return retVal, err
+		}
+		return ret.(T), nil
 	}
-	return mm.MatMul(b, tensor.WithReuse(prealloc))
 }
 
 func (op matmul[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) (err error) {
@@ -286,11 +291,17 @@ func (op add[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVa
 
 	a := vs[0]
 	b := vs[1]
-	mm, ok := any(a).(adder[DT, T])
-	if !ok {
-		return retVal, errors.Errorf("expected %T to have a Add method", a)
+	switch mm := any(a).(type) {
+	case adder[DT, T]:
+		return mm.AddScalar(b.Data()[0], true, tensor.WithReuse(prealloc))
+	default:
+		var ret tensor.Basic[DT]
+		if ret, err = tensor.Add[DT](a, b, tensor.WithReuse(prealloc)); err != nil {
+			return retVal, err
+		}
+		return ret.(T), nil
 	}
-	return mm.AddScalar(b.Data()[0], true, tensor.WithReuse(prealloc))
+
 }
 
 func (op add[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
@@ -363,6 +374,7 @@ func Add[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal go
 	// check if engine supports Add. If not, return
 	if _, ok := a.Engine().Workhorse().(tensor.Adder[DT, T]); !ok {
 		if _, ok := b.Engine().Workhorse().(tensor.Adder[DT, T]); !ok {
+			log.Printf("Cannot add. Neither A nor B implements Adder")
 			return
 		}
 	}
@@ -371,7 +383,7 @@ func Add[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal go
 	at, aok := exprgraph.T2T[DT, T](a)
 	bt, bok := exprgraph.T2T[DT, T](b)
 	var ct T
-
+	log.Printf("add: aok %t, bok %t", aok, bok)
 	switch {
 	case aok && bok && retVal != nil:
 		// both a and b  are values, so we can "materialize" c
@@ -433,6 +445,12 @@ func resetRnd() {
 
 // getDeriv is a utility function
 func getDeriv[DT tensor.Num, T tensor.Tensor[DT, T]](t gorgonia.Tensor) T {
-	n := t.(*exprgraph.Value[DT, T])
-	return n.Basic.(*dual.Dual[DT, T]).Deriv()
+	switch n := t.(type) {
+	case *exprgraph.Value[DT, T]:
+		return n.Basic.(*dual.Dual[DT, T]).Deriv()
+	case *exprgraph.Value[DT, *dual.Dual[DT, T]]:
+		return n.Basic.(*dual.Dual[DT, T]).Deriv()
+	}
+	panic("NYI")
+
 }

@@ -128,6 +128,109 @@ func (dv *Dual[DT, T]) Format(s fmt.State, c rune) {
 	fmt.Fprintf(s, "%v", dv.Tensor)
 }
 
+/*
+STUFF to implement tensor.Tensor
+*/
+func (dv *Dual[DT, T]) Alike(opts ...tensor.ConsOpt) *Dual[DT, T] {
+	if dv == nil {
+		var z T
+		t := z.Alike(opts...)
+		return NewVar[DT, T](t)
+	}
+
+	t := dv.Tensor.Alike(opts...)
+	// TODO with backing. Otherwise the following is fine
+	d := dv.d.Alike(opts...)
+	return &Dual[DT, T]{Tensor: t, d: d}
+}
+
+func (dv *Dual[DT, T]) Apply(f any, opts ...tensor.FuncOpt) (*Dual[DT, T], error) {
+	fo := tensor.ParseFuncOpts(opts...)
+	if fo.Unsafe {
+		_, err := dv.Tensor.Apply(f, opts...)
+		if err != nil {
+			return nil, err
+		}
+		return dv, nil
+	}
+	t, err := dv.Tensor.Apply(f, opts...)
+	if err != nil {
+		return nil, err
+	}
+	d := dv.d.Clone()
+	return &Dual[DT, T]{Tensor: t, d: d}, nil
+}
+
+func (dv *Dual[DT, T]) Reduce(fn any, defaultValue DT, opts ...tensor.FuncOpt) (*Dual[DT, T], error) {
+	fo := tensor.ParseFuncOpts(opts...)
+	if fo.Unsafe {
+		_, err := dv.Tensor.Reduce(fn, defaultValue, opts...)
+		if err != nil {
+			return nil, err
+		}
+		return dv, nil
+	}
+	t, err := dv.Tensor.Reduce(fn, defaultValue, opts...)
+	if err != nil {
+		return nil, err
+	}
+	d := dv.d.Clone()
+	return &Dual[DT, T]{Tensor: t, d: d}, nil
+}
+
+func (dv *Dual[DT, T]) Scan(fn func(DT, DT) DT, axis int, opts ...tensor.FuncOpt) (*Dual[DT, T], error) {
+	fo := tensor.ParseFuncOpts(opts...)
+	if fo.Unsafe {
+		_, err := dv.Tensor.Scan(fn, axis, opts...)
+		if err != nil {
+			return nil, err
+		}
+		return dv, nil
+	}
+	t, err := dv.Tensor.Scan(fn, axis, opts...)
+	if err != nil {
+		return nil, err
+	}
+	d := dv.d.Clone()
+	return &Dual[DT, T]{Tensor: t, d: d}, nil
+}
+
+func (dv *Dual[DT, T]) Dot(red, el func(DT, DT) DT, other *Dual[DT, T], opts ...tensor.FuncOpt) (*Dual[DT, T], error) {
+	fo := tensor.ParseFuncOpts(opts...)
+	if fo.Unsafe {
+		_, err := dv.Tensor.Dot(red, el, other.Value(), opts...)
+		if err != nil {
+			return nil, err
+		}
+		return dv, nil
+	}
+	t, err := dv.Tensor.Dot(red, el, other.Value(), opts...)
+	if err != nil {
+		return nil, err
+	}
+	d := dv.d.Clone()
+	return &Dual[DT, T]{Tensor: t, d: d}, nil
+}
+
+func (dv *Dual[DT, T]) T(axes ...int) (*Dual[DT, T], error) {
+	return nil, errors.Errorf("Cannot T() *Dual")
+}
+
+func (dv *Dual[DT, T]) Slice(rs ...tensor.SliceRange) (*Dual[DT, T], error) {
+	return nil, errors.Errorf("Cannot slice *Dual")
+}
+
+func (dv *Dual[DT, T]) Materialize() (*Dual[DT, T], error) {
+	return nil, errors.Errorf("Materialize is not supported for *Dual")
+}
+func (dv *Dual[DT, T]) Repeat(axis int, repeats ...int) (*Dual[DT, T], error) {
+	return nil, errors.Errorf("Cannot Repeat *Dual")
+}
+
+/*
+   Other interfaces
+*/
+
 // CopyFrom copies the values from a values.Value[DT] to the first value of the *Dual[DT,T]. The deriv is untouched.
 func (dv *Dual[DT, T]) CopyFrom(src interface{}) error {
 	if v, ok := src.(values.Value[DT]); ok {
