@@ -99,7 +99,7 @@ func (n *desc) ZeroWaiting() { atomic.StoreInt32(&n.waiting, int32(0)) }
 func (n *desc) isnode() {}
 
 // Value represents a node that has a value.
-type Value[DT any, T tensor.Tensor[DT, T]] struct {
+type Value[DT any, T tensor.Basic[DT]] struct {
 	tensor.Basic[DT] // note this is the interface, not the constraint
 	desc
 
@@ -133,7 +133,7 @@ func newValueInGraph[DT any, T tensor.Tensor[DT, T]](g *Graph, name string, v T)
 	return retVal
 }
 
-func replaceValueInGraph[DT any, T tensor.Tensor[DT, T]](g *Graph, name string, id NodeID, v T) *Value[DT, T] {
+func replaceValueInGraph[DT any, T tensor.Basic[DT]](g *Graph, name string, id NodeID, v T) *Value[DT, T] {
 	retVal := &Value[DT, T]{
 		Basic: v,
 		desc: desc{
@@ -288,10 +288,10 @@ func liftNode(n Node) Node {
 }
 
 // SymToVal converts a symbolic node to a value node. It is a convenience function.
-func SymToVal[DT any, T tensor.Tensor[DT, T]](n *Symbolic[DT]) *Value[DT, T] {
+func SymToVal[DT any, T tensor.Basic[DT]](n *Symbolic[DT]) *Value[DT, T] {
 	var d T
 	log.Printf("Type of d is %T", d)
-	d = d.Alike(tensor.WithShape(n.Shape()...), tensor.WithEngine(n.engine))
+	d = any(d).(tensor.Aliker[T]).Alike(tensor.WithShape(n.Shape()...), tensor.WithEngine(n.engine))
 	retVal := replaceValueInGraph[DT, T](n.engine, n.name, n.id, d)
 	retVal.Op = n.Op.(ops.Op[DT, T])
 	n.engine = nil

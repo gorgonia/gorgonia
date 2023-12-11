@@ -32,19 +32,19 @@ type GraphEngine interface {
 	Graph() *exprgraph.Graph
 }
 
-type StandardEngine[DT any, T tensor.Tensor[DT, T]] interface {
+type StandardEngine[DT any, T tensor.Basic[DT]] interface {
 	tensor.Engine
-	tensor.SpecializedFuncOptHandler[DT, T]
+	tensor.FuncOptHandler[DT]
 	tensor.BLA[DT, T]
 	tensor.Adder[DT, T]
 }
 
-type ADOp[DT any, T tensor.Tensor[DT, T]] interface {
+type ADOp[DT any, T tensor.Basic[DT]] interface {
 	ops.Op[DT, T]
 	DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error
 }
 
-type Queueer[DT any, T tensor.Tensor[DT, T]] interface {
+type Queueer[DT any, T tensor.Basic[DT]] interface {
 	Q(op ops.Op[DT, T], inputs []gorgonia.Tensor, output gorgonia.Tensor) error
 }
 
@@ -53,7 +53,7 @@ type matmuler[T any] interface {
 }
 
 // matmul is an Op
-type matmul[DT tensor.Num, T tensor.Tensor[DT, T]] struct{}
+type matmul[DT tensor.Num, T tensor.Basic[DT]] struct{}
 
 // Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime.
 func (op matmul[DT, T]) Arity() int { return 2 }
@@ -130,10 +130,10 @@ func (op matmul[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, ou
 
 	// temporary transpose
 	var bdvT, advT T
-	if bdvT, err = bdv.Value().T(); err != nil {
+	if bdvT, err = bdv.V().(tensor.Operable[T]).T(); err != nil {
 		return err
 	}
-	if advT, err = adv.Value().T(); err != nil {
+	if advT, err = adv.V().(tensor.Operable[T]).T(); err != nil {
 		return err
 	}
 
@@ -149,7 +149,7 @@ func (op matmul[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, ou
 	return nil
 }
 
-func MatMul[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
+func MatMul[DT tensor.Num, T tensor.Basic[DT]](a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 	eng, ok := a.Engine().(GraphEngine)
 	if !ok {
 		eng, ok = b.Engine().(GraphEngine)
@@ -216,7 +216,7 @@ func MatMul[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal
 	case aok && bok && retVal == nil:
 		// we'd have to create one ourselves
 		shp := tensor.Shape{a.Shape()[0], b.Shape()[1]}
-		ct = ct.Alike(tensor.WithEngine(a.Engine()), tensor.WithShape(shp...))
+		ct = any(ct).(tensor.Aliker[T]).Alike(tensor.WithEngine(a.Engine()), tensor.WithShape(shp...))
 	default:
 		// one of a or b is not a value tensor
 		return retVal, nil
@@ -250,7 +250,7 @@ type adder[DT, T any] interface {
 }
 
 // add is addition with a scalar on the right
-type add[DT tensor.Num, T tensor.Tensor[DT, T]] struct{}
+type add[DT tensor.Num, T tensor.Basic[DT]] struct{}
 
 // Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime.
 func (op add[DT, T]) Arity() int { return 2 }
@@ -295,6 +295,7 @@ func (op add[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVa
 	case adder[DT, T]:
 		return mm.AddScalar(b.Data()[0], true, tensor.WithReuse(prealloc))
 	default:
+		log.Printf("tensor.Add")
 		var ret tensor.Basic[DT]
 		if ret, err = tensor.Add[DT](a, b, tensor.WithReuse(prealloc)); err != nil {
 			return retVal, err
@@ -324,7 +325,7 @@ func (op add[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, outpu
 	return nil
 }
 
-func Add[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
+func Add[DT tensor.Num, T tensor.Basic[DT]](a, b gorgonia.Tensor) (retVal gorgonia.Tensor, err error) {
 	eng, ok := a.Engine().(GraphEngine)
 	if !ok {
 		eng, ok = b.Engine().(GraphEngine)
@@ -394,7 +395,7 @@ func Add[DT tensor.Num, T tensor.Tensor[DT, T]](a, b gorgonia.Tensor) (retVal go
 		// we'd have to create one ourselves
 		// NOTICE: This example assumes that `Add` adds a matrix to a scalar.
 		shp := a.Shape()
-		ct = ct.Alike(tensor.WithEngine(a.Engine()), tensor.WithShape(shp...))
+		ct = any(ct).(tensor.Aliker[T]).Alike(tensor.WithEngine(a.Engine()), tensor.WithShape(shp...))
 	default:
 		// one of a or b is not a value tensor
 		return retVal, nil

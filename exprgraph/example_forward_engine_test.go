@@ -14,15 +14,20 @@ import (
 
 var _ tensor.BLA[float64, *dual.Dual[float64, *dense.Dense[float64]]] = &FwdEngine[float64, *dense.Dense[float64]]{}
 var _ tensor.Adder[float64, *dual.Dual[float64, *dense.Dense[float64]]] = &FwdEngine[float64, *dense.Dense[float64]]{}
+var _ tensor.BLA[float64, tensor.Basic[float64]] = (&FwdEngine[float64, *dense.Dense[float64]]{}).BasicEng().(*FwdEngine[float64, tensor.Basic[float64]])
 
 // FwdEngine is a Engine that performs forwards mode differentiation
 //
 // Here the implementation is done by means of implementing MatMul and AddScalar
 // Obviously in the real world situation, Add also needs to be implemented, but in this example
 // we are not going to call Add, only AddScalar.
-type FwdEngine[DT tensor.Num, T tensor.Tensor[DT, T]] struct {
+type FwdEngine[DT tensor.Num, T tensor.Basic[DT]] struct {
 	StandardEngine[DT, T]
 	g *exprgraph.Graph
+}
+
+func (e FwdEngine[DT, T]) BasicEng() tensor.Engine {
+	return &FwdEngine[DT, tensor.Basic[DT]]{StandardEngine: e.StandardEngine.BasicEng().(StandardEngine[DT, tensor.Basic[DT]]), g: e.g}
 }
 
 func (e *FwdEngine[DT, T]) Graph() *exprgraph.Graph { return e.g }
@@ -39,26 +44,26 @@ func (e *FwdEngine[DT, T]) Lift(a exprgraph.Tensor) exprgraph.Tensor {
 	panic("Unreachable")
 }
 
-func (e *FwdEngine[DT, T]) Inner(ctx context.Context, a, b *dual.Dual[DT, T]) (DT, error) {
+func (e *FwdEngine[DT, T]) Inner(ctx context.Context, a, b tensor.Basic[DT]) (DT, error) {
 	return 0, errors.New("NYI")
 }
 
-func (e *FwdEngine[DT, T]) FMA(ctx context.Context, a, x, retVal *dual.Dual[DT, T]) error {
+func (e *FwdEngine[DT, T]) FMA(ctx context.Context, a, x, retVal tensor.Basic[DT]) error {
 	return errors.New("NYI")
 }
 
-func (e *FwdEngine[DT, T]) MatVecMul(ctx context.Context, a, b, retVal *dual.Dual[DT, T], incr []DT) error {
+func (e *FwdEngine[DT, T]) MatVecMul(ctx context.Context, a, b, retVal tensor.Basic[DT], incr []DT) error {
 	return errors.New("NYI")
 }
 
-func (e *FwdEngine[DT, T]) Outer(ctx context.Context, a, b, retVal *dual.Dual[DT, T], incr []DT) error {
+func (e *FwdEngine[DT, T]) Outer(ctx context.Context, a, b, retVal tensor.Basic[DT], incr []DT) error {
 	return errors.New("NYI")
 }
 
-func (e *FwdEngine[DT, T]) MatMul(ctx context.Context, a, b, c *dual.Dual[DT, T], incr []DT) error {
-	adv := a
-	bdv := b
-	cdv := c
+func (e *FwdEngine[DT, T]) MatMul(ctx context.Context, a, b, c tensor.Basic[DT], incr []DT) error {
+	adv := a.(*dual.Dual[DT, T])
+	bdv := b.(*dual.Dual[DT, T])
+	cdv := c.(*dual.Dual[DT, T])
 
 	if err := e.StandardEngine.MatMul(ctx, adv.Value(), bdv.Value(), cdv.Value(), incr); err != nil {
 		return err
@@ -67,40 +72,43 @@ func (e *FwdEngine[DT, T]) MatMul(ctx context.Context, a, b, c *dual.Dual[DT, T]
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
 
-	bdvT, err := bdv.Value().T()
+	bdvT, err := bdv.V().(tensor.Operable[T]).T()
 	if err != nil {
 		return err // cannot transpose
 	}
 
 	// dA = C×B'
-	if err := e.StandardEngine.MatMul(ctx, cdv.Value(), bdvT, advd, nil); err != nil {
+	if err := e.StandardEngine.MatMul(ctx, cdv.Value(), bdvT, advd, advd.Data()); err != nil {
 		return err
 	}
 
-	advT, err := adv.Value().T()
+	advT, err := adv.V().(tensor.Operable[T]).T()
 	if err != nil {
 		return err // cannot transpose
 	}
 
 	// dB = A'×C
-	if err := e.StandardEngine.MatMul(ctx, advT, cdv.Value(), bdvd, nil); err != nil {
+	if err := e.StandardEngine.MatMul(ctx, advT, cdv.Value(), bdvd, bdvd.Data()); err != nil {
 		return err
 	}
 
 	return nil
 }
-func (e *FwdEngine[DT, T]) Add(ctx context.Context, a, b, retVal *dual.Dual[DT, T], toIncr bool) (err error) {
+func (e *FwdEngine[DT, T]) Add(ctx context.Context, a, b, retVal tensor.Basic[DT], toIncr bool) (err error) {
+	log.Printf("add??")
 	return errors.New("NYI")
 }
 
-func (e *FwdEngine[DT, T]) AddScalar(ctx context.Context, a *dual.Dual[DT, T], b DT, retVal *dual.Dual[DT, T], leftTensor bool, toIncr bool) (err error) {
-	adv := a
+func (e *FwdEngine[DT, T]) AddScalar(ctx context.Context, a tensor.Basic[DT], b DT, retVal tensor.Basic[DT], leftTensor bool, toIncr bool) (err error) {
+	log.Printf("Add Scalar")
+	adv := a.(*dual.Dual[DT, T])
 	//bdv := b
-	if err = e.StandardEngine.AddScalar(ctx, adv.Value(), b, retVal.Value(), leftTensor, toIncr); err != nil {
+	if err = e.StandardEngine.AddScalar(ctx, adv.Value(), b, retVal, leftTensor, toIncr); err != nil {
 		return err
 	}
 
 	advd := adv.Deriv()
+	log.Printf("AddScalar %v", advd)
 	advd.Memset(1.0) // this is assuming we only work in float64. More needs to be done here
 	return nil
 }

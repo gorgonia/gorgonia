@@ -13,13 +13,13 @@ import (
 //var _ datatypes.Tensor[float64] = &Dual[float64]{}
 
 // Op is a function that takes an arbitrary number of Values and returns a Value
-type Op[DT tensor.Num, T tensor.Tensor[DT, T]] func(vals ...T) (T, error)
+type Op[DT tensor.Num, T tensor.Basic[DT]] func(vals ...T) (T, error)
 
 // PreallocOp is a function that has the return value specified and preallocated, then takes an arbitrary number of Values and returns a Value.
-type PreallocOp[DT tensor.Num, T tensor.Tensor[DT, T]] func(prealloc T, inputs ...T) (T, error)
+type PreallocOp[DT tensor.Num, T tensor.Basic[DT]] func(prealloc T, inputs ...T) (T, error)
 
 // DualOp is any op that can perform its forwards operation on *Dual.
-type DualOp[DT tensor.Num, T tensor.Tensor[DT, T]] interface {
+type DualOp[DT tensor.Num, T tensor.Basic[DT]] interface {
 	Do(vals ...T) (T, error)
 	Dual(vals ...*Dual[DT, T]) (T, error)
 }
@@ -32,9 +32,9 @@ type Value[DT tensor.Num] interface {
 }
 
 // Dual represents a dual value. In this instance, a dual value usually holds the value and a gradient value.
-type Dual[DT tensor.Num, T tensor.Tensor[DT, T]] struct {
-	tensor.Tensor[DT, T]
-	d tensor.Tensor[DT, T]
+type Dual[DT tensor.Num, T tensor.Basic[DT]] struct {
+	tensor.Basic[DT]
+	d tensor.Basic[DT]
 }
 
 // SetDeriv sets the derivative value
@@ -46,21 +46,21 @@ func (dv *Dual[DT, T]) SetDeriv(d values.Value[DT]) error {
 
 // SetValue sets the value.
 func (dv *Dual[DT, T]) SetValue(v values.Value[DT]) error {
-	dv.Tensor = v.(T)
+	dv.Basic = v.(T)
 	return dv.sanity()
 }
 
 // SetEngine sets the engine.
 func (dv *Dual[DT, T]) SetEngine(e tensor.Engine) {
-	values.SetEngine[DT](dv.Tensor, e)
+	values.SetEngine[DT](dv.Basic, e)
 	values.SetEngine[DT](dv.d, e)
 }
 
 // Value returns the value of the dual value.
-func (dv *Dual[DT, T]) Value() T { return dv.Tensor.(T) }
+func (dv *Dual[DT, T]) Value() T { return dv.Basic.(T) }
 
 // V returns the value of the dual value as a tensor.Basic.
-func (dv *Dual[DT, T]) V() tensor.Basic[DT] { return dv.Tensor }
+func (dv *Dual[DT, T]) V() tensor.Basic[DT] { return dv.Basic }
 
 // Deriv returns the derivative value.
 func (dv *Dual[DT, T]) Deriv() T { return dv.d.(T) }
@@ -70,21 +70,22 @@ func (dv *Dual[DT, T]) DV() tensor.Basic[DT] { return dv.d }
 
 // Clone clones a *Dual[DT,T].
 func (dv *Dual[DT, T]) Clone() *Dual[DT, T] {
+
 	var v, d T
-	v = dv.Tensor.Clone()
+	v = dv.Basic.(tensor.Cloner[T]).Clone()
 
 	if dv.d != nil {
-		d = dv.d.Clone()
+		d = dv.d.(tensor.Cloner[T]).Clone()
 	}
 
 	dv2 := new(Dual[DT, T])
-	dv2.Tensor = v
+	dv2.Basic = v
 	dv2.d = d
 	return dv2
 }
 
 // Type returns the type of the values in the *Dual[DT,T].
-func (dv *Dual[DT, T]) Type() hm.Type { return values.TypeOf(dv.Tensor) }
+func (dv *Dual[DT, T]) Type() hm.Type { return values.TypeOf(dv.Basic) }
 
 // ValueEq implements values.Value[DT]Eqer, which states that Values can be compared.
 func (dv *Dual[DT, T]) ValueEq(a values.Value[DT]) bool {
@@ -93,11 +94,11 @@ func (dv *Dual[DT, T]) ValueEq(a values.Value[DT]) bool {
 		if at == dv {
 			return true
 		}
-		veq := at.Tensor.Eq(dv.Tensor.(T))
-		deq := at.d.Eq(dv.d.(T))
+		veq := at.Basic.(tensor.Eq[T]).Eq(dv.Basic.(T))
+		deq := at.d.(tensor.Eq[T]).Eq(dv.d.(T))
 		return veq && deq
 	// case Value:
-	// 	return ValueEq(at, dv.Tensor)
+	// 	return ValueEq(at, dv.Basic)
 	default:
 		return false
 	}
@@ -107,109 +108,110 @@ func (dv *Dual[DT, T]) Eq(other *Dual[DT, T]) bool {
 	if dv == other {
 		return true
 	}
-	veq := dv.Tensor.Eq(other.Tensor.(T))
-	deq := dv.d.Eq(other.d.(T))
+	veq := dv.Basic.(tensor.Eq[T]).Eq(other.Basic.(T))
+	deq := dv.d.(tensor.Eq[T]).Eq(other.d.(T))
 	return veq && deq
 }
 
-func (dv *Dual[DT, T]) String() string { return fmt.Sprintf("%#+v", dv.Tensor) }
+func (dv *Dual[DT, T]) String() string { return fmt.Sprintf("%#+v", dv.Basic) }
 
 func (dv *Dual[DT, T]) Format(s fmt.State, c rune) {
 	isScalar := dv.Shape().Eq(shapes.ScalarShape())
 	if s.Flag('#') {
 		if isScalar {
-			fmt.Fprintf(s, "{%v | %v}", dv.Tensor, dv.d)
+			fmt.Fprintf(s, "{%v | %v}", dv.Basic, dv.d)
 		} else {
-			fmt.Fprintf(s, "{\nvalue:\n%v---\nderiv:\n%v}", dv.Tensor, dv.d)
+			fmt.Fprintf(s, "{\nvalue:\n%v---\nderiv:\n%v}", dv.Basic, dv.d)
 		}
 		return
 	}
 
-	fmt.Fprintf(s, "%v", dv.Tensor)
+	fmt.Fprintf(s, "%v", dv.Basic)
 }
 
 /*
-STUFF to implement tensor.Tensor
+STUFF to implement tensor.Basic
 */
 func (dv *Dual[DT, T]) Alike(opts ...tensor.ConsOpt) *Dual[DT, T] {
 	if dv == nil {
 		var z T
-		t := z.Alike(opts...)
+		t := any(z).(tensor.Aliker[T]).Alike(opts...)
 		return NewVar[DT, T](t)
 	}
 
-	t := dv.Tensor.Alike(opts...)
+	t := dv.Basic.(tensor.Aliker[T]).Alike(opts...)
 	// TODO with backing. Otherwise the following is fine
-	d := dv.d.Alike(opts...)
-	return &Dual[DT, T]{Tensor: t, d: d}
+	d := dv.d.(tensor.Aliker[T]).Alike(opts...)
+	return &Dual[DT, T]{Basic: t, d: d}
 }
 
+/*
 func (dv *Dual[DT, T]) Apply(f any, opts ...tensor.FuncOpt) (*Dual[DT, T], error) {
 	fo := tensor.ParseFuncOpts(opts...)
 	if fo.Unsafe {
-		_, err := dv.Tensor.Apply(f, opts...)
+		_, err := dv.Basic.Apply(f, opts...)
 		if err != nil {
 			return nil, err
 		}
 		return dv, nil
 	}
-	t, err := dv.Tensor.Apply(f, opts...)
+	t, err := dv.Basic.Apply(f, opts...)
 	if err != nil {
 		return nil, err
 	}
 	d := dv.d.Clone()
-	return &Dual[DT, T]{Tensor: t, d: d}, nil
+	return &Dual[DT, T]{Basic: t, d: d}, nil
 }
 
 func (dv *Dual[DT, T]) Reduce(fn any, defaultValue DT, opts ...tensor.FuncOpt) (*Dual[DT, T], error) {
 	fo := tensor.ParseFuncOpts(opts...)
 	if fo.Unsafe {
-		_, err := dv.Tensor.Reduce(fn, defaultValue, opts...)
+		_, err := dv.Basic.Reduce(fn, defaultValue, opts...)
 		if err != nil {
 			return nil, err
 		}
 		return dv, nil
 	}
-	t, err := dv.Tensor.Reduce(fn, defaultValue, opts...)
+	t, err := dv.Basic.Reduce(fn, defaultValue, opts...)
 	if err != nil {
 		return nil, err
 	}
 	d := dv.d.Clone()
-	return &Dual[DT, T]{Tensor: t, d: d}, nil
+	return &Dual[DT, T]{Basic: t, d: d}, nil
 }
 
 func (dv *Dual[DT, T]) Scan(fn func(DT, DT) DT, axis int, opts ...tensor.FuncOpt) (*Dual[DT, T], error) {
 	fo := tensor.ParseFuncOpts(opts...)
 	if fo.Unsafe {
-		_, err := dv.Tensor.Scan(fn, axis, opts...)
+		_, err := dv.Basic.Scan(fn, axis, opts...)
 		if err != nil {
 			return nil, err
 		}
 		return dv, nil
 	}
-	t, err := dv.Tensor.Scan(fn, axis, opts...)
+	t, err := dv.Basic.Scan(fn, axis, opts...)
 	if err != nil {
 		return nil, err
 	}
 	d := dv.d.Clone()
-	return &Dual[DT, T]{Tensor: t, d: d}, nil
+	return &Dual[DT, T]{Basic: t, d: d}, nil
 }
 
 func (dv *Dual[DT, T]) Dot(red, el func(DT, DT) DT, other *Dual[DT, T], opts ...tensor.FuncOpt) (*Dual[DT, T], error) {
 	fo := tensor.ParseFuncOpts(opts...)
 	if fo.Unsafe {
-		_, err := dv.Tensor.Dot(red, el, other.Value(), opts...)
+		_, err := dv.Basic.Dot(red, el, other.Value(), opts...)
 		if err != nil {
 			return nil, err
 		}
 		return dv, nil
 	}
-	t, err := dv.Tensor.Dot(red, el, other.Value(), opts...)
+	t, err := dv.Basic.Dot(red, el, other.Value(), opts...)
 	if err != nil {
 		return nil, err
 	}
 	d := dv.d.Clone()
-	return &Dual[DT, T]{Tensor: t, d: d}, nil
+	return &Dual[DT, T]{Basic: t, d: d}, nil
 }
 
 func (dv *Dual[DT, T]) T(axes ...int) (*Dual[DT, T], error) {
@@ -234,7 +236,7 @@ func (dv *Dual[DT, T]) Repeat(axis int, repeats ...int) (*Dual[DT, T], error) {
 // CopyFrom copies the values from a values.Value[DT] to the first value of the *Dual[DT,T]. The deriv is untouched.
 func (dv *Dual[DT, T]) CopyFrom(src interface{}) error {
 	if v, ok := src.(values.Value[DT]); ok {
-		_, err := values.Copy[DT](dv.Tensor, v)
+		_, err := values.Copy[DT](dv.Basic, v)
 		return err
 	}
 	return errors.Errorf("Unable to CopyFrom %T", src)
@@ -259,14 +261,14 @@ func (dv *Dual[DT, T]) sanity() error {
 // clones the dualValue and zeroes out the ndarrays
 func (dv *Dual[DT, T]) clone0() (retVal *Dual[DT, T], err error) {
 	var v, d T
-	v = dv.Tensor.Clone()
-	d = dv.d.Clone()
+	v = dv.Basic.(tensor.Cloner[T]).Clone()
+	d = dv.d.(tensor.Cloner[T]).Clone()
 
 	v.Zero()
 	d.Zero()
 
 	dv2 := new(Dual[DT, T])
-	dv2.Tensor = v
+	dv2.Basic = v
 	dv2.d = d
 	retVal = dv2
 	return
@@ -277,7 +279,7 @@ func (dv *Dual[DT, T]) clone0() (retVal *Dual[DT, T], err error) {
 // The original implementation was to have a constantDualValue type. This would lead to waaay less allocations of matrices
 // but as it turns out, as I waws working, the constants turn out to be not so constant afterall.
 // Is this a problem with the graph that leads to derivation of constant values? I don't quite know. TO CHECK
-func constantDV[DT tensor.Num, T tensor.Tensor[DT, T]](val values.Value[DT]) *Dual[DT, T] {
+func constantDV[DT tensor.Num, T tensor.Basic[DT]](val values.Value[DT]) *Dual[DT, T] {
 	enterLogScope()
 	defer leaveLogScope()
 
@@ -285,20 +287,20 @@ func constantDV[DT tensor.Num, T tensor.Tensor[DT, T]](val values.Value[DT]) *Du
 
 	// retVal := &dualValue{Value: val}
 	retVal := new(Dual[DT, T])
-	retVal.Tensor = v
+	retVal.Basic = v
 
-	retVal.d = v.Clone()
+	retVal.d = val.(tensor.Cloner[T]).Clone()
 	retVal.d.Zero()
 	return retVal
 }
 
 // the derivative of x is 1.
-func variableDV[DT tensor.Num, T tensor.Tensor[DT, T]](val values.Value[DT]) *Dual[DT, T] {
+func variableDV[DT tensor.Num, T tensor.Basic[DT]](val values.Value[DT]) *Dual[DT, T] {
 	v := val.(T)
 	// retVal := &dualValue{Value: val}
 	retVal := new(Dual[DT, T])
-	retVal.Tensor = v
-	retVal.d = v.Clone()
+	retVal.Basic = v
+	retVal.d = val.(tensor.Cloner[T]).Clone()
 	retVal.d.Memset(1)
 	return retVal
 }
@@ -343,7 +345,7 @@ func dvUnitVarManaged(v values.Value[DT], op ExternalOp) (*Dual[DT,T], error) {
 	}
 
 	switch d := dv.d.(type) {
-	case tensor.Tensor:
+	case tensor.Basic:
 		dt := d.Dtype()
 		switch dt {
 		case tensor.Float64:
@@ -373,10 +375,10 @@ func dvUnitVarManaged(v values.Value[DT], op ExternalOp) (*Dual[DT,T], error) {
 */
 
 // helper to unpack from []*Dual[DT,T]
-func idValue[DT tensor.Num, T tensor.Tensor[DT, T]](inputs []*Dual[DT, T]) (retVals []T) {
+func idValue[DT tensor.Num, T tensor.Basic[DT]](inputs []*Dual[DT, T]) (retVals []T) {
 	retVals = make([]T, len(inputs))
 	for i, input := range inputs {
-		retVals[i] = input.Tensor.(T)
+		retVals[i] = input.Basic.(T)
 	}
 	return
 }
@@ -470,7 +472,7 @@ func dvBindVar0(op Op, retVal *Dual[DT,T], inputs []*Dual[DT,T]) (err error) {
 	switch v := retVal.d.(type) {
 	case values.Scalar:
 		retVal.d = values.One(v.Dtype())
-	case tensor.Tensor:
+	case tensor.Basic:
 		switch v.Dtype() {
 		case tensor.Float64:
 			err = v.Memset(float64(1))

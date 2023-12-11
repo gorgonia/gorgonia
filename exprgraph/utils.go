@@ -31,7 +31,7 @@ func T2B[DT tensor.Num](a Tensor) tensor.Basic[DT] {
 	}
 }
 
-func T2T[DT tensor.Num, T tensor.Tensor[DT, T]](a Tensor) (retVal T, ok bool) {
+func T2T[DT tensor.Num, T tensor.Basic[DT]](a Tensor) (retVal T, ok bool) {
 	switch t := a.(type) {
 	case valuer[T]:
 		return t.Value(), true
