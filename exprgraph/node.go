@@ -105,7 +105,7 @@ type Value[DT any, T tensor.Basic[DT]] struct {
 	tensor.Basic[DT] // note this is the interface, not the constraint
 	desc
 
-	Op         ops.Op[DT, T]
+	op         ops.Op[DT, T]
 	beforeLift T
 }
 
@@ -167,6 +167,10 @@ func (n *Value[DT, T]) Value() T {
 		panic("Cannot get Value")
 	}
 }
+
+func (n *Value[DT, T]) Op() ops.Op[DT, T] { return n.op }
+
+func (n *Value[DT, T]) O() ops.Desc { return n.op }
 
 func (n *Value[DT, T]) Format(f fmt.State, c rune) {
 	if n == nil {
@@ -329,7 +333,7 @@ func SymToVal[DT any, T tensor.Basic[DT]](n *Symbolic[DT]) *Value[DT, T] {
 	}
 
 	retVal := replaceValueInGraph[DT, T](n.engine, n.name, n.id, d)
-	retVal.Op = n.Op.(ops.Op[DT, T])
+	retVal.op = n.Op.(ops.Op[DT, T])
 	n.engine = nil
 	n.Op = nil
 	return retVal

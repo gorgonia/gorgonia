@@ -3,7 +3,6 @@ package exprgraph_test
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/chewxy/hm"
@@ -111,7 +110,6 @@ func (op matmul[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (re
 	case matmuler[T]:
 		return mm.MatMul(b, tensor.WithReuse(prealloc))
 	default:
-
 		var ret tensor.Basic[DT]
 		if ret, err = tensor.MatMul[DT](a, b, tensor.WithReuse(prealloc)); err != nil {
 			return retVal, err
@@ -199,7 +197,6 @@ func MatMul[DT tensor.Num, T tensor.Basic[DT]](a, b gorgonia.Tensor) (retVal gor
 
 	// check if engine supports MatMul. If not, return
 	if _, ok := a.Engine().Workhorse().(tensor.BLA[DT, T]); !ok {
-		log.Printf("Engine %T is not a BLA", a.Engine().Workhorse())
 		return
 
 	}
@@ -223,7 +220,7 @@ func MatMul[DT tensor.Num, T tensor.Basic[DT]](a, b gorgonia.Tensor) (retVal gor
 		return retVal, nil
 	}
 
-	if ct, err = op.PreallocDo(nil, ct, at, bt); err != nil {
+	if ct, err = op.PreallocDo(context.Background(), ct, at, bt); err != nil {
 		return nil, err
 	}
 	if retVal == nil {

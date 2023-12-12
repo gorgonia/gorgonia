@@ -3,7 +3,6 @@ package exprgraph_test
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
 
 	"gorgonia.org/gorgonia"
@@ -19,6 +18,10 @@ import (
 // 	_ tensor.MatMuler = &RxEngine{}
 // )
 
+type identityLift struct{}
+
+func (_ identityLift) Lift(a gorgonia.Tensor) gorgonia.Tensor { return a }
+
 type Notifier interface {
 	NotifyUpdated(gorgonia.Tensor)
 }
@@ -32,8 +35,10 @@ type obs struct {
 // RxEngine is a reactive engine for Gorgonia
 type RxEngine[DT tensor.Num, T tensor.Basic[DT]] struct {
 	StandardEngine[DT, T]
-	g *exprgraph.Graph
-	q chan obs // queue of nodes to be updated
+	g        *exprgraph.Graph
+	q        chan obs // queue of nodes to be updated
+	lifter   exprgraph.Lifter
+	isLifter bool
 
 	l             sync.Mutex
 	current       context.Context
@@ -55,7 +60,11 @@ func NewRx[DT tensor.Num, T tensor.Basic[DT]](e StandardEngine[DT, T], g *exprgr
 	} else {
 		g.Engine = eng
 	}
-
+	eng.lifter = identityLift{}
+	if lifter, ok := e.(exprgraph.Lifter); ok {
+		eng.lifter = lifter
+		eng.isLifter = true
+	}
 	eng.g = g
 	eng.q = make(chan obs, 1024)
 	go eng.loop()
@@ -64,8 +73,9 @@ func NewRx[DT tensor.Num, T tensor.Basic[DT]](e StandardEngine[DT, T], g *exprgr
 
 func (e *RxEngine[DT, T]) BasicEng() tensor.Engine {
 	return &RxEngine[DT, tensor.Basic[DT]]{
-		g: e.g,
-		q: e.q,
+		StandardEngine: e.StandardEngine.BasicEng().(StandardEngine[DT, tensor.Basic[DT]]),
+		g:              e.g,
+		q:              e.q,
 	}
 }
 
@@ -75,10 +85,11 @@ func (e *RxEngine[DT, T]) SetGraph(g *exprgraph.Graph) { e.g = g }
 
 // Lift implements lift only iff the underlying StandardEngine is a Lifter.
 func (e *RxEngine[DT, T]) Lift(a gorgonia.Tensor) gorgonia.Tensor {
-	if lifter, ok := e.StandardEngine.(exprgraph.Lifter); ok {
-		return lifter.Lift(a)
-	}
-	return a
+	return e.lifter.Lift(a)
+	// if lifter, ok := e.StandardEngine.(exprgraph.Lifter); ok {
+	// 	return lifter.Lift(a)
+	// }
+	// return a
 }
 
 // NotifyUpdated tells the engine that `a` has been updated.
@@ -150,9 +161,9 @@ func (e *RxEngine[DT, T]) flowUp(ctx context.Context, n exprgraph.Node) int {
 // flowDown recomputes the value of `n`, and recomputes any of the children if need be.
 // The criteria for recomputation is in the .Waiting() method of a `Node`.
 func (e *RxEngine[DT, T]) flowDown(ctx context.Context, node exprgraph.Node) error {
-	n := node.(*exprgraph.Value[DT, T])
-	childrenOfN := e.g.ChildrenOfAsNodes(n)
-	children := exprgraph.TsFromNodes[*exprgraph.Value[DT, T]](childrenOfN)
+	n := node.(exprgraph.RxNode)
+	childrenOfN := e.g.ChildrenOfAsNodes(node)
+	children := exprgraph.TsFromNodes[exprgraph.RxNode](childrenOfN)
 
 	// Depth first search.
 	// TODO: maybe traverse and process the graph concurrently?
@@ -167,13 +178,15 @@ func (e *RxEngine[DT, T]) flowDown(ctx context.Context, node exprgraph.Node) err
 	}
 
 	childValues := make([]T, 0, len(children))
-	for _, n := range children {
-		childValues = append(childValues, n.Value())
+	for _, c := range children {
+		v := exprgraph.T2B[DT](c)
+		childValues = append(childValues, v.(T))
 	}
 
-	switch o := n.Op.(type) {
+	switch o := n.O().(type) {
 	case ops.PreallocOp[DT, T]:
-		if _, err := o.PreallocDo(ctx, n.Value(), childValues...); err != nil {
+		v := exprgraph.T2B[DT](n)
+		if _, err := o.PreallocDo(ctx, v.(T), childValues...); err != nil {
 			n.AddWaiting()
 			return err
 		}
@@ -196,6 +209,8 @@ func LetRx(a gorgonia.Tensor, v values.V) {
 	// default:
 	// 	fmt.Printf("Cannot do Let %s %T\n%v", a, a, a)
 	// }
+
+	//TODO THIS IS A TEMPORARY HACK
 	aData := a.(tensor.Basic[float64]).Data()
 	vData := v.(tensor.Basic[float64]).Data()
 	copy(aData, vData)
@@ -288,16 +303,14 @@ func Example_rx_engine_composed() {
 	y := exprgraph.New[float64](g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
 	z := exprgraph.New[float64](g, "z", tensor.WithShape(), tensor.WithBacking([]float64{1}))
 
-	xy, err := MatMul[float64, *dense.Dense[float64]](x, y)
-	if err != nil {
-		log.Printf("Cannot MatMul, %v", err)
-		fmt.Println(err)
-	}
-	xypz, err := Add[float64, *dense.Dense[float64]](xy, z)
+	xy, err := MatMul[float64, tensor.Basic[float64]](x, y)
 	if err != nil {
 		fmt.Println(err)
 	}
-	log.Printf("x %T, y %T xy %T xyz %T", x, y, xy, xypz)
+	xypz, err := Add[float64, tensor.Basic[float64]](xy, z)
+	if err != nil {
+		fmt.Println(err)
+	}
 	getD := getDeriv[float64, *dense.Dense[float64]]
 
 	fmt.Printf("x:\n%v\ny:\n%v\nxy:\n%v\nxy+z:\n%v\n", x, y, xy, xypz)

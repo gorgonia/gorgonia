@@ -1,6 +1,7 @@
 package exprgraph
 
 import (
+	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/gorgonia/values/dual"
 )
@@ -14,6 +15,20 @@ type Lifter interface {
 type ValueNode interface {
 	Node
 	V() values.V
+}
+
+type RxNode interface {
+	ValueNode
+
+	AddWaiting()
+	Waiting() int
+	ZeroWaiting()
+
+	O() ops.Desc
+}
+
+type Oper[DT any, T values.Value[DT]] interface {
+	Op() ops.Op[DT, T]
 }
 
 type graphSetter interface {
