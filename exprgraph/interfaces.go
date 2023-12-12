@@ -1,6 +1,9 @@
 package exprgraph
 
-import "gorgonia.org/gorgonia/values"
+import (
+	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/gorgonia/values/dual"
+)
 
 // A Lifter is any type that converts the underlying type of a Tensor.
 // A typical use case is to turn a tensor into a dual value.
@@ -19,6 +22,7 @@ type graphSetter interface {
 
 type valuelifter interface {
 	V() values.V
+	d() dual.V // can be nil
 	prelift() values.V
 
 	setLifted(lifted, original values.V)

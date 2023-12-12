@@ -2,7 +2,6 @@ package exprgraph
 
 import (
 	"fmt"
-	"log"
 	"sync/atomic"
 
 	"github.com/chewxy/hm"
@@ -12,6 +11,7 @@ import (
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 	"gorgonia.org/tensor/dense"
@@ -190,13 +190,37 @@ func (n *Value[DT, T]) Format(f fmt.State, c rune) {
 	}
 }
 
-func (n *Value[DT, T]) V() values.V { return n.Basic }
+func (n *Value[DT, T]) V() values.V {
+	switch b := n.Basic.(type) {
+	case dual.V:
+		return b.V()
+	default:
+		return n.Basic
+	}
+}
 
 func (n *Value[DT, T]) prelift() values.V { return n.beforeLift }
 
 func (n *Value[DT, T]) setLifted(lifted, original values.V) {
 	n.Basic = any(lifted).(tensor.Basic[DT])
 	n.beforeLift = original.(T)
+}
+
+// d will return a value if n.Basic is a dual.V. Otherwise it returns nil
+func (n *Value[DT, T]) d() dual.V {
+	if dv, ok := n.Basic.(dual.V); ok {
+		return dv
+	}
+	return nil
+}
+
+func (n *Value[DT, T]) DV() values.V {
+	switch b := n.Basic.(type) {
+	case dual.V:
+		return b.DV()
+	default:
+		return nil
+	}
 }
 
 // Symbolic represents a symbolic node. It needs a graph as an engine.
@@ -290,8 +314,18 @@ func liftNode(n Node) Node {
 // SymToVal converts a symbolic node to a value node. It is a convenience function.
 func SymToVal[DT any, T tensor.Basic[DT]](n *Symbolic[DT]) *Value[DT, T] {
 	var d T
-	log.Printf("Type of d is %T", d)
-	d = any(d).(tensor.Aliker[T]).Alike(tensor.WithShape(n.Shape()...), tensor.WithEngine(n.engine))
+	switch any(d).(type) {
+	case tensor.Aliker[T]:
+		d = any(d).(tensor.Aliker[T]).Alike(tensor.WithShape(n.Shape()...), tensor.WithEngine(n.engine))
+	case nil:
+		// if it's nill it means that T is a interface that implements tensor.Basic[DT]... there's no underlying datatype.
+		// we'll use dense as a default
+		x := dense.New[DT](tensor.WithShape(n.Shape()...), tensor.WithEngine(n.engine))
+		d = any(x).(T)
+	default:
+		panic(fmt.Sprintf("d of %T not handled yet", d))
+	}
+
 	retVal := replaceValueInGraph[DT, T](n.engine, n.name, n.id, d)
 	retVal.Op = n.Op.(ops.Op[DT, T])
 	n.engine = nil

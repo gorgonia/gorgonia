@@ -3,7 +3,6 @@ package exprgraph_test
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/exprgraph"
@@ -12,9 +11,7 @@ import (
 	"gorgonia.org/tensor/dense"
 )
 
-var _ tensor.BLA[float64, *dual.Dual[float64, *dense.Dense[float64]]] = &FwdEngine[float64, *dense.Dense[float64]]{}
-var _ tensor.Adder[float64, *dual.Dual[float64, *dense.Dense[float64]]] = &FwdEngine[float64, *dense.Dense[float64]]{}
-var _ tensor.BLA[float64, tensor.Basic[float64]] = (&FwdEngine[float64, *dense.Dense[float64]]{}).BasicEng().(*FwdEngine[float64, tensor.Basic[float64]])
+var _ tensor.BLA[float64, tensor.Basic[float64]] = (&FwdEngine[float64, *dense.Dense[float64]]{}).BasicEng().(*FwdEngine[float64, *dense.Dense[float64]])
 
 // FwdEngine is a Engine that performs forwards mode differentiation
 //
@@ -26,8 +23,9 @@ type FwdEngine[DT tensor.Num, T tensor.Basic[DT]] struct {
 	g *exprgraph.Graph
 }
 
-func (e FwdEngine[DT, T]) BasicEng() tensor.Engine {
-	return &FwdEngine[DT, tensor.Basic[DT]]{StandardEngine: e.StandardEngine.BasicEng().(StandardEngine[DT, tensor.Basic[DT]]), g: e.g}
+func (e *FwdEngine[DT, T]) BasicEng() tensor.Engine {
+	//return &FwdEngine[DT, tensor.Basic[DT]]{StandardEngine: e.StandardEngine.BasicEng().(StandardEngine[DT, tensor.Basic[DT]]), g: e.g}
+	return e
 }
 
 func (e *FwdEngine[DT, T]) Graph() *exprgraph.Graph { return e.g }
@@ -61,16 +59,20 @@ func (e *FwdEngine[DT, T]) Outer(ctx context.Context, a, b, retVal tensor.Basic[
 }
 
 func (e *FwdEngine[DT, T]) MatMul(ctx context.Context, a, b, c tensor.Basic[DT], incr []DT) error {
-	adv := a.(*dual.Dual[DT, T])
-	bdv := b.(*dual.Dual[DT, T])
-	cdv := c.(*dual.Dual[DT, T])
+	adv := a.(dual.V)
+	bdv := b.(dual.V)
+	cdv := c.(dual.V)
 
-	if err := e.StandardEngine.MatMul(ctx, adv.Value(), bdv.Value(), cdv.Value(), incr); err != nil {
+	advv := adv.V().(T)
+	bdvv := bdv.V().(T)
+	cdvv := cdv.V().(T)
+
+	if err := e.StandardEngine.MatMul(ctx, advv, bdvv, cdvv, incr); err != nil {
 		return err
 	}
 
-	advd := adv.Deriv()
-	bdvd := bdv.Deriv()
+	advd := adv.DV().(T)
+	bdvd := bdv.DV().(T)
 
 	bdvT, err := bdv.V().(tensor.Operable[T]).T()
 	if err != nil {
@@ -78,7 +80,7 @@ func (e *FwdEngine[DT, T]) MatMul(ctx context.Context, a, b, c tensor.Basic[DT],
 	}
 
 	// dA = C×B'
-	if err := e.StandardEngine.MatMul(ctx, cdv.Value(), bdvT, advd, advd.Data()); err != nil {
+	if err := e.StandardEngine.MatMul(ctx, cdvv, bdvT, advd, advd.Data()); err != nil {
 		return err
 	}
 
@@ -88,27 +90,28 @@ func (e *FwdEngine[DT, T]) MatMul(ctx context.Context, a, b, c tensor.Basic[DT],
 	}
 
 	// dB = A'×C
-	if err := e.StandardEngine.MatMul(ctx, advT, cdv.Value(), bdvd, bdvd.Data()); err != nil {
+	if err := e.StandardEngine.MatMul(ctx, advT, cdvv, bdvd, bdvd.Data()); err != nil {
 		return err
 	}
 
 	return nil
 }
 func (e *FwdEngine[DT, T]) Add(ctx context.Context, a, b, retVal tensor.Basic[DT], toIncr bool) (err error) {
-	log.Printf("add??")
 	return errors.New("NYI")
 }
 
 func (e *FwdEngine[DT, T]) AddScalar(ctx context.Context, a tensor.Basic[DT], b DT, retVal tensor.Basic[DT], leftTensor bool, toIncr bool) (err error) {
-	log.Printf("Add Scalar")
-	adv := a.(*dual.Dual[DT, T])
+	adv := a.(dual.V)
+	rdv := retVal.(dual.V)
+	advv := adv.V().(T)
+	rdvv := rdv.V().(T)
+
 	//bdv := b
-	if err = e.StandardEngine.AddScalar(ctx, adv.Value(), b, retVal, leftTensor, toIncr); err != nil {
+	if err = e.StandardEngine.AddScalar(ctx, advv, b, rdvv, leftTensor, toIncr); err != nil {
 		return err
 	}
 
-	advd := adv.Deriv()
-	log.Printf("AddScalar %v", advd)
+	advd := adv.DV().(T)
 	advd.Memset(1.0) // this is assuming we only work in float64. More needs to be done here
 	return nil
 }
@@ -126,19 +129,16 @@ func Example_forward_differentiation_engine() {
 	x := exprgraph.New[float64](g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
 	y := exprgraph.New[float64](g, "y", tensor.WithShape(3, 2), tensor.WithBacking([]float64{6, 5, 4, 3, 2, 1}))
 	z := exprgraph.New[float64](g, "z", tensor.WithShape(), tensor.WithBacking([]float64{1}))
-	xy, err := MatMul[float64, *dual.Dual[float64, *dense.Dense[float64]]](x, y)
+	xy, err := MatMul[float64, tensor.Basic[float64]](x, y)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	xypz, err := Add[float64, *dual.Dual[float64, *dense.Dense[float64]]](xy, z)
+	xypz, err := Add[float64, tensor.Basic[float64]](xy, z)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
-	log.Printf("x %T, y %T", x, y)
-	log.Printf("xy %T, xypz %T", xy, xypz)
 
 	// note: getDeriv is defined in example_utils_test.go
 	getD := getDeriv[float64, *dense.Dense[float64]]
