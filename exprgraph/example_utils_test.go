@@ -3,6 +3,7 @@ package exprgraph_test
 import (
 	"context"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/chewxy/hm"
@@ -198,6 +199,7 @@ func MatMul[DT tensor.Num, T tensor.Basic[DT]](a, b gorgonia.Tensor) (retVal gor
 
 	// check if engine supports MatMul. If not, return
 	if _, ok := a.Engine().Workhorse().(tensor.BLA[DT, T]); !ok {
+		log.Printf("Engine %T is not a BLA", a.Engine().Workhorse())
 		return
 
 	}

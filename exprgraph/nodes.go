@@ -122,3 +122,14 @@ func TensorsFromNodeIDs(g *Graph, ns []NodeID) []Tensor {
 	}
 	return retVal
 }
+
+func TsFromNodes[T Node](ns []Node) []T {
+	retVal := make([]T, 0, len(ns))
+	for _, n := range ns {
+		v, ok := n.(T)
+		if ok {
+			retVal = append(retVal, v)
+		}
+	}
+	return retVal
+}

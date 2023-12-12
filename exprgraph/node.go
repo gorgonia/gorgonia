@@ -20,6 +20,9 @@ import (
 // constraints
 var (
 	_ Nodelike = Value[float64, *dense.Dense[float64]]{}
+
+	_ Node = &Value[float64, *dense.Dense[float64]]{}
+	_ Node = &Symbolic[float64]{}
 )
 
 // Node is a description of a tensor that has a name and an ID.
@@ -34,7 +37,6 @@ type Node interface {
 
 	graph.Node      // ID() int64
 	NodeID() NodeID // alternative to ID()
-	tensor.Desc
 	Name() string
 
 	isnode() // seals the interface to this package

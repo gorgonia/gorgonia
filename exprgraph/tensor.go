@@ -2,10 +2,10 @@ package exprgraph
 
 import (
 	"gonum.org/v1/gonum/graph"
-	"gorgonia.org/tensor"
+	"gorgonia.org/gorgonia/internal/datatypes"
 )
 
-type Tensor = tensor.Desc
+type Tensor = datatypes.Tensor
 
 // Nodelike is anything that looks like a Node.
 type Nodelike = graph.Node
