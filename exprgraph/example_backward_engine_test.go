@@ -50,64 +50,6 @@ func (e *BwdEngine[DT, T]) Lift(a exprgraph.Tensor) exprgraph.Tensor {
 	panic("Unreachable")
 }
 
-/*
-func (e *BwdEngine[DT, T]) Inner(ctx context.Context, a, b T) (DT, error) {
-	return 0, errors.New("NYI")
-}
-
-func (e *BwdEngine[DT, T]) FMA(ctx context.Context, a, x, retVal T) error {
-	return errors.New("NYI")
-}
-
-func (e *BwdEngine[DT, T]) MatVecMul(ctx context.Context, a, b, retVal T, incr []DT) error {
-	return errors.New("NYI")
-}
-
-func (e *BwdEngine[DT, T]) Outer(ctx context.Context, a, b, retVal T, incr []DT) error {
-	return errors.New("NYI")
-}
-
-func (e *BwdEngine[DT, T]) MatMul(ctx context.Context, a, b, c T, incr []DT) error {
-	mm, ok := e.Engine.(tensor.BLA[DT, T])
-	if !ok {
-		return errors.New("Expected BLA")
-	}
-	err := e.StandardEngine.MatMul(ctx, a, b, c, incr)
-	log.Printf("err in MatMul %v", err)
-	return err
-}
-*/
-/*
-func (e *BwdEngine[DT, T]) AddScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (tensor.Tensor, error) {
-	fo := tensor.ParseFuncOpts(opts...)
-	reuse := fo.Reuse()
-
-	var cdv *dual.Dual
-	if reuse != nil {
-		switch rt := reuse.(type) {
-		case *dual.Dual:
-			cdv = rt
-			fo.SetReuse(cdv.Value)
-		case tensor.Tensor:
-			fo.SetReuse(rt)
-		}
-
-	}
-
-	c, err := e.StdEng.AddScalar(a, b, leftTensor, fo.FuncOpts()...)
-	if err != nil {
-		return nil, err
-	}
-	if cdv == nil {
-		c = e.Lift(c).(tensor.Tensor)
-	} else {
-		cdv.Value = c
-		c = cdv
-	}
-	return c, nil
-        }
-*/
-
 func (e *BwdEngine[DT, T]) Q(op ops.Op[DT, T], inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
 	var ad ADOp[DT, T]
 	var ok bool
