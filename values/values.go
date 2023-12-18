@@ -86,8 +86,8 @@ type CopierTo[T any] interface {
 }
 
 // CopierFrom represents any type that can copy data from the source provided.
-type CopierFrom[T any] interface {
-	CopyFrom(src T) error
+type CopierFrom interface {
+	CopyFrom(src any) error
 }
 
 type ShallowCloner[T any] interface {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/chewxy/hm"
+	"github.com/pkg/errors"
 	"gorgonia.org/dtype"
 	"gorgonia.org/gorgonia/internal/datatypes"
 	gerrors "gorgonia.org/gorgonia/internal/errors"
@@ -195,30 +196,21 @@ func ZeroValue[DT any](v Value[DT]) Value[DT] {
 
 // Copy copies the src values into dest values. For scalars, it just returns itself
 func Copy[DT any](dest, src Value[DT]) (Value[DT], error) {
-	panic("NYI")
-	// var ok bool
 
-	// var copyFrom CopierFrom[DT]
-	// if copyFrom, ok = dest.(CopierFrom[DT]); ok {
-	// 	err := copyFrom.CopyFrom(src)
-	// 	return dest, err
-	// }
+	var ok bool
+	var copyFrom CopierFrom
+	if copyFrom, ok = dest.(CopierFrom); ok {
+		err := copyFrom.CopyFrom(src)
+		return dest, err
+	}
 
-	// switch srcT := src.(type) {
-	// case CopierTo[DT]:
-	// 	err := srcT.CopyTo(dest)
-	// 	return dest, err
-	// case tensor.Basic[DT]:
-	// 	var destT tensor.Basic[DT]
-	// 	if destT, ok = dest.(tensor.Basic[DT]); !ok {
-	// 		return nil, errors.Errorf("Expected dest to be a tensor.Tensor. Got %T instead", dest)
-	// 	}
-	// 	err := tensor.Copy(destT, srcT)
-	// 	return dest, err
-
-	// default:
-	// 	return nil, errors.Errorf("Unable to copy value of type %T into value of type %T", src, dest)
-	// }
+	switch srcT := src.(type) {
+	case CopierTo[*dense.Dense[DT]]:
+		err := srcT.CopyTo(dest.(*dense.Dense[DT]))
+		return dest, err
+	default:
+		return nil, errors.Errorf("Unable to copy value of type %T into value of type %T", src, dest)
+	}
 }
 
 // SetEngine sets the engine of the given value.

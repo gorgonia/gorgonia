@@ -3,6 +3,7 @@ package exprgraph_test
 import (
 	"context"
 	"fmt"
+	"log"
 	"sync"
 
 	"gorgonia.org/gorgonia"
@@ -198,22 +199,17 @@ func (e *RxEngine[DT, T]) flowDown(ctx context.Context, node exprgraph.Node) err
 }
 
 // LetRx is Let() but for reactive engine.
-func LetRx(a gorgonia.Tensor, v values.V) {
+func LetRx[DT any](a gorgonia.Tensor, v values.Value[DT]) {
 	// do Let
-	// switch at := a.(type) {
-	// case exprgraph.ValueNode:
-	// 	av := at.V()
-	// 	values.Copy(av, v) // in real life you gotta return error
-	// case values.Value:
-	// 	values.Copy(at, v)
-	// default:
-	// 	fmt.Printf("Cannot do Let %s %T\n%v", a, a, a)
-	// }
-
-	//TODO THIS IS A TEMPORARY HACK
-	aData := a.(tensor.Basic[float64]).Data()
-	vData := v.(tensor.Basic[float64]).Data()
-	copy(aData, vData)
+	switch at := a.(type) {
+	case exprgraph.ValueNode:
+		av := at.V().(values.Value[DT])
+		values.Copy[DT](av, v) // in real life you gotta return error
+	case values.Value[DT]:
+		values.Copy[DT](at, v)
+	default:
+		fmt.Printf("Cannot do Let %s %T\n%v", a, a, a)
+	}
 
 	// do reactive things
 	eng := a.Engine().Workhorse()
@@ -240,6 +236,7 @@ func Example_rx_engine() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	let := LetRx[float64]
 
 	fmt.Printf("x:\n%v\ny:\n%v\nxy:\n%v\nxy+z:\n%v\n", x, y, xy, xypz)
 
@@ -247,9 +244,9 @@ func Example_rx_engine() {
 	xv := dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{100, 200, 300, 400, 500, 600}))
 	yv := dense.New[float64](tensor.WithShape(3, 2), tensor.WithBacking([]float64{60, 50, 40, 30, 20, 10}))
 	zv := dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{1010}))
-	LetRx(x, xv)
-	LetRx(y, yv)
-	LetRx(z, zv)
+	let(x, xv)
+	let(y, yv)
+	let(z, zv)
 	engine.Wait()
 	fmt.Printf("After Updating\n-----\nx:\n%v\ny:\n%v\nxy:\n%v\nxy+z:\n%v\n", x, y, xy, xypz)
 
@@ -316,13 +313,15 @@ func Example_rx_engine_composed() {
 	fmt.Printf("x:\n%v\ny:\n%v\nxy:\n%v\nxy+z:\n%v\n", x, y, xy, xypz)
 	fmt.Printf("dx:\n%v\ndy:\n%v\ndxy:\n%v\ndxy+z:\n%v\n", getD(x), getD(y), getD(xy), getD(xypz))
 
+	let := LetRx[float64]
+
 	// Update
 	xv := dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{100, 200, 300, 400, 500, 600}))
 	yv := dense.New[float64](tensor.WithShape(3, 2), tensor.WithBacking([]float64{60, 50, 40, 30, 20, 10}))
 	zv := dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{1010}))
-	LetRx(x, xv)
-	LetRx(y, yv)
-	LetRx(z, zv)
+	let(x, xv)
+	let(y, yv)
+	let(z, zv)
 	engine.Wait()
 
 	fmt.Printf("After Updating\n-----\nx:\n%v\ny:\n%v\nxy:\n%v\nxy+z:\n%v\n", x, y, xy, xypz)
