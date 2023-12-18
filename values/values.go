@@ -60,6 +60,15 @@ type OneValuer[DT any] interface {
 	OneValue() Value[DT]
 }
 
+// ScalarOner is anything that can get the equivalent value to 1.
+type ScalarOner[DT any] interface{ ScalarOne() DT }
+
+// ScalarZero is any datatype that can get the equivalent of the value zero.
+// This interface is not strictly necessary if one defines one's datatypes well -
+// that is to say, make the zeroth value useful. Bue occasionally, there may be
+// data types where the zeroth value is not zero. So it may be useful to implement this.
+type ScalarZeroer[DT any] interface{ ScalarZero() DT }
+
 // ValueEqualer represents any type that can perform a equal value check
 type ValueEqualer[DT any] interface {
 	ValueEq(Value[DT]) bool

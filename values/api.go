@@ -40,9 +40,43 @@ func AnyToValue[DT any](any interface{}) (val Value[DT], t hm.Type, dt dtype.Dty
 	// }
 }
 
-// One creates a Value of the given Dtype with the equivalent value of 1.
-func One[DT tensor.Num]() scalar.Scalar[DT] {
-	return scalar.S[DT](1)
+// One creates a scalar of the given Dtype with the equivalent value of 1.
+func One[DT any]() DT {
+	var z DT
+	switch o := any(z).(type) {
+	case uint8:
+		return any(o + 1).(DT)
+	case uint16:
+		return any(o + 1).(DT)
+	case uint32:
+		return any(o + 1).(DT)
+	case uint64:
+		return any(o + 1).(DT)
+	case uint:
+		return any(o + 1).(DT)
+	case int8:
+		return any(o + 1).(DT)
+	case int16:
+		return any(o + 1).(DT)
+	case int32:
+		return any(o + 1).(DT)
+	case int64:
+		return any(o + 1).(DT)
+	case float32:
+		return any(o + 1).(DT)
+	case float64:
+		return any(o + 1).(DT)
+	case complex64:
+		return any(o + 1).(DT)
+	case complex128:
+		return any(o + 1).(DT)
+	case bool:
+		return any(true).(DT)
+	case ScalarOner[DT]:
+		return o.ScalarOne()
+	default:
+		panic(fmt.Sprintf("Cannot get One for %T", z))
+	}
 }
 
 // nativeOne generates the given "1" value and returns it as an interface.

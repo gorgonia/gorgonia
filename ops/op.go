@@ -25,6 +25,8 @@ type Desc interface {
 	fmt.Stringer
 }
 
+func GetOp[DT any, T values.Value[DT]](op Desc) (Op[DT, T], error) { panic("NYI") }
+
 // An Op is a symbolic representation of an operation
 // Think of them as functions, taking an input (or multiple), and outputting something
 //

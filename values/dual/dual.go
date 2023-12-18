@@ -13,19 +13,19 @@ import (
 //var _ datatypes.Tensor[float64] = &Dual[float64]{}
 
 // Op is a function that takes an arbitrary number of Values and returns a Value
-type Op[DT tensor.Num, T tensor.Basic[DT]] func(vals ...T) (T, error)
+type Op[DT any, T tensor.Basic[DT]] func(vals ...T) (T, error)
 
 // PreallocOp is a function that has the return value specified and preallocated, then takes an arbitrary number of Values and returns a Value.
-type PreallocOp[DT tensor.Num, T tensor.Basic[DT]] func(prealloc T, inputs ...T) (T, error)
+type PreallocOp[DT any, T tensor.Basic[DT]] func(prealloc T, inputs ...T) (T, error)
 
 // DualOp is any op that can perform its forwards operation on *Dual.
-type DualOp[DT tensor.Num, T tensor.Basic[DT]] interface {
+type DualOp[DT any, T tensor.Basic[DT]] interface {
 	Do(vals ...T) (T, error)
 	Dual(vals ...*Dual[DT, T]) (T, error)
 }
 
 // Value represents a *Dual, but without the structure (T) defined.
-type Value[DT tensor.Num] interface {
+type Value[DT any] interface {
 	tensor.Basic[DT]
 	Val() tensor.Basic[DT]
 	DVal() tensor.Basic[DT]
@@ -39,7 +39,7 @@ type V interface {
 }
 
 // Dual represents a dual value. In this instance, a dual value usually holds the value and a gradient value.
-type Dual[DT tensor.Num, T tensor.Basic[DT]] struct {
+type Dual[DT any, T tensor.Basic[DT]] struct {
 	tensor.Basic[DT]
 	d tensor.Basic[DT]
 }
@@ -292,7 +292,7 @@ func (dv *Dual[DT, T]) clone0() (retVal *Dual[DT, T], err error) {
 // The original implementation was to have a constantDualValue type. This would lead to waaay less allocations of matrices
 // but as it turns out, as I waws working, the constants turn out to be not so constant afterall.
 // Is this a problem with the graph that leads to derivation of constant values? I don't quite know. TO CHECK
-func constantDV[DT tensor.Num, T tensor.Basic[DT]](val values.Value[DT]) *Dual[DT, T] {
+func constantDV[DT any, T tensor.Basic[DT]](val values.Value[DT]) *Dual[DT, T] {
 	enterLogScope()
 	defer leaveLogScope()
 
@@ -308,13 +308,13 @@ func constantDV[DT tensor.Num, T tensor.Basic[DT]](val values.Value[DT]) *Dual[D
 }
 
 // the derivative of x is 1.
-func variableDV[DT tensor.Num, T tensor.Basic[DT]](val values.Value[DT]) *Dual[DT, T] {
+func variableDV[DT any, T tensor.Basic[DT]](val values.Value[DT]) *Dual[DT, T] {
 	v := val.(T)
 	// retVal := &dualValue{Value: val}
 	retVal := new(Dual[DT, T])
 	retVal.Basic = v
 	retVal.d = val.(tensor.Cloner[T]).Clone()
-	retVal.d.Memset(1)
+	retVal.d.Memset(values.One[DT]())
 	return retVal
 }
 
@@ -388,7 +388,7 @@ func dvUnitVarManaged(v values.Value[DT], op ExternalOp) (*Dual[DT,T], error) {
 */
 
 // helper to unpack from []*Dual[DT,T]
-func idValue[DT tensor.Num, T tensor.Basic[DT]](inputs []*Dual[DT, T]) (retVals []T) {
+func idValue[DT any, T tensor.Basic[DT]](inputs []*Dual[DT, T]) (retVals []T) {
 	retVals = make([]T, len(inputs))
 	for i, input := range inputs {
 		retVals[i] = input.Basic.(T)

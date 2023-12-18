@@ -19,7 +19,7 @@ import (
 //
 // Additional notes: this is analogous to `unit` or `pure` in Haskell.
 // A *Dual[DT] is a monadic representation of a dual value.
-func New[DT tensor.Num, T tensor.Basic[DT]](v values.Value[DT]) *Dual[DT, T] {
+func New[DT any, T tensor.Basic[DT]](v values.Value[DT]) *Dual[DT, T] {
 	switch v := v.(type) {
 	case *Dual[DT, T]:
 		return v
@@ -32,7 +32,7 @@ func New[DT tensor.Num, T tensor.Basic[DT]](v values.Value[DT]) *Dual[DT, T] {
 // NewVar creates a new *Dual[DT] assuming that the provided value is to be treated as a variable.
 //
 // Other behaviours from New() is preserved.
-func NewVar[DT tensor.Num, T tensor.Basic[DT]](v values.Value[DT]) *Dual[DT, T] {
+func NewVar[DT any, T tensor.Basic[DT]](v values.Value[DT]) *Dual[DT, T] {
 	switch v := v.(type) {
 	case *Dual[DT, T]:
 		return v
@@ -42,7 +42,7 @@ func NewVar[DT tensor.Num, T tensor.Basic[DT]](v values.Value[DT]) *Dual[DT, T] 
 }
 
 // BindVar performs the operation on the inputs. The result is a *Dual[DT,T] that assumes that it is a variable value.
-func BindVar[DT tensor.Num, T tensor.Basic[DT]](op Op[DT, T], inputs ...*Dual[DT, T]) (retVal *Dual[DT, T], err error) {
+func BindVar[DT any, T tensor.Basic[DT]](op Op[DT, T], inputs ...*Dual[DT, T]) (retVal *Dual[DT, T], err error) {
 	var ret values.Value[DT]
 	if ret, err = op(idValue(inputs)...); err != nil {
 		return nil, errors.Wrap(err, gerrors.OpDoFail)
@@ -51,7 +51,7 @@ func BindVar[DT tensor.Num, T tensor.Basic[DT]](op Op[DT, T], inputs ...*Dual[DT
 }
 
 // Bind0 performs the operation using a preallocated *Dual[DT,T]. The resulting deriv is not set.
-func Bind0[DT tensor.Num, T tensor.Basic[DT]](op PreallocOp[DT, T], retVal *Dual[DT, T], inputs ...*Dual[DT, T]) (*Dual[DT, T], error) {
+func Bind0[DT any, T tensor.Basic[DT]](op PreallocOp[DT, T], retVal *Dual[DT, T], inputs ...*Dual[DT, T]) (*Dual[DT, T], error) {
 	prealloc := retVal.Basic.(T)
 
 	ret, err := op(prealloc, idValue(inputs)...)
@@ -66,7 +66,7 @@ func Bind0[DT tensor.Num, T tensor.Basic[DT]](op PreallocOp[DT, T], retVal *Dual
 }
 
 // Bind performs the operation on the inputs. The result is a *Dual[DT,T] with the d value set by the provided DualOp.
-func Bind[DT tensor.Num, T tensor.Basic[DT]](op DualOp[DT, T], inputs ...*Dual[DT, T]) (retVal *Dual[DT, T], err error) {
+func Bind[DT any, T tensor.Basic[DT]](op DualOp[DT, T], inputs ...*Dual[DT, T]) (retVal *Dual[DT, T], err error) {
 	var ret T
 	if ret, err = op.Do(idValue[DT](inputs)...); err != nil {
 		return nil, errors.Wrap(err, gerrors.OpDoFail)
@@ -82,18 +82,18 @@ func Bind[DT tensor.Num, T tensor.Basic[DT]](op DualOp[DT, T], inputs ...*Dual[D
 }
 
 // LiftVar transforms a Op into a function that takes the equivalent in *Dual[DT,T]s.
-func LiftVar[DT tensor.Num, T tensor.Basic[DT]](op Op[DT, T]) func(values ...*Dual[DT, T]) (*Dual[DT, T], error) {
+func LiftVar[DT any, T tensor.Basic[DT]](op Op[DT, T]) func(values ...*Dual[DT, T]) (*Dual[DT, T], error) {
 	return func(inputs ...*Dual[DT, T]) (retVal *Dual[DT, T], err error) { return BindVar(op, inputs...) }
 }
 
 // Lift transforms a DualOp into a function that takes the equivalent in *Dual[DT,T]s
-func Lift[DT tensor.Num, T tensor.Basic[DT]](op DualOp[DT, T]) func(values ...*Dual[DT, T]) (*Dual[DT, T], error) {
+func Lift[DT any, T tensor.Basic[DT]](op DualOp[DT, T]) func(values ...*Dual[DT, T]) (*Dual[DT, T], error) {
 	return func(inputs ...*Dual[DT, T]) (*Dual[DT, T], error) { return Bind(op, inputs...) }
 }
 
 // All checks that all values.Value[DT] are *Dual[DT,T]. It returns a list of *Dual[DT,T], and a bool indicating if it's all *Dual[DT,T].
 // If not, the list will be empty.
-func All[DT tensor.Num, T tensor.Basic[DT]](vals ...values.Value[DT]) ([]*Dual[DT, T], bool) {
+func All[DT any, T tensor.Basic[DT]](vals ...values.Value[DT]) ([]*Dual[DT, T], bool) {
 	retVal := make([]*Dual[DT, T], len(vals))
 	for i := range vals {
 		d, ok := vals[i].(*Dual[DT, T])
@@ -106,6 +106,6 @@ func All[DT tensor.Num, T tensor.Basic[DT]](vals ...values.Value[DT]) ([]*Dual[D
 }
 
 // NewAlike is a function that clones the given *Dual[DT,T]. However, the values and deriv are zeroed out.
-func NewAlike[DT tensor.Num, T tensor.Basic[DT]](a *Dual[DT, T]) (retVal *Dual[DT, T], err error) {
+func NewAlike[DT any, T tensor.Basic[DT]](a *Dual[DT, T]) (retVal *Dual[DT, T], err error) {
 	return a.clone0()
 }
