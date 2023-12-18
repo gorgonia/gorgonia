@@ -3,7 +3,6 @@ package exprgraph_test
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
 
 	"gorgonia.org/gorgonia"
