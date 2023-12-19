@@ -100,7 +100,7 @@ func (n *desc) ZeroWaiting() { atomic.StoreInt32(&n.waiting, int32(0)) }
 
 func (n *desc) isnode() {}
 
-// Value represents a node that has a value.
+// Value represents a node that has a value of a given datatype DT and a type T.
 type Value[DT any, T tensor.Basic[DT]] struct {
 	tensor.Basic[DT] // note this is the interface, not the constraint
 	desc
@@ -120,6 +120,7 @@ func newValue[DT any, T tensor.Tensor[DT, T]](name string, v T) *Value[DT, T] {
 	return retVal
 }
 
+// newValueInGraph is a utility function to create a new *Value[DT,T] in a graph.
 func newValueInGraph[DT any, T tensor.Tensor[DT, T]](g *Graph, name string, v T) *Value[DT, T] {
 	// TODO check that v has g as engine
 	retVal := &Value[DT, T]{
@@ -135,6 +136,9 @@ func newValueInGraph[DT any, T tensor.Tensor[DT, T]](g *Graph, name string, v T)
 	return retVal
 }
 
+// replaceValueInGraph finds a node in the graph.
+// If it's a *Value[DT,T] node, then the value in that node will be replaced with `v`.
+// If it's a *Symbolic[DT] then that *Symbolic[DT] will be replaced with a new *Value[DT,T] with `v` as its value.
 func replaceValueInGraph[DT any, T tensor.Basic[DT]](g *Graph, name string, id NodeID, v T) *Value[DT, T] {
 	retVal := &Value[DT, T]{
 		Basic: v,
@@ -172,6 +176,7 @@ func (n *Value[DT, T]) Op() ops.Op[DT, T] { return n.op }
 
 func (n *Value[DT, T]) O() ops.Desc { return n.op }
 
+// Format implements fmt.Formatter.
 func (n *Value[DT, T]) Format(f fmt.State, c rune) {
 	if n == nil {
 		fmt.Fprintf(f, "<nil>")
@@ -238,6 +243,7 @@ type Symbolic[DT any] struct {
 	Op     any // tmp
 }
 
+// NewSymbolic creates a new symbolic node.
 func NewSymbolic[DT any](g *Graph, shape shapes.Shape, name string) (*Symbolic[DT], error) {
 	strides := tensor.CalcStrides(shape)
 	ap := tensor.MakeAP(shape, strides, 0, 0)
