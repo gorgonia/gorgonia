@@ -53,7 +53,7 @@ func New[DT any](g *Graph, name string, opts ...tensor.ConsOpt) Node {
 	}
 
 	// symbolic or value?
-	if c.Data == nil {
+	if c.Data == nil && c.InitFn == nil {
 		retVal, err := NewSymbolic[DT](g, c.Shape, name)
 		if err != nil {
 			panic(err)
@@ -69,7 +69,7 @@ func New[DT any](g *Graph, name string, opts ...tensor.ConsOpt) Node {
 	case []DT:
 		bas = dense.New[DT](opts...)
 	default:
-		panic("NYI")
+		bas = dense.New[DT](opts...)
 	}
 
 	if g != nil {
@@ -240,7 +240,7 @@ type Symbolic[DT any] struct {
 	desc
 	dt     dtype.Dtype
 	engine *Graph
-	Op     any // tmp
+	Op     ops.Desc // tmp
 }
 
 // NewSymbolic creates a new symbolic node.

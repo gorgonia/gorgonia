@@ -3,6 +3,7 @@ package exprgraph_test
 import (
 	"context"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/chewxy/hm"
@@ -196,8 +197,16 @@ func MatMul[DT tensor.Num, T tensor.Basic[DT]](a, b gorgonia.Tensor) (retVal gor
 	}
 
 	// check if engine supports MatMul. If not, return
-	if _, ok := a.Engine().Workhorse().(tensor.BLA[DT, T]); !ok {
-		return
+	_, aok := a.Engine().Workhorse().(tensor.BLA[DT, T])
+	_, bok := b.Engine().Workhorse().(tensor.BLA[DT, T])
+	switch {
+	case !aok && !bok:
+		_, aok = a.Engine().Workhorse().BasicEng().(tensor.BLA[DT, T])
+		_, bok = b.Engine().Workhorse().BasicEng().(tensor.BLA[DT, T])
+		if !aok && !bok {
+			return
+		}
+	default:
 
 	}
 	// do the values stuff
@@ -217,6 +226,7 @@ func MatMul[DT tensor.Num, T tensor.Basic[DT]](a, b gorgonia.Tensor) (retVal gor
 		ct = any(ct).(tensor.Aliker[T]).Alike(tensor.WithEngine(a.Engine()), tensor.WithShape(shp...))
 	default:
 		// one of a or b is not a value tensor
+		log.Printf("One of a or b is not a value tensor a %T b %T", a, b)
 		return retVal, nil
 	}
 
@@ -369,10 +379,17 @@ func Add[DT tensor.Num, T tensor.Basic[DT]](a, b gorgonia.Tensor) (retVal gorgon
 	}
 
 	// check if engine supports Add. If not, return
-	if _, ok := a.Engine().Workhorse().(tensor.Adder[DT, T]); !ok {
-		if _, ok := b.Engine().Workhorse().(tensor.Adder[DT, T]); !ok {
+	_, aok := a.Engine().Workhorse().(tensor.Adder[DT, T])
+	_, bok := b.Engine().Workhorse().(tensor.Adder[DT, T])
+	switch {
+	case !aok && !bok:
+		_, aok = a.Engine().Workhorse().BasicEng().(tensor.Adder[DT, T])
+		_, bok = b.Engine().Workhorse().BasicEng().(tensor.Adder[DT, T])
+		if !aok && !bok {
 			return
 		}
+	default:
+
 	}
 
 	// do the values stuff'
@@ -392,6 +409,7 @@ func Add[DT tensor.Num, T tensor.Basic[DT]](a, b gorgonia.Tensor) (retVal gorgon
 		ct = any(ct).(tensor.Aliker[T]).Alike(tensor.WithEngine(a.Engine()), tensor.WithShape(shp...))
 	default:
 		// one of a or b is not a value tensor
+		log.Printf("One of a or b is not a value tensor a %T b %T", a, b)
 		return retVal, nil
 	}
 	if ct, err = op.PreallocDo(nil, ct, at, bt); err != nil {
