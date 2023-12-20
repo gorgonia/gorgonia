@@ -150,6 +150,7 @@ func BenchmarkBackwardDiff(b *testing.B) {
 		})
 	}
 
+	// It turns out that the Basic version of MatMul and Add may actually be faster??
 	for _, bm := range exprLengths {
 		b.Run(fmt.Sprintf("Basic/length=%d", bm), func(b *testing.B) {
 			b.StopTimer()
@@ -174,4 +175,97 @@ func BenchmarkBackwardDiff(b *testing.B) {
 			_ = z
 		})
 	}
+}
+
+func BenchmarkRxEngine(b *testing.B) {
+	exprLengths := []int{1, 5, 10, 100, 1000}
+	for _, bm := range exprLengths {
+		b.Run(fmt.Sprintf("dense/length=%d", bm), func(b *testing.B) {
+			b.StopTimer()
+			engine := NewRx[float64, *dense.Dense[float64]](dense.StdFloat64Engine[*dense.Dense[float64]]{}, nil)
+			g := engine.Graph()
+
+			b.ResetTimer()
+			b.StartTimer()
+
+			var z gorgonia.Tensor
+			var err error
+			for i := 0; i < b.N; i++ {
+				if z, err = longExpr[float64, *dense.Dense[float64]](g, bm); err != nil {
+					b.Error(err)
+				}
+			}
+			_ = z
+		})
+	}
+	for _, bm := range exprLengths {
+		b.Run(fmt.Sprintf("Basic/length=%d", bm), func(b *testing.B) {
+			b.StopTimer()
+			engine := NewRx[float64, *dense.Dense[float64]](dense.StdFloat64Engine[*dense.Dense[float64]]{}, nil)
+			g := engine.Graph()
+
+			b.ResetTimer()
+			b.StartTimer()
+
+			var z gorgonia.Tensor
+			var err error
+			for i := 0; i < b.N; i++ {
+				if z, err = longExpr[float64, *dense.Dense[float64]](g, bm); err != nil {
+					b.Error(err)
+				}
+			}
+			_ = z
+		})
+	}
+
+}
+func BenchmarkRxEngineComposedFwd(b *testing.B) {
+	exprLengths := []int{1, 5, 10, 100, 1000}
+	for _, bm := range exprLengths {
+		b.Run(fmt.Sprintf("dense/length=%d", bm), func(b *testing.B) {
+			b.StopTimer()
+			fwd := &FwdEngine[float64, *dense.Dense[float64]]{StandardEngine: dense.StdFloat64Engine[*dense.Dense[float64]]{}}
+			g := exprgraph.NewGraph(fwd)
+			fwd.g = g
+
+			engine := NewRx[float64, tensor.Basic[float64]](fwd, g)
+
+			b.ResetTimer()
+			b.StartTimer()
+
+			var z gorgonia.Tensor
+			var err error
+			for i := 0; i < b.N; i++ {
+				if z, err = longExpr[float64, *dense.Dense[float64]](g, bm); err != nil {
+					b.Error(err)
+				}
+			}
+			_ = z
+			_ = engine
+		})
+	}
+	for _, bm := range exprLengths {
+		b.Run(fmt.Sprintf("Basic/length=%d", bm), func(b *testing.B) {
+			b.StopTimer()
+			fwd := &FwdEngine[float64, *dense.Dense[float64]]{StandardEngine: dense.StdFloat64Engine[*dense.Dense[float64]]{}}
+			g := exprgraph.NewGraph(fwd)
+			fwd.g = g
+
+			engine := NewRx[float64, tensor.Basic[float64]](fwd, g)
+
+			b.ResetTimer()
+			b.StartTimer()
+
+			var z gorgonia.Tensor
+			var err error
+			for i := 0; i < b.N; i++ {
+				if z, err = longExpr[float64, *dense.Dense[float64]](g, bm); err != nil {
+					b.Error(err)
+				}
+			}
+			_ = z
+			_ = engine
+		})
+	}
+
 }

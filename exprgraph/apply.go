@@ -5,12 +5,11 @@ import (
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/gorgonia/types"
-	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
 )
 
 // Apply creates a new Symbolic[DT] node.
-func Apply[DT any, T values.Value[DT]](g *Graph, op ops.Desc, newname string, children ...Node) (*Symbolic[DT], error) {
+func Apply[DT any](g *Graph, op ops.Desc, newname string, children ...Node) (*Symbolic[DT], error) {
 	s := op.ShapeExpr()
 	t := op.Type()
 

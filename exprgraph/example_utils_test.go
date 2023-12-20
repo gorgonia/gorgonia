@@ -189,7 +189,7 @@ func MatMul[DT tensor.Num, T tensor.Basic[DT]](a, b gorgonia.Tensor) (retVal gor
 		}
 
 		// shape checks are done here
-		cnode, err := exprgraph.Apply[DT, T](g, op, cname, anode, bnode)
+		cnode, err := exprgraph.Apply[DT](g, op, cname, anode, bnode)
 		if err != nil {
 			return nil, err
 		}
@@ -371,7 +371,7 @@ func Add[DT tensor.Num, T tensor.Basic[DT]](a, b gorgonia.Tensor) (retVal gorgon
 		}
 
 		// shape checks are done here
-		cnode, err := exprgraph.Apply[DT, T](g, op, cname, anode, bnode)
+		cnode, err := exprgraph.Apply[DT](g, op, cname, anode, bnode)
 		if err != nil {
 			return nil, err
 		}
