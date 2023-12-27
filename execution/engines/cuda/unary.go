@@ -4,7 +4,7 @@ import (
 	"context"
 	"unsafe"
 
-	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/internal/debug"
 )
 

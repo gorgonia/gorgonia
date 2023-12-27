@@ -13,6 +13,8 @@ const (
 
 	TypeMismatch  = "Type Mismatch: a %T and b %T"
 	ShapeMismatch = "Shape Mismatch. Expected %v. Got %v"
+	ArrayMismatch = "Cannot reuse %v. Length of array: %d. Expected length of at least %d."
+	DtypeError    = "Dtype Error. Expected %v. Got %v"
 
 	SymbolicOpFail = "Failed to perform %v symbolically"
 

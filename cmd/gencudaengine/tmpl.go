@@ -21,6 +21,8 @@ func (e *Engine[DT,T]) {{.Method}}(ctx context.Context, a, b, retVal T, opts ...
 
 // {{.ScalarMethod}}Scalar implements tensor.{{.Method}}er. It does not support safe or increment operation options and will return an error if those options are passed in.
 func (e *Engine[DT,T]) {{.ScalarMethod}}Scalar(ctx context.Context, a T, b DT, retVal T,  leftTensor, toIncr bool) (err error) {
+return errors.NYI()
+/*
 	name := constructBinName1(a, leftTensor, "{{.ScalarMethod | lower}}")
 
 	var bMem tensor.Memory
@@ -50,6 +52,7 @@ func (e *Engine[DT,T]) {{.ScalarMethod}}Scalar(ctx context.Context, a T, b DT, r
 		err = errors.Wrap(err, "Unable to perform engine.{{.ScalarMethod}} - CUDA LaunchAndSync failed.")
 	}
 	return
+*/
 }
 
 `
