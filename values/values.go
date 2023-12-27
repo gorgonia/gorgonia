@@ -13,9 +13,10 @@ type V interface {
 }
 
 // Value represents a value that Gorgonia accepts. At this point it is implemented by:
-//   - *dense.Dense
-//   - scalar.Scalar
-//   - *dualValue
+//   - *dense.Dense[DT]
+//   - *exprgraph.Value[DT, T]
+//   - *dual.Value[DT,T]
+//   - scalar.Scalar[DT
 //
 // A Value is essentially any thing that knows its own type and shape.
 // Most importantly though, a Value is a pointer - and can be converted into a tensor.Memory.

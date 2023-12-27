@@ -17,7 +17,7 @@ var (
 
 // this file implements all the tensor linalg engine interfaces
 
-func (e *Engine) checkThreeFloat(a, b, ret tensor.Tensor) (ad, bd, retVal *tensor.Dense, err error) {
+func (e *Engine[DT, T]) checkThreeFloat(a, b, ret tensor.Tensor) (ad, bd, retVal *tensor.Dense, err error) {
 	// if /*a.IsNativelyAccessible() &&*/ !a.IsManuallyManaged() {
 	// 	return nil, nil, nil, errors.New("CUDA Engine only takes non-natively accessible memory (memory on graphics cards). a isn't.")
 	// }
@@ -47,7 +47,7 @@ func (e *Engine) checkThreeFloat(a, b, ret tensor.Tensor) (ad, bd, retVal *tenso
 }
 
 // MatVecMul performs matrix vector multiplication
-func (e *Engine) MatVecMul(ctx context.Context, a, b, prealloc tensor.Tensor) (err error) {
+func (e *Engine[DT, T]) MatVecMul(ctx context.Context, a, b, prealloc tensor.Tensor) (err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func (e *Engine) MatVecMul(ctx context.Context, a, b, prealloc tensor.Tensor) (e
 }
 
 // MatMul performs matrix multiplication
-func (e *Engine) MatMul(ctx context.Context, a, b, prealloc tensor.Tensor) (err error) {
+func (e *Engine[DT, T]) MatMul(ctx context.Context, a, b, prealloc tensor.Tensor) (err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return err
 	}
@@ -238,7 +238,7 @@ func (e *Engine) MatMul(ctx context.Context, a, b, prealloc tensor.Tensor) (err 
 }
 
 // Outer performs outer product (kronecker) multiplication
-func (e *Engine) Outer(ctx context.Context, a, b, prealloc tensor.Tensor) (err error) {
+func (e *Engine[DT, T]) Outer(ctx context.Context, a, b, prealloc tensor.Tensor) (err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return err
 	}

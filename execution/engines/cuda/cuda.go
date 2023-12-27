@@ -20,9 +20,9 @@ var (
 	_ tensor.StandardEngine2 = &Engine{}
 )
 
-// Engine is a CUDA engine
-type Engine struct {
-	tensor.Engine
+// EngineState represents the internal, type-free state. In typical runs, you'd have
+// potentially multiple engines and single engine state.
+type EngineState struct {
 	sync.Mutex
 
 	a allocator.BFC
@@ -54,23 +54,37 @@ type Engine struct {
 	running     bool
 }
 
+func NewState(hint int64) *EngineState {
+	dev, err := cu.GetDevice(0)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to get CUDA device 0. Error %v", err))
+	}
+	return &EngineState{
+		totalMem: hint,
+		d:        dev,
+	}
+}
+
+// Engine is a CUDA engine
+type Engine[DT any, T tensor.Basic[DT]] struct {
+	// tensor.Engine // is this needed?
+
+	*EngineState
+}
+
 // New creates and initializes the engine. This is to be used when then engine is standalone.
 // It will reserve 80% of your GPU memory if `hint` <= 0 are provided.
 // This function will panic if there are any CUDA errors.
 //
 // You will need to manually call `.Run()`
-func New(hint int64) *Engine {
-	dev, err := cu.GetDevice(0)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to get CUDA device 0. Error %v", err))
-	}
-	e := &Engine{totalMem: hint, d: dev}
+func New[DT any, T tensor.Basic[DT]](state *EngineState) *Engine[DT, T] {
+	e := &Engine[DT, T]{EngineState: state}
 
 	return e
 }
 
 // IsInitialized returns true when the engine has been initialized
-func (e *Engine) IsInitialized() bool {
+func (e *Engine[DT, T]) IsInitialized() bool {
 	e.Lock()
 	initialized := e.initialized
 	e.Unlock()
@@ -78,31 +92,31 @@ func (e *Engine) IsInitialized() bool {
 }
 
 // AllocAccessible returns true because the engine return Go-accessible memory pointers
-func (e *Engine) AllocAccessible() bool { return true }
+func (e *Engine[DT, T]) AllocAccessible() bool { return true }
 
 // Alloc allocates a chunk of certain size from engine memory
-func (e *Engine) Alloc(size int64) (tensor.Memory, error) {
+func (e *Engine[DT, T]) Alloc(size int64) (tensor.Memory, error) {
 	e.waitForInit()
 	return e.Get(size)
 }
 
 // AllocFlags returns allocation flags
-func (e *Engine) AllocFlags() (tensor.MemoryFlag, tensor.DataOrder) {
+func (e *Engine[DT, T]) AllocFlags() (tensor.MemoryFlag, tensor.DataOrder) {
 	return tensor.MakeMemoryFlag(tensor.ManuallyManaged), tensor.ColMajor
 }
 
 // Free rees memory
-func (e *Engine) Free(mem tensor.Memory, size int64) error {
+func (e *Engine[DT, T]) Free(mem tensor.Memory, size int64) error {
 	e.waitForInit()
 	e.Put(mem, size)
 	return nil
 }
 
-func (e *Engine) Memset(mem tensor.Memory, val interface{}) error {
+func (e *Engine[DT, T]) Memset(mem tensor.Memory, val interface{}) error {
 	panic("not implemented")
 }
 
-func (e *Engine) Memclr(mem tensor.Memory) {
+func (e *Engine[DT, T]) Memclr(mem tensor.Memory) {
 	panic("not implemented")
 }
 
@@ -110,7 +124,7 @@ func (e *Engine) Memclr(mem tensor.Memory) {
 // The memory that will be copied is up to the smallest of sizes between dst and src.
 // i.e. if dst is 8 bytes and src is 16 bytes, only the first 8 bytes of src will be copied.
 // Likewise, if dst is 20 bytes and src is 3 bytes, only 3 bytes will be copied.
-func (e *Engine) Memcpy(dst tensor.Memory, src tensor.Memory) error {
+func (e *Engine[DT, T]) Memcpy(dst tensor.Memory, src tensor.Memory) error {
 	sSize := src.MemSize()
 	dSize := dst.MemSize()
 
@@ -131,11 +145,11 @@ func (e *Engine) Memcpy(dst tensor.Memory, src tensor.Memory) error {
 	return e.c.Error()
 }
 
-func (e *Engine) memcpy(dst cu.DevicePtr, src cu.DevicePtr, size int64) {
+func (e *Engine[DT, T]) memcpy(dst cu.DevicePtr, src cu.DevicePtr, size int64) {
 	e.c.Memcpy(dst, src, size)
 }
 
-func (e *Engine) Accessible(mem tensor.Memory) (tensor.Memory, error) {
+func (e *Engine[DT, T]) Accessible(mem tensor.Memory) (tensor.Memory, error) {
 	size := mem.MemSize()
 	bs := make([]byte, int(size))
 	e.c.Context.MemcpyDtoH(unsafe.Pointer(&bs[0]), cu.DevicePtr(mem.Uintptr()), int64(size))
@@ -168,16 +182,16 @@ func (e *Engine) Accessible(mem tensor.Memory) (tensor.Memory, error) {
 }
 
 // WorksWith returns true because the data order can be directly worked with
-func (e *Engine) WorksWith(order tensor.DataOrder) bool { return true }
+func (e *Engine[DT, T]) WorksWith(order tensor.DataOrder) bool { return true }
 
 // NonStdAlloc nothing instead of running the default built in allocator
-func (e *Engine) NonStdAlloc() {}
+func (e *Engine[DT, T]) NonStdAlloc() {}
 
 // Errors returns an error message
-func (e *Engine) Errors() error { return e.c.Errors() }
+func (e *Engine[DT, T]) Errors() error { return e.c.Errors() }
 
 // waitForInit is a loop that blocks and waits till the engine is initialized.
-func (e *Engine) waitForInit() {
+func (e *Engine[DT, T]) waitForInit() {
 	for ok := e.IsInitialized(); !ok; ok = e.IsInitialized() {
 	}
 }

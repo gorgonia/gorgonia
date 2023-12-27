@@ -29,31 +29,31 @@ const (
 )
 
 // HasFunc returns true if the execution is external (cgo/cuda/openCL) AND the external device contains the function with the given name
-func (e *Engine) HasFunc(name string) bool { _, ok := e.f[name]; return ok }
+func (e *EngineState) HasFunc(name string) bool { _, ok := e.f[name]; return ok }
 
 // Sync returns a channel of sync signals
-func (e *Engine) Sync() chan struct{} { return e.syncChan }
+func (e *EngineState) Sync() chan struct{} { return e.syncChan }
 
 // Signal signals the machine to do work
-func (e *Engine) Signal() { e.c.Signal() }
+func (e *EngineState) Signal() { e.c.Signal() }
 
 // Context returns the BatchedContext
-func (e *Engine) Context() *cu.BatchedContext { return &e.c }
+func (e *EngineState) Context() *cu.BatchedContext { return &e.c }
 
 // CUDNNContext returns the cuDNN context
-func (e *Engine) CUDNNContext() *cudnn.Context { return &e.n }
+func (e *EngineState) CUDNNContext() *cudnn.Context { return &e.n }
 
 // BLASContext returns the cuBLAS context
-func (e *Engine) BLASContext() *cublas.Standard { return &e.b }
+func (e *EngineState) BLASContext() *cublas.Standard { return &e.b }
 
 // Modules returns the loaded modules indexed by name
-func (e *Engine) Modules() map[string]cu.Module { return e.m }
+func (e *EngineState) Modules() map[string]cu.Module { return e.m }
 
 // Functions returns the loaded functions indexed by name
-func (e *Engine) Functions() map[string]cu.Function { return e.f }
+func (e *EngineState) Functions() map[string]cu.Function { return e.f }
 
 // ElemGridSize calculates the gridsize for elementwise operations. n is the number of elements
-func (e *Engine) ElemGridSize(n int) (gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ int) {
+func (e *EngineState) ElemGridSize(n int) (gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ int) {
 	maxThreads := e.mtpb
 	maxGridX := e.mgdx
 	maxGridY := e.mgdy
@@ -93,7 +93,7 @@ func (e *Engine) ElemGridSize(n int) (gridDimX, gridDimY, gridDimZ, blockDimX, b
 // of the engine. However, this method is included for instances where one would
 // need to manually manage the engine.
 // Init() needs to run in the same threadlocked OS thread as the .Run() (or manual equivalent).
-func (e *Engine) Init(device cu.Device, size int64) (err error) {
+func (e *EngineState) Init(device cu.Device, size int64) (err error) {
 	e.Lock()
 	initialized := e.initialized
 	e.Unlock()
@@ -117,7 +117,7 @@ func (e *Engine) Init(device cu.Device, size int64) (err error) {
 	return
 }
 
-func (e *Engine) doInit(size int64) (err error) {
+func (e *EngineState) doInit(size int64) (err error) {
 	e.syncChan = make(chan struct{})
 	e.finishChan = make(chan struct{})
 	e.a = allocator.Make(memalign)
@@ -181,7 +181,7 @@ func (e *Engine) doInit(size int64) (err error) {
 }
 
 // Close cleans up the machine, and closes all available resources
-func (e *Engine) Close() error {
+func (e *EngineState) Close() error {
 	e.Signal() // tell the engine to do all the work now.
 
 	debug.Logtid("engine.Close", 1)
@@ -233,16 +233,16 @@ func (e *Engine) Close() error {
 }
 
 // DoWork sends a signal to the batched CUDA Context to actually do work
-func (e *Engine) DoWork() error {
+func (e *EngineState) DoWork() error {
 	debug.Logtid("engine.DoWork", 1)
 	e.c.DoWork()
 	return e.c.Errors()
 }
 
 // Run initialises and starts the engine
-func (e *Engine) Run() { e.once.Do(e.run) }
+func (e *EngineState) Run() { e.once.Do(e.run) }
 
-func (e *Engine) run() {
+func (e *EngineState) run() {
 	e.Lock()
 	if e.running {
 		e.Unlock()
@@ -341,7 +341,7 @@ loop:
 }
 
 // blockThread is an easier version of calculating <<threads, blocks>> for CUDA. Useful for debugging
-func (e *Engine) blockThread(n, dev int) (blocks, threads int) {
+func (e *EngineState) blockThread(n, dev int) (blocks, threads int) {
 	switch {
 	case n <= 32:
 		threads = 32

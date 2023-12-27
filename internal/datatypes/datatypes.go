@@ -12,8 +12,11 @@ import (
 )
 
 // Tensor represents values that are acceptable in Gorgonia. At this point, it is implemented by:
-//   - tensor.Basic[DT]
-//   - exprgraph.Node
+//   - *exprgraph.Value[DT,T]
+//   - *exprgraph.Symbolic[DT]
+//   - *dense.Dense[DT]
+//   - *dual.Dual[DT]
+//   - scalar.Scalar
 //
 // There is an overlap with values.Value. The reason is semantic clarity. Values are Tensors. Tensors are Values.
 type Tensor interface {

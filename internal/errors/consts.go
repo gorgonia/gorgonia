@@ -24,6 +24,9 @@ const (
 	nyiTypeFail  = "%q not yet implemented for interactions with %T. "
 	nyiTypeFail2 = "%q (%v) not yet implemented for interactions with %T. "
 	nyiFailN     = "%q not yet implemented. %v. "
+
+	FailedFuncOpt = "Unable to handle FuncOpts for %s"
+	EngineSupport = "Engine %T does not implement %T, which is needed for %s"
 )
 
 type NoOp struct{}

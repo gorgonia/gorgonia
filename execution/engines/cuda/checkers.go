@@ -14,7 +14,7 @@ import (
 // this file provides checker methods for the engine.
 
 // NaNChecker checks that the tensor contains a NaN
-func (e *Engine) HasNaN(a tensor.Tensor) (bool, error) {
+func (e *Engine[DT, T]) HasNaN(a tensor.Tensor) (bool, error) {
 	dt := a.Dtype()
 	name := fmt.Sprintf("misc.hasNaN_f%v", int(dt.Size()*8))
 
@@ -39,7 +39,7 @@ func (e *Engine) HasNaN(a tensor.Tensor) (bool, error) {
 }
 
 // InfChecker checks that the tensor contains a Inf
-func (e *Engine) HasInf(a tensor.Tensor) (bool, error) {
+func (e *Engine[DT, T]) HasInf(a tensor.Tensor) (bool, error) {
 	dt := a.Dtype()
 	name := fmt.Sprintf("misc.hasInf_f%v", int(dt.Size()*8))
 

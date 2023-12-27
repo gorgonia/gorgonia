@@ -28,8 +28,8 @@ var (
 // Node is a description of a tensor that has a name and an ID.
 //
 // There are two possible definition of a Node:
-//   - Value[DT, T]
-//   - Symbolic[DT]
+//   - *exprgraph.Value[DT, T]
+//   - *exprgraph.Symbolic[DT]
 //
 // It's an interface instead of a constraint because it's more useful as an interface.
 type Node interface {
@@ -42,6 +42,7 @@ type Node interface {
 	isnode() // seals the interface to this package
 }
 
+// New creates a new Node.
 func New[DT any](g *Graph, name string, opts ...tensor.ConsOpt) Node {
 	c := new(tensor.Constructor)
 	for _, opt := range opts {

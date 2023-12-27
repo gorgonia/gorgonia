@@ -1,3 +1,4 @@
+//go:build !cuda
 // +build !cuda
 
 package execution
@@ -15,7 +16,7 @@ type ExternMetadata struct {
 
 func MakeEngine(e tensor.Engine) ExternMetadata {
 	if e == nil {
-		e = tensor.StdEng{}
+		panic("Expected an engine to be passed in")
 	}
 	return ExternMetadata{e}
 }
@@ -26,7 +27,7 @@ func (m *ExternMetadata) Get(dev Device, size int64) (tensor.Memory, error) {
 }
 
 // GetFromValue allocates a memory of the size of v. In this build it returns a NoOpError, and v itself.
-func (m *ExternMetadata) GetFromValue(dev Device, v values.Value) (tensor.Memory, error) {
+func (m *ExternMetadata) GetFromValue(dev Device, v values.V) (tensor.Memory, error) {
 	return v, gerrors.NoOp{}
 }
 
@@ -34,9 +35,9 @@ func (m *ExternMetadata) GetFromValue(dev Device, v values.Value) (tensor.Memory
 func (m *ExternMetadata) Put(dev Device, mem tensor.Memory, size int64) {}
 
 // PutValue puts a previously allocated value into the pool. In this build,  it is a noop.
-func (m *ExternMetadata) PutValue(dev Device, v values.Value) {}
+func (m *ExternMetadata) PutValue(dev Device, v values.V) {}
 
 // Transfer transfers a value from device to device. In this build, it's a noop, returning the input value, and a nil error
-func (m *ExternMetadata) Transfer(toDev, fromDev Device, v values.Value, synchronous bool) (retVal values.Value, err error) {
+func (m *ExternMetadata) Transfer(toDev, fromDev Device, v values.V, synchronous bool) (retVal values.V, err error) {
 	return v, nil
 }

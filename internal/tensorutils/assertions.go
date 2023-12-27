@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 )
 
 // contexter is any engine (or type) that returns the current context.
@@ -13,13 +14,16 @@ type contexter interface {
 }
 
 // GetDenseTensor tries to extract a tensor.DenseTensor from a tensor.Tensor.
-func GetDenseTensor(t tensor.Tensor) (tensor.DenseTensor, error) {
+func GetDenseTensor[DT any, T tensor.Tensor[DT, T]](t tensor.DescWithStorage) (dense.DenseTensor[DT, T], error) {
 	switch tt := t.(type) {
-	case tensor.DenseTensor:
+	case dense.DenseTensor[DT, T]:
 		return tt, nil
-	case tensor.Densor:
-		return tt.Dense(), nil
+	// case dense.Densor[DT]:
+	// 	var z T
+
+	// 	return z.FromDense(tt.GetDense()), nil
 	default:
+		_ = tt
 		return nil, errors.Errorf("Tensor %T is not a DenseTensor", t)
 	}
 }

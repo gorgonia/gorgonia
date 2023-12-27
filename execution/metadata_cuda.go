@@ -1,8 +1,12 @@
+//go:build cuda
 // +build cuda
 
 package execution
 
-import "gorgonia.org/tensor"
+import (
+	"gorgonia.org/execution/engines/cuda"
+	"gorgonia.org/tensor"
+)
 
 type ExternMetadata struct {
 	tensor.Engine

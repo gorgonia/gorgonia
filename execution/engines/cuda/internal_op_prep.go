@@ -12,7 +12,7 @@ import (
 
 // internal_op_prep.go provides the syntactic abstractions for code that is relevant to extracting a CUDA memory from a tensor.
 
-func (e *Engine) opMem(a tensor.Tensor, opts ...tensor.FuncOpt) (mem cu.DevicePtr, size int64, retVal tensor.Tensor, err error) {
+func (e *Engine[DT, T]) opMem(a tensor.Tensor, opts ...tensor.FuncOpt) (mem cu.DevicePtr, size int64, retVal tensor.Tensor, err error) {
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
 	var ctx context.Context

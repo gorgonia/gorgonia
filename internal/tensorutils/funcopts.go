@@ -1,15 +1,13 @@
 package gtu
 
 import (
-	"context"
-
 	"github.com/pkg/errors"
-	"gorgonia.org/dtype"
 	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 )
 
+/*
 // HandleFuncOpts handles funcOpts from package tensor.
 func HandleFuncOpts(expShape shapes.Shape, expType dtype.Dtype, o tensor.DataOrder, strict bool, opts ...tensor.FuncOpt) (ctx context.Context, reuse tensor.DenseTensor, safe, toReuse, incr, same bool, err error) {
 	fo := tensor.ParseFuncOpts(opts...)
@@ -53,4 +51,36 @@ func HandleFuncOpts(expShape shapes.Shape, expType dtype.Dtype, o tensor.DataOrd
 
 	}
 	return
+}
+
+*/
+
+func HandleFuncOpts[DT any, T tensor.Tensor[DT, T]](e tensor.Engine, t T, expShape shapes.Shape, opts ...tensor.FuncOpt) (retVal T, fo tensor.Option, err error) {
+	switch e := e.(type) {
+	case tensor.SpecializedFuncOptHandler[DT, T]:
+		return e.HandleFuncOptsSpecialized(t, expShape, opts...)
+	case tensor.FuncOptHandler[DT]:
+		var ret tensor.Basic[DT]
+		ret, fo, err = e.HandleFuncOpts(t, expShape, opts...)
+		if err != nil {
+			return retVal, fo, errors.Wrapf(err, gerrors.FailedFuncOpt, gerrors.ThisFn())
+		}
+		var ok bool
+		if retVal, ok = ret.(T); !ok {
+			return retVal, fo, errors.Errorf("Expected retVal type to be %T", retVal)
+		}
+		return
+	case tensor.DescFuncOptHandler[DT]:
+		var ret tensor.DescWithStorage
+		ret, fo, err = e.HandleFuncOptsDesc(t, expShape, opts...)
+		if err != nil {
+			return retVal, fo, err
+		}
+		var ok bool
+		if retVal, ok = ret.(T); !ok {
+			return retVal, fo, errors.Errorf("Expected retVal type to be %T", retVal)
+		}
+		return
+	}
+	return retVal, fo, errors.Errorf(gerrors.EngineSupport, e, e, gerrors.ThisFn())
 }
