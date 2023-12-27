@@ -4,13 +4,9 @@ import (
 	"fmt"
 
 	"gorgonia.org/gorgonia/internal/errors"
-	gtu "gorgonia.org/gorgonia/internal/tensorutils"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 )
-
-// used to import gtu so goimports can know how to import gtu elsewhere in the package.
-var _ = gtu.HandleFuncOpts
 
 func binaryCheck[DT any](a, b tensor.Basic[DT]) (err error) {
 	if !a.Shape().Eq(b.Shape()) {

@@ -7,55 +7,22 @@ import (
 	"gonum.org/v1/gonum/blas"
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 )
 
 var (
-	_ tensor.MatVecMuler = &Engine{}
-	_ tensor.MatMuler    = &Engine{}
-	_ tensor.OuterProder = &Engine{}
+	_ tensor.BLA[float64, *dense.Dense[float64]] = &Engine[float64, *dense.Dense[float64]]{}
 )
 
 // this file implements all the tensor linalg engine interfaces
 
-func (e *Engine[DT, T]) checkThreeFloat(a, b, ret tensor.Tensor) (ad, bd, retVal *tensor.Dense, err error) {
-	// if /*a.IsNativelyAccessible() &&*/ !a.IsManuallyManaged() {
-	// 	return nil, nil, nil, errors.New("CUDA Engine only takes non-natively accessible memory (memory on graphics cards). a isn't.")
-	// }
-
-	// if /* b.IsNativelyAccessible() && */ !b.IsManuallyManaged() {
-	// 	return nil, nil, nil, errors.New("CUDA Engine only takes non-natively accessible memory (memory on graphics cards). b isn't")
-	// }
-
-	// if /* ret.IsNativelyAccessible() && */ !ret.IsManuallyManaged() {
-	// 	return nil, nil, nil, errors.New("CUDA Engine only takes non-natively accessible memory (memory on graphics cards). ret isn't")
-	// }
-
-	if a.Dtype() != b.Dtype() || b.Dtype() != ret.Dtype() {
-		return nil, nil, nil, errors.New("Expected a and b and retVal all to have the same Dtype")
-	}
-	var ok bool
-	if ad, ok = a.(*tensor.Dense); !ok {
-		return nil, nil, nil, errors.New("Expected a to be a *tensor.Dense")
-	}
-	if bd, ok = b.(*tensor.Dense); !ok {
-		return nil, nil, nil, errors.New("Expected b to be a *tensor.Dense")
-	}
-	if retVal, ok = ret.(*tensor.Dense); !ok {
-		return nil, nil, nil, errors.New("Expected ret to be a *tensor.Dense")
-	}
-	return
-}
-
 // MatVecMul performs matrix vector multiplication
-func (e *Engine[DT, T]) MatVecMul(ctx context.Context, a, b, prealloc tensor.Tensor) (err error) {
+func (e *Engine[DT, T]) MatVecMul(ctx context.Context, a, b, prealloc T, incr []DT) (err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return err
 	}
-
-	// check all three are dense float tensors
-	var ad, bd, pd *tensor.Dense
-	if ad, bd, pd, err = e.checkThreeFloat(a, b, prealloc); err != nil {
-		return errors.Wrapf(err, "MatVecMul failed pre check")
+	if incr != nil {
+		panic("NYI incr")
 	}
 
 	tA := blas.Trans
@@ -92,17 +59,17 @@ func (e *Engine[DT, T]) MatVecMul(ctx context.Context, a, b, prealloc tensor.Ten
 	// log.Printf("b %v", b.Strides())
 	// incX := a.Strides()[0]
 	// incY = b.Strides()[0]
-	switch ad.Dtype() {
-	case tensor.Float64:
-		A := ad.Float64s()
-		X := bd.Float64s()
-		Y := pd.Float64s()
+	var z0 DT
+	A := a.Data()
+	X := b.Data()
+	Y := prealloc.Data()
+	switch any(z0).(type) {
+	case float64:
+		A, X, Y := any(A).([]float64), any(X).([]float64), any(Y).([]float64)
 		alpha, beta := float64(1), float64(0)
 		e.c.Do(func() error { e.b.Dgemv(tA, m, n, alpha, A, lda, X, incX, beta, Y, incY); return e.b.Err() })
-	case tensor.Float32:
-		A := ad.Float32s()
-		X := bd.Float32s()
-		Y := pd.Float32s()
+	case float32:
+		A, X, Y := any(A).([]float32), any(X).([]float32), any(Y).([]float32)
 		alpha, beta := float32(1), float32(0)
 		e.c.Do(func() error { e.b.Sgemv(tA, m, n, alpha, A, lda, X, incX, beta, Y, incY); return e.b.Err() })
 	default:
@@ -112,14 +79,13 @@ func (e *Engine[DT, T]) MatVecMul(ctx context.Context, a, b, prealloc tensor.Ten
 }
 
 // MatMul performs matrix multiplication
-func (e *Engine[DT, T]) MatMul(ctx context.Context, a, b, prealloc tensor.Tensor) (err error) {
+func (e *Engine[DT, T]) MatMul(ctx context.Context, a, b, prealloc T, incr []DT) (err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return err
 	}
 
-	var ad, bd, pd *tensor.Dense
-	if ad, bd, pd, err = e.checkThreeFloat(a, b, prealloc); err != nil {
-		return errors.Wrapf(err, "MatVecMul failed pre check")
+	if incr != nil {
+		panic("NYI: incr")
 	}
 
 	ado := a.DataOrder()
@@ -133,9 +99,9 @@ func (e *Engine[DT, T]) MatMul(ctx context.Context, a, b, prealloc tensor.Tensor
 	// b is (k, n)
 	// c is (m, n)
 	var m, n, k int
-	m = ad.Shape()[0]
-	k = ad.Shape()[1]
-	n = bd.Shape()[1]
+	m = a.Shape()[0]
+	k = a.Shape()[1]
+	n = b.Shape()[1]
 
 	// // wrt the strides, we use the original strides, because that's what BLAS needs, instead of calling .Strides()
 	// // lda in colmajor = number of rows;
@@ -176,7 +142,7 @@ func (e *Engine[DT, T]) MatMul(ctx context.Context, a, b, prealloc tensor.Tensor
 		// magic swappy thingy
 		m, n = n, m
 		lda, ldb = ldb, lda
-		ad, bd = bd, ad
+		a, b = b, a
 	case ado.IsRowMajor() && bdo.IsRowMajor() && za && !zb:
 		lda = m
 		ldb = n
@@ -187,7 +153,7 @@ func (e *Engine[DT, T]) MatMul(ctx context.Context, a, b, prealloc tensor.Tensor
 		m, n = n, m
 		lda, ldb = ldb, lda
 		tA, tB = tB, tA
-		ad, bd = bd, ad
+		a, b = b, a
 	case ado.IsRowMajor() && bdo.IsRowMajor() && za && zb:
 		lda = m
 		ldb = k
@@ -197,7 +163,7 @@ func (e *Engine[DT, T]) MatMul(ctx context.Context, a, b, prealloc tensor.Tensor
 		// magic swappy thingy
 		m, n = n, m
 		lda, ldb = ldb, lda
-		ad, bd = bd, ad
+		a, b = b, a
 	case ado.IsRowMajor() && bdo.IsRowMajor() && !za && zb:
 		lda = k
 		ldb = k
@@ -208,29 +174,30 @@ func (e *Engine[DT, T]) MatMul(ctx context.Context, a, b, prealloc tensor.Tensor
 		m, n = n, m
 		lda, ldb = ldb, lda
 		tA, tB = tB, tA
-		ad, bd = bd, ad
+		a, b = b, a
 
 	default:
 		panic("Unreachable")
 	}
 	e.Signal()
-	switch ad.Dtype() {
-	case tensor.Float64:
-		A := ad.Float64s()
-		B := bd.Float64s()
-		C := pd.Float64s()
+
+	A := a.Data()
+	B := b.Data()
+	C := prealloc.Data()
+	var z DT
+	switch any(z).(type) {
+	case float64:
+		A, B, C := any(A).([]float64), any(B).([]float64), any(C).([]float64)
 		alpha, beta := float64(1), float64(0)
 
 		e.c.Do(func() error { e.b.Dgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc); return nil })
 
-	case tensor.Float32:
-		A := ad.Float32s()
-		B := bd.Float32s()
-		C := pd.Float32s()
+	case float32:
+		A, B, C := any(A).([]float32), any(B).([]float32), any(C).([]float32)
 		alpha, beta := float32(1), float32(0)
 		e.c.Do(func() error { e.b.Sgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc); return nil })
 	default:
-		return errors.Errorf("Unsupported Dtype %v", ad.Dtype())
+		return errors.Errorf("Unsupported Dtype %v", a.Dtype())
 	}
 	e.Signal()
 
@@ -238,23 +205,22 @@ func (e *Engine[DT, T]) MatMul(ctx context.Context, a, b, prealloc tensor.Tensor
 }
 
 // Outer performs outer product (kronecker) multiplication
-func (e *Engine[DT, T]) Outer(ctx context.Context, a, b, prealloc tensor.Tensor) (err error) {
+func (e *Engine[DT, T]) Outer(ctx context.Context, a, b, prealloc T, incr []DT) (err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return err
 	}
-
-	var ad, bd, pd *tensor.Dense
-	if ad, bd, pd, err = e.checkThreeFloat(a, b, prealloc); err != nil {
-		return errors.Wrapf(err, "MatVecMul failed pre check")
+	if incr == nil {
+		panic("NYI incr")
 	}
-	m := ad.Size()
-	n := bd.Size()
-	pdo := pd.DataOrder()
+
+	m := a.Size()
+	n := b.Size()
+	pdo := prealloc.DataOrder()
 
 	var lda int
 	switch {
 	case pdo.IsColMajor():
-		lda = pd.Shape()[0]
+		lda = prealloc.Shape()[0]
 	case pdo.IsRowMajor():
 		aShape := a.Shape().Clone()
 		bShape := b.Shape().Clone()
@@ -265,7 +231,7 @@ func (e *Engine[DT, T]) Outer(ctx context.Context, a, b, prealloc tensor.Tensor)
 			return err
 		}
 
-		if err = e.MatMul(ctx, a, b, prealloc); err != nil {
+		if err = e.MatMul(ctx, a, b, prealloc, nil); err != nil {
 			return err
 		}
 
@@ -279,18 +245,18 @@ func (e *Engine[DT, T]) Outer(ctx context.Context, a, b, prealloc tensor.Tensor)
 	}
 
 	e.Signal()
+	x := a.Data()
+	y := b.Data()
+	A := prealloc.Data()
 	incX, incY := 1, 1
-	switch ad.Dtype() {
-	case tensor.Float64:
-		x := ad.Float64s()
-		y := bd.Float64s()
-		A := pd.Float64s()
+	var z DT
+	switch any(z).(type) {
+	case float64:
+		x, y, A := any(x).([]float64), any(y).([]float64), any(A).([]float64)
 		alpha := float64(1)
 		e.c.Do(func() error { e.b.Dger(m, n, alpha, x, incX, y, incY, A, lda); return nil })
-	case tensor.Float32:
-		x := ad.Float32s()
-		y := bd.Float32s()
-		A := pd.Float32s()
+	case float32:
+		x, y, A := any(x).([]float32), any(y).([]float32), any(A).([]float32)
 		alpha := float32(1)
 		e.c.Do(func() error { e.b.Sger(m, n, alpha, x, incX, y, incY, A, lda); return nil })
 	}

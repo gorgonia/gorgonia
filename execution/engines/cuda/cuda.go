@@ -84,6 +84,12 @@ func New[DT any, T tensor.Basic[DT]](state *EngineState) *Engine[DT, T] {
 	return e
 }
 
+func (e *Engine[DT, T]) Workhorse() tensor.Engine { return e }
+
+func (e *Engine[DT, T]) BasicEng() tensor.Engine {
+	return &Engine[DT, tensor.Basic[DT]]{EngineState: e.EngineState}
+}
+
 // IsInitialized returns true when the engine has been initialized
 func (e *Engine[DT, T]) IsInitialized() bool {
 	e.Lock()
@@ -176,7 +182,7 @@ func (e *Engine[DT, T]) Accessible(mem tensor.Memory) (tensor.Memory, error) {
 }
 
 // WorksWith returns true because the data order can be directly worked with
-func (e *Engine[DT, T]) WorksWith(order tensor.DataOrder) bool { return true }
+func (e *Engine[DT, T]) WorksWith(flags tensor.MemoryFlag, order tensor.DataOrder) bool { return true }
 
 // NonStdAlloc nothing instead of running the default built in allocator
 func (e *Engine[DT, T]) NonStdAlloc() {}
