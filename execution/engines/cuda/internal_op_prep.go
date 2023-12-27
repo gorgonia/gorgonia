@@ -1,17 +1,27 @@
 package cuda
 
 import (
-	"context"
-
-	"github.com/pkg/errors"
-	"gorgonia.org/cu"
-	gctx "gorgonia.org/gorgonia/internal/context"
-	gtu "gorgonia.org/gorgonia/internal/tensorutils"
+	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 )
 
 // internal_op_prep.go provides the syntactic abstractions for code that is relevant to extracting a CUDA memory from a tensor.
 
+// Engine cannot handle incr or safe. See opMem()
+
+func (e *Engine[DT, T]) HandleFuncOptsSpecialized(a T, expShape shapes.Shape, opts ...tensor.FuncOpt) (retVal T, fo tensor.Option, err error) {
+	panic("NYI")
+}
+
+func (e *Engine[DT, T]) HandleFuncOpts(a tensor.Basic[DT], expShape shapes.Shape, opts ...tensor.FuncOpt) (retVal tensor.Basic[DT], fo tensor.Option, err error) {
+	panic("NYI")
+}
+
+func (e *Engine[DT, T]) HandleFuncOptsDesc(a tensor.Basic[DT], expShape shapes.Shape, opts ...tensor.FuncOpt) (retVal tensor.DescWithStorage, fo tensor.Option, err error) {
+	panic("NYI")
+}
+
+/*
 func (e *Engine[DT, T]) opMem(a tensor.Tensor, opts ...tensor.FuncOpt) (mem cu.DevicePtr, size int64, retVal tensor.Tensor, err error) {
 	var reuse tensor.DenseTensor
 	var safe, toReuse bool
@@ -42,3 +52,4 @@ func (e *Engine[DT, T]) opMem(a tensor.Tensor, opts ...tensor.FuncOpt) (mem cu.D
 	}
 	return mem, size, retVal, err
 }
+*/

@@ -15,7 +15,7 @@ import (
 // LoadStdLib loads the standard lib from the gorgonia standard library.
 // This function needs to be called in the same threadlocked OS thread as the thread
 // that created the engine.
-func LoadStdLib(e *Engine[DT, T]) error {
+func LoadStdLib(e *EngineState) error {
 	stdlib := cudalib.StandardLib()
 
 	for _, l := range stdlib {
@@ -27,7 +27,7 @@ func LoadStdLib(e *Engine[DT, T]) error {
 }
 
 // LoadCUDAFunc loads a string representing a CUDA PTX file into the engine, giving it the universe of computing functions.
-func (e *Engine[DT, T]) LoadCUDAFunc(moduleName, data string, funcs []string) (err error) {
+func (e *EngineState) LoadCUDAFunc(moduleName, data string, funcs []string) (err error) {
 	fns := e.f
 	if fns == nil {
 		fns = make(map[string]cu.Function)
@@ -59,7 +59,7 @@ func (e *Engine[DT, T]) LoadCUDAFunc(moduleName, data string, funcs []string) (e
 
 // Call launches a known kernel that takes at least one argument.
 // The argument's size must be known.
-func (e *Engine[DT, T]) Call(fnName string, size int, args ...unsafe.Pointer) error {
+func (e *EngineState) Call(fnName string, size int, args ...unsafe.Pointer) error {
 	if !e.HasFunc(fnName) {
 		return errors.Errorf("The engine does not have the function %q", fnName)
 	}

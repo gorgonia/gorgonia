@@ -3,17 +3,17 @@ package main
 import "text/template"
 
 const binopRaw = `// {{.Method}} implements tensor.{{.Method}}er. It does not support safe or increment operation options and will return an error if those options are passed in.
-func (e *Engine) {{.Method}}(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
+func (e *Engine[DT,T]) {{.Method}}(ctx context.Context, a, b, retVal T, opts ...tensor.FuncOpt) (err error) {
 	name := constructBinName2(a, b, "{{.ScalarMethod | lower}}")
 
-	if err = binaryCheck(a, b); err != nil {
-		return nil, errors.Wrap(err, "Basic checks failed for {{.Method}}")
+	if err = binaryCheck[DT](a, b); err != nil {
+		return errors.Wrap(err, "Basic checks failed for {{.Method}}")
 	}
 
 	var mem, memB cu.DevicePtr
 	var size int64
 	if mem, size, retVal, err = e.opMem(a, opts...); err != nil{
-		return nil, errors.Wrap(err, "Unable to perform {{.Method}}")
+		return errors.Wrap(err, "Unable to perform {{.Method}}")
 	}
 	memB = cu.DevicePtr(b.Uintptr())
 
@@ -26,24 +26,24 @@ func (e *Engine) {{.Method}}(a tensor.Tensor, b tensor.Tensor, opts ...tensor.Fu
 }
 
 // {{.ScalarMethod}}Scalar implements tensor.{{.Method}}er. It does not support safe or increment operation options and will return an error if those options are passed in.
-func (e *Engine) {{.ScalarMethod}}Scalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
+func (e *Engine[DT,T]) {{.ScalarMethod}}Scalar(ctx context.Context, a T, b DT, retVal T,  leftTensor, toIncr bool) (err error) {
 	name := constructBinName1(a, leftTensor, "{{.ScalarMethod | lower}}")
 
 	var bMem tensor.Memory
 	var ok bool
 	if bMem, ok = b.(tensor.Memory); !ok {
-		return nil, errors.Errorf("b has to be a tensor.Memory. Got %T instead", b)
+		return errors.Errorf("b has to be a tensor.Memory. Got %T instead", b)
 	}
 
-	if err = unaryCheck(a); err != nil {
-		return nil, errors.Wrap(err, "Basic checks failed for {{.ScalarMethod}}Scalar")
+	if err = unaryCheck[DT](a); err != nil {
+		return errors.Wrap(err, "Basic checks failed for {{.ScalarMethod}}Scalar")
 	}
 
 
 	var mem, memB cu.DevicePtr
 	var size int64
 	if mem, size, retVal, err = e.opMem(a, opts...); err != nil{
-		return nil, errors.Wrap(err, "Unable to perform {{.Method}}")
+		return errors.Wrap(err, "Unable to perform {{.Method}}")
 	}
 	memB = cu.DevicePtr(bMem.Uintptr())
 	if !leftTensor {
@@ -60,12 +60,12 @@ func (e *Engine) {{.ScalarMethod}}Scalar(a tensor.Tensor, b interface{}, leftTen
 `
 
 const unopRaw = `// {{.Method}} implements tensor.{{.Method}}er. It does not support safe or increment options and will return an error if those options are passed in.
-func (e *Engine) {{.Method}}(a tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
+func (e *Engine[DT,T]) {{.Method}}(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "{{.KernelName}}")
 	var mem cu.DevicePtr
 	var size int64
 	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to perform {{.Method}}")
+		return errors.Wrap(err, "Unable to perform {{.Method}}")
 	}
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)

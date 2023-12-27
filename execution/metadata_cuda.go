@@ -4,7 +4,7 @@
 package execution
 
 import (
-	"gorgonia.org/execution/engines/cuda"
+	"gorgonia.org/gorgonia/execution/engines/cuda"
 	"gorgonia.org/tensor"
 )
 

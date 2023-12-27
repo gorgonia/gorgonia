@@ -12,26 +12,7 @@ import (
 // used to import gtu so goimports can know how to import gtu elsewhere in the package.
 var _ = gtu.HandleFuncOpts
 
-func binaryCheck(a, b tensor.Tensor) (err error) {
-	at := a.Dtype()
-	bt := b.Dtype()
-
-	switch at {
-	case tensor.Float32, tensor.Float64:
-	default:
-		return errors.Errorf("Unsupported Dtype for a: %v", at)
-	}
-
-	switch bt {
-	case tensor.Float32, tensor.Float64:
-	default:
-		return errors.Errorf("Unsupported Dtype for b: %v", bt)
-	}
-
-	if at.Kind() != bt.Kind() {
-		return errors.Errorf(errors.TypeMismatch, at, bt)
-	}
-
+func binaryCheck[DT any](a, b tensor.Basic[DT]) (err error) {
 	if !a.Shape().Eq(b.Shape()) {
 		return errors.Errorf(errors.ShapeMismatch, b.Shape(), a.Shape())
 	}
@@ -46,14 +27,7 @@ func binaryCheck(a, b tensor.Tensor) (err error) {
 	return nil
 }
 
-func unaryCheck(a tensor.Tensor) error {
-	at := a.Dtype()
-	switch at {
-	case tensor.Float32, tensor.Float64:
-	default:
-		return errors.Errorf("Unsupported Dtype for a: %v", at)
-	}
-
+func unaryCheck[DT any](a tensor.Basic[DT]) error {
 	if a.RequiresIterator() {
 		return errors.New("unsupported operation: a requires an iterator")
 	}
@@ -68,7 +42,7 @@ func logicalSize(s shapes.Shape) int {
 }
 
 // constructName2 constructs the built-in CUDA kernel name for an operation.
-func constructBinName2(a, b tensor.Tensor, fn string) (name string) {
+func constructBinName2(a, b tensor.Desc, fn string) (name string) {
 	dt := a.Dtype()
 	as := a.Shape()
 	bs := b.Shape()
@@ -86,7 +60,7 @@ func constructBinName2(a, b tensor.Tensor, fn string) (name string) {
 }
 
 // constructName1 constructs the built-in CUDA kernel name for an operation (for those with an explicit scalar passed in).
-func constructBinName1(a tensor.Tensor, leftTensor bool, fn string) (name string) {
+func constructBinName1(a tensor.Desc, leftTensor bool, fn string) (name string) {
 	dt := a.Dtype()
 	if leftTensor {
 		name = fmt.Sprintf("%v.%s_vs_f%d", elemBinOpMod, fn, int(dt.Size()*8))
@@ -97,7 +71,7 @@ func constructBinName1(a tensor.Tensor, leftTensor bool, fn string) (name string
 }
 
 // constructUnOpName constructs the built in CUDA kernel name for a unary operation.
-func constructUnOpName(a tensor.Tensor, fn string) (name string) {
+func constructUnOpName(a tensor.Desc, fn string) (name string) {
 	dt := a.Dtype()
 	return fmt.Sprintf("%v.%v_f%d", elemUnaryOpMod, fn, int(dt.Size()*8))
 }

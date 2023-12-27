@@ -11,13 +11,14 @@ import (
 	cudnn "gorgonia.org/cu/dnn"
 	"gorgonia.org/gorgonia/internal/allocator"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 
 	"sync"
 	"unsafe"
 )
 
 var (
-	_ tensor.StandardEngine2 = &Engine{}
+// _ tensor.StandardEngine2 = &Engine{}
 )
 
 // EngineState represents the internal, type-free state. In typical runs, you'd have
@@ -102,7 +103,7 @@ func (e *Engine[DT, T]) Alloc(size int64) (tensor.Memory, error) {
 
 // AllocFlags returns allocation flags
 func (e *Engine[DT, T]) AllocFlags() (tensor.MemoryFlag, tensor.DataOrder) {
-	return tensor.MakeMemoryFlag(tensor.ManuallyManaged), tensor.ColMajor
+	return tensor.MakeMemoryFlag(tensor.ManuallyManaged), tensor.ColMajor // TODO: NativelyInaccessible?
 }
 
 // Free rees memory
@@ -157,7 +158,7 @@ func (e *Engine[DT, T]) Accessible(mem tensor.Memory) (tensor.Memory, error) {
 		return nil, err
 	}
 	switch t := mem.(type) {
-	case *tensor.Dense:
+	case *dense.Dense[DT]:
 		dt := t.Dtype()
 		l := int(size / dt.Size())
 		backingHdr := &reflect.SliceHeader{
@@ -165,16 +166,9 @@ func (e *Engine[DT, T]) Accessible(mem tensor.Memory) (tensor.Memory, error) {
 			Len:  l,
 			Cap:  l,
 		}
-		switch dt {
-		case tensor.Float64:
-			backing := *(*[]float64)(unsafe.Pointer(backingHdr))
-			retVal := tensor.New(tensor.WithShape(t.Shape().Clone()...), tensor.WithBacking(backing))
-			return retVal, e.c.Error()
-		case tensor.Float32:
-			backing := *(*[]float32)(unsafe.Pointer(backingHdr))
-			retVal := tensor.New(tensor.WithShape(t.Shape().Clone()...), tensor.WithBacking(backing))
-			return retVal, e.c.Error()
-		}
+		backing := *(*[]DT)(unsafe.Pointer(backingHdr))
+		retVal := dense.New[DT](tensor.WithShape(t.Shape().Clone()...), tensor.WithBacking(backing))
+		return retVal, e.c.Error()
 	default:
 		return nil, errors.Errorf("mem of type %T unsupported by Accessible", mem)
 	}
