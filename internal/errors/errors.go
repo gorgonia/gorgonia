@@ -1,6 +1,16 @@
-package gerrors
+package errors
 
-import "runtime"
+import (
+	"github.com/pkg/errors"
+	"runtime"
+)
+
+var (
+	Errorf = errors.Errorf
+	Wrap   = errors.Wrap
+	Wrapf  = errors.Wrapf
+	New    = errors.New
+)
 
 // ThisFn returns the name of the function
 func ThisFn(skips ...uint) string {

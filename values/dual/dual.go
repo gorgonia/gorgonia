@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/chewxy/hm"
-	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"

@@ -1,8 +1,7 @@
 package dual
 
 import (
-	"github.com/pkg/errors"
-	gerrors "gorgonia.org/gorgonia/internal/errors"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 )
@@ -45,7 +44,7 @@ func NewVar[DT any, T tensor.Basic[DT]](v values.Value[DT]) *Dual[DT, T] {
 func BindVar[DT any, T tensor.Basic[DT]](op Op[DT, T], inputs ...*Dual[DT, T]) (retVal *Dual[DT, T], err error) {
 	var ret values.Value[DT]
 	if ret, err = op(idValue(inputs)...); err != nil {
-		return nil, errors.Wrap(err, gerrors.OpDoFail)
+		return nil, errors.Wrap(err, errors.OpDoFail)
 	}
 	return NewVar[DT, T](ret), nil
 }
@@ -56,7 +55,7 @@ func Bind0[DT any, T tensor.Basic[DT]](op PreallocOp[DT, T], retVal *Dual[DT, T]
 
 	ret, err := op(prealloc, idValue(inputs)...)
 	if err != nil {
-		return nil, errors.Wrap(err, gerrors.OpDoFail)
+		return nil, errors.Wrap(err, errors.OpDoFail)
 	}
 	if err = retVal.SetValue(ret); err != nil {
 		return nil, errors.Wrap(err, "Unable to SetValue in Bind0")
@@ -69,7 +68,7 @@ func Bind0[DT any, T tensor.Basic[DT]](op PreallocOp[DT, T], retVal *Dual[DT, T]
 func Bind[DT any, T tensor.Basic[DT]](op DualOp[DT, T], inputs ...*Dual[DT, T]) (retVal *Dual[DT, T], err error) {
 	var ret T
 	if ret, err = op.Do(idValue[DT](inputs)...); err != nil {
-		return nil, errors.Wrap(err, gerrors.OpDoFail)
+		return nil, errors.Wrap(err, errors.OpDoFail)
 	}
 	var deriv values.Value[DT]
 	if deriv, err = op.Dual(inputs...); err != nil {
