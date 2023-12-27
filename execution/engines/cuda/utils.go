@@ -3,8 +3,7 @@ package cuda
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
-	gerrors "gorgonia.org/gorgonia/internal/errors"
+	"gorgonia.org/gorgonia/internal/errors"
 	gtu "gorgonia.org/gorgonia/internal/tensorutils"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
@@ -30,11 +29,11 @@ func binaryCheck(a, b tensor.Tensor) (err error) {
 	}
 
 	if at.Kind() != bt.Kind() {
-		return errors.Errorf(gerrors.TypeMismatch, at, bt)
+		return errors.Errorf(errors.TypeMismatch, at, bt)
 	}
 
 	if !a.Shape().Eq(b.Shape()) {
-		return errors.Errorf(gerrors.ShapeMismatch, b.Shape(), a.Shape())
+		return errors.Errorf(errors.ShapeMismatch, b.Shape(), a.Shape())
 	}
 
 	if a.RequiresIterator() {

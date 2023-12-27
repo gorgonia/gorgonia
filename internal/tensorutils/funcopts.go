@@ -1,8 +1,7 @@
 package gtu
 
 import (
-	"github.com/pkg/errors"
-	gerrors "gorgonia.org/gorgonia/internal/errors"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 )
@@ -25,13 +24,13 @@ func HandleFuncOpts(expShape shapes.Shape, expType dtype.Dtype, o tensor.DataOrd
 		}
 
 		if (strict || same) && reuse.Dtype() != expType {
-			err = errors.Errorf(gerrors.TypeMismatch, expType, reuse.Dtype())
+			err = errors.Errorf(errors.TypeMismatch, expType, reuse.Dtype())
 			err = errors.Wrapf(err, "Cannot use reuse")
 			return
 		}
 
 		if reuse.DataSize() != expShape.TotalSize() && !expShape.IsScalar() {
-			err = errors.Errorf(gerrors.ShapeMismatch, reuse.Shape(), expShape)
+			err = errors.Errorf(errors.ShapeMismatch, reuse.Shape(), expShape)
 			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch - reuse.len() %v, expShape.TotalSize() %v", reuse.DataSize(), expShape.TotalSize())
 			return
 		}
@@ -63,7 +62,7 @@ func HandleFuncOpts[DT any, T tensor.Tensor[DT, T]](e tensor.Engine, t T, expSha
 		var ret tensor.Basic[DT]
 		ret, fo, err = e.HandleFuncOpts(t, expShape, opts...)
 		if err != nil {
-			return retVal, fo, errors.Wrapf(err, gerrors.FailedFuncOpt, gerrors.ThisFn())
+			return retVal, fo, errors.Wrapf(err, errors.FailedFuncOpt, errors.ThisFn())
 		}
 		var ok bool
 		if retVal, ok = ret.(T); !ok {
@@ -82,5 +81,5 @@ func HandleFuncOpts[DT any, T tensor.Tensor[DT, T]](e tensor.Engine, t T, expSha
 		}
 		return
 	}
-	return retVal, fo, errors.Errorf(gerrors.EngineSupport, e, e, gerrors.ThisFn())
+	return retVal, fo, errors.Errorf(errors.EngineSupport, e, e, errors.ThisFn())
 }

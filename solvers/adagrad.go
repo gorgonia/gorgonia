@@ -4,8 +4,7 @@ import (
 	"math"
 
 	"github.com/chewxy/math32"
-	"github.com/pkg/errors"
-	gerrors "gorgonia.org/gorgonia/internal/errors"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
@@ -204,7 +203,7 @@ func (s *AdaGradSolver) Step(model []ValueGrad) (err error) {
 			*(grad.(*values.F64)) = values.F64(0.0)
 
 		default:
-			return errors.Errorf(gerrors.NYIFail, "Adagrad step", cv)
+			return errors.Errorf(errors.NYIFail, "Adagrad step", cv)
 		}
 
 	}

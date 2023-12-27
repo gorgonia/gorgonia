@@ -4,9 +4,7 @@ import (
 	"fmt"
 
 	"github.com/chewxy/hm"
-	"github.com/pkg/errors"
 	"gorgonia.org/dtype"
-	gerrors "gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/tensor"
 )
@@ -75,7 +73,7 @@ func DtypeOf(t hm.Type) (retVal dtype.Dtype, err error) {
 	case hm.TypeVariable:
 		err = errors.Errorf("instance %v does not have a dtype", p)
 	default:
-		err = gerrors.NYI(p)
+		err = errors.NYI(p)
 		return
 	}
 

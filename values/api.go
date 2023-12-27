@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/chewxy/hm"
-	"github.com/pkg/errors"
+
 	"gorgonia.org/dtype"
 	"gorgonia.org/gorgonia/internal/datatypes"
-	gerrors "gorgonia.org/gorgonia/internal/errors"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
@@ -122,7 +122,7 @@ func MakeFromMem[DT any](t hm.Type, s shapes.Shape, mem tensor.Memory) (retVal V
 	// case dtype.Dtype:
 	// 	return makeScalarFromMem(tt, mem)
 	// default:
-	// 	return nil, gerrors.NYI(tt)
+	// 	return nil, errors.NYI(tt)
 	// }
 
 }
@@ -141,7 +141,7 @@ func Make(t hm.Type, s shapes.Shape) (retVal tensor.DescWithStorage, err error) 
 	case types.TensorType:
 		return dense.NewOf(dt, tensor.WithShape(s...))
 	default:
-		return nil, gerrors.NYI(tt)
+		return nil, errors.NYI(tt)
 	}
 }
 

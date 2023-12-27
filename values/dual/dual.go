@@ -407,7 +407,7 @@ func dvBind(op Op, inputs []*Dual[DT,T]) (retVal *Dual[DT,T], err error) {
 
 	var ret values.Value[DT]
 	if ret, err = op.Do(vals...); err != nil {
-		return nil, errors.Wrap(err, gerrors.OpDoFail)
+		return nil, errors.Wrap(err, errors.OpDoFail)
 	}
 	if o, ok := op.(ExternalOp); ok {
 		return dvUnitManaged(ret, o)
@@ -422,7 +422,7 @@ func dvBindVar(op Op, inputs []*Dual[DT,T]) (retVal *Dual[DT,T], err error) {
 
 	var ret values.Value[DT]
 	if ret, err = op.Do(vals...); err != nil {
-		return nil, errors.Wrap(err, gerrors.OpDoFail)
+		return nil, errors.Wrap(err, errors.OpDoFail)
 	}
 	if o, ok := op.(ExternalOp); ok {
 		return dvUnitVarManaged(ret, o)
@@ -444,7 +444,7 @@ func dvBind0(op Op, retVal *Dual[DT,T], inputs []*Dual[DT,T]) (err error) {
 		}
 	}
 	if ret, err = op.Do(vals...); err != nil {
-		return errors.Wrap(err, gerrors.OpDoFail)
+		return errors.Wrap(err, errors.OpDoFail)
 	}
 
 next:
@@ -470,12 +470,12 @@ func dvBindVar0(op Op, retVal *Dual[DT,T], inputs []*Dual[DT,T]) (err error) {
 		ret, err = pd.UsePreallocDo(prealloc, vals...)
 	} else {
 		if ret, err = op.Do(vals...); err != nil {
-			return errors.Wrap(err, gerrors.OpDoFail)
+			return errors.Wrap(err, errors.OpDoFail)
 		}
 	}
 
 	if err != nil {
-		return errors.Wrapf(err, gerrors.OpDoFail)
+		return errors.Wrapf(err, errors.OpDoFail)
 	}
 
 	if err = retVal.SetValue(ret); err != nil {
@@ -494,7 +494,7 @@ func dvBindVar0(op Op, retVal *Dual[DT,T], inputs []*Dual[DT,T]) (err error) {
 		}
 		retVal.d = v
 	default:
-		err = errors.Errorf(gerrors.NYITypeFail, "dvBindVar0", retVal.d)
+		err = errors.Errorf(errors.NYITypeFail, "dvBindVar0", retVal.d)
 	}
 	return
 }

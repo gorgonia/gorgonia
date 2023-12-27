@@ -7,7 +7,7 @@ import (
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 
-	gerrors "gorgonia.org/gorgonia/internal/errors"
+	"gorgonia.org/gorgonia/internal/errors"
 )
 
 type ExternMetadata struct {
@@ -23,12 +23,12 @@ func MakeEngine(e tensor.Engine) ExternMetadata {
 
 // Get allocates a memory of the size. In this build it returns a NoOpError.
 func (m *ExternMetadata) Get(dev Device, size int64) (tensor.Memory, error) {
-	return nil, gerrors.NoOp{}
+	return nil, errors.NoOp{}
 }
 
 // GetFromValue allocates a memory of the size of v. In this build it returns a NoOpError, and v itself.
 func (m *ExternMetadata) GetFromValue(dev Device, v values.V) (tensor.Memory, error) {
-	return v, gerrors.NoOp{}
+	return v, errors.NoOp{}
 }
 
 // Put puts a previously allocated memory slab of the provided size back into the pool. Currently this is a No-op in this build.

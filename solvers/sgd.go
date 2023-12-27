@@ -1,8 +1,7 @@
 package solvers
 
 import (
-	"github.com/pkg/errors"
-	gerrors "gorgonia.org/gorgonia/internal/errors"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 )
@@ -192,7 +191,7 @@ func (s *VanillaSolver) Step(model []ValueGrad) (err error) {
 			*(weights.(*values.F64)) = values.F64(wv)
 			*(grad.(*values.F64)) = values.F64(0.0)
 		default:
-			return errors.Errorf(gerrors.NYIFail, "VanillaSolver.step", w)
+			return errors.Errorf(errors.NYIFail, "VanillaSolver.step", w)
 		}
 	}
 	return

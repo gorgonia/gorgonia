@@ -6,10 +6,10 @@ import (
 	"runtime/trace"
 
 	"github.com/chewxy/hm"
-	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/exprgraph"
 	gctx "gorgonia.org/gorgonia/internal/context"
-	gerrors "gorgonia.org/gorgonia/internal/errors"
+	"gorgonia.org/gorgonia/internal/errors"
+
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
@@ -97,7 +97,7 @@ func (op *Sum) Do(ctx context.Context, vs ...values.Value) (retVal values.Value,
 		ctx2, task := trace.NewTask(ctx, op.String())
 		return denseReduction(task, ctx2, (*tensor.Dense).Sum, axesToInts(op.along), t)
 	default:
-		return nil, gerrors.NYI(t)
+		return nil, errors.NYI(t)
 	}
 }
 

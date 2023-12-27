@@ -1,13 +1,11 @@
 package solvers
 
 import (
-	"math"
-
-	"github.com/pkg/errors"
-	gerrors "gorgonia.org/gorgonia/internal/errors"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
+	"math"
 )
 
 // AdamSolver is the Adaptive Moment Estimation solver (basically RMSProp on steroids).
@@ -33,11 +31,12 @@ type AdamSolver struct {
 }
 
 // NewAdamSolver creates an Adam solver with these default values:
-//		eta (learn rate)	  	: 0.001
-//		eps (smoothing factor)		: 1e-8
-//		beta1				: 0.9
-//		beta2 				: 0.999
-//		batch				: 1
+//
+//	eta (learn rate)	  	: 0.001
+//	eps (smoothing factor)		: 1e-8
+//	beta1				: 0.9
+//	beta2 				: 0.999
+//	batch				: 1
 func NewAdamSolver(opts ...SolverOpt) *AdamSolver {
 	s := &AdamSolver{
 		eta:   0.001,
@@ -343,7 +342,7 @@ func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 			*(grad.(*values.F64)) = values.F64(0.0)
 
 		default:
-			err = errors.Errorf(gerrors.NYITypeFail, "AdamSolver", cvm)
+			err = errors.Errorf(errors.NYITypeFail, "AdamSolver", cvm)
 			return
 		}
 

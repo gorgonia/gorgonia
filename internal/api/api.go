@@ -1,11 +1,9 @@
 package gapi
 
 import (
-	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/execution/engines"
 	"gorgonia.org/gorgonia/exprgraph"
 	"gorgonia.org/gorgonia/internal/datatypes"
-	gerrors "gorgonia.org/gorgonia/internal/errors"
 	gtu "gorgonia.org/gorgonia/internal/tensorutils"
 	stdops "gorgonia.org/gorgonia/ops/std"
 	"gorgonia.org/tensor"
@@ -24,7 +22,7 @@ func Add(a, b datatypes.Tensor) (retVal datatypes.Tensor, err error) {
 		// do symbolic stuff if there is an engine that supports symbolic things
 		g := hybrid.Graph()
 		if retVal, err = binopSymbolic(op, g, a, b); err != nil {
-			return nil, errors.Wrapf(err, gerrors.SymbolicOpFail, "Add")
+			return nil, errors.Wrapf(err, errors.SymbolicOpFail, "Add")
 		}
 	}
 
@@ -78,7 +76,7 @@ func MatMul(a, b datatypes.Tensor) (retVal datatypes.Tensor, err error) {
 		// do symbolic stuff
 		g := hybrid.Graph()
 		if retVal, err = binopSymbolic(op, g, a, b); err != nil {
-			return nil, errors.Wrapf(err, gerrors.SymbolicOpFail, "MatMul")
+			return nil, errors.Wrapf(err, errors.SymbolicOpFail, "MatMul")
 		}
 	}
 	// do the values stuff
