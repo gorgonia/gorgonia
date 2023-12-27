@@ -5,7 +5,6 @@ import (
 	"unsafe"
 
 	"github.com/pkg/errors"
-	"gorgonia.org/cu"
 	"gorgonia.org/internal/debug"
 )
 
@@ -14,11 +13,7 @@ import (
 // Neg implements tensor.Neger. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Neg(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "neg")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Neg")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -31,11 +26,7 @@ func (e *Engine[DT, T]) Neg(ctx context.Context, a T, retVal T) (err error) {
 // Inv implements tensor.Inver. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Inv(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "inverse")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Inv")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -48,11 +39,7 @@ func (e *Engine[DT, T]) Inv(ctx context.Context, a T, retVal T) (err error) {
 // Square implements tensor.Squareer. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Square(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "square")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Square")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -65,11 +52,7 @@ func (e *Engine[DT, T]) Square(ctx context.Context, a T, retVal T) (err error) {
 // Cube implements tensor.Cubeer. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Cube(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "cube")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Cube")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -82,11 +65,7 @@ func (e *Engine[DT, T]) Cube(ctx context.Context, a T, retVal T) (err error) {
 // Exp implements tensor.Exper. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Exp(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "exp")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Exp")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -99,11 +78,7 @@ func (e *Engine[DT, T]) Exp(ctx context.Context, a T, retVal T) (err error) {
 // Tanh implements tensor.Tanher. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Tanh(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "tanh")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Tanh")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -116,11 +91,7 @@ func (e *Engine[DT, T]) Tanh(ctx context.Context, a T, retVal T) (err error) {
 // Log implements tensor.Loger. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Log(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "ln")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Log")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -133,11 +104,7 @@ func (e *Engine[DT, T]) Log(ctx context.Context, a T, retVal T) (err error) {
 // Log2 implements tensor.Log2er. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Log2(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "log2")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Log2")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -150,11 +117,7 @@ func (e *Engine[DT, T]) Log2(ctx context.Context, a T, retVal T) (err error) {
 // Log10 implements tensor.Log10er. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Log10(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "log10")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Log10")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -167,11 +130,7 @@ func (e *Engine[DT, T]) Log10(ctx context.Context, a T, retVal T) (err error) {
 // Sqrt implements tensor.Sqrter. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Sqrt(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "sqrt")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Sqrt")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -184,11 +143,7 @@ func (e *Engine[DT, T]) Sqrt(ctx context.Context, a T, retVal T) (err error) {
 // Cbrt implements tensor.Cbrter. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Cbrt(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "cbrt")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Cbrt")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -201,11 +156,7 @@ func (e *Engine[DT, T]) Cbrt(ctx context.Context, a T, retVal T) (err error) {
 // InvSqrt implements tensor.InvSqrter. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) InvSqrt(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "invsqrt")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform InvSqrt")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -218,11 +169,7 @@ func (e *Engine[DT, T]) InvSqrt(ctx context.Context, a T, retVal T) (err error) 
 // Sign implements tensor.Signer. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Sign(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "sign")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Sign")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -235,11 +182,7 @@ func (e *Engine[DT, T]) Sign(ctx context.Context, a T, retVal T) (err error) {
 // Log1p implements tensor.Log1per. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Log1p(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "log1p")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Log1p")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -252,11 +195,7 @@ func (e *Engine[DT, T]) Log1p(ctx context.Context, a T, retVal T) (err error) {
 // Expm1 implements tensor.Expm1er. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Expm1(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "expm1")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Expm1")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -269,11 +208,7 @@ func (e *Engine[DT, T]) Expm1(ctx context.Context, a T, retVal T) (err error) {
 // Cos implements tensor.Coser. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Cos(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "cos")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Cos")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -286,11 +221,7 @@ func (e *Engine[DT, T]) Cos(ctx context.Context, a T, retVal T) (err error) {
 // Sin implements tensor.Siner. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Sin(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "sin")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Sin")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -303,11 +234,7 @@ func (e *Engine[DT, T]) Sin(ctx context.Context, a T, retVal T) (err error) {
 // Abs implements tensor.Abser. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Abs(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "abs")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Abs")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -320,11 +247,7 @@ func (e *Engine[DT, T]) Abs(ctx context.Context, a T, retVal T) (err error) {
 // Ceil implements tensor.Ceiler. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Ceil(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "ceil")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Ceil")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -337,11 +260,7 @@ func (e *Engine[DT, T]) Ceil(ctx context.Context, a T, retVal T) (err error) {
 // Floor implements tensor.Floorer. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Floor(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "floor")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Floor")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -354,11 +273,7 @@ func (e *Engine[DT, T]) Floor(ctx context.Context, a T, retVal T) (err error) {
 // Softplus implements tensor.Softpluser. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Softplus(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "softplus")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Softplus")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -371,11 +286,7 @@ func (e *Engine[DT, T]) Softplus(ctx context.Context, a T, retVal T) (err error)
 // Sigmoid implements tensor.Sigmoider. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Sigmoid(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "sigmoid")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform Sigmoid")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)

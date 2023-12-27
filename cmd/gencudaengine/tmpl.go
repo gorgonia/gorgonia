@@ -9,13 +9,7 @@ func (e *Engine[DT,T]) {{.Method}}(ctx context.Context, a, b, retVal T, opts ...
 	if err = binaryCheck[DT](a, b); err != nil {
 		return errors.Wrap(err, "Basic checks failed for {{.Method}}")
 	}
-
-	var mem, memB cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil{
-		return errors.Wrap(err, "Unable to perform {{.Method}}")
-	}
-	memB = cu.DevicePtr(b.Uintptr())
+        mem, memB, size := e.opMem(a, b, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -57,16 +51,13 @@ func (e *Engine[DT,T]) {{.ScalarMethod}}Scalar(ctx context.Context, a T, b DT, r
 	}
 	return
 }
+
 `
 
 const unopRaw = `// {{.Method}} implements tensor.{{.Method}}er. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT,T]) {{.Method}}(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "{{.KernelName}}")
-	var mem cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform {{.Method}}")
-	}
+	mem, _, size := e.opMem(a, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)

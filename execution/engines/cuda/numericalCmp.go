@@ -5,7 +5,6 @@ import (
 	"unsafe"
 
 	"github.com/pkg/errors"
-	"gorgonia.org/cu"
 	"gorgonia.org/internal/debug"
 	"gorgonia.org/tensor"
 )
@@ -19,13 +18,7 @@ func (e *Engine[DT, T]) MaxBetween(ctx context.Context, a, b, retVal T, opts ...
 	if err = binaryCheck[DT](a, b); err != nil {
 		return errors.Wrap(err, "Basic checks failed for MaxBetween")
 	}
-
-	var mem, memB cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform MaxBetween")
-	}
-	memB = cu.DevicePtr(b.Uintptr())
+	mem, memB, size := e.opMem(a, b, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -35,8 +28,9 @@ func (e *Engine[DT, T]) MaxBetween(ctx context.Context, a, b, retVal T, opts ...
 	return
 }
 
+/*
 // MaxBetweenScalar implements tensor.MaxBetweener. It does not support safe or increment operation options and will return an error if those options are passed in.
-func (e *Engine[DT, T]) MaxBetweenScalar(ctx context.Context, a T, b DT, retVal T, leftTensor, toIncr bool) (err error) {
+func (e *Engine[DT,T]) MaxBetweenScalar(ctx context.Context, a T, b DT, retVal T,  leftTensor, toIncr bool) (err error) {
 	name := constructBinName1(a, leftTensor, "maxbetween")
 
 	var bMem tensor.Memory
@@ -49,9 +43,10 @@ func (e *Engine[DT, T]) MaxBetweenScalar(ctx context.Context, a T, b DT, retVal 
 		return errors.Wrap(err, "Basic checks failed for MaxBetweenScalar")
 	}
 
+
 	var mem, memB cu.DevicePtr
 	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
+	if mem, size, retVal, err = e.opMem(a, opts...); err != nil{
 		return errors.Wrap(err, "Unable to perform MaxBetween")
 	}
 	memB = cu.DevicePtr(bMem.Uintptr())
@@ -61,12 +56,12 @@ func (e *Engine[DT, T]) MaxBetweenScalar(ctx context.Context, a T, b DT, retVal 
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil{
 		err = errors.Wrap(err, "Unable to perform engine.MaxBetween - CUDA LaunchAndSync failed.")
 	}
 	return
 }
-
+*/
 // MinBetween implements tensor.MinBetweener. It does not support safe or increment operation options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) MinBetween(ctx context.Context, a, b, retVal T, opts ...tensor.FuncOpt) (err error) {
 	name := constructBinName2(a, b, "minbetween")
@@ -74,13 +69,7 @@ func (e *Engine[DT, T]) MinBetween(ctx context.Context, a, b, retVal T, opts ...
 	if err = binaryCheck[DT](a, b); err != nil {
 		return errors.Wrap(err, "Basic checks failed for MinBetween")
 	}
-
-	var mem, memB cu.DevicePtr
-	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
-		return errors.Wrap(err, "Unable to perform MinBetween")
-	}
-	memB = cu.DevicePtr(b.Uintptr())
+	mem, memB, size := e.opMem(a, b, retVal)
 
 	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
@@ -90,8 +79,9 @@ func (e *Engine[DT, T]) MinBetween(ctx context.Context, a, b, retVal T, opts ...
 	return
 }
 
+/*
 // MinBetweenScalar implements tensor.MinBetweener. It does not support safe or increment operation options and will return an error if those options are passed in.
-func (e *Engine[DT, T]) MinBetweenScalar(ctx context.Context, a T, b DT, retVal T, leftTensor, toIncr bool) (err error) {
+func (e *Engine[DT,T]) MinBetweenScalar(ctx context.Context, a T, b DT, retVal T,  leftTensor, toIncr bool) (err error) {
 	name := constructBinName1(a, leftTensor, "minbetween")
 
 	var bMem tensor.Memory
@@ -104,9 +94,10 @@ func (e *Engine[DT, T]) MinBetweenScalar(ctx context.Context, a T, b DT, retVal 
 		return errors.Wrap(err, "Basic checks failed for MinBetweenScalar")
 	}
 
+
 	var mem, memB cu.DevicePtr
 	var size int64
-	if mem, size, retVal, err = e.opMem(a, opts...); err != nil {
+	if mem, size, retVal, err = e.opMem(a, opts...); err != nil{
 		return errors.Wrap(err, "Unable to perform MinBetween")
 	}
 	memB = cu.DevicePtr(bMem.Uintptr())
@@ -116,8 +107,9 @@ func (e *Engine[DT, T]) MinBetweenScalar(ctx context.Context, a T, b DT, retVal 
 
 	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil{
 		err = errors.Wrap(err, "Unable to perform engine.MinBetween - CUDA LaunchAndSync failed.")
 	}
 	return
 }
+*/
