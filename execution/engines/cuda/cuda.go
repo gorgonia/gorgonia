@@ -3,13 +3,14 @@ package cuda
 import "C"
 import (
 	"fmt"
+	"log"
 	"reflect"
 
-	"github.com/pkg/errors"
 	"gorgonia.org/cu"
 	cublas "gorgonia.org/cu/blas"
 	cudnn "gorgonia.org/cu/dnn"
 	"gorgonia.org/gorgonia/internal/allocator"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/tensor"
 	"gorgonia.org/tensor/dense"
 
@@ -55,6 +56,8 @@ type EngineState struct {
 	running     bool
 }
 
+// NewState  will reserve 80% of your GPU memory if `hint` <= 0 are provided.
+// This function will panic if there are any CUDA errors
 func NewState(hint int64) *EngineState {
 	dev, err := cu.GetDevice(0)
 	if err != nil {
@@ -74,9 +77,6 @@ type Engine[DT any, T tensor.Basic[DT]] struct {
 }
 
 // New creates and initializes the engine. This is to be used when then engine is standalone.
-// It will reserve 80% of your GPU memory if `hint` <= 0 are provided.
-// This function will panic if there are any CUDA errors.
-//
 // You will need to manually call `.Run()`
 func New[DT any, T tensor.Basic[DT]](state *EngineState) *Engine[DT, T] {
 	e := &Engine[DT, T]{EngineState: state}
@@ -132,6 +132,7 @@ func (e *Engine[DT, T]) Memclr(mem tensor.Memory) {
 // i.e. if dst is 8 bytes and src is 16 bytes, only the first 8 bytes of src will be copied.
 // Likewise, if dst is 20 bytes and src is 3 bytes, only 3 bytes will be copied.
 func (e *Engine[DT, T]) Memcpy(dst tensor.Memory, src tensor.Memory) error {
+	log.Printf("Memcpy src %p %T %v, dst %p %T %v, called by %v", src, src, src.Uintptr(), dst, dst, dst.Uintptr(), errors.ThisFn(1))
 	sSize := src.MemSize()
 	dSize := dst.MemSize()
 
@@ -157,6 +158,7 @@ func (e *Engine[DT, T]) memcpy(dst cu.DevicePtr, src cu.DevicePtr, size int64) {
 }
 
 func (e *Engine[DT, T]) Accessible(mem tensor.Memory) (tensor.Memory, error) {
+	log.Printf("Accessible")
 	size := mem.MemSize()
 	bs := make([]byte, int(size))
 	e.c.Context.MemcpyDtoH(unsafe.Pointer(&bs[0]), cu.DevicePtr(mem.Uintptr()), int64(size))

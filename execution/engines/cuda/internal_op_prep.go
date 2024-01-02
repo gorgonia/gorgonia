@@ -1,6 +1,8 @@
 package cuda
 
 import (
+	"log"
+
 	"gorgonia.org/cu"
 	"gorgonia.org/dtype"
 	"gorgonia.org/gorgonia/internal/errors"
@@ -298,6 +300,7 @@ func (e *Engine[DT, T]) opMem(operands ...T) (mem, memB cu.DevicePtr, size int64
 	mem = cu.DevicePtr(retVal.Uintptr())
 	memA := cu.DevicePtr(a.Uintptr())
 	if memA != mem {
+		log.Printf("opmem")
 		memSize := int64(a.MemSize())
 		e.memcpy(mem, memA, memSize)
 	}

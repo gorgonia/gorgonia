@@ -5,6 +5,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"gorgonia.org/dtype"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/tensor"
 )
