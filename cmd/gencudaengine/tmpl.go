@@ -3,7 +3,7 @@ package main
 import "text/template"
 
 const binopRaw = `// {{.Method}} implements tensor.{{.Method}}er. It does not support safe or increment operation options and will return an error if those options are passed in.
-func (e *Engine[DT,T]) {{.Method}}(ctx context.Context, a, b, retVal T, opts ...tensor.FuncOpt) (err error) {
+func (e *Engine[DT,T]) {{.Method}}(ctx context.Context, a, b, retVal T, toIncr bool) (err error) {
 	name := constructBinName2(a, b, "{{.ScalarMethod | lower}}")
 
 	if err = binaryCheck[DT](a, b); err != nil {
@@ -62,7 +62,7 @@ func (e *Engine[DT,T]) {{.Method}}(ctx context.Context, a T, retVal T) (err erro
 	name := constructUnOpName(a, "{{.KernelName}}")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")

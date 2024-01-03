@@ -15,7 +15,7 @@ func (e *Engine[DT, T]) Neg(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "neg")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -28,7 +28,7 @@ func (e *Engine[DT, T]) Inv(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "inverse")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -41,7 +41,7 @@ func (e *Engine[DT, T]) Square(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "square")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -54,7 +54,7 @@ func (e *Engine[DT, T]) Cube(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "cube")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -67,7 +67,7 @@ func (e *Engine[DT, T]) Exp(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "exp")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -80,7 +80,7 @@ func (e *Engine[DT, T]) Tanh(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "tanh")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -93,7 +93,7 @@ func (e *Engine[DT, T]) Log(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "ln")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -106,7 +106,7 @@ func (e *Engine[DT, T]) Log2(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "log2")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -119,7 +119,7 @@ func (e *Engine[DT, T]) Log10(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "log10")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -132,7 +132,7 @@ func (e *Engine[DT, T]) Sqrt(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "sqrt")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -145,7 +145,7 @@ func (e *Engine[DT, T]) Cbrt(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "cbrt")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -158,7 +158,7 @@ func (e *Engine[DT, T]) InvSqrt(ctx context.Context, a T, retVal T) (err error) 
 	name := constructUnOpName(a, "invsqrt")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -171,7 +171,7 @@ func (e *Engine[DT, T]) Sign(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "sign")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -184,7 +184,7 @@ func (e *Engine[DT, T]) Log1p(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "log1p")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -197,7 +197,7 @@ func (e *Engine[DT, T]) Expm1(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "expm1")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -210,7 +210,7 @@ func (e *Engine[DT, T]) Cos(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "cos")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -223,7 +223,7 @@ func (e *Engine[DT, T]) Sin(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "sin")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -236,7 +236,7 @@ func (e *Engine[DT, T]) Abs(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "abs")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -249,7 +249,7 @@ func (e *Engine[DT, T]) Ceil(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "ceil")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -262,7 +262,7 @@ func (e *Engine[DT, T]) Floor(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "floor")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -275,7 +275,7 @@ func (e *Engine[DT, T]) Softplus(ctx context.Context, a T, retVal T) (err error)
 	name := constructUnOpName(a, "softplus")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")
@@ -288,7 +288,7 @@ func (e *Engine[DT, T]) Sigmoid(ctx context.Context, a T, retVal T) (err error) 
 	name := constructUnOpName(a, "sigmoid")
 	mem, _, size := e.opMem(a, retVal)
 
-	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("CUDADO %q, Mem: %v size %v", name, mem, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&size)); err != nil {
 		err = errors.Wrap(err, "Unable to perform engine.Neg - CUDA LaunchAndSync failed")

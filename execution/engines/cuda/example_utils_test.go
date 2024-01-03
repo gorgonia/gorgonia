@@ -386,6 +386,7 @@ func Add[DT tensor.Num, T tensor.Basic[DT]](a, b gorgonia.Tensor) (retVal gorgon
 		_, aok = a.Engine().Workhorse().BasicEng().(tensor.Adder[DT, T])
 		_, bok = b.Engine().Workhorse().BasicEng().(tensor.Adder[DT, T])
 		if !aok && !bok {
+			log.Printf("Not AOK and not BOK")
 			return
 		}
 	default:
@@ -395,6 +396,7 @@ func Add[DT tensor.Num, T tensor.Basic[DT]](a, b gorgonia.Tensor) (retVal gorgon
 	// do the values stuff'
 	at, aok := exprgraph.T2T[DT, T](a)
 	bt, bok := exprgraph.T2T[DT, T](b)
+	log.Printf("Doing Values stuff - aok %v bok %v", aok, bok)
 	var ct T
 	switch {
 	case aok && bok && retVal != nil:

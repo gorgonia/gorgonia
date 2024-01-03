@@ -293,6 +293,9 @@ loop:
 				e.err = err
 				break loop
 			}
+			// debug.Logtid("Sending to syncChan", 0)
+			// e.syncChan <- struct{}{}
+			// debug.Logtid("done sending to syncChan", 0)
 
 		case w := <-e.c.Work():
 			if w != nil {
