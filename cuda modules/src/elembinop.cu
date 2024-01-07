@@ -5,16 +5,48 @@
 	int blockId = blockIdx.x + blockIdx.y * gridDim.x + gridDim.x * gridDim.y * blockIdx.z;\
 	int idx = blockId * (blockDim.x * blockDim.y * blockDim.z) + (threadIdx.z * (blockDim.x * blockDim.y)) + (threadIdx.y * blockDim.x) + threadIdx.x;
 
+
 #define CHECKSIZE \
 	if (idx >= size) { \
 		return; \
 	}
+
+#define ROWCOL \
+	int row = idx / rows;
+	int col = idx % rows;
 
 #define VVBINOP(name, t, type, op)\
 	__global__ void  name ##_vv_ ##t(type* A, type* B, int size) { \
 		THREADID \
 		CHECKSIZE \
 		A[idx] = A[idx] op B[idx];}
+
+// MVI = Matrix-Vector perform on Innermost. The vector must be `rows` long.
+#define MVIBINOP(name, t, type, op)\
+	__global__ void name ##_MVI_ ##t(type* A, type* B, int rows, int cols) { \
+		THREADID \
+		CHECKSIZE \
+		ROWCOL \
+		// check if thread index is within bounds of A. \
+		if (row < rows && col < cols) { \
+			A[row*rows+col] = A[row*rows+col] op B [row]; \
+		} \
+	}
+
+// MVO = Matrix-Vector performing on Outermost. The vector must be `cols` long.
+#define MVOBINOP(name, t, type, op)\
+	__global__ void name ##_MVO_ ##t(type *A, type B, int rows, int cols) {\
+		   THREADID \
+		   CHECKSIZE \
+		   ROWCOL \
+		   if (row < rows && col < cols) { \
+		   	   A[row*rows+col] = A[row*rows+col] op B [col]; \
+		   } \
+	}
+
+// VMI = Vector-Matrix performing on the Innermost dimension. The result is B gets overwritten. Vector must be `rows` long.
+#define VMIBINOP(name, t, type, op) \
+
 
 #define VSBINOP(name, t, type, op)\
 	__global__ void  name ##_vs_ ##t(type* A, type* B, int size) { \
@@ -131,7 +163,7 @@ extern "C" { SVBINOP(eq, f32, float, ==) }
 extern "C" { SVBINOP(ne, f64, double, !=) }
 extern "C" { SVBINOP(ne, f32, float, !=) }
 
-/* SCALAR-SCALAR BIN OP */	
+/* SCALAR-SCALAR BIN OP */
 
 extern "C" { SSBINOP(add, f64, double, +) }
 extern "C" { SSBINOP(add, f32, float, +) }

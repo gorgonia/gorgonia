@@ -29,38 +29,32 @@ func (e *Engine[DT, T]) Add(ctx context.Context, a, b, retVal T, toIncr bool) (e
 
 // AddScalar implements tensor.Adder. It does not support safe or increment operation options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) AddScalar(ctx context.Context, a T, b DT, retVal T, leftTensor, toIncr bool) (err error) {
-	return errors.NYI()
-	/*
-		name := constructBinName1(a, leftTensor, "add")
+	name := constructBinName1(a, leftTensor, "add")
 
-		var bMem tensor.Memory
-		var ok bool
-		if bMem, ok = b.(tensor.Memory); !ok {
-			return errors.Errorf("b has to be a tensor.Memory. Got %T instead", b)
-		}
+	// var bMem tensor.Memory
+	// var ok bool
+	// if bMem, ok = b.(tensor.Memory); !ok {
+	// 	return errors.Errorf("b has to be a tensor.Memory. Got %T instead", b)
+	// }
 
-		if err = unaryCheck[DT](a); err != nil {
-			return errors.Wrap(err, "Basic checks failed for AddScalar")
-		}
+	if err = unaryCheck[DT](a); err != nil {
+		return errors.Wrap(err, "Basic checks failed for AddScalar")
+	}
 
+	// var mem cu.DevicePtr
+	// var size int64
+	mem, memB, size := e.opMem(a, retVal)
+	// memB = cu.DevicePtr(bMem.Uintptr())
+	// if !leftTensor {
+	// 	mem, memB = memB, mem
+	// }
 
-		var mem, memB cu.DevicePtr
-		var size int64
-		if mem, size, retVal, err = e.opMem(a, opts...); err != nil{
-			return errors.Wrap(err, "Unable to perform Add")
-		}
-		memB = cu.DevicePtr(bMem.Uintptr())
-		if !leftTensor {
-			mem, memB = memB, mem
-		}
-
-		debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
-		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil{
-			err = errors.Wrap(err, "Unable to perform engine.Add - CUDA LaunchAndSync failed.")
-		}
-		return
-	*/
+	debug.Logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.Add - CUDA LaunchAndSync failed.")
+	}
+	return
 }
 
 // Sub implements tensor.Suber. It does not support safe or increment operation options and will return an error if those options are passed in.
