@@ -48,7 +48,7 @@ func Example() {
 
 	engine.Signal()
 	debug.Logf("FINAL SIGNAL")
-	engine.Wait()
+	//engine.Wait()
 
 	fmt.Printf("x:\n%v\ny:\n%v\nxy:\n%v\nxy+z:\n%v\n", x, y, xy, xypz)
 

@@ -189,7 +189,10 @@ func (e *EngineState) doInit(size int64) (err error) {
 // Close cleans up the machine, and closes all available resources
 func (e *EngineState) Close() error {
 	e.Signal() // tell the engine to do all the work now.
+	return e.b.Do(func() error { return e.close() })
+}
 
+func (e *EngineState) close() error {
 	debug.Logtid("engine.Close", 1)
 	// start the Close process.
 	e.Lock()
