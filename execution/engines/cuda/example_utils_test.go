@@ -253,7 +253,6 @@ func MatMul[DT tensor.Num, T tensor.Basic[DT]](a, b gorgonia.Tensor) (retVal gor
 
 type adder[DT, T any] interface {
 	Add(T, ...tensor.FuncOpt) (T, error)
-	AddScalar(s DT, scalarOnLeft bool, opts ...tensor.FuncOpt) (T, error)
 }
 
 // add is addition with a scalar on the right
@@ -270,7 +269,7 @@ func (op add[DT, T]) Type() hm.Type {
 // ShapeExpr informs the shape operations that the Op will do. A quick primer is given in the README of the shapes package.
 func (op add[DT, T]) ShapeExpr() shapes.Expr {
 	a := shapes.Var('a')
-	return shapes.MakeArrow(a, shapes.ScalarShape(), a)
+	return shapes.MakeArrow(a, a, a)
 }
 
 // Do executes the op.
@@ -300,7 +299,7 @@ func (op add[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVa
 	b := vs[1]
 	switch mm := any(a).(type) {
 	case adder[DT, T]:
-		return mm.AddScalar(b.Data()[0], true, tensor.WithReuse(prealloc))
+		return mm.Add(b, tensor.WithReuse(prealloc), tensor.AutoBroadcast)
 	default:
 		var ret tensor.Basic[DT]
 		if ret, err = tensor.Add[DT](a, b, tensor.WithReuse(prealloc)); err != nil {

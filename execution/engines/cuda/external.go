@@ -37,6 +37,13 @@ func (e *EngineState) Sync() chan struct{} { return e.syncChan }
 // Signal signals the machine to do work
 func (e *EngineState) Signal() { e.c.Signal() }
 
+// Wait waits till there's no more jobs, then closes
+func (e *EngineState) Wait() {
+	for e.c.Queue() > 0 {
+
+	}
+}
+
 // Context returns the BatchedContext
 func (e *EngineState) Context() *cu.BatchedContext { return &e.c }
 
@@ -176,7 +183,6 @@ func (e *EngineState) doInit(size int64) (err error) {
 	}
 	e.a.Reserve(uintptr(ptr), allocsize)
 	e.n = *(cudnn.NewContext())
-	go e.Run()
 	return nil
 }
 

@@ -55,6 +55,52 @@ return errors.NYI()
 */
 }
 
+func (e *Engine[DT,T]) {{.ScalarMethod}}Broadcastable(ctx context.Context, a, b, retVal T, expAPA, expAPB *tensor.AP, toIncr bool) (err error) {
+	// check if it's a scalar in a or b
+	var name string
+	var scalarOnLeft bool
+	var t T
+	switch {
+	case a.Shape().IsScalarEquiv():
+		scalarOnLeft = true
+		name = constructBinName1(b, !scalarOnLeft, "{{.ScalarMethod | lower}}")
+		t = b
+	case b.Shape().IsScalarEquiv():
+		scalarOnLeft = false
+		name = constructBinName1(a, !scalarOnLeft, "{{.ScalarMethod | lower}}")
+		t = a
+	}
+	// scalar
+	if name != "" {
+		if err = unaryCheck[DT](t); err !=nil{
+			return errors.Wrap(err, "Basic checks failed for {{.ScalarMethod}}Scalar")
+		}
+		 mem, memB, size := e.opMem(a, b, retVal)
+		if scalarOnLeft{
+			mem, memB = memB, mem
+		}
+
+		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
+		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err !=nil{
+			err = errors.Wrap(err, "Unable to perform engine.{{.Method}} - CUDA LaunchAndSync failed.")
+		}
+		return
+	}
+	return errors.NYI()
+
+/*
+	name := constructBinName2BC(a, b, "{{.ScalarMethod | lower}}")
+	 mem, memB, size := e.opMem(a, b, retVal)
+
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err !=nil{
+		err = errors.Wrap(err, "Unable to perform engine.{{.Method}} - CUDA LaunchAndSync failed.")
+	}
+	return
+*/
+}
 `
 
 const unopRaw = `// {{.Method}} implements tensor.{{.Method}}er. It does not support safe or increment options and will return an error if those options are passed in.

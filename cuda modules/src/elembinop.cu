@@ -12,7 +12,7 @@
 	}
 
 #define ROWCOL \
-	int row = idx / rows;
+	int row = idx / rows;\
 	int col = idx % rows;
 
 #define VVBINOP(name, t, type, op)\
@@ -45,7 +45,7 @@
 	}
 
 // VMI = Vector-Matrix performing on the Innermost dimension. The result is B gets overwritten. Vector must be `rows` long.
-#define VMIBINOP(name, t, type, op) \
+//#define VMIBINOP(name, t, type, op) \
 
 
 #define VSBINOP(name, t, type, op)\

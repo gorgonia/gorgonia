@@ -17,6 +17,8 @@ import (
 // that created the engine.
 func LoadStdLib(e *EngineState) error {
 	stdlib := cudalib.StandardLib()
+	debug.Logtid("LoadStdLib", 0)
+	debug.Logf("Length of stdlib %d", len(stdlib))
 
 	for _, l := range stdlib {
 		if err := e.LoadCUDAFunc(l.ModuleName, l.Data, l.Funcs); err != nil {
@@ -60,6 +62,7 @@ func (e *EngineState) LoadCUDAFunc(moduleName, data string, funcs []string) (err
 // Call launches a known kernel that takes at least one argument.
 // The argument's size must be known.
 func (e *EngineState) Call(fnName string, size int, args ...unsafe.Pointer) error {
+	debug.Logf("e.Call %v", fnName)
 	if !e.HasFunc(fnName) {
 		return errors.Errorf("The engine does not have the function %q", fnName)
 	}
@@ -69,6 +72,8 @@ func (e *EngineState) Call(fnName string, size int, args ...unsafe.Pointer) erro
 
 	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
 	debug.Logf("args: %v", args)
+	debug.Logf("Call %v", fnName)
+	debug.Logtid("e.Call", 1)
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return nil
 }
