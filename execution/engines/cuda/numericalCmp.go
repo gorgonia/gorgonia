@@ -13,7 +13,7 @@ import (
 
 // MaxBetween implements tensor.MaxBetweener. It does not support safe or increment operation options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) MaxBetween(ctx context.Context, a, b, retVal T, toIncr bool) (err error) {
-	name := constructBinName2(a, b, "maxbetween")
+	name, _, _ := constructBinName2(a, b, "maxbetween", false)
 
 	if err = binaryCheck[DT](a, b); err != nil {
 		return errors.Wrap(err, "Basic checks failed for MaxBetween")
@@ -66,23 +66,18 @@ func (e *Engine[DT, T]) MaxBetweenScalar(ctx context.Context, a T, b DT, retVal 
 
 func (e *Engine[DT, T]) MaxBetweenBroadcastable(ctx context.Context, a, b, retVal T, expAPA, expAPB *tensor.AP, toIncr bool) (err error) {
 	// check if it's a scalar in a or b
-	var name string
-	var scalarOnLeft bool
-	var t T
-	switch {
-	case a.Shape().IsScalarEquiv():
-		scalarOnLeft = true
-		name = constructBinName1(b, !scalarOnLeft, "maxbetween")
-		t = b
-	case b.Shape().IsScalarEquiv():
-		scalarOnLeft = false
-		name = constructBinName1(a, !scalarOnLeft, "maxbetween")
-		t = a
-	}
+	name, scalarOnLeft, scalarOnRight := constructBinName2(a, b, "maxbetween", true)
+	isScalar := scalarOnLeft || scalarOnRight
 	// scalar
-	if name != "" {
+	if isScalar {
+		var t T
+		if scalarOnLeft {
+			t = b
+		} else {
+			t = a
+		}
 		if err = unaryCheck[DT](t); err != nil {
-			return errors.Wrap(err, "Basic checks failed for MaxBetweenScalar")
+			return errors.Wrap(err, "Basic checks failed for MaxBetweenBroadcastable")
 		}
 		mem, memB, size := e.opMem(a, b, retVal)
 		if scalarOnLeft {
@@ -92,28 +87,34 @@ func (e *Engine[DT, T]) MaxBetweenBroadcastable(ctx context.Context, a, b, retVa
 		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
-			err = errors.Wrap(err, "Unable to perform engine.MaxBetween - CUDA LaunchAndSync failed.")
+			err = errors.Wrap(err, "Unable to perform engine.Add - CUDA LaunchAndSync failed.")
 		}
 		return
 	}
-	return errors.NYI()
 
-	/*
-		name := constructBinName2BC(a, b, "maxbetween")
-		 mem, memB, size := e.opMem(a, b, retVal)
+	sp, totalAlloc, err := e.prepShapes(expAPA, expAPB, retVal)
+	if err != nil {
+		return errors.Wrap(err, "Failed to prep shapes")
+	}
+	_ = totalAlloc
+	// TODO: sp is a slice of CUDA memory. They need to be freed. Add to this once the hook architecture is finished in package cu.
 
-		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
-		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err !=nil{
-			err = errors.Wrap(err, "Unable to perform engine.MaxBetween - CUDA LaunchAndSync failed.")
-		}
-		return
-	*/
+	mem, memB, memRetVal, size := e.opMemBC(a, b, retVal)
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&memRetVal),
+		unsafe.Pointer(&sp[0]), unsafe.Pointer(&sp[1]), unsafe.Pointer(&sp[2]),
+		unsafe.Pointer(&sp[3]), unsafe.Pointer(&sp[4]), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.AddBC - CUDA LaunchAndSync failed.")
+	}
+
+	return
+
 }
 
 // MinBetween implements tensor.MinBetweener. It does not support safe or increment operation options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) MinBetween(ctx context.Context, a, b, retVal T, toIncr bool) (err error) {
-	name := constructBinName2(a, b, "minbetween")
+	name, _, _ := constructBinName2(a, b, "minbetween", false)
 
 	if err = binaryCheck[DT](a, b); err != nil {
 		return errors.Wrap(err, "Basic checks failed for MinBetween")
@@ -166,23 +167,18 @@ func (e *Engine[DT, T]) MinBetweenScalar(ctx context.Context, a T, b DT, retVal 
 
 func (e *Engine[DT, T]) MinBetweenBroadcastable(ctx context.Context, a, b, retVal T, expAPA, expAPB *tensor.AP, toIncr bool) (err error) {
 	// check if it's a scalar in a or b
-	var name string
-	var scalarOnLeft bool
-	var t T
-	switch {
-	case a.Shape().IsScalarEquiv():
-		scalarOnLeft = true
-		name = constructBinName1(b, !scalarOnLeft, "minbetween")
-		t = b
-	case b.Shape().IsScalarEquiv():
-		scalarOnLeft = false
-		name = constructBinName1(a, !scalarOnLeft, "minbetween")
-		t = a
-	}
+	name, scalarOnLeft, scalarOnRight := constructBinName2(a, b, "minbetween", true)
+	isScalar := scalarOnLeft || scalarOnRight
 	// scalar
-	if name != "" {
+	if isScalar {
+		var t T
+		if scalarOnLeft {
+			t = b
+		} else {
+			t = a
+		}
 		if err = unaryCheck[DT](t); err != nil {
-			return errors.Wrap(err, "Basic checks failed for MinBetweenScalar")
+			return errors.Wrap(err, "Basic checks failed for MinBetweenBroadcastable")
 		}
 		mem, memB, size := e.opMem(a, b, retVal)
 		if scalarOnLeft {
@@ -192,21 +188,27 @@ func (e *Engine[DT, T]) MinBetweenBroadcastable(ctx context.Context, a, b, retVa
 		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
-			err = errors.Wrap(err, "Unable to perform engine.MinBetween - CUDA LaunchAndSync failed.")
+			err = errors.Wrap(err, "Unable to perform engine.Add - CUDA LaunchAndSync failed.")
 		}
 		return
 	}
-	return errors.NYI()
 
-	/*
-		name := constructBinName2BC(a, b, "minbetween")
-		 mem, memB, size := e.opMem(a, b, retVal)
+	sp, totalAlloc, err := e.prepShapes(expAPA, expAPB, retVal)
+	if err != nil {
+		return errors.Wrap(err, "Failed to prep shapes")
+	}
+	_ = totalAlloc
+	// TODO: sp is a slice of CUDA memory. They need to be freed. Add to this once the hook architecture is finished in package cu.
 
-		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
-		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err !=nil{
-			err = errors.Wrap(err, "Unable to perform engine.MinBetween - CUDA LaunchAndSync failed.")
-		}
-		return
-	*/
+	mem, memB, memRetVal, size := e.opMemBC(a, b, retVal)
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&memRetVal),
+		unsafe.Pointer(&sp[0]), unsafe.Pointer(&sp[1]), unsafe.Pointer(&sp[2]),
+		unsafe.Pointer(&sp[3]), unsafe.Pointer(&sp[4]), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.AddBC - CUDA LaunchAndSync failed.")
+	}
+
+	return
+
 }

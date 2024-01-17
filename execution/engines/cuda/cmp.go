@@ -13,7 +13,7 @@ import (
 
 // Lt implements tensor.Lter. It does not support safe or increment operation options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Lt(ctx context.Context, a, b, retVal T, toIncr bool) (err error) {
-	name := constructBinName2(a, b, "lt")
+	name, _, _ := constructBinName2(a, b, "lt", false)
 
 	if err = binaryCheck[DT](a, b); err != nil {
 		return errors.Wrap(err, "Basic checks failed for Lt")
@@ -66,23 +66,18 @@ func (e *Engine[DT, T]) LtScalar(ctx context.Context, a T, b DT, retVal T, leftT
 
 func (e *Engine[DT, T]) LtBroadcastable(ctx context.Context, a, b, retVal T, expAPA, expAPB *tensor.AP, toIncr bool) (err error) {
 	// check if it's a scalar in a or b
-	var name string
-	var scalarOnLeft bool
-	var t T
-	switch {
-	case a.Shape().IsScalarEquiv():
-		scalarOnLeft = true
-		name = constructBinName1(b, !scalarOnLeft, "lt")
-		t = b
-	case b.Shape().IsScalarEquiv():
-		scalarOnLeft = false
-		name = constructBinName1(a, !scalarOnLeft, "lt")
-		t = a
-	}
+	name, scalarOnLeft, scalarOnRight := constructBinName2(a, b, "lt", true)
+	isScalar := scalarOnLeft || scalarOnRight
 	// scalar
-	if name != "" {
+	if isScalar {
+		var t T
+		if scalarOnLeft {
+			t = b
+		} else {
+			t = a
+		}
 		if err = unaryCheck[DT](t); err != nil {
-			return errors.Wrap(err, "Basic checks failed for LtScalar")
+			return errors.Wrap(err, "Basic checks failed for LtBroadcastable")
 		}
 		mem, memB, size := e.opMem(a, b, retVal)
 		if scalarOnLeft {
@@ -92,28 +87,34 @@ func (e *Engine[DT, T]) LtBroadcastable(ctx context.Context, a, b, retVal T, exp
 		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
-			err = errors.Wrap(err, "Unable to perform engine.Lt - CUDA LaunchAndSync failed.")
+			err = errors.Wrap(err, "Unable to perform engine.Add - CUDA LaunchAndSync failed.")
 		}
 		return
 	}
-	return errors.NYI()
 
-	/*
-		name := constructBinName2BC(a, b, "lt")
-		 mem, memB, size := e.opMem(a, b, retVal)
+	sp, totalAlloc, err := e.prepShapes(expAPA, expAPB, retVal)
+	if err != nil {
+		return errors.Wrap(err, "Failed to prep shapes")
+	}
+	_ = totalAlloc
+	// TODO: sp is a slice of CUDA memory. They need to be freed. Add to this once the hook architecture is finished in package cu.
 
-		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
-		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err !=nil{
-			err = errors.Wrap(err, "Unable to perform engine.Lt - CUDA LaunchAndSync failed.")
-		}
-		return
-	*/
+	mem, memB, memRetVal, size := e.opMemBC(a, b, retVal)
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&memRetVal),
+		unsafe.Pointer(&sp[0]), unsafe.Pointer(&sp[1]), unsafe.Pointer(&sp[2]),
+		unsafe.Pointer(&sp[3]), unsafe.Pointer(&sp[4]), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.AddBC - CUDA LaunchAndSync failed.")
+	}
+
+	return
+
 }
 
 // Lte implements tensor.Lteer. It does not support safe or increment operation options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Lte(ctx context.Context, a, b, retVal T, toIncr bool) (err error) {
-	name := constructBinName2(a, b, "lte")
+	name, _, _ := constructBinName2(a, b, "lte", false)
 
 	if err = binaryCheck[DT](a, b); err != nil {
 		return errors.Wrap(err, "Basic checks failed for Lte")
@@ -166,23 +167,18 @@ func (e *Engine[DT, T]) LteScalar(ctx context.Context, a T, b DT, retVal T, left
 
 func (e *Engine[DT, T]) LteBroadcastable(ctx context.Context, a, b, retVal T, expAPA, expAPB *tensor.AP, toIncr bool) (err error) {
 	// check if it's a scalar in a or b
-	var name string
-	var scalarOnLeft bool
-	var t T
-	switch {
-	case a.Shape().IsScalarEquiv():
-		scalarOnLeft = true
-		name = constructBinName1(b, !scalarOnLeft, "lte")
-		t = b
-	case b.Shape().IsScalarEquiv():
-		scalarOnLeft = false
-		name = constructBinName1(a, !scalarOnLeft, "lte")
-		t = a
-	}
+	name, scalarOnLeft, scalarOnRight := constructBinName2(a, b, "lte", true)
+	isScalar := scalarOnLeft || scalarOnRight
 	// scalar
-	if name != "" {
+	if isScalar {
+		var t T
+		if scalarOnLeft {
+			t = b
+		} else {
+			t = a
+		}
 		if err = unaryCheck[DT](t); err != nil {
-			return errors.Wrap(err, "Basic checks failed for LteScalar")
+			return errors.Wrap(err, "Basic checks failed for LteBroadcastable")
 		}
 		mem, memB, size := e.opMem(a, b, retVal)
 		if scalarOnLeft {
@@ -192,28 +188,34 @@ func (e *Engine[DT, T]) LteBroadcastable(ctx context.Context, a, b, retVal T, ex
 		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
-			err = errors.Wrap(err, "Unable to perform engine.Lte - CUDA LaunchAndSync failed.")
+			err = errors.Wrap(err, "Unable to perform engine.Add - CUDA LaunchAndSync failed.")
 		}
 		return
 	}
-	return errors.NYI()
 
-	/*
-		name := constructBinName2BC(a, b, "lte")
-		 mem, memB, size := e.opMem(a, b, retVal)
+	sp, totalAlloc, err := e.prepShapes(expAPA, expAPB, retVal)
+	if err != nil {
+		return errors.Wrap(err, "Failed to prep shapes")
+	}
+	_ = totalAlloc
+	// TODO: sp is a slice of CUDA memory. They need to be freed. Add to this once the hook architecture is finished in package cu.
 
-		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
-		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err !=nil{
-			err = errors.Wrap(err, "Unable to perform engine.Lte - CUDA LaunchAndSync failed.")
-		}
-		return
-	*/
+	mem, memB, memRetVal, size := e.opMemBC(a, b, retVal)
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&memRetVal),
+		unsafe.Pointer(&sp[0]), unsafe.Pointer(&sp[1]), unsafe.Pointer(&sp[2]),
+		unsafe.Pointer(&sp[3]), unsafe.Pointer(&sp[4]), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.AddBC - CUDA LaunchAndSync failed.")
+	}
+
+	return
+
 }
 
 // Gt implements tensor.Gter. It does not support safe or increment operation options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Gt(ctx context.Context, a, b, retVal T, toIncr bool) (err error) {
-	name := constructBinName2(a, b, "gt")
+	name, _, _ := constructBinName2(a, b, "gt", false)
 
 	if err = binaryCheck[DT](a, b); err != nil {
 		return errors.Wrap(err, "Basic checks failed for Gt")
@@ -266,23 +268,18 @@ func (e *Engine[DT, T]) GtScalar(ctx context.Context, a T, b DT, retVal T, leftT
 
 func (e *Engine[DT, T]) GtBroadcastable(ctx context.Context, a, b, retVal T, expAPA, expAPB *tensor.AP, toIncr bool) (err error) {
 	// check if it's a scalar in a or b
-	var name string
-	var scalarOnLeft bool
-	var t T
-	switch {
-	case a.Shape().IsScalarEquiv():
-		scalarOnLeft = true
-		name = constructBinName1(b, !scalarOnLeft, "gt")
-		t = b
-	case b.Shape().IsScalarEquiv():
-		scalarOnLeft = false
-		name = constructBinName1(a, !scalarOnLeft, "gt")
-		t = a
-	}
+	name, scalarOnLeft, scalarOnRight := constructBinName2(a, b, "gt", true)
+	isScalar := scalarOnLeft || scalarOnRight
 	// scalar
-	if name != "" {
+	if isScalar {
+		var t T
+		if scalarOnLeft {
+			t = b
+		} else {
+			t = a
+		}
 		if err = unaryCheck[DT](t); err != nil {
-			return errors.Wrap(err, "Basic checks failed for GtScalar")
+			return errors.Wrap(err, "Basic checks failed for GtBroadcastable")
 		}
 		mem, memB, size := e.opMem(a, b, retVal)
 		if scalarOnLeft {
@@ -292,28 +289,34 @@ func (e *Engine[DT, T]) GtBroadcastable(ctx context.Context, a, b, retVal T, exp
 		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
-			err = errors.Wrap(err, "Unable to perform engine.Gt - CUDA LaunchAndSync failed.")
+			err = errors.Wrap(err, "Unable to perform engine.Add - CUDA LaunchAndSync failed.")
 		}
 		return
 	}
-	return errors.NYI()
 
-	/*
-		name := constructBinName2BC(a, b, "gt")
-		 mem, memB, size := e.opMem(a, b, retVal)
+	sp, totalAlloc, err := e.prepShapes(expAPA, expAPB, retVal)
+	if err != nil {
+		return errors.Wrap(err, "Failed to prep shapes")
+	}
+	_ = totalAlloc
+	// TODO: sp is a slice of CUDA memory. They need to be freed. Add to this once the hook architecture is finished in package cu.
 
-		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
-		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err !=nil{
-			err = errors.Wrap(err, "Unable to perform engine.Gt - CUDA LaunchAndSync failed.")
-		}
-		return
-	*/
+	mem, memB, memRetVal, size := e.opMemBC(a, b, retVal)
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&memRetVal),
+		unsafe.Pointer(&sp[0]), unsafe.Pointer(&sp[1]), unsafe.Pointer(&sp[2]),
+		unsafe.Pointer(&sp[3]), unsafe.Pointer(&sp[4]), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.AddBC - CUDA LaunchAndSync failed.")
+	}
+
+	return
+
 }
 
 // Gte implements tensor.Gteer. It does not support safe or increment operation options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) Gte(ctx context.Context, a, b, retVal T, toIncr bool) (err error) {
-	name := constructBinName2(a, b, "gte")
+	name, _, _ := constructBinName2(a, b, "gte", false)
 
 	if err = binaryCheck[DT](a, b); err != nil {
 		return errors.Wrap(err, "Basic checks failed for Gte")
@@ -366,23 +369,18 @@ func (e *Engine[DT, T]) GteScalar(ctx context.Context, a T, b DT, retVal T, left
 
 func (e *Engine[DT, T]) GteBroadcastable(ctx context.Context, a, b, retVal T, expAPA, expAPB *tensor.AP, toIncr bool) (err error) {
 	// check if it's a scalar in a or b
-	var name string
-	var scalarOnLeft bool
-	var t T
-	switch {
-	case a.Shape().IsScalarEquiv():
-		scalarOnLeft = true
-		name = constructBinName1(b, !scalarOnLeft, "gte")
-		t = b
-	case b.Shape().IsScalarEquiv():
-		scalarOnLeft = false
-		name = constructBinName1(a, !scalarOnLeft, "gte")
-		t = a
-	}
+	name, scalarOnLeft, scalarOnRight := constructBinName2(a, b, "gte", true)
+	isScalar := scalarOnLeft || scalarOnRight
 	// scalar
-	if name != "" {
+	if isScalar {
+		var t T
+		if scalarOnLeft {
+			t = b
+		} else {
+			t = a
+		}
 		if err = unaryCheck[DT](t); err != nil {
-			return errors.Wrap(err, "Basic checks failed for GteScalar")
+			return errors.Wrap(err, "Basic checks failed for GteBroadcastable")
 		}
 		mem, memB, size := e.opMem(a, b, retVal)
 		if scalarOnLeft {
@@ -392,28 +390,34 @@ func (e *Engine[DT, T]) GteBroadcastable(ctx context.Context, a, b, retVal T, ex
 		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
-			err = errors.Wrap(err, "Unable to perform engine.Gte - CUDA LaunchAndSync failed.")
+			err = errors.Wrap(err, "Unable to perform engine.Add - CUDA LaunchAndSync failed.")
 		}
 		return
 	}
-	return errors.NYI()
 
-	/*
-		name := constructBinName2BC(a, b, "gte")
-		 mem, memB, size := e.opMem(a, b, retVal)
+	sp, totalAlloc, err := e.prepShapes(expAPA, expAPB, retVal)
+	if err != nil {
+		return errors.Wrap(err, "Failed to prep shapes")
+	}
+	_ = totalAlloc
+	// TODO: sp is a slice of CUDA memory. They need to be freed. Add to this once the hook architecture is finished in package cu.
 
-		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
-		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err !=nil{
-			err = errors.Wrap(err, "Unable to perform engine.Gte - CUDA LaunchAndSync failed.")
-		}
-		return
-	*/
+	mem, memB, memRetVal, size := e.opMemBC(a, b, retVal)
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&memRetVal),
+		unsafe.Pointer(&sp[0]), unsafe.Pointer(&sp[1]), unsafe.Pointer(&sp[2]),
+		unsafe.Pointer(&sp[3]), unsafe.Pointer(&sp[4]), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.AddBC - CUDA LaunchAndSync failed.")
+	}
+
+	return
+
 }
 
 // ElEq implements tensor.ElEqer. It does not support safe or increment operation options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) ElEq(ctx context.Context, a, b, retVal T, toIncr bool) (err error) {
-	name := constructBinName2(a, b, "eq")
+	name, _, _ := constructBinName2(a, b, "eq", false)
 
 	if err = binaryCheck[DT](a, b); err != nil {
 		return errors.Wrap(err, "Basic checks failed for ElEq")
@@ -466,23 +470,18 @@ func (e *Engine[DT, T]) EqScalar(ctx context.Context, a T, b DT, retVal T, leftT
 
 func (e *Engine[DT, T]) EqBroadcastable(ctx context.Context, a, b, retVal T, expAPA, expAPB *tensor.AP, toIncr bool) (err error) {
 	// check if it's a scalar in a or b
-	var name string
-	var scalarOnLeft bool
-	var t T
-	switch {
-	case a.Shape().IsScalarEquiv():
-		scalarOnLeft = true
-		name = constructBinName1(b, !scalarOnLeft, "eq")
-		t = b
-	case b.Shape().IsScalarEquiv():
-		scalarOnLeft = false
-		name = constructBinName1(a, !scalarOnLeft, "eq")
-		t = a
-	}
+	name, scalarOnLeft, scalarOnRight := constructBinName2(a, b, "eq", true)
+	isScalar := scalarOnLeft || scalarOnRight
 	// scalar
-	if name != "" {
+	if isScalar {
+		var t T
+		if scalarOnLeft {
+			t = b
+		} else {
+			t = a
+		}
 		if err = unaryCheck[DT](t); err != nil {
-			return errors.Wrap(err, "Basic checks failed for EqScalar")
+			return errors.Wrap(err, "Basic checks failed for EqBroadcastable")
 		}
 		mem, memB, size := e.opMem(a, b, retVal)
 		if scalarOnLeft {
@@ -492,28 +491,34 @@ func (e *Engine[DT, T]) EqBroadcastable(ctx context.Context, a, b, retVal T, exp
 		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
-			err = errors.Wrap(err, "Unable to perform engine.ElEq - CUDA LaunchAndSync failed.")
+			err = errors.Wrap(err, "Unable to perform engine.Add - CUDA LaunchAndSync failed.")
 		}
 		return
 	}
-	return errors.NYI()
 
-	/*
-		name := constructBinName2BC(a, b, "eq")
-		 mem, memB, size := e.opMem(a, b, retVal)
+	sp, totalAlloc, err := e.prepShapes(expAPA, expAPB, retVal)
+	if err != nil {
+		return errors.Wrap(err, "Failed to prep shapes")
+	}
+	_ = totalAlloc
+	// TODO: sp is a slice of CUDA memory. They need to be freed. Add to this once the hook architecture is finished in package cu.
 
-		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
-		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err !=nil{
-			err = errors.Wrap(err, "Unable to perform engine.ElEq - CUDA LaunchAndSync failed.")
-		}
-		return
-	*/
+	mem, memB, memRetVal, size := e.opMemBC(a, b, retVal)
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&memRetVal),
+		unsafe.Pointer(&sp[0]), unsafe.Pointer(&sp[1]), unsafe.Pointer(&sp[2]),
+		unsafe.Pointer(&sp[3]), unsafe.Pointer(&sp[4]), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.AddBC - CUDA LaunchAndSync failed.")
+	}
+
+	return
+
 }
 
 // ElNe implements tensor.ElNeer. It does not support safe or increment operation options and will return an error if those options are passed in.
 func (e *Engine[DT, T]) ElNe(ctx context.Context, a, b, retVal T, toIncr bool) (err error) {
-	name := constructBinName2(a, b, "ne")
+	name, _, _ := constructBinName2(a, b, "ne", false)
 
 	if err = binaryCheck[DT](a, b); err != nil {
 		return errors.Wrap(err, "Basic checks failed for ElNe")
@@ -566,23 +571,18 @@ func (e *Engine[DT, T]) NeScalar(ctx context.Context, a T, b DT, retVal T, leftT
 
 func (e *Engine[DT, T]) NeBroadcastable(ctx context.Context, a, b, retVal T, expAPA, expAPB *tensor.AP, toIncr bool) (err error) {
 	// check if it's a scalar in a or b
-	var name string
-	var scalarOnLeft bool
-	var t T
-	switch {
-	case a.Shape().IsScalarEquiv():
-		scalarOnLeft = true
-		name = constructBinName1(b, !scalarOnLeft, "ne")
-		t = b
-	case b.Shape().IsScalarEquiv():
-		scalarOnLeft = false
-		name = constructBinName1(a, !scalarOnLeft, "ne")
-		t = a
-	}
+	name, scalarOnLeft, scalarOnRight := constructBinName2(a, b, "ne", true)
+	isScalar := scalarOnLeft || scalarOnRight
 	// scalar
-	if name != "" {
+	if isScalar {
+		var t T
+		if scalarOnLeft {
+			t = b
+		} else {
+			t = a
+		}
 		if err = unaryCheck[DT](t); err != nil {
-			return errors.Wrap(err, "Basic checks failed for NeScalar")
+			return errors.Wrap(err, "Basic checks failed for NeBroadcastable")
 		}
 		mem, memB, size := e.opMem(a, b, retVal)
 		if scalarOnLeft {
@@ -592,21 +592,27 @@ func (e *Engine[DT, T]) NeBroadcastable(ctx context.Context, a, b, retVal T, exp
 		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
-			err = errors.Wrap(err, "Unable to perform engine.ElNe - CUDA LaunchAndSync failed.")
+			err = errors.Wrap(err, "Unable to perform engine.Add - CUDA LaunchAndSync failed.")
 		}
 		return
 	}
-	return errors.NYI()
 
-	/*
-		name := constructBinName2BC(a, b, "ne")
-		 mem, memB, size := e.opMem(a, b, retVal)
+	sp, totalAlloc, err := e.prepShapes(expAPA, expAPB, retVal)
+	if err != nil {
+		return errors.Wrap(err, "Failed to prep shapes")
+	}
+	_ = totalAlloc
+	// TODO: sp is a slice of CUDA memory. They need to be freed. Add to this once the hook architecture is finished in package cu.
 
-		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
-		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err !=nil{
-			err = errors.Wrap(err, "Unable to perform engine.ElNe - CUDA LaunchAndSync failed.")
-		}
-		return
-	*/
+	mem, memB, memRetVal, size := e.opMemBC(a, b, retVal)
+	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
+	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&memRetVal),
+		unsafe.Pointer(&sp[0]), unsafe.Pointer(&sp[1]), unsafe.Pointer(&sp[2]),
+		unsafe.Pointer(&sp[3]), unsafe.Pointer(&sp[4]), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.AddBC - CUDA LaunchAndSync failed.")
+	}
+
+	return
+
 }

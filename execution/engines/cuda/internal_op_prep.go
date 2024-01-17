@@ -2,6 +2,7 @@ package cuda
 
 import (
 	"log"
+	"unsafe"
 
 	"gorgonia.org/cu"
 	"gorgonia.org/dtype"
@@ -307,4 +308,41 @@ func (e *Engine[DT, T]) opMem(operands ...T) (mem, memB cu.DevicePtr, size int64
 
 	size = int64(logicalSize(retVal.Shape()))
 	return
+}
+func (e *Engine[DT, T]) opMemBC(a, b, retVal T) (memA, memB, memC cu.DevicePtr, size int64) {
+	memA = cu.DevicePtr(a.Uintptr())
+	memB = cu.DevicePtr(b.Uintptr())
+	memC = cu.DevicePtr(retVal.Uintptr())
+	size = int64(logicalSize(retVal.Shape()))
+	return
+}
+
+func (e *Engine[DT, T]) prepShapes(expAPA, expAPB *tensor.AP, retVal T) (sp []cu.DevicePtr, totalAlloc uintptr, err error) {
+	expShapeA := expAPA.Shape()
+	expShapeB := expAPB.Shape()
+	retShape := retVal.Shape()
+	expStridesA := expAPA.Strides()
+	expStridesB := expAPB.Strides()
+	totalAlloc = sliceMemSize(expShapeA)
+	// we call Get here instead of e.c.MemAlloc because this engine is manually managed, baby!
+	memShape, err := e.Get(int64(totalAlloc * 5)) // ×5 is all that is needed because it's assumed that all the shapes and strides have the same dims
+	if err != nil {
+		return nil, 0, err
+	}
+	ss := [][]int{
+		[]int(expShapeA),
+		[]int(expShapeB),
+		[]int(retShape),
+		expStridesA,
+		expStridesB,
+	}
+	sp = make([]cu.DevicePtr, len(ss))
+	var offset uintptr
+	for i, s := range ss {
+		offset += uintptr(i) * totalAlloc
+		ptr := cu.DevicePtr(memShape.Uintptr() + offset)
+		sp[i] = ptr
+		e.c.MemcpyHtoD(ptr, unsafe.Pointer(&s[0]), int64(totalAlloc))
+	}
+	return sp, totalAlloc, nil
 }

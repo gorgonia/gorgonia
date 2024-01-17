@@ -37,11 +37,11 @@ func (e *EngineState) Sync() chan struct{} { return e.syncChan }
 // Signal signals the machine to do work
 func (e *EngineState) Signal() { e.c.Signal() }
 
-// Wait waits till there's no more jobs, then closes
-func (e *EngineState) Wait() {
-	for e.c.Queue() > 0 {
-
-	}
+// Done cancels all the internal contexts, and then cleans up all the things
+func (e *EngineState) Done() {
+	debug.Logf("sending to finishChan")
+	e.finishChan <- struct{}{}
+	e.syncChan <- struct{}{}
 }
 
 // Context returns the BatchedContext
@@ -125,7 +125,7 @@ func (e *EngineState) Init(device cu.Device, size int64) (err error) {
 }
 
 func (e *EngineState) doInit(size int64) (err error) {
-	e.syncChan = make(chan struct{})
+	e.syncChan = make(chan struct{}, 1)
 	e.finishChan = make(chan struct{})
 	e.a = allocator.Make(memalign)
 
@@ -290,6 +290,7 @@ func (e *EngineState) run() {
 	// OK, now everything has been initialized, then let's go:
 
 	e.running = true
+	e.syncChan <- struct{}{} // will be cleared if message sent to finishChan
 	e.Unlock()
 
 loop:
@@ -325,28 +326,38 @@ loop:
 			break loop
 		}
 	}
+	debug.Logf("broke out of loop")
+	defer func() {
+		<-e.syncChan
+	}()
+
+	// debug.Logf("Drain work chan")
+	// // now we drain the work chan
+	// if w := <-e.c.Work(); w != nil {
+	// 	err := w()
+	// 	if err != nil {
+	// 		e.err = err
+	// 		return
+	// 	}
+	// }
+
+	// DoWork
+	debug.Logf("DoWorkNow")
+	debug.Logtid("engine.run (finish)", 0)
+	e.c.DoWorkNow()
+	e.c.DoWork()
+	debug.Logf("Finished DoWork()")
+	if err := e.c.Errors(); err != nil {
+		e.err = err
+
+	}
+
+	debug.Logf("Close batched Context")
 	// we need to wait for the CUDA context to finish first
 	err := e.c.Close()
 	if err != nil {
 		e.err = err // TODO: check if e.err already has an error in there
 		return
-	}
-
-	// now we drain the work chan
-	if w := <-e.c.Work(); w != nil {
-		err := w()
-		if err != nil {
-			e.err = err
-			return
-		}
-	}
-
-	// DoWork
-	debug.Logtid("engine.run (finish)", 0)
-	e.c.DoWork()
-	if err := e.c.Errors(); err != nil {
-		e.err = err
-
 	}
 
 	return

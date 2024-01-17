@@ -269,7 +269,8 @@ func (op add[DT, T]) Type() hm.Type {
 // ShapeExpr informs the shape operations that the Op will do. A quick primer is given in the README of the shapes package.
 func (op add[DT, T]) ShapeExpr() shapes.Expr {
 	a := shapes.Var('a')
-	return shapes.MakeArrow(a, a, a)
+	b := shapes.Var('b')
+	return shapes.MakeArrow(a, b, a)
 }
 
 // Do executes the op.

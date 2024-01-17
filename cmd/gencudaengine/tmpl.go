@@ -4,7 +4,7 @@ import "text/template"
 
 const binopRaw = `// {{.Method}} implements tensor.{{.Method}}er. It does not support safe or increment operation options and will return an error if those options are passed in.
 func (e *Engine[DT,T]) {{.Method}}(ctx context.Context, a, b, retVal T, toIncr bool) (err error) {
-	name := constructBinName2(a, b, "{{.ScalarMethod | lower}}")
+	name, _, _ := constructBinName2(a, b, "{{.ScalarMethod | lower}}",false)
 
 	if err = binaryCheck[DT](a, b); err != nil {
 		return errors.Wrap(err, "Basic checks failed for {{.Method}}")
@@ -57,49 +57,52 @@ return errors.NYI()
 
 func (e *Engine[DT,T]) {{.ScalarMethod}}Broadcastable(ctx context.Context, a, b, retVal T, expAPA, expAPB *tensor.AP, toIncr bool) (err error) {
 	// check if it's a scalar in a or b
-	var name string
-	var scalarOnLeft bool
-	var t T
-	switch {
-	case a.Shape().IsScalarEquiv():
-		scalarOnLeft = true
-		name = constructBinName1(b, !scalarOnLeft, "{{.ScalarMethod | lower}}")
-		t = b
-	case b.Shape().IsScalarEquiv():
-		scalarOnLeft = false
-		name = constructBinName1(a, !scalarOnLeft, "{{.ScalarMethod | lower}}")
-		t = a
-	}
+	name, scalarOnLeft, scalarOnRight := constructBinName2(a, b, "{{.ScalarMethod | lower}}", true)
+	isScalar := scalarOnLeft || scalarOnRight
 	// scalar
-	if name != "" {
-		if err = unaryCheck[DT](t); err !=nil{
-			return errors.Wrap(err, "Basic checks failed for {{.ScalarMethod}}Scalar")
+	if isScalar {
+		var t T
+		if scalarOnLeft {
+			t = b
+		} else {
+			t = a
 		}
-		 mem, memB, size := e.opMem(a, b, retVal)
-		if scalarOnLeft{
+		if err = unaryCheck[DT](t); err != nil {
+			return errors.Wrap(err, "Basic checks failed for {{.ScalarMethod}}Broadcastable")
+		}
+		mem, memB, size := e.opMem(a, b, retVal)
+		if scalarOnLeft {
 			mem, memB = memB, mem
 		}
 
 		debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 		debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err !=nil{
-			err = errors.Wrap(err, "Unable to perform engine.{{.Method}} - CUDA LaunchAndSync failed.")
+		if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err != nil {
+			err = errors.Wrap(err, "Unable to perform engine.Add - CUDA LaunchAndSync failed.")
 		}
 		return
 	}
-	return errors.NYI()
 
-/*
-	name := constructBinName2BC(a, b, "{{.ScalarMethod | lower}}")
-	 mem, memB, size := e.opMem(a, b, retVal)
 
+	sp, totalAlloc, err := e.prepShapes(expAPA, expAPB, retVal)
+	if err != nil {
+		return errors.Wrap(err, "Failed to prep shapes")
+	}
+	_ = totalAlloc
+	// TODO: sp is a slice of CUDA memory. They need to be freed. Add to this once the hook architecture is finished in package cu.
+
+	mem, memB, memRetVal, size := e.opMemBC(a, b, retVal)
 	debug.Logf("CUDADO %q, Mem: %v MemB: %v size %v", name, mem, memB, size)
 	debug.Logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&size)); err !=nil{
-		err = errors.Wrap(err, "Unable to perform engine.{{.Method}} - CUDA LaunchAndSync failed.")
+	if err = e.Call(name, int(size), unsafe.Pointer(&mem), unsafe.Pointer(&memB), unsafe.Pointer(&memRetVal),
+		unsafe.Pointer(&sp[0]), unsafe.Pointer(&sp[1]), unsafe.Pointer(&sp[2]),
+		unsafe.Pointer(&sp[3]), unsafe.Pointer(&sp[4]), unsafe.Pointer(&size)); err != nil {
+		err = errors.Wrap(err, "Unable to perform engine.AddBC - CUDA LaunchAndSync failed.")
 	}
+
+
 	return
-*/
+
 }
 `
 
