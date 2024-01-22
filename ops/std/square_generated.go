@@ -8,17 +8,16 @@ import (
 
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/tensor"
 )
 
 // square is a elementwise square.
-type squareOp struct{ unop }
+type squareOp[DT any, T values.Value[DT]] struct{ unop }
 
 // String implements fmt.Stringer.
-func (op squareOp) String() string { return "²" }
+func (op squareOp[DT, T]) String() string { return "²" }
 
 // Do performs elementwise square.
-func (op squareOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op squareOp[DT, T]) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
@@ -32,7 +31,7 @@ func (op squareOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Va
 
 // PreallocDo performs elementwise square but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
-func (op squareOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op squareOp[DT, T]) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
@@ -45,4 +44,4 @@ func (op squareOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...
 }
 
 // DiffWRT returns {true} for square
-func (op squareOp) DiffWRT(inputs int) []bool { return onetrue }
+func (op squareOp[DT, T]) DiffWRT(inputs int) []bool { return onetrue }

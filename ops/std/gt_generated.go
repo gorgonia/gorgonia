@@ -10,26 +10,25 @@ import (
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/tensor"
 )
 
 // gtOp is the base op for elementwise greater-than.
-type gtOp struct {
+type gtOp[DT any, T values.Value[DT]] struct {
 	binop
 	retSame bool
 }
 
 // String implements fmt.Stringer.
-func (op gtOp) String() string { return ">" }
+func (op gtOp[DT, T]) String() string { return ">" }
 
 // Do performs elementwise greater-than.
-func (op gtOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op gtOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
+	a := vs[0]
+	b := vs[1]
 
 	// Do the actual operation
 	ctx2, task := trace.NewTask(ctx, op.String())
@@ -44,13 +43,13 @@ func (op gtOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value,
 
 // PreallocDo performs elementwise greater-than but with a preallocated return value.
 // PreallocDo allows gt to implement ops.PreallocOp.
-func (op gtOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op gtOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
+	a := vs[0]
+	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	if op.retSame {
@@ -60,17 +59,17 @@ func (op gtOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...valu
 	}
 	task.End()
 	return retVal, err
-}                                         // DiffWRT returns {false, false} for gt
-func (op gtOp) DiffWRT(inputs int) []bool { return twofalses }
+}                                                // DiffWRT returns {false, false} for gt
+func (op gtOp[DT, T]) DiffWRT(inputs int) []bool { return twofalses }
 
 // gtVV is a tensor-tensor elementwise greater-than.
-type gtVV struct {
-	gtOp
+type gtVV[DT any, T values.Value[DT]] struct {
+	gtOp[DT, T]
 	binopVV
 }
 
 // Type returns the type: (·) : a → a → a or (·) :  a → a → b
-func (op gtVV) Type() hm.Type {
+func (op gtVV[DT, T]) Type() hm.Type {
 	a := hm.TypeVariable('a') // (T U) or U
 	if op.retSame {
 		return types.NewFunc(a, a, a)
@@ -80,8 +79,8 @@ func (op gtVV) Type() hm.Type {
 }
 
 // gtVS is a tensor-scalar elementwise greater-than.
-type gtVS struct {
-	gtOp
+type gtVS[DT any, T values.Value[DT]] struct {
+	gtOp[DT, T]
 	binopVS
 }
 
@@ -100,8 +99,8 @@ func (op gtVS) Type() hm.Type {
 }
 
 // gtSV is a scalar-tensor elementwise greater-than.
-type gtSV struct {
-	gtOp
+type gtSV[DT any, T values.Value[DT]] struct {
+	gtOp[DT, T]
 	binopSV
 }
 
@@ -109,7 +108,7 @@ type gtSV struct {
 func (op gtSV) String() string { return "·>" }
 
 // Type returns the type: (·) : a → b → b or (·) :  a → b → c
-func (op gtSV) Type() hm.Type {
+func (op gtSV[DT, T]) Type() hm.Type {
 	a := hm.TypeVariable('a') // U
 	b := hm.TypeVariable('b') // (T U) or U
 	if op.retSame {

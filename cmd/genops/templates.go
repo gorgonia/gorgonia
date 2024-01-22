@@ -6,39 +6,39 @@ import (
 
 const arithMetaRaw = `
 {{define "TypeDefRaw"}}
-type {{.Name }}Op struct{ binop }
+type {{.Name }}Op[DT any, T values.Value[DT]] struct{ binop }
 
 // String implements fmt.Stringer.
-func (op {{.Name}}Op) String() string { return "{{.Symbol}}" }
+func (op {{.Name}}Op[DT,T]) String() string { return "{{.Symbol}}" }
 
 // Do performs {{.CommentOp}}.
-func (op {{.Name}}Op) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op {{.Name}}Op[DT,T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	{{- template "Do" . -}}
 }
 
 // PreallocDo performs {{.CommentOp}} but with a preallocated return value.
 // PreallocDo allows {{.Name}} to implement ops.PreallocOp.
-func (op {{.Name}}Op) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op {{.Name}}Op[DT,T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	{{- template "PreallocDo" . -}}
 }
 
 
 {{- if not .IsDiff -}}
 // DiffWRT returns {false, false} for {{.Name}}
-func (op {{.Name}}Op) DiffWRT(inputs int) []bool { return twofalses }
+func (op {{.Name}}Op[DT,T]) DiffWRT(inputs int) []bool { return twofalses }
 {{- end -}}
 {{end}}
 
 {{define "TypeDefVV"}}
-type {{.Name}}VV struct { {{.Name }}Op ; binopVV }
+type {{.Name}}VV[DT any, T values.Value[DT]] struct { {{.Name }}Op[DT,T] ; binopVV }
 {{end}}
 
 {{define "TypeDefVS"}}
-type {{.Name}}VS struct { {{.Name}}Op ; binopVS }
+type {{.Name}}VS[DT any, T values.Value[DT]] struct { {{.Name}}Op[DT,T] ; binopVS }
 {{end}}
 
 {{define "TypeDefSV"}}
-type {{.Name}}SV struct { {{.Name}}Op ; binopSV }
+type {{.Name}}SV[DT any, T values.Value[DT]] struct { {{.Name}}Op[DT,T] ; binopSV }
 {{end}}
 
 {{- define "Do" -}}
@@ -46,8 +46,8 @@ type {{.Name}}SV struct { {{.Name}}Op ; binopSV }
 		return nil, err
 	}
 
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
+	a := vs[0]
+	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	retVal, err = tensor.{{.Method}}(a, b, tensor.WithContext(ctx2))
@@ -59,8 +59,8 @@ if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
+	a := vs[0]
+	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	retVal, err = tensor.{{.Method}}(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
@@ -77,39 +77,39 @@ if err := gctx.Handle(ctx); err != nil {
 const cmpMetaRaw = `
 
 {{define "TypeDefRaw"}}
-type {{.Name}}Op struct{ binop; retSame bool }
+type {{.Name}}Op[DT any, T values.Value[DT]] struct{ binop; retSame bool }
 
 // String implements fmt.Stringer.
-func (op {{.Name}}Op) String() string { return "{{.Symbol}}" }
+func (op {{.Name}}Op[DT,T]) String() string { return "{{.Symbol}}" }
 
 // Do performs {{.CommentOp}}.
-func (op {{.Name}}Op) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op {{.Name}}Op[DT,T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	{{- template "Do" . -}}
 }
 
 // PreallocDo performs {{.CommentOp}} but with a preallocated return value.
 // PreallocDo allows {{.Name}} to implement ops.PreallocOp.
-func (op {{.Name}}Op) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op {{.Name}}Op[DT,T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	{{- template "PreallocDo" . -}}
 }
 
 {{- if not .IsDiff -}}
 // DiffWRT returns {false, false} for {{.Name}}
-func (op {{.Name}}Op) DiffWRT(inputs int) []bool { return twofalses }
+func (op {{.Name}}Op[DT,T]) DiffWRT(inputs int) []bool { return twofalses }
 {{- end -}}
 {{end}}
 
 
 {{define "TypeDefVV"}}
-type {{.Name}}VV struct { {{.Name}}Op; binopVV  }
+type {{.Name}}VV[DT any, T values.Value[DT]] struct { {{.Name}}Op[DT,T]; binopVV  }
 {{end}}
 
 {{define "TypeDefVS"}}
-type {{.Name}}VS struct { {{.Name}}Op; binopVS }
+type {{.Name}}VS[DT any, T values.Value[DT]] struct { {{.Name}}Op[DT,T]; binopVS }
 {{end}}
 
 {{define "TypeDefSV"}}
-type {{.Name}}SV struct { {{.Name}}Op; binopSV }
+type {{.Name}}SV[DT any, T values.Value[DT]] struct { {{.Name}}Op[DT,T]; binopSV }
 {{end}}
 
 {{- define "Do" -}}
@@ -117,8 +117,8 @@ type {{.Name}}SV struct { {{.Name}}Op; binopSV }
 		return nil, err
 	}
 
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
+	a := vs[0]
+	b := vs[1]
 
 	// Do the actual operation
 	ctx2, task := trace.NewTask(ctx, op.String())
@@ -135,8 +135,8 @@ if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
+	a := vs[0]
+	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	if op.retSame {
@@ -150,7 +150,7 @@ if err := gctx.Handle(ctx); err != nil {
 
 {{define "Type()VV"}}
 // Type returns the type: (·) : a → a → a or (·) :  a → a → b
-func (op {{.Name}}VV) Type() hm.Type{
+func (op {{.Name}}VV[DT,T]) Type() hm.Type{
 	a := hm.TypeVariable('a') // (T U) or U
 	if op.retSame{
 		return types.NewFunc(a, a, a)
@@ -173,7 +173,7 @@ func (op {{.Name}}VS) Type() hm.Type {
 {{end}}
 {{define "Type()SV"}}
 // Type returns the type: (·) : a → b → b or (·) :  a → b → c
-func (op {{.Name}}SV) Type() hm.Type {
+func (op {{.Name}}SV[DT,T]) Type() hm.Type {
 	a := hm.TypeVariable('a') // U
 	b := hm.TypeVariable('b') // (T U) or U
 	if op.retSame{
@@ -218,7 +218,7 @@ func (op {{.Name}}SV) String() string { return "·{{.Symbol}}" }
 
 const binSymDiffRaw = `{{ if .IsDiff }}
 // SymDiff performs the symbolic differentiation of {{.Name}}.
-func (op {{.Name}}Op)SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error){ panic("not implemented" )}
+func (op {{.Name}}Op[DT,T])SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error){ panic("not implemented" )}
 {{ end }}
 
 `
@@ -387,13 +387,13 @@ func Test_{{$SV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 `
 
 const unopTmplRaw = `// {{.Name}} is a {{.CommentOp}}.
-type {{.Name}}Op struct{unop}
+type {{.Name}}Op[DT any, T values.Value[DT]] struct{unop}
 
 // String implements fmt.Stringer.
-func (op {{.Name}}Op) String() string {return "{{.Symbol}}" }
+func (op {{.Name}}Op[DT,T]) String() string {return "{{.Symbol}}" }
 
 // Do performs {{.CommentOp}}.
-func (op {{.Name}}Op) Do(ctx context.Context, vs ...values.Value)(retVal values.Value, err error){
+func (op {{.Name}}Op[DT,T]) Do(ctx context.Context, vs ...values.Value)(retVal values.Value, err error){
 if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
@@ -407,7 +407,7 @@ if err := gctx.Handle(ctx); err != nil {
 
 // PreallocDo performs {{.CommentOp}} but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
-func (op {{.Name}}Op) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op {{.Name}}Op[DT,T]) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
@@ -422,7 +422,7 @@ func (op {{.Name}}Op) PreallocDo(ctx context.Context, prealloc values.Value, vs 
 
 {{ if  .IsDiff }}
 // DiffWRT returns {true} for {{.Name}}
-func (op {{.Name}}Op) DiffWRT(inputs int) []bool { return onetrue }
+func (op {{.Name}}Op[DT,T]) DiffWRT(inputs int) []bool { return onetrue }
 {{- end -}}
 
 `

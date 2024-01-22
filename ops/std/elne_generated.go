@@ -10,26 +10,25 @@ import (
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/tensor"
 )
 
 // elNeOp is the base op for elementwise not-equal-to.
-type elNeOp struct {
+type elNeOp[DT any, T values.Value[DT]] struct {
 	binop
 	retSame bool
 }
 
 // String implements fmt.Stringer.
-func (op elNeOp) String() string { return "≠" }
+func (op elNeOp[DT, T]) String() string { return "≠" }
 
 // Do performs elementwise not-equal-to.
-func (op elNeOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op elNeOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
+	a := vs[0]
+	b := vs[1]
 
 	// Do the actual operation
 	ctx2, task := trace.NewTask(ctx, op.String())
@@ -44,13 +43,13 @@ func (op elNeOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Valu
 
 // PreallocDo performs elementwise not-equal-to but with a preallocated return value.
 // PreallocDo allows elNe to implement ops.PreallocOp.
-func (op elNeOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op elNeOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
+	a := vs[0]
+	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	if op.retSame {
@@ -60,17 +59,17 @@ func (op elNeOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...va
 	}
 	task.End()
 	return retVal, err
-}                                           // DiffWRT returns {false, false} for elNe
-func (op elNeOp) DiffWRT(inputs int) []bool { return twofalses }
+}                                                  // DiffWRT returns {false, false} for elNe
+func (op elNeOp[DT, T]) DiffWRT(inputs int) []bool { return twofalses }
 
 // elNeVV is a tensor-tensor elementwise not-equal-to.
-type elNeVV struct {
-	elNeOp
+type elNeVV[DT any, T values.Value[DT]] struct {
+	elNeOp[DT, T]
 	binopVV
 }
 
 // Type returns the type: (·) : a → a → a or (·) :  a → a → b
-func (op elNeVV) Type() hm.Type {
+func (op elNeVV[DT, T]) Type() hm.Type {
 	a := hm.TypeVariable('a') // (T U) or U
 	if op.retSame {
 		return types.NewFunc(a, a, a)
@@ -80,8 +79,8 @@ func (op elNeVV) Type() hm.Type {
 }
 
 // elNeVS is a tensor-scalar elementwise not-equal-to.
-type elNeVS struct {
-	elNeOp
+type elNeVS[DT any, T values.Value[DT]] struct {
+	elNeOp[DT, T]
 	binopVS
 }
 
@@ -100,8 +99,8 @@ func (op elNeVS) Type() hm.Type {
 }
 
 // elNeSV is a scalar-tensor elementwise not-equal-to.
-type elNeSV struct {
-	elNeOp
+type elNeSV[DT any, T values.Value[DT]] struct {
+	elNeOp[DT, T]
 	binopSV
 }
 
@@ -109,7 +108,7 @@ type elNeSV struct {
 func (op elNeSV) String() string { return "·≠" }
 
 // Type returns the type: (·) : a → b → b or (·) :  a → b → c
-func (op elNeSV) Type() hm.Type {
+func (op elNeSV[DT, T]) Type() hm.Type {
 	a := hm.TypeVariable('a') // U
 	b := hm.TypeVariable('b') // (T U) or U
 	if op.retSame {

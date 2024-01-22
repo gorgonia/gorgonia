@@ -16,7 +16,7 @@ type V interface {
 //   - *dense.Dense[DT]
 //   - *exprgraph.Value[DT, T]
 //   - *dual.Value[DT,T]
-//   - scalar.Scalar[DT
+//   - scalar.Scalar[DT]
 //
 // A Value is essentially any thing that knows its own type and shape.
 // Most importantly though, a Value is a pointer - and can be converted into a tensor.Memory.

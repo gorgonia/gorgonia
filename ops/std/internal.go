@@ -9,8 +9,6 @@ import (
 
 // internal.go provides the data structures that are useful for the specific implementations in this package.
 
-type Tensor = datatypes.Tensor
-
 var twotrues = []bool{true, true}
 var twofalses = []bool{false, false}
 var onetrue = []bool{true}

@@ -8,17 +8,16 @@ import (
 
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/tensor"
 )
 
 // abs is a elementwise absolute value.
-type absOp struct{ unop }
+type absOp[DT any, T values.Value[DT]] struct{ unop }
 
 // String implements fmt.Stringer.
-func (op absOp) String() string { return "|·|" }
+func (op absOp[DT, T]) String() string { return "|·|" }
 
 // Do performs elementwise absolute value.
-func (op absOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op absOp[DT, T]) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
@@ -32,7 +31,7 @@ func (op absOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value
 
 // PreallocDo performs elementwise absolute value but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
-func (op absOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op absOp[DT, T]) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}

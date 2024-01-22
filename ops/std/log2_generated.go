@@ -8,17 +8,16 @@ import (
 
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/tensor"
 )
 
 // log2 is a elementwise log2.
-type log2Op struct{ unop }
+type log2Op[DT any, T values.Value[DT]] struct{ unop }
 
 // String implements fmt.Stringer.
-func (op log2Op) String() string { return "Log2" }
+func (op log2Op[DT, T]) String() string { return "Log2" }
 
 // Do performs elementwise log2.
-func (op log2Op) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op log2Op[DT, T]) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
@@ -32,7 +31,7 @@ func (op log2Op) Do(ctx context.Context, vs ...values.Value) (retVal values.Valu
 
 // PreallocDo performs elementwise log2 but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
-func (op log2Op) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op log2Op[DT, T]) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
@@ -45,4 +44,4 @@ func (op log2Op) PreallocDo(ctx context.Context, prealloc values.Value, vs ...va
 }
 
 // DiffWRT returns {true} for log2
-func (op log2Op) DiffWRT(inputs int) []bool { return onetrue }
+func (op log2Op[DT, T]) DiffWRT(inputs int) []bool { return onetrue }

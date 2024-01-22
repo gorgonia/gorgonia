@@ -8,17 +8,16 @@ import (
 
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/tensor"
 )
 
 // tanh is a elementwise tanh.
-type tanhOp struct{ unop }
+type tanhOp[DT any, T values.Value[DT]] struct{ unop }
 
 // String implements fmt.Stringer.
-func (op tanhOp) String() string { return "tanh" }
+func (op tanhOp[DT, T]) String() string { return "tanh" }
 
 // Do performs elementwise tanh.
-func (op tanhOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op tanhOp[DT, T]) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
@@ -32,7 +31,7 @@ func (op tanhOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Valu
 
 // PreallocDo performs elementwise tanh but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
-func (op tanhOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op tanhOp[DT, T]) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
@@ -45,4 +44,4 @@ func (op tanhOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...va
 }
 
 // DiffWRT returns {true} for tanh
-func (op tanhOp) DiffWRT(inputs int) []bool { return onetrue }
+func (op tanhOp[DT, T]) DiffWRT(inputs int) []bool { return onetrue }

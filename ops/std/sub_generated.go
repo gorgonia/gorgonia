@@ -8,23 +8,22 @@ import (
 
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/tensor"
 )
 
 // subOp is the base op for elementwise subtraction.
-type subOp struct{ binop }
+type subOp[DT any, T values.Value[DT]] struct{ binop }
 
 // String implements fmt.Stringer.
-func (op subOp) String() string { return "-" }
+func (op subOp[DT, T]) String() string { return "-" }
 
 // Do performs elementwise subtraction.
-func (op subOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op subOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
+	a := vs[0]
+	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	retVal, err = tensor.Sub(a, b, tensor.WithContext(ctx2))
@@ -34,13 +33,13 @@ func (op subOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value
 
 // PreallocDo performs elementwise subtraction but with a preallocated return value.
 // PreallocDo allows sub to implement ops.PreallocOp.
-func (op subOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op subOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
+	a := vs[0]
+	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	retVal, err = tensor.Sub(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
@@ -49,14 +48,14 @@ func (op subOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...val
 }
 
 // subVV is a tensor-tensor elementwise subtraction.
-type subVV struct {
-	subOp
+type subVV[DT any, T values.Value[DT]] struct {
+	subOp[DT, T]
 	binopVV
 }
 
 // subVS is a tensor-scalar elementwise subtraction.
-type subVS struct {
-	subOp
+type subVS[DT any, T values.Value[DT]] struct {
+	subOp[DT, T]
 	binopVS
 }
 
@@ -64,8 +63,8 @@ type subVS struct {
 func (op subVS) String() string { return "-·" }
 
 // subSV is a scalar-tensor elementwise subtraction.
-type subSV struct {
-	subOp
+type subSV[DT any, T values.Value[DT]] struct {
+	subOp[DT, T]
 	binopSV
 }
 

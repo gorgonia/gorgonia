@@ -8,17 +8,16 @@ import (
 
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/tensor"
 )
 
 // inv is a elementwise 1/x.
-type invOp struct{ unop }
+type invOp[DT any, T values.Value[DT]] struct{ unop }
 
 // String implements fmt.Stringer.
-func (op invOp) String() string { return "1/·" }
+func (op invOp[DT, T]) String() string { return "1/·" }
 
 // Do performs elementwise 1/x.
-func (op invOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op invOp[DT, T]) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
@@ -32,7 +31,7 @@ func (op invOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value
 
 // PreallocDo performs elementwise 1/x but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
-func (op invOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op invOp[DT, T]) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
@@ -45,4 +44,4 @@ func (op invOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...val
 }
 
 // DiffWRT returns {true} for inv
-func (op invOp) DiffWRT(inputs int) []bool { return onetrue }
+func (op invOp[DT, T]) DiffWRT(inputs int) []bool { return onetrue }

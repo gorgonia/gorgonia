@@ -8,17 +8,16 @@ import (
 
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/tensor"
 )
 
 // sign is a elementwise sign.
-type signOp struct{ unop }
+type signOp[DT any, T values.Value[DT]] struct{ unop }
 
 // String implements fmt.Stringer.
-func (op signOp) String() string { return "Sign" }
+func (op signOp[DT, T]) String() string { return "Sign" }
 
 // Do performs elementwise sign.
-func (op signOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op signOp[DT, T]) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
@@ -32,7 +31,7 @@ func (op signOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Valu
 
 // PreallocDo performs elementwise sign but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
-func (op signOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op signOp[DT, T]) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}

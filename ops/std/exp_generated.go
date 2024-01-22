@@ -8,17 +8,16 @@ import (
 
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/tensor"
 )
 
 // exp is a elementwise exp.
-type expOp struct{ unop }
+type expOp[DT any, T values.Value[DT]] struct{ unop }
 
 // String implements fmt.Stringer.
-func (op expOp) String() string { return "Exp" }
+func (op expOp[DT, T]) String() string { return "Exp" }
 
 // Do performs elementwise exp.
-func (op expOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op expOp[DT, T]) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
@@ -32,7 +31,7 @@ func (op expOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value
 
 // PreallocDo performs elementwise exp but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
-func (op expOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op expOp[DT, T]) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
@@ -45,4 +44,4 @@ func (op expOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...val
 }
 
 // DiffWRT returns {true} for exp
-func (op expOp) DiffWRT(inputs int) []bool { return onetrue }
+func (op expOp[DT, T]) DiffWRT(inputs int) []bool { return onetrue }

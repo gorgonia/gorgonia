@@ -10,26 +10,25 @@ import (
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/tensor"
 )
 
 // lteOp is the base op for elementwise less-than-or-equal-to.
-type lteOp struct {
+type lteOp[DT any, T values.Value[DT]] struct {
 	binop
 	retSame bool
 }
 
 // String implements fmt.Stringer.
-func (op lteOp) String() string { return "≤" }
+func (op lteOp[DT, T]) String() string { return "≤" }
 
 // Do performs elementwise less-than-or-equal-to.
-func (op lteOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op lteOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
+	a := vs[0]
+	b := vs[1]
 
 	// Do the actual operation
 	ctx2, task := trace.NewTask(ctx, op.String())
@@ -44,13 +43,13 @@ func (op lteOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value
 
 // PreallocDo performs elementwise less-than-or-equal-to but with a preallocated return value.
 // PreallocDo allows lte to implement ops.PreallocOp.
-func (op lteOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op lteOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
+	a := vs[0]
+	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	if op.retSame {
@@ -60,17 +59,17 @@ func (op lteOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...val
 	}
 	task.End()
 	return retVal, err
-}                                          // DiffWRT returns {false, false} for lte
-func (op lteOp) DiffWRT(inputs int) []bool { return twofalses }
+}                                                 // DiffWRT returns {false, false} for lte
+func (op lteOp[DT, T]) DiffWRT(inputs int) []bool { return twofalses }
 
 // lteVV is a tensor-tensor elementwise less-than-or-equal-to.
-type lteVV struct {
-	lteOp
+type lteVV[DT any, T values.Value[DT]] struct {
+	lteOp[DT, T]
 	binopVV
 }
 
 // Type returns the type: (·) : a → a → a or (·) :  a → a → b
-func (op lteVV) Type() hm.Type {
+func (op lteVV[DT, T]) Type() hm.Type {
 	a := hm.TypeVariable('a') // (T U) or U
 	if op.retSame {
 		return types.NewFunc(a, a, a)
@@ -80,8 +79,8 @@ func (op lteVV) Type() hm.Type {
 }
 
 // lteVS is a tensor-scalar elementwise less-than-or-equal-to.
-type lteVS struct {
-	lteOp
+type lteVS[DT any, T values.Value[DT]] struct {
+	lteOp[DT, T]
 	binopVS
 }
 
@@ -100,8 +99,8 @@ func (op lteVS) Type() hm.Type {
 }
 
 // lteSV is a scalar-tensor elementwise less-than-or-equal-to.
-type lteSV struct {
-	lteOp
+type lteSV[DT any, T values.Value[DT]] struct {
+	lteOp[DT, T]
 	binopSV
 }
 
@@ -109,7 +108,7 @@ type lteSV struct {
 func (op lteSV) String() string { return "·≤" }
 
 // Type returns the type: (·) : a → b → b or (·) :  a → b → c
-func (op lteSV) Type() hm.Type {
+func (op lteSV[DT, T]) Type() hm.Type {
 	a := hm.TypeVariable('a') // U
 	b := hm.TypeVariable('b') // (T U) or U
 	if op.retSame {

@@ -308,7 +308,16 @@ func unstubbed(file io.Reader, name string) []string {
 		if fn.Recv == nil || len(fn.Recv.List) != 1 {
 			return true
 		}
-		recv := fn.Recv.List[0].Type.(*ast.Ident).Name
+		var recv string
+		switch r0 := fn.Recv.List[0].Type.(type) {
+		case *ast.Ident:
+			recv = r0.Name
+		case *ast.StarExpr:
+			recv = r0.X.(*ast.Ident).Name
+		default:
+			log.Printf("ERROR: UNSUPPORTED TYPE %v in %v", fn.Recv.List[0].Type, name)
+		}
+
 		ignored = append(ignored, strings.TrimSuffix(recv, "Op"))
 		return false
 	})

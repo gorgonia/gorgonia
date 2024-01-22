@@ -12,19 +12,19 @@ import (
 )
 
 // addOp is the base op for elementwise addition.
-type addOp struct{ binop }
+type addOp[DT any, T values.Value[DT]] struct{ binop }
 
 // String implements fmt.Stringer.
-func (op addOp) String() string { return "+" }
+func (op addOp[DT, T]) String() string { return "+" }
 
 // Do performs elementwise addition.
-func (op addOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op addOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
+	a := vs[0]
+	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	retVal, err = tensor.Add(a, b, tensor.WithContext(ctx2))
@@ -34,13 +34,13 @@ func (op addOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value
 
 // PreallocDo performs elementwise addition but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
-func (op addOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op addOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return nil, err
 	}
 
-	a := vs[0].(tensor.Tensor)
-	b := vs[1].(tensor.Tensor)
+	a := vs[0]
+	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	retVal, err = tensor.Add(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
@@ -49,14 +49,14 @@ func (op addOp) PreallocDo(ctx context.Context, prealloc values.Value, vs ...val
 }
 
 // addVV is a tensor-tensor elementwise addition.
-type addVV struct {
-	addOp
+type addVV[DT any, T values.Value[DT]] struct {
+	addOp[DT, T]
 	binopVV
 }
 
 // addVS is a tensor-scalar elementwise addition.
-type addVS struct {
-	addOp
+type addVS[DT any, T values.Value[DT]] struct {
+	addOp[DT, T]
 	binopVS
 }
 
@@ -64,8 +64,8 @@ type addVS struct {
 func (op addVS) String() string { return "+·" }
 
 // addSV is a scalar-tensor elementwise addition.
-type addSV struct {
-	addOp
+type addSV[DT any, T values.Value[DT]] struct {
+	addOp[DT, T]
 	binopSV
 }
 
