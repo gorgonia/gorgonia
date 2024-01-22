@@ -5,31 +5,56 @@
 	int blockId = blockIdx.x + blockIdx.y * gridDim.x + gridDim.x * gridDim.y * blockIdx.z;\
 	int idx = blockId * (blockDim.x * blockDim.y * blockDim.z) + (threadIdx.z * (blockDim.x * blockDim.y)) + (threadIdx.y * blockDim.x) + threadIdx.x;
 
+
 #define CHECKSIZE \
 	if (idx >= size) { \
 		return; \
 	}
 
+#define ROWCOL \
+	int row = idx / rows;\
+	int col = idx % rows;
+
 #define VVBINOP(name, t, type, op)\
-	__global__ void  name ##_vv_ ##t(type* A, type* B, int size) { \
+	__global__ void  name ##_vv_ ##t(type* A, type* B, const int size) { \
 		THREADID \
 		CHECKSIZE \
 		A[idx] = A[idx] op B[idx];}
 
+#define BCBINOP(name, t, type, op)\
+__global__ void name ##_broadcast_ ##t (type* A, type* B, type* C, int* aShape, int* bShape, int* outShape, int* aStrides, int* bStrides, const int size) {\
+    THREADID\
+    CHECKSIZE\
+    int aIndex = 0;\
+    int bIndex = 0;\
+    for (int j = blockDim.x - 1; j >= 0; j--) {\
+        int aDim = (j < aShape[0]) ? aShape[0] : 1; \
+        int bDim = (j < bShape[0]) ? bShape[0] : 1; \
+        int dimIndex = (idx / (blockDim.x * blockDim.y * blockDim.z)) % outShape[j];\
+        if (aDim != 1) {\
+            aIndex += (dimIndex % aDim) * aStrides[j];\
+        }\
+        if (bDim != 1) {\
+            bIndex += (dimIndex % bDim) * bStrides[j];\
+        }\
+    }\
+    C[idx] = A[aIndex] op B[bIndex];\
+}
+
 #define VSBINOP(name, t, type, op)\
-	__global__ void  name ##_vs_ ##t(type* A, type* B, int size) { \
+	__global__ void  name ##_vs_ ##t(type* A, type* B, const int size) { \
 		THREADID \
 		CHECKSIZE \
 		A[idx] = A[idx] op B[0];}
 
 #define SVBINOP(name, t, type, op)\
-	__global__ void  name ##_sv_ ##t(type* A, type* B, int size) { \
+	__global__ void  name ##_sv_ ##t(type* A, type* B, const int size) { \
 		THREADID \
 		CHECKSIZE \
 		B[idx] = A[0] op B[idx];}
 
 #define SSBINOP(name, t, type, op)\
-	__global__ void  name ##_ss_ ##t(type* A, type* B, int size) { \
+	__global__ void  name ##_ss_ ##t(type* A, type* B, const int size) { \
 		THREADID \
 		CHECKSIZE \
 		A[0] = A[0] op B[0];}
@@ -65,6 +90,38 @@ extern "C" { VVBINOP(eq, f32, float, ==)}
 
 extern "C" { VVBINOP(ne, f64, double, !=)}
 extern "C" { VVBINOP(ne, f32, float, !=)}
+
+/* BROADCAST BIN OP */
+
+extern "C" { BCBINOP(add, f64, double, +) }
+extern "C" { BCBINOP(add, f32, float, +) }
+
+extern "C" { BCBINOP(sub, f64, double, -) }
+extern "C" { BCBINOP(sub, f32, float, -) }
+
+extern "C" { BCBINOP(mul, f64, double, *) }
+extern "C" { BCBINOP(mul, f32, float, *) }
+
+extern "C" { BCBINOP(div, f64, double, /) }
+extern "C" { BCBINOP(div, f32, float, /) }
+
+extern "C" { BCBINOP(gt, f64, double, >)}
+extern "C" { BCBINOP(gt, f32, float, >)}
+
+extern "C" { BCBINOP(gte, f64, double, >=)}
+extern "C" { BCBINOP(gte, f32, float, >=)}
+
+extern "C" { BCBINOP(lt, f64, double, <)}
+extern "C" { BCBINOP(lt, f32, float, <)}
+
+extern "C" { BCBINOP(lte, f64, double, <=)}
+extern "C" { BCBINOP(lte, f32, float, <=)}
+
+extern "C" { BCBINOP(eq, f64, double, ==)}
+extern "C" { BCBINOP(eq, f32, float, ==)}
+
+extern "C" { BCBINOP(ne, f64, double, !=)}
+extern "C" { BCBINOP(ne, f32, float, !=)}
 
 
 /* VECTOR-SCALAR BIN OP */
@@ -131,7 +188,7 @@ extern "C" { SVBINOP(eq, f32, float, ==) }
 extern "C" { SVBINOP(ne, f64, double, !=) }
 extern "C" { SVBINOP(ne, f32, float, !=) }
 
-/* SCALAR-SCALAR BIN OP */	
+/* SCALAR-SCALAR BIN OP */
 
 extern "C" { SSBINOP(add, f64, double, +) }
 extern "C" { SSBINOP(add, f32, float, +) }
@@ -166,25 +223,25 @@ extern "C" { SSBINOP(ne, f32, float, !=)}
 /* FUNCTION BIN OP */
 
 #define VVFNBINOP(name, t, type, op)\
-	__global__ void  name ##_vv_ ##t(type* A, type* B, int size) { \
+	__global__ void  name ##_vv_ ##t(type* A, type* B, const int size) { \
 		THREADID \
 		CHECKSIZE \
 		A[idx] = op(A[idx], B[idx]);}
 
 #define VSFNBINOP(name, t, type, op)\
-	__global__ void  name ##_vs_ ##t(type* A, type* B, int size) { \
+	__global__ void  name ##_vs_ ##t(type* A, type* B, const int size) { \
 		THREADID \
 		CHECKSIZE \
 		A[idx] = op(A[idx], B[0]);}
 
 #define SVFNBINOP(name, t, type, op)\
-	__global__ void  name ##_sv_ ##t(type* A, type* B, int size) { \
+	__global__ void  name ##_sv_ ##t(type* A, type* B, const int size) { \
 		THREADID \
 		CHECKSIZE \
 		B[idx] = op(A[0], B[idx]);}
 
 #define SSFNBINOP(name, t, type, op)\
-	__global__ void  name ##_ss_ ##t(type* A, type* B, int size) { \
+	__global__ void  name ##_ss_ ##t(type* A, type* B, const int size) { \
 		THREADID \
 		CHECKSIZE \
 		A[0] = op(A[0], B[0]);}

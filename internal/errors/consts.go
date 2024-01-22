@@ -36,6 +36,13 @@ type NoOp struct{}
 func (err NoOp) Error() string { return noopMsg }
 func (err NoOp) NoOp()         {}
 
+type NoOpWarning struct {
+	NoOp
+	W string
+}
+
+func (err NoOpWarning) Warning() string { return err.W }
+
 // NYI is a convenience function that decorates a NYI error message with additional information.
 func NYI(args ...interface{}) error {
 	msg := nyiFail

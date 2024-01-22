@@ -37,6 +37,13 @@ func (e *EngineState) Sync() chan struct{} { return e.syncChan }
 // Signal signals the machine to do work
 func (e *EngineState) Signal() { e.c.Signal() }
 
+// Done cancels all the internal contexts, and then cleans up all the things
+func (e *EngineState) Done() {
+	debug.Logf("sending to finishChan")
+	e.finishChan <- struct{}{}
+	e.syncChan <- struct{}{}
+}
+
 // Context returns the BatchedContext
 func (e *EngineState) Context() *cu.BatchedContext { return &e.c }
 
@@ -118,7 +125,7 @@ func (e *EngineState) Init(device cu.Device, size int64) (err error) {
 }
 
 func (e *EngineState) doInit(size int64) (err error) {
-	e.syncChan = make(chan struct{})
+	e.syncChan = make(chan struct{}, 1)
 	e.finishChan = make(chan struct{})
 	e.a = allocator.Make(memalign)
 
@@ -176,14 +183,16 @@ func (e *EngineState) doInit(size int64) (err error) {
 	}
 	e.a.Reserve(uintptr(ptr), allocsize)
 	e.n = *(cudnn.NewContext())
-	go e.Run()
 	return nil
 }
 
 // Close cleans up the machine, and closes all available resources
 func (e *EngineState) Close() error {
 	e.Signal() // tell the engine to do all the work now.
+	return e.b.Do(func() error { return e.close() })
+}
 
+func (e *EngineState) close() error {
 	debug.Logtid("engine.Close", 1)
 	// start the Close process.
 	e.Lock()
@@ -281,6 +290,7 @@ func (e *EngineState) run() {
 	// OK, now everything has been initialized, then let's go:
 
 	e.running = true
+	e.syncChan <- struct{}{} // will be cleared if message sent to finishChan
 	e.Unlock()
 
 loop:
@@ -293,6 +303,9 @@ loop:
 				e.err = err
 				break loop
 			}
+			// debug.Logtid("Sending to syncChan", 0)
+			// e.syncChan <- struct{}{}
+			// debug.Logtid("done sending to syncChan", 0)
 
 		case w := <-e.c.Work():
 			if w != nil {
@@ -313,28 +326,38 @@ loop:
 			break loop
 		}
 	}
+	debug.Logf("broke out of loop")
+	defer func() {
+		<-e.syncChan
+	}()
+
+	// debug.Logf("Drain work chan")
+	// // now we drain the work chan
+	// if w := <-e.c.Work(); w != nil {
+	// 	err := w()
+	// 	if err != nil {
+	// 		e.err = err
+	// 		return
+	// 	}
+	// }
+
+	// DoWork
+	debug.Logf("DoWorkNow")
+	debug.Logtid("engine.run (finish)", 0)
+	e.c.DoWorkNow()
+	e.c.DoWork()
+	debug.Logf("Finished DoWork()")
+	if err := e.c.Errors(); err != nil {
+		e.err = err
+
+	}
+
+	debug.Logf("Close batched Context")
 	// we need to wait for the CUDA context to finish first
 	err := e.c.Close()
 	if err != nil {
 		e.err = err // TODO: check if e.err already has an error in there
 		return
-	}
-
-	// now we drain the work chan
-	if w := <-e.c.Work(); w != nil {
-		err := w()
-		if err != nil {
-			e.err = err
-			return
-		}
-	}
-
-	// DoWork
-	debug.Logtid("engine.run (finish)", 0)
-	e.c.DoWork()
-	if err := e.c.Errors(); err != nil {
-		e.err = err
-
 	}
 
 	return

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/pkg/errors"
 	"gorgonia.org/cu"
 	cudalib "gorgonia.org/gorgonia/cuda"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/internal/debug"
 )
 
@@ -18,8 +18,11 @@ import (
 func LoadStdLib(e *EngineState) error {
 	stdlib := cudalib.StandardLib()
 	if len(stdlib) == 0 {
-		return errors.Errorf("No standard lib found. Did you forget to generate cudamodules.go?")
+		return errors.NoOpWarning{W: "No functions found in StdLib. Perhaps you forgot to run `cudagen`?"}
 	}
+
+	debug.Logtid("LoadStdLib", 0)
+	debug.Logf("Length of stdlib %d", len(stdlib))
 
 	for _, l := range stdlib {
 		if err := e.LoadCUDAFunc(l.ModuleName, l.Data, l.Funcs); err != nil {
@@ -63,6 +66,8 @@ func (e *EngineState) LoadCUDAFunc(moduleName, data string, funcs []string) (err
 // Call launches a known kernel that takes at least one argument.
 // The argument's size must be known.
 func (e *EngineState) Call(fnName string, size int, args ...unsafe.Pointer) error {
+	debug.Logtid("EngineState.Call", 1)
+	debug.Logf("\te.Call %v", fnName)
 	if !e.HasFunc(fnName) {
 		return errors.Errorf("The engine does not have the function %q", fnName)
 	}
@@ -70,8 +75,8 @@ func (e *EngineState) Call(fnName string, size int, args ...unsafe.Pointer) erro
 	fn := e.f[fnName]
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(size)
 
-	debug.Logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	debug.Logf("args: %v", args)
+	debug.Logf("\tgx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	debug.Logf("\targs: %v", args)
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return nil
 }

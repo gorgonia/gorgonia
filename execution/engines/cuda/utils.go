@@ -2,6 +2,7 @@ package cuda
 
 import (
 	"fmt"
+	"unsafe"
 
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/shapes"
@@ -37,18 +38,30 @@ func logicalSize(s shapes.Shape) int {
 	return s.TotalSize()
 }
 
+func sliceMemSize[T shapes.Shape | []int](a T) uintptr {
+	x := shapes.Shape(a)
+	sz := x.TotalSize()
+	var z int
+	return uintptr(sz) * unsafe.Sizeof(z)
+}
+
 // constructName2 constructs the built-in CUDA kernel name for an operation.
-func constructBinName2(a, b tensor.Desc, fn string) (name string) {
+func constructBinName2(a, b tensor.Desc, fn string, isBC bool) (name string, scalarOnLeft, scalarOnRight bool) {
 	dt := a.Dtype()
 	as := a.Shape()
 	bs := b.Shape()
 	switch {
-	case as.IsScalar() && bs.IsScalar():
+	case as.IsScalar() && bs.IsScalarEquiv():
 		name = fmt.Sprintf("%v.%s_ss_f%d", elemBinOpMod, fn, int(dt.Size()*8))
-	case as.IsScalar() && !bs.IsScalar():
+		scalarOnLeft, scalarOnRight = true, true
+	case as.IsScalar() && !bs.IsScalarEquiv():
 		name = fmt.Sprintf("%v.%s_sv_f%d", elemBinOpMod, fn, int(dt.Size()*8))
-	case !as.IsScalar() && bs.IsScalar():
+		scalarOnLeft = true
+	case !as.IsScalarEquiv() && bs.IsScalarEquiv():
 		name = fmt.Sprintf("%v.%s_vs_f%d", elemBinOpMod, fn, int(dt.Size()*8))
+		scalarOnRight = true
+	case isBC:
+		name = fmt.Sprintf("%v.%s_broadcast_f%d", elemBinOpMod, fn, int(dt.Size()*8))
 	default:
 		name = fmt.Sprintf("%v.%s_vv_f%d", elemBinOpMod, fn, int(dt.Size()*8))
 	}
