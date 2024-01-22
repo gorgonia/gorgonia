@@ -19,7 +19,7 @@ func (op divOp[DT, T]) String() string { return "÷" }
 // Do performs elementwise division.
 func (op divOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -35,7 +35,7 @@ func (op divOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 // PreallocDo allows div to implement ops.PreallocOp.
 func (op divOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -60,7 +60,7 @@ type divVS[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op divVS) String() string { return "÷·" }
+func (op divVS[DT, T]) String() string { return "÷·" }
 
 // divSV is a scalar-tensor elementwise division.
 type divSV[DT any, T values.Value[DT]] struct {
@@ -69,4 +69,4 @@ type divSV[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op divSV) String() string { return "·÷" }
+func (op divSV[DT, T]) String() string { return "·÷" }

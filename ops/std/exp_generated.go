@@ -17,12 +17,12 @@ type expOp[DT any, T values.Value[DT]] struct{ unop }
 func (op expOp[DT, T]) String() string { return "Exp" }
 
 // Do performs elementwise exp.
-func (op expOp[DT, T]) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op expOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
-	a := vs[0].(tensor.Tensor)
+	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
 	retVal, err = tensor.Exp(a, tensor.WithContext(ctx2))
 	task.End()
@@ -31,12 +31,12 @@ func (op expOp[DT, T]) Do(ctx context.Context, vs ...values.Value) (retVal value
 
 // PreallocDo performs elementwise exp but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
-func (op expOp[DT, T]) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op expOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
-	a := vs[0].(tensor.Tensor)
+	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
 	retVal, err = tensor.Exp(a, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
 	task.End()

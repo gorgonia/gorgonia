@@ -19,7 +19,7 @@ func (op subOp[DT, T]) String() string { return "-" }
 // Do performs elementwise subtraction.
 func (op subOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -35,7 +35,7 @@ func (op subOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 // PreallocDo allows sub to implement ops.PreallocOp.
 func (op subOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -60,7 +60,7 @@ type subVS[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op subVS) String() string { return "-·" }
+func (op subVS[DT, T]) String() string { return "-·" }
 
 // subSV is a scalar-tensor elementwise subtraction.
 type subSV[DT any, T values.Value[DT]] struct {
@@ -69,4 +69,4 @@ type subSV[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op subSV) String() string { return "·-" }
+func (op subSV[DT, T]) String() string { return "·-" }

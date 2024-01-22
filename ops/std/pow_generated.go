@@ -19,7 +19,7 @@ func (op powOp[DT, T]) String() string { return "^" }
 // Do performs elementwise exponentiation.
 func (op powOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -35,7 +35,7 @@ func (op powOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 // PreallocDo allows pow to implement ops.PreallocOp.
 func (op powOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -60,7 +60,7 @@ type powVS[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op powVS) String() string { return "^·" }
+func (op powVS[DT, T]) String() string { return "^·" }
 
 // powSV is a scalar-tensor elementwise exponentiation.
 type powSV[DT any, T values.Value[DT]] struct {
@@ -69,4 +69,4 @@ type powSV[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op powSV) String() string { return "·^" }
+func (op powSV[DT, T]) String() string { return "·^" }

@@ -46,19 +46,19 @@ type binopTestResult struct {
 }
 
 var arithTestInput = binopTestInput{
-	AVV:  "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
-	BVV:  "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{10, 20, 30, 40, 50, 60}))",
-	AVV2: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{1}))",
-	BVV2: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{2}))",
-	CVV:  "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{-1}))",
+	AVV:  "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
+	BVV:  "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{10, 20, 30, 40, 50, 60}))",
+	AVV2: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{1}))",
+	BVV2: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{2}))",
+	CVV:  "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{-1}))",
 
-	AVS: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
-	BVS: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))",
-	CVS: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{-1, -1, -1, -1, -1, -1}))",
+	AVS: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
+	BVS: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{100}))",
+	CVS: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{-1, -1, -1, -1, -1, -1}))",
 
-	ASV: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))",
-	BSV: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
-	CSV: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{-1, -1, -1, -1, -1, -1}))",
+	ASV: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{100}))",
+	BSV: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
+	CSV: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{-1, -1, -1, -1, -1, -1}))",
 }
 
 var arithTestResults = []binopTestResult{
@@ -163,19 +163,19 @@ var cmpTestResultsBool = []binopTestResult{
 }
 
 var cmpTestInputBool = binopTestInput{
-	AVV:  "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
-	BVV:  "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1,2, 3, 40, 50, 60}))",
-	AVV2: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{1}))",
-	BVV2: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{2}))",
-	CVV:  "tensor.New(tensor.WithShape(), tensor.WithBacking([]bool{false}))",
+	AVV:  "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
+	BVV:  "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1,2, 3, 40, 50, 60}))",
+	AVV2: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{1}))",
+	BVV2: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{2}))",
+	CVV:  "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]bool{false}))",
 
-	AVS: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
-	BVS: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))",
-	CVS: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))",
+	AVS: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
+	BVS: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{100}))",
+	CVS: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))",
 
-	ASV: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))",
-	BSV: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
-	CSV: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))",
+	ASV: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{100}))",
+	BSV: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
+	CSV: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))",
 }
 
 var cmpTestResultsSame = []binopTestResult{
@@ -226,19 +226,19 @@ var cmpTestResultsSame = []binopTestResult{
 }
 
 var cmpTestInputSame = binopTestInput{
-	AVV:  "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
-	BVV:  "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1,2, 3, 40, 50, 60}))",
-	AVV2: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{1}))",
-	BVV2: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{2}))",
-	CVV:  "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{0}))",
+	AVV:  "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
+	BVV:  "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1,2, 3, 40, 50, 60}))",
+	AVV2: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{1}))",
+	BVV2: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{2}))",
+	CVV:  "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{0}))",
 
-	AVS: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
-	BVS: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))",
-	CVS: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 0, 0, 0, 0, 0}))",
+	AVS: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
+	BVS: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{100}))",
+	CVS: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 0, 0, 0, 0, 0}))",
 
-	ASV: "tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))",
-	BSV: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
-	CSV: "tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 0, 0, 0, 0, 0}))",
+	ASV: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{100}))",
+	BSV: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
+	CSV: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 0, 0, 0, 0, 0}))",
 }
 
 var unops = []op{

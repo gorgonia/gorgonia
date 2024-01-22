@@ -24,7 +24,7 @@ func (op lteOp[DT, T]) String() string { return "≤" }
 // Do performs elementwise less-than-or-equal-to.
 func (op lteOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -45,7 +45,7 @@ func (op lteOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 // PreallocDo allows lte to implement ops.PreallocOp.
 func (op lteOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -85,7 +85,7 @@ type lteVS[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op lteVS) String() string { return "≤·" }
+func (op lteVS[DT, T]) String() string { return "≤·" }
 
 // Type returns the type: (·) : a → b → a or (·) :  a → b → c
 func (op lteVS) Type() hm.Type {
@@ -105,7 +105,7 @@ type lteSV[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op lteSV) String() string { return "·≤" }
+func (op lteSV[DT, T]) String() string { return "·≤" }
 
 // Type returns the type: (·) : a → b → b or (·) :  a → b → c
 func (op lteSV[DT, T]) Type() hm.Type {

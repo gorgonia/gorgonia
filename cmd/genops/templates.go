@@ -43,7 +43,7 @@ type {{.Name}}SV[DT any, T values.Value[DT]] struct { {{.Name}}Op[DT,T] ; binopS
 
 {{- define "Do" -}}
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -56,7 +56,7 @@ type {{.Name}}SV[DT any, T values.Value[DT]] struct { {{.Name}}Op[DT,T] ; binopS
 {{- end -}}
 {{- define "PreallocDo" -}}
 if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -114,7 +114,7 @@ type {{.Name}}SV[DT any, T values.Value[DT]] struct { {{.Name}}Op[DT,T]; binopSV
 
 {{- define "Do" -}}
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -132,7 +132,7 @@ type {{.Name}}SV[DT any, T values.Value[DT]] struct { {{.Name}}Op[DT,T]; binopSV
 {{- end -}}
 {{- define "PreallocDo" -}}
 if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -200,7 +200,7 @@ const binOpRaw = `// {{.Name}}Op is the base op for {{.CommentOp}}.
 {{- template "TypeDefVS" . -}}
 
 // String implements fmt.Stringer.
-func (op {{.Name}}VS) String() string { return "{{.Symbol}}·" }
+func (op {{.Name}}VS[DT,T]) String() string { return "{{.Symbol}}·" }
 
 {{ template "Type()VS" . }}
 
@@ -210,7 +210,7 @@ func (op {{.Name}}VS) String() string { return "{{.Symbol}}·" }
 {{- template "TypeDefSV" . -}}
 
 // String implements fmt.Stringer.
-func (op {{.Name}}SV) String() string { return "·{{.Symbol}}" }
+func (op {{.Name}}SV[DT,T]) String() string { return "·{{.Symbol}}" }
 
 {{ template "Type()SV" . }}
 
@@ -240,7 +240,7 @@ const arithOpTestRaw = `{{ define "varExpected" }}
 	if c, err = op.Do(context.Background(), a, b); err != nil {
 		t.Fatalf("Expected {{.}}{} to work correctly. Err: %v", err)
 	}
-	assert.Equal(t, expectedType, datatypes.TypeOf(c))
+	assert.Equal(t, expectedType, datatypes.TypeOf[float64](c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
 {{end}}
 {{ define "op.PreallocDo" }}
@@ -248,7 +248,7 @@ const arithOpTestRaw = `{{ define "varExpected" }}
 	if err != nil {
 		t.Fatalf("Expected {{.}}{}'s Prealloc to work. Err: %v", err)
 	}
-	assert.Equal(t, expectedType, datatypes.TypeOf(c))
+	assert.Equal(t, expectedType, datatypes.TypeOf[float64](c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
 {{ end }}
 
@@ -256,14 +256,14 @@ const arithOpTestRaw = `{{ define "varExpected" }}
 {{- $VS := ( printf "%vVS" .Name ) -}}
 {{- $SV := ( printf "%vSV" .Name ) -}}
 func Test_{{$VV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
-	op := {{$VV}}{ {{if .IsCmpRetTrue}}{{.Name}}Op{retSame: true}, binopVV{} {{end}} }
+	op := {{$VV}}[float64, *dense.Dense[float64]]{ {{if .IsCmpRetTrue}}{{.Name}}Op[float64, *dense.Dense[float64]]{retSame: true}, binopVV{} {{end}} }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
 	/* Do (using tensor-tensor) */
 
 	// set up
-	var a, b, c values.Value
+	var a, b, c *dense.Dense[float64]
 	{{- template "varExpected" }}
 	a = {{.AVV}}
 	b = {{.BVV}}
@@ -293,10 +293,10 @@ func Test_{{$VV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 
 
 	// bad cases: fails  typecheck and shapecheck
-	a = tensor.New(tensor.WithShape(2, 3), tensor.Of(tensor.Float64))
-	b = tensor.New(tensor.WithShape(), tensor.Of(tensor.Float64))
+	a = dense.New[float64](tensor.WithShape(2, 3))
+	b = dense.New[float64](tensor.WithShape())
 	if expectedType, err = typecheck(op, a, b); err == nil {
-		t.Fatalf("Expected {{.Name}}VV{} to NOT pass type checking. Got ~(%v %v) =  %v ", datatypes.TypeOf(a), datatypes.TypeOf(b), expectedType)
+		t.Fatalf("Expected {{.Name}}VV{} to NOT pass type checking. Got ~(%v %v) =  %v ", datatypes.TypeOf[float64](a), datatypes.TypeOf[float64](b), expectedType)
 	}
 	if expectedShape, err = shapecheck(op, a, b); err == nil {
 		t.Fatalf("Expected {{.Name}}VV{} to NOT pass shape checking. Got expectedShape = %v", expectedShape)
@@ -305,14 +305,14 @@ func Test_{{$VV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 }
 
 func Test_{{$VS}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
-	op := {{$VS}}{ {{if .IsCmpRetTrue}}{{.Name}}Op{retSame: true}, binopVS{} {{end}} }
+	op := {{$VS}}[float64, *dense.Dense[float64]]{ {{if .IsCmpRetTrue}}{{.Name}}Op[float64, *dense.Dense[float64]]{retSame: true}, binopVS{} {{end}} }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
 	/* Do */
 
 	// set up
-	var a, b, c values.Value
+	var a, b, c *dense.Dense[float64]
 	{{- template "varExpected" }}
 	a = {{.AVS}}
 	b = {{.BVS}}
@@ -336,7 +336,7 @@ func Test_{{$VS}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 
 	/* bad cases: {{$VS}}{} on tensor-tensor */
 
-	b = tensor.New(tensor.WithShape(2, 3), tensor.Of(tensor.Float64))
+	b = dense.New[float64](tensor.WithShape(2, 3))
 	// we won't type check because the type system is not a dependent type system, thus
 	// {{.Name}}VS : (a → b → a) will always type check without errors
 	if expectedShape, err = shapecheck(op, a, b); err == nil {
@@ -345,14 +345,14 @@ func Test_{{$VS}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 }
 
 func Test_{{$SV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
-	op := {{$SV}}{ {{if .IsCmpRetTrue}}{{.Name}}Op{retSame: true}, binopSV{} {{end}}  }
+	op := {{$SV}}[float64, *dense.Dense[float64]]{ {{if .IsCmpRetTrue}}{{.Name}}Op[float64, *dense.Dense[float64]]{retSame: true}, binopSV{} {{end}}  }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
 	/* Do */
 
 	// set up
-	var a, b, c values.Value
+	var a, b, c *dense.Dense[float64]
 	{{- template "varExpected" }}
 	a = {{.ASV}}
 	b = {{.BSV}}
@@ -377,7 +377,7 @@ func Test_{{$SV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 
 	/* bad cases: {{.Name}}SV{} on tensor-tensor */
 
-	a = tensor.New(tensor.WithShape(2, 3), tensor.Of(tensor.Float64))
+	a = dense.New[float64](tensor.WithShape(2, 3))
 	// we won't type check because the type system is not a dependent type system, thus
 	// {{.Name}}SV : (a → b → b) will always type check without errors
 	if expectedShape, err = shapecheck(op, a, b); err == nil {
@@ -393,12 +393,12 @@ type {{.Name}}Op[DT any, T values.Value[DT]] struct{unop}
 func (op {{.Name}}Op[DT,T]) String() string {return "{{.Symbol}}" }
 
 // Do performs {{.CommentOp}}.
-func (op {{.Name}}Op[DT,T]) Do(ctx context.Context, vs ...values.Value)(retVal values.Value, err error){
+func (op {{.Name}}Op[DT,T]) Do(ctx context.Context, vs ...T)(retVal T, err error){
 if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
-	a := vs[0].(tensor.Tensor)
+	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
 	retVal, err = tensor.{{.Method}}(a, tensor.WithContext(ctx2))
 	task.End()
@@ -407,12 +407,12 @@ if err := gctx.Handle(ctx); err != nil {
 
 // PreallocDo performs {{.CommentOp}} but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
-func (op {{.Name}}Op[DT,T]) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op {{.Name}}Op[DT,T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
-	a := vs[0].(tensor.Tensor)
+	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
 	retVal, err = tensor.{{.Method}}(a, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
 	task.End()
@@ -428,13 +428,13 @@ func (op {{.Name}}Op[DT,T]) DiffWRT(inputs int) []bool { return onetrue }
 `
 
 const unopTestRaw = `func Test_{{.Name}}(t *testing.T){
-	op := {{.Name}}Op{}
+	op := {{.Name}}Op[float64, *dense.Dense[float64]]{}
 	// basic test
 	assert.Equal(t, 1, op.Arity())
 
 	// Do
 	var a, b values.Value
-	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking({{.Input}}))
+	a = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking({{.Input}}))
 
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
@@ -451,17 +451,17 @@ const unopTestRaw = `func Test_{{.Name}}(t *testing.T){
 	if b, err = op.Do(context.Background(), a); err != nil {
 		t.Fatalf("Expected {{.Name}}Op{} to work correctly. Err: %v", err)
 	}
-	assert.Equal(t, expectedType, datatypes.TypeOf(b))
+	assert.Equal(t, expectedType, datatypes.TypeOf[float64](b))
 	assert.True(t, expectedShape.Eq(b.Shape()))
 	correct := {{.Correct}}
 	assert.Equal(t, correct, b.Data())
 
 	// PreallocDo
-	b = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{-100, -100, -100, -100, -100, -100}))
+	b = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{-100, -100, -100, -100, -100, -100}))
 	if b, err = op.PreallocDo(context.Background(), b, a); err != nil {
 		t.Fatalf("Expected {{.Name}}Op{} to work correctly. Err: %v", err)
 	}
-	assert.Equal(t, expectedType, datatypes.TypeOf(b))
+	assert.Equal(t, expectedType, datatypes.TypeOf[float64](b))
 	assert.True(t, expectedShape.Eq(b.Shape()))
 	assert.Equal(t, correct, b.Data())
 }
@@ -473,18 +473,18 @@ const binopAPIRaw = `{{- $cmp := "" -}}
 {{- $sv := "" -}}
 {{- if .IsCmp -}}
 {{- $cmp = ", retSame bool" -}}
-{{- $vv = (printf "%vVV{%vOp{retSame: retSame}, binopVV{}}" .Name .Name ) -}}
-{{- $vs = (printf "%vVS{%vOp{retSame: retSame}, binopVS{}}" .Name .Name ) -}}
-{{- $sv = (printf "%vSV{%vOp{retSame: retSame}, binopSV{}}" .Name .Name ) -}}
+{{- $vv = (printf "%vVV[DT,T]{%vOp[DT,T]{retSame: retSame}, binopVV{}}" .Name .Name ) -}}
+{{- $vs = (printf "%vVS[DT,T]{%vOp[DT,T]{retSame: retSame}, binopVS{}}" .Name .Name ) -}}
+{{- $sv = (printf "%vSV[DT,T]{%vOp[DT,T]{retSame: retSame}, binopSV{}}" .Name .Name ) -}}
 {{- else -}}
 {{- $cmp = ""}}
-{{- $vv = (printf "%vVV{}" .Name ) -}}
-{{- $vs = (printf "%vVS{}" .Name ) -}}
-{{- $sv = (printf "%vSV{}" .Name ) -}}
+{{- $vv = (printf "%vVV[DT, T]{}" .Name ) -}}
+{{- $vs = (printf "%vVS[DT,T]{}" .Name ) -}}
+{{- $sv = (printf "%vSV[DT,T]{}" .Name ) -}}
 {{- end -}}
 
 // {{.Name | title}} creates an ops.Op that is correct to the shape of the given operands.
-func {{.Name | title}}(a, b ops.Operand {{$cmp}}) ops.PreallocOp {
+func {{.Name | title}}[DT any, T values.Value[DT]](a, b ops.Operand {{$cmp}}) ops.PreallocOp[DT,T] {
 	aScalar := a.Shape().IsScalar()
 	bScalar := b.Shape().IsScalar()
 
@@ -516,62 +516,62 @@ const binopAPITestRaw = `{{- $retSameFalse := "" -}}
 func Test{{.Name | title}}(t *testing.T){
 	assert := assert.New(t)
 
-	var op, expected ops.Op
+	var op, expected ops.Op[float64, *dense.Dense[float64]]
 
 	// test vv
-	a := tensor.New(tensor.WithShape(2,3), tensor.Of(tensor.Float64))
-	b := tensor.New(tensor.WithShape(2,3), tensor.Of(tensor.Float64))
-	op = {{.Name | title}}(a, b {{$retSameFalse}})
-	expected = {{.Name}}VV{ {{.Name}}Op{ {{$cmpfalse}} }, binopVV{} }
+	a := dense.New[float64](tensor.WithShape(2,3))
+	b := dense.New[float64](tensor.WithShape(2,3))
+	op = {{.Name | title}}[float64, *dense.Dense[float64]](a, b {{$retSameFalse}})
+	expected = {{.Name}}VV[float64, *dense.Dense[float64]]{ {{if .IsCmp}} {{.Name}}Op[float64, *dense.Dense[float64]]{ {{$cmpfalse}} }, binopVV{} {{end}} }
 	assert.Equal(op, expected)
 
 
 {{ if .IsCmp }}
 	// test vv but retSame = true
-	op = {{.Name | title}}(a, b {{$retSameTrue}})
-	expected = {{.Name}}VV{ {{.Name}}Op{ {{$cmptrue}} }, binopVV{} }
+	op = {{.Name | title}}[float64, *dense.Dense[float64]](a, b {{$retSameTrue}})
+	expected = {{.Name}}VV[float64, *dense.Dense[float64]]{ {{.Name}}Op[float64, *dense.Dense[float64]]{ {{$cmptrue}} }, binopVV{} }
 	assert.Equal(op, expected)
 {{ end }}
 
 	// test vs
-	b = tensor.New(tensor.WithShape(), tensor.Of(tensor.Float64))
-	op = {{.Name | title}}(a, b {{$retSameFalse}})
-	expected = {{.Name}}VS{ {{.Name}}Op{ {{$cmpfalse}} }, binopVS{} }
+	b = dense.New[float64](tensor.WithShape())
+	op = {{.Name | title}}[float64, *dense.Dense[float64]](a, b {{$retSameFalse}})
+	expected = {{.Name}}VS[float64, *dense.Dense[float64]]{ {{if .IsCmp}} {{.Name}}Op[float64, *dense.Dense[float64]]{ {{$cmpfalse}} }, binopVS{} {{end}} }
 	assert.Equal(op, expected)
 
 
 {{ if .IsCmp }}
 	// test vs but retSame = true
-	op = {{.Name | title}}(a, b {{$retSameTrue}})
-	expected = {{.Name}}VS{ {{.Name}}Op{ {{$cmptrue}} }, binopVS{} }
+	op = {{.Name | title}}[float64, *dense.Dense[float64]](a, b {{$retSameTrue}})
+	expected = {{.Name}}VS[float64, *dense.Dense[float64]]{ {{.Name}}Op[float64, *dense.Dense[float64]]{ {{$cmptrue}} }, binopVS{} }
 	assert.Equal(op, expected)
 {{ end }}
 
 
 	// test sv
-	op = {{.Name | title}}(b, a {{$retSameFalse}})
-	expected = {{.Name}}SV{ {{.Name}}Op{ {{$cmpfalse}} }, binopSV{} }
+	op = {{.Name | title}}[float64, *dense.Dense[float64]](b, a {{$retSameFalse}})
+	expected = {{.Name}}SV[float64, *dense.Dense[float64]]{ {{if .IsCmp}} {{.Name}}Op[float64, *dense.Dense[float64]]{ {{$cmpfalse}} }, binopSV{} {{end}} }
 	assert.Equal(op, expected)
 
 {{ if .IsCmp }}
 	// test sv but retSame = true
-	op = {{.Name | title}}(b, a  {{$retSameTrue}})
-	expected = {{.Name}}SV{ {{.Name}}Op{ {{$cmptrue}} }, binopSV{} }
+	op = {{.Name | title}}[float64, *dense.Dense[float64]](b, a  {{$retSameTrue}})
+	expected = {{.Name}}SV[float64, *dense.Dense[float64]]{ {{.Name}}Op[float64, *dense.Dense[float64]]{ {{$cmptrue}} }, binopSV{} }
 	assert.Equal(op, expected)
 {{ end }}
 
 
 	// test ss
-	a = tensor.New(tensor.WithShape(), tensor.Of(tensor.Float64))
-	op = {{.Name | title}}(a, b {{$retSameFalse}})
-	expected = {{.Name}}VV{ {{.Name}}Op{ {{$cmpfalse}} }, binopVV{} }
+	a = dense.New[float64](tensor.WithShape())
+	op = {{.Name | title}}[float64, *dense.Dense[float64]](a, b {{$retSameFalse}})
+	expected = {{.Name}}VV[float64, *dense.Dense[float64]]{ {{if .IsCmp}} {{.Name}}Op[float64, *dense.Dense[float64]]{ {{$cmpfalse}} }, binopVV{} {{end}} }
 	assert.Equal(op, expected)
 
 
 {{ if .IsCmp }}
 	// test ss but retSame = true
-	op = {{.Name | title}}(a, b {{$retSameTrue}})
-	expected = {{.Name}}VV{ {{.Name}}Op{ {{$cmptrue}} }, binopVV{} }
+	op = {{.Name | title}}[float64, *dense.Dense[float64]](a, b {{$retSameTrue}})
+	expected = {{.Name}}VV[float64, *dense.Dense[float64]]{ {{.Name}}Op[float64, *dense.Dense[float64]]{ {{$cmptrue}} }, binopVV{} }
 	assert.Equal(op, expected)
 {{ end }}
 
@@ -581,10 +581,10 @@ func Test{{.Name | title}}(t *testing.T){
 
 const doDiffTmplRaw = `{{ if .IsDiff }}
 // DoDiff is the method that allows automatic differentiation of` + " `{{ .Name }}` " + `g.
-func (op {{ .Name }}Op) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) error {
-	adv := exprgraph.T2T(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2T(inputs[1]).(*dual.Dual)
-	cdv := exprgraph.T2T(output).(*dual.Dual)
+func (op {{ .Name }}Op[DT,T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
+	adv := exprgraph.T2B[DT](inputs[0]).(*dual.Dual[DT,T])
+	bdv := exprgraph.T2B[DT](inputs[1]).(*dual.Dual[DT,T])
+	cdv := exprgraph.T2B[DT](output).(*dual.Dual[DT,T])
 
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()

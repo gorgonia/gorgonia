@@ -24,7 +24,7 @@ func (op elEqOp[DT, T]) String() string { return "=" }
 // Do performs elementwise equal-to.
 func (op elEqOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -45,7 +45,7 @@ func (op elEqOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 // PreallocDo allows elEq to implement ops.PreallocOp.
 func (op elEqOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -85,7 +85,7 @@ type elEqVS[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op elEqVS) String() string { return "=·" }
+func (op elEqVS[DT, T]) String() string { return "=·" }
 
 // Type returns the type: (·) : a → b → a or (·) :  a → b → c
 func (op elEqVS) Type() hm.Type {
@@ -105,7 +105,7 @@ type elEqSV[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op elEqSV) String() string { return "·=" }
+func (op elEqSV[DT, T]) String() string { return "·=" }
 
 // Type returns the type: (·) : a → b → b or (·) :  a → b → c
 func (op elEqSV[DT, T]) Type() hm.Type {

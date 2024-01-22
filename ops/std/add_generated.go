@@ -20,7 +20,7 @@ func (op addOp[DT, T]) String() string { return "+" }
 // Do performs elementwise addition.
 func (op addOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -36,7 +36,7 @@ func (op addOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 // PreallocDo allows add to implement ops.PreallocOp.
 func (op addOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -61,7 +61,7 @@ type addVS[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op addVS) String() string { return "+·" }
+func (op addVS[DT, T]) String() string { return "+·" }
 
 // addSV is a scalar-tensor elementwise addition.
 type addSV[DT any, T values.Value[DT]] struct {
@@ -70,4 +70,4 @@ type addSV[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op addSV) String() string { return "·+" }
+func (op addSV[DT, T]) String() string { return "·+" }

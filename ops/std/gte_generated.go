@@ -24,7 +24,7 @@ func (op gteOp[DT, T]) String() string { return "≥" }
 // Do performs elementwise greater-than-or-equal-to.
 func (op gteOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -45,7 +45,7 @@ func (op gteOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 // PreallocDo allows gte to implement ops.PreallocOp.
 func (op gteOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -85,7 +85,7 @@ type gteVS[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op gteVS) String() string { return "≥·" }
+func (op gteVS[DT, T]) String() string { return "≥·" }
 
 // Type returns the type: (·) : a → b → a or (·) :  a → b → c
 func (op gteVS) Type() hm.Type {
@@ -105,7 +105,7 @@ type gteSV[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op gteSV) String() string { return "·≥" }
+func (op gteSV[DT, T]) String() string { return "·≥" }
 
 // Type returns the type: (·) : a → b → b or (·) :  a → b → c
 func (op gteSV[DT, T]) Type() hm.Type {

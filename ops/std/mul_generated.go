@@ -19,7 +19,7 @@ func (op mulOp[DT, T]) String() string { return "*" }
 // Do performs elementwise multiplciatio=.
 func (op mulOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -35,7 +35,7 @@ func (op mulOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 // PreallocDo allows mul to implement ops.PreallocOp.
 func (op mulOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -60,7 +60,7 @@ type mulVS[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op mulVS) String() string { return "*·" }
+func (op mulVS[DT, T]) String() string { return "*·" }
 
 // mulSV is a scalar-tensor elementwise multiplciatio=.
 type mulSV[DT any, T values.Value[DT]] struct {
@@ -69,4 +69,4 @@ type mulSV[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op mulSV) String() string { return "·*" }
+func (op mulSV[DT, T]) String() string { return "·*" }

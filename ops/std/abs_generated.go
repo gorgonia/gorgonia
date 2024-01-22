@@ -17,12 +17,12 @@ type absOp[DT any, T values.Value[DT]] struct{ unop }
 func (op absOp[DT, T]) String() string { return "|·|" }
 
 // Do performs elementwise absolute value.
-func (op absOp[DT, T]) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op absOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
-	a := vs[0].(tensor.Tensor)
+	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
 	retVal, err = tensor.Abs(a, tensor.WithContext(ctx2))
 	task.End()
@@ -31,12 +31,12 @@ func (op absOp[DT, T]) Do(ctx context.Context, vs ...values.Value) (retVal value
 
 // PreallocDo performs elementwise absolute value but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
-func (op absOp[DT, T]) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op absOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
-	a := vs[0].(tensor.Tensor)
+	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
 	retVal, err = tensor.Abs(a, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
 	task.End()

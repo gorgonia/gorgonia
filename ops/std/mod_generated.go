@@ -19,7 +19,7 @@ func (op modOp[DT, T]) String() string { return "%" }
 // Do performs elementwise mod.
 func (op modOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -35,7 +35,7 @@ func (op modOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 // PreallocDo allows mod to implement ops.PreallocOp.
 func (op modOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -61,7 +61,7 @@ type modVS[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op modVS) String() string { return "%·" }
+func (op modVS[DT, T]) String() string { return "%·" }
 
 // modSV is a scalar-tensor elementwise mod.
 type modSV[DT any, T values.Value[DT]] struct {
@@ -70,4 +70,4 @@ type modSV[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op modSV) String() string { return "·%" }
+func (op modSV[DT, T]) String() string { return "·%" }

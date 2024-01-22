@@ -24,7 +24,7 @@ func (op elNeOp[DT, T]) String() string { return "≠" }
 // Do performs elementwise not-equal-to.
 func (op elNeOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -45,7 +45,7 @@ func (op elNeOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 // PreallocDo allows elNe to implement ops.PreallocOp.
 func (op elNeOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	a := vs[0]
@@ -85,7 +85,7 @@ type elNeVS[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op elNeVS) String() string { return "≠·" }
+func (op elNeVS[DT, T]) String() string { return "≠·" }
 
 // Type returns the type: (·) : a → b → a or (·) :  a → b → c
 func (op elNeVS) Type() hm.Type {
@@ -105,7 +105,7 @@ type elNeSV[DT any, T values.Value[DT]] struct {
 }
 
 // String implements fmt.Stringer.
-func (op elNeSV) String() string { return "·≠" }
+func (op elNeSV[DT, T]) String() string { return "·≠" }
 
 // Type returns the type: (·) : a → b → b or (·) :  a → b → c
 func (op elNeSV[DT, T]) Type() hm.Type {
