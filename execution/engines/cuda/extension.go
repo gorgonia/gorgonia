@@ -17,6 +17,9 @@ import (
 // that created the engine.
 func LoadStdLib(e *EngineState) error {
 	stdlib := cudalib.StandardLib()
+	if len(stdlib) == 0 {
+		return errors.Errorf("No standard lib found. Did you forget to generate cudamodules.go?")
+	}
 
 	for _, l := range stdlib {
 		if err := e.LoadCUDAFunc(l.ModuleName, l.Data, l.Funcs); err != nil {
