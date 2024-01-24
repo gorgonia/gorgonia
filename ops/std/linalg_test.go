@@ -7,14 +7,14 @@ import (
 	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/assert"
 	"gorgonia.org/gorgonia/internal/datatypes"
-	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 )
 
 func TestMatMul(t *testing.T) {
 	assert := assert.New(t)
-	op := MatMul{}
+	op := MatMul[float64, *dense.Dense[float64]]{}
 
 	// basic test
 	assert.Equal(2, op.Arity())
@@ -22,13 +22,13 @@ func TestMatMul(t *testing.T) {
 	/* Do */
 
 	// set up
-	var a, b, c, d values.Value
+	var a, b, c, d *dense.Dense[float64]
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
 	var err error
 
-	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	b = tensor.New(tensor.WithShape(3, 4), tensor.WithBacking(tensor.Range(tensor.Float64, 1, 13)))
+	a = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	b = dense.New[float64](tensor.WithShape(3, 4), tensor.WithBacking(tensor.Range[float64](1, 13)))
 
 	// type and shape checks
 	if expectedType, err = typecheck(op, a, b); err != nil {
@@ -60,7 +60,7 @@ func TestMatMul(t *testing.T) {
 
 func TestMatVecMul(t *testing.T) {
 	assert := assert.New(t)
-	op := MatVecMul{}
+	op := MatVecMul[float64, *dense.Dense[float64]]{}
 
 	// basic test
 	assert.Equal(2, op.Arity())
@@ -68,13 +68,13 @@ func TestMatVecMul(t *testing.T) {
 	/* Do */
 
 	// set up
-	var a, b, c, d values.Value
+	var a, b, c, d *dense.Dense[float64]
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
 	var err error
 
-	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	b = tensor.New(tensor.WithShape(3), tensor.WithBacking(tensor.Range(tensor.Float64, 1, 4)))
+	a = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	b = dense.New[float64](tensor.WithShape(3), tensor.WithBacking(tensor.Range[float64](1, 4)))
 
 	// type and shape checks
 	if expectedType, err = typecheck(op, a, b); err != nil {
@@ -106,7 +106,7 @@ func TestMatVecMul(t *testing.T) {
 
 func TestInner(t *testing.T) {
 	assert := assert.New(t)
-	op := VecDot{}
+	op := VecDot[float64, *dense.Dense[float64]]{}
 
 	// basic test
 	assert.Equal(2, op.Arity())
@@ -114,13 +114,13 @@ func TestInner(t *testing.T) {
 	/* Do */
 
 	// set up
-	var a, b, c, d values.Value
+	var a, b, c, d *dense.Dense[float64]
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
 	var err error
 
-	a = tensor.New(tensor.WithShape(3), tensor.WithBacking([]float64{1, 2, 3}))
-	b = tensor.New(tensor.WithShape(3), tensor.WithBacking(tensor.Range(tensor.Float64, 1, 4)))
+	a = dense.New[float64](tensor.WithShape(3), tensor.WithBacking([]float64{1, 2, 3}))
+	b = dense.New[float64](tensor.WithShape(3), tensor.WithBacking(tensor.Range[float64](1, 4)))
 
 	// type and shape checks
 	if expectedType, err = typecheck(op, a, b); err != nil {
@@ -151,7 +151,7 @@ func TestInner(t *testing.T) {
 
 func TestOuter(t *testing.T) {
 	assert := assert.New(t)
-	op := Outer{}
+	op := Outer[float64, *dense.Dense[float64]]{}
 
 	// basic test
 	assert.Equal(2, op.Arity())
@@ -159,13 +159,13 @@ func TestOuter(t *testing.T) {
 	/* Do */
 
 	// set up
-	var a, b, c, d values.Value
+	var a, b, c, d *dense.Dense[float64]
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
 	var err error
 
-	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	b = tensor.New(tensor.WithShape(5, 2, 5), tensor.WithBacking(tensor.Range(tensor.Float64, 1, 51)))
+	a = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	b = dense.New[float64](tensor.WithShape(5, 2, 5), tensor.WithBacking(tensor.Range[float64](1, 51)))
 
 	// type and shape checks
 	if expectedType, err = typecheck(op, a, b); err != nil {

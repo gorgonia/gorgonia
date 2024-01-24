@@ -10,6 +10,7 @@ import (
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/tensor"
 )
 
 // gteOp is the base op for elementwise greater-than-or-equal-to.

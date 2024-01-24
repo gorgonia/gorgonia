@@ -8,6 +8,7 @@ import (
 
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/tensor"
 )
 
 // mulOp is the base op for elementwise multiplciatio=.

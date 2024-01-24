@@ -8,6 +8,7 @@ import (
 
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/tensor"
 )
 
 // modOp is the base op for elementwise mod.

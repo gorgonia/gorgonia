@@ -9,6 +9,7 @@ import (
 	"gorgonia.org/gorgonia/exprgraph"
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/internal/errors"
+	"gorgonia.org/tensor/dense"
 
 	"gorgonia.org/gorgonia/ops"
 	"gorgonia.org/gorgonia/types"
@@ -40,10 +41,10 @@ func reductionTypeExpr(along shapes.Axes) hm.Type {
 	return hm.NewFnType(a, d)
 }
 
-func denseReduction(task *trace.Task, ctx context.Context, f func(t *tensor.Dense, along ...int) (*tensor.Dense, error), along []int, input *tensor.Dense) (retVal values.Value, err error) {
+func denseReduction[DT any](task *trace.Task, ctx context.Context, f func(t *dense.Dense[DT], along ...int) (*dense.Dense[DT], error), along []int, input *dense.Dense[DT]) (retVal values.Value[DT], err error) {
 	defer task.End()
 	// TODO: put ctx into input.Engine somehow
-	var ret *tensor.Dense
+	var ret *dense.Dense[DT]
 	if ret, err = f(input, along...); err != nil {
 		return nil, errors.Wrapf(err, "Failed to perform reduction of %v", funcName(f))
 	}

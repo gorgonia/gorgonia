@@ -5,9 +5,16 @@ import (
 	"reflect"
 	"testing/quick"
 
+	"github.com/chewxy/hm"
+	"github.com/pkg/errors"
 	"gorgonia.org/dtype"
+	"gorgonia.org/gorgonia/internal/datatypes"
+	"gorgonia.org/gorgonia/ops"
+	"gorgonia.org/gorgonia/types"
+	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 
 	_ "unsafe"
 )
@@ -23,6 +30,31 @@ func init() {
 
 	var b int
 	intType = reflect.TypeOf(b)
+}
+
+func typecheck(op ops.Desc, vs ...values.V) (retType hm.Type, err error) {
+	childrenTypes := hm.BorrowTypes(3)
+	defer hm.ReturnTypes(childrenTypes)
+	childrenTypes = childrenTypes[:0]
+
+	ts := make([]hm.Type, len(vs))
+	for i := range vs {
+		ts[i] = datatypes.TypeOf(vs[i])
+	}
+	childrenTypes = append(childrenTypes, ts...)
+
+	childrenTypes = append(childrenTypes, hm.TypeVariable('z'))
+	return types.Infer(op.Type(), childrenTypes...)
+}
+
+func shapecheck(op ops.Op, vs ...values.Value) (retVal shapes.Shape, err error) {
+	s := op.ShapeExpr()
+	for i, v := range vs {
+		if s, err = shapes.InferApp(s, v.Shape()); err != nil {
+			return nil, errors.Wrapf(err, "Unable to infer %v on %dth value. Last inferred shape: %v", op, i, s)
+		}
+	}
+	return shapes.ToShape(s)
 }
 
 /* THIS PORTION IS ADAPTED FROM testutils_test.go OF PACKAGE tensor */
@@ -81,16 +113,16 @@ func shuffleInts(a []int, r *rand.Rand) {
 }
 
 // tTensor is a wrapped *tensor.Dense so it may implement quick.Generator.
-type tTensor struct {
-	*tensor.Dense
+type tTensor[DT any] struct {
+	*dense.Dense[DT]
 }
 
 // Generate generates a tTensor. This is adapted from the *Dense.Generate in testutils_test.go in package tensor.
-func (t tTensor) Generate(r *rand.Rand, size int) reflect.Value {
+func (t tTensor[DT]) Generate(r *rand.Rand, size int) reflect.Value {
 	// generate type
-	ri := r.Intn(len(specializedTypes))
-	of := specializedTypes[ri]
-	datatyp := reflect.SliceOf(of.Type)
+	var z DT
+	typ := reflect.TypeOf(z)
+	datatyp := reflect.SliceOf(typ)
 	gendat, _ := quick.Value(datatyp, r)
 	// generate dims
 	var scalar bool
@@ -102,12 +134,12 @@ func (t tTensor) Generate(r *rand.Rand, size int) reflect.Value {
 	switch {
 	case dims == 0 || l == 0:
 		scalar = true
-		gendat, _ = quick.Value(of.Type, r)
+		gendat, _ = quick.Value(typ, r)
 	case dims == 1:
 		s = shapes.Shape{gendat.Len()}
 	default:
 		factors := factorize(l)
-		s = shapes.Shape(tensor.BorrowInts(dims))
+		s = make(shapes.Shape, dims)
 		// fill with 1s so that we can get a non-zero TotalSize
 		for i := 0; i < len(s); i++ {
 			s[i] = 1
@@ -141,13 +173,12 @@ func (t tTensor) Generate(r *rand.Rand, size int) reflect.Value {
 		order := tensor.DataOrder(r.Intn(4))
 	*/
 
-	var v *tensor.Dense
+	var v *dense.Dense[DT]
 	if scalar {
-		v = tensor.New(tensor.FromScalar(gendat.Interface()))
+		v = dense.New[DT](tensor.FromScalar(gendat.Interface()))
 	} else {
-		v = tensor.New(tensor.Of(of), tensor.WithShape(s...), tensor.WithBacking(gendat.Interface()))
+		v = dense.New[DT](tensor.WithShape(s...), tensor.WithBacking(gendat.Interface()))
 	}
-	tensor.WithEngine(tensor.StdEng{})(v)
 
 	// generate engine
 
@@ -206,5 +237,5 @@ func (t tTensor) Generate(r *rand.Rand, size int) reflect.Value {
 		}
 	*/
 
-	return reflect.ValueOf(tTensor{v})
+	return reflect.ValueOf(tTensor[DT]{v})
 }

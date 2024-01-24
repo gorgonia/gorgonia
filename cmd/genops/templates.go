@@ -240,7 +240,7 @@ const arithOpTestRaw = `{{ define "varExpected" }}
 	if c, err = op.Do(context.Background(), a, b); err != nil {
 		t.Fatalf("Expected {{.}}{} to work correctly. Err: %v", err)
 	}
-	assert.Equal(t, expectedType, datatypes.TypeOf[float64](c))
+	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
 {{end}}
 {{ define "op.PreallocDo" }}
@@ -248,7 +248,7 @@ const arithOpTestRaw = `{{ define "varExpected" }}
 	if err != nil {
 		t.Fatalf("Expected {{.}}{}'s Prealloc to work. Err: %v", err)
 	}
-	assert.Equal(t, expectedType, datatypes.TypeOf[float64](c))
+	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
 {{ end }}
 
@@ -296,7 +296,7 @@ func Test_{{$VV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 	a = dense.New[float64](tensor.WithShape(2, 3))
 	b = dense.New[float64](tensor.WithShape())
 	if expectedType, err = typecheck(op, a, b); err == nil {
-		t.Fatalf("Expected {{.Name}}VV{} to NOT pass type checking. Got ~(%v %v) =  %v ", datatypes.TypeOf[float64](a), datatypes.TypeOf[float64](b), expectedType)
+		t.Fatalf("Expected {{.Name}}VV{} to NOT pass type checking. Got ~(%v %v) =  %v ", datatypes.TypeOf(a), datatypes.TypeOf(b), expectedType)
 	}
 	if expectedShape, err = shapecheck(op, a, b); err == nil {
 		t.Fatalf("Expected {{.Name}}VV{} to NOT pass shape checking. Got expectedShape = %v", expectedShape)
@@ -451,7 +451,7 @@ const unopTestRaw = `func Test_{{.Name}}(t *testing.T){
 	if b, err = op.Do(context.Background(), a); err != nil {
 		t.Fatalf("Expected {{.Name}}Op{} to work correctly. Err: %v", err)
 	}
-	assert.Equal(t, expectedType, datatypes.TypeOf[float64](b))
+	assert.Equal(t, expectedType, datatypes.TypeOf(b))
 	assert.True(t, expectedShape.Eq(b.Shape()))
 	correct := {{.Correct}}
 	assert.Equal(t, correct, b.Data())
@@ -461,7 +461,7 @@ const unopTestRaw = `func Test_{{.Name}}(t *testing.T){
 	if b, err = op.PreallocDo(context.Background(), b, a); err != nil {
 		t.Fatalf("Expected {{.Name}}Op{} to work correctly. Err: %v", err)
 	}
-	assert.Equal(t, expectedType, datatypes.TypeOf[float64](b))
+	assert.Equal(t, expectedType, datatypes.TypeOf(b))
 	assert.True(t, expectedShape.Eq(b.Shape()))
 	assert.Equal(t, correct, b.Data())
 }

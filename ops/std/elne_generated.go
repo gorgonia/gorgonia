@@ -10,6 +10,7 @@ import (
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/tensor"
 )
 
 // elNeOp is the base op for elementwise not-equal-to.

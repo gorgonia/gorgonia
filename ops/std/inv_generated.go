@@ -8,6 +8,7 @@ import (
 
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/tensor"
 )
 
 // inv is a elementwise 1/x.

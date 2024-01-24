@@ -53,7 +53,7 @@ type Tensor interface {
 }
 
 // TypeOf returns the type of a given Tensor
-func TypeOf[DT any](t Tensor) hm.Type {
+func TypeOf(t Tensor) hm.Type {
 	switch tt := t.(type) {
 	case hm.Typer:
 		return tt.Type()
