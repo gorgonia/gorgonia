@@ -7,21 +7,21 @@ import (
 	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/assert"
 	"gorgonia.org/gorgonia/internal/datatypes"
-	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 )
 
 func TestAdd__(t *testing.T) {
-	op := addVV{}
+	op := addVV[float64, *dense.Dense[float64]]{}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
 	// tensor-tensor / Do()
 
-	var a, b, c values.Value
-	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	b = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{10, 20, 30, 40, 50, 60}))
+	var a, b, c *dense.Dense[float64]
+	a = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	b = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{10, 20, 30, 40, 50, 60}))
 
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
@@ -44,9 +44,9 @@ func TestAdd__(t *testing.T) {
 
 	// scalar-scalar / PreallocDo
 
-	a = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{1}))
-	b = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{2}))
-	c = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{-1}))
+	a = dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{1}))
+	b = dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{2}))
+	c = dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{-1}))
 
 	if expectedType, err = typecheck(op, a, b); err != nil {
 		t.Fatalf("Expected Add{} to pass type checking. Err: %v", err)
@@ -65,8 +65,8 @@ func TestAdd__(t *testing.T) {
 	assert.True(t, expectedShape.Eq(c.Shape()))
 
 	// bad cases: fails  typecheck and shapecheck
-	a = tensor.New(tensor.WithShape(2, 3), tensor.Of(tensor.Float64))
-	b = tensor.New(tensor.WithShape(), tensor.Of(tensor.Float64))
+	a = dense.New[float64](tensor.WithShape(2, 3))
+	b = dense.New[float64](tensor.WithShape())
 	if expectedType, err = typecheck(op, a, b); err == nil {
 		t.Fatalf("Expected Add{} to NOT pass type checking. Got ~(%v %v) =  %v ", datatypes.TypeOf(a), datatypes.TypeOf(b), expectedType)
 	}
@@ -77,12 +77,12 @@ func TestAdd__(t *testing.T) {
 }
 
 func TestAddVS__(t *testing.T) {
-	op := addVS{}
+	op := addVS[float64, *dense.Dense[float64]]{}
 
 	// Do
-	var a, b, c values.Value
-	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	b = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))
+	var a, b, c *dense.Dense[float64]
+	a = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	b = dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{100}))
 
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
@@ -104,7 +104,7 @@ func TestAddVS__(t *testing.T) {
 	assert.Equal(t, correct, c.Data())
 
 	// PreallocDo
-	c = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{-1, -1, -1, -1, -1, -1}))
+	c = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{-1, -1, -1, -1, -1, -1}))
 
 	c, err = op.PreallocDo(context.Background(), c, a, b)
 	if err != nil {
@@ -115,7 +115,7 @@ func TestAddVS__(t *testing.T) {
 	assert.Equal(t, correct, c.Data())
 
 	// bad cases: AddVS{} on tensor-tensor
-	b = tensor.New(tensor.WithShape(2, 3), tensor.Of(tensor.Float64))
+	b = dense.New[float64](tensor.WithShape(2, 3))
 	// we won't type check because the type system is not a dependent type system, thus
 	// AddVS : (a → b → a) will always type check without errors
 	if expectedShape, err = shapecheck(op, a, b); err == nil {
@@ -124,12 +124,12 @@ func TestAddVS__(t *testing.T) {
 }
 
 func TestAddSV__(t *testing.T) {
-	op := addSV{}
+	op := addSV[float64, *dense.Dense[float64]]{}
 
 	// Do
-	var a, b, c values.Value
-	a = tensor.New(tensor.WithShape(), tensor.WithBacking([]float64{100}))
-	b = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	var a, b, c *dense.Dense[float64]
+	a = dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{100}))
+	b = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
 
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
@@ -151,7 +151,7 @@ func TestAddSV__(t *testing.T) {
 	assert.Equal(t, correct, c.Data())
 
 	// PreallocDo
-	c = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{-1, -1, -1, -1, -1, -1}))
+	c = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{-1, -1, -1, -1, -1, -1}))
 
 	c, err = op.PreallocDo(context.Background(), c, a, b)
 	if err != nil {
@@ -162,7 +162,7 @@ func TestAddSV__(t *testing.T) {
 	assert.Equal(t, correct, c.Data())
 
 	// bad cases: AddSV{} on tensor-tensor
-	a = tensor.New(tensor.WithShape(2, 3), tensor.Of(tensor.Float64))
+	a = dense.New[float64](tensor.WithShape(2, 3))
 	// we won't type check because the type system is not a dependent type system, thus
 	// AddSV : (a → b → b) will always type check without errors
 	if expectedShape, err = shapecheck(op, a, b); err == nil {
@@ -171,11 +171,11 @@ func TestAddSV__(t *testing.T) {
 }
 
 func TestAbs__(t *testing.T) {
-	op := absOp{}
+	op := absOp[float64, *dense.Dense[float64]]{}
 
 	// Do
-	var a, b values.Value
-	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{-1, -2, -3, 4, 5, 6}))
+	var a, b *dense.Dense[float64]
+	a = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{-1, -2, -3, 4, 5, 6}))
 
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
@@ -198,7 +198,7 @@ func TestAbs__(t *testing.T) {
 	assert.Equal(t, correct, b.Data())
 
 	// PreallocDo
-	b = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{-100, -100, -100, -100, -100, -100}))
+	b = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{-100, -100, -100, -100, -100, -100}))
 	if b, err = op.PreallocDo(context.Background(), b, a); err != nil {
 		t.Fatalf("Expected AddSV{} to work correctly. Err: %v", err)
 	}

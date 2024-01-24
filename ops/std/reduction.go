@@ -15,7 +15,6 @@ import (
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
-	"gorgonia.org/tensor"
 )
 
 // In general all reductions will reduce the dims
@@ -51,61 +50,61 @@ func denseReduction[DT any](task *trace.Task, ctx context.Context, f func(t *den
 	return ret, err
 }
 
-type Reduction struct {
-	op    ops.Op
+type Reduction[DT any, T values.Value[DT]] struct {
+	op    ops.Op[DT, T]
 	along shapes.Axes
-	def   values.Value
+	def   T
 }
 
 // Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime.
-func (op *Reduction) Arity() int { return 1 }
+func (op *Reduction[DT, T]) Arity() int { return 1 }
 
 // Type informs the type of the Op (not the node). This will be used by the type system to infer the final type of the node.
-func (op *Reduction) Type() hm.Type { return reductionTypeExpr(op.along) }
+func (op *Reduction[DT, T]) Type() hm.Type { return reductionTypeExpr(op.along) }
 
 // ShapeExpr informs the shape operations that the Op will do. A quick primer is given in the README of the shapes package.
-func (op *Reduction) ShapeExpr() shapes.Expr { return reductionShapeExpr(op.along) }
+func (op *Reduction[DT, T]) ShapeExpr() shapes.Expr { return reductionShapeExpr(op.along) }
 
 // Do executes the op.
-func (op *Reduction) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op *Reduction[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	panic("not implemented") // TODO: Implement
 }
 
-func (op *Reduction) String() string { return fmt.Sprintf("%v/", op.op) }
+func (op *Reduction[DT, T]) String() string { return fmt.Sprintf("%v/", op.op) }
 
 // Sum is an op that performs a reduction with + along the given axes
-type Sum struct {
+type Sum[DT any, T values.Value[DT]] struct {
 	along shapes.Axes
 }
 
 // Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime.
-func (op *Sum) Arity() int { return 1 }
+func (op *Sum[DT, T]) Arity() int { return 1 }
 
 // Type informs the type of the Op (not the node). This will be used by the type system to infer the final type of the node.
-func (op *Sum) Type() hm.Type { return reductionTypeExpr(op.along) }
+func (op *Sum[DT, T]) Type() hm.Type { return reductionTypeExpr(op.along) }
 
 // ShapeExpr informs the shape operations that the Op will do. A quick primer is given in the README of the shapes package.
-func (op *Sum) ShapeExpr() shapes.Expr { return reductionShapeExpr(op.along) }
+func (op *Sum[DT, T]) ShapeExpr() shapes.Expr { return reductionShapeExpr(op.along) }
 
 // Do executes the op.
-func (op *Sum) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op *Sum[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
-	switch t := vs[0].(type) {
-	case *tensor.Dense:
+	switch t := any(vs[0]).(type) {
+	case *dense.Dense[DT]:
 		ctx2, task := trace.NewTask(ctx, op.String())
-		return denseReduction(task, ctx2, (*tensor.Dense).Sum, axesToInts(op.along), t)
+		return denseReduction(task, ctx2, (*dense.Dense[DT]).Sum, axesToInts(op.along), t)
 	default:
-		return nil, errors.NYI(t)
+		return retVal, errors.NYI(t)
 	}
 }
 
-func (op *Sum) String() string { return "∑" }
+func (op *Sum[DT, T]) String() string { return "∑" }
 
-func (op *Sum) DiffWRT(inputs int) []bool { return onetrue }
+func (op *Sum[DT, T]) DiffWRT(inputs int) []bool { return onetrue }
 
-func (op *Sum) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+func (op *Sum[DT, T]) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
 	panic("not implemented") // TODO: Implement
 }

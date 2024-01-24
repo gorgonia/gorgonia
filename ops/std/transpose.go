@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/exprgraph"
 	gctx "gorgonia.org/gorgonia/internal/context"
+	"gorgonia.org/gorgonia/internal/datatypes"
 	"gorgonia.org/gorgonia/internal/encoding"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
@@ -18,20 +19,20 @@ import (
 	"gorgonia.org/tensor"
 )
 
-type transposeOp struct {
+type transposeOp[DT any, T values.Value[DT]] struct {
 	pattern shapes.Axes
 }
 
-func Transpose(pattern []int) transposeOp {
+func Transpose[DT any, T values.Value[DT]](pattern []int) transposeOp[DT, T] {
 	// TODO: pattern checks
-	return transposeOp{ints2axes(pattern)}
+	return transposeOp[DT, T]{ints2axes(pattern)}
 }
 
 // Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime.
-func (op transposeOp) Arity() int { return 1 }
+func (op transposeOp[DT, T]) Arity() int { return 1 }
 
 // Type returns Tensor-d a → Tensor-d a.
-func (op transposeOp) Type() hm.Type {
+func (op transposeOp[DT, T]) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	d := op.pattern.Dims()
 	t := types.MakeTensorType(d, a)
@@ -39,7 +40,7 @@ func (op transposeOp) Type() hm.Type {
 }
 
 // ShapeExpr returns { a → T X[b] a | (D X[b] = D a) },
-func (op transposeOp) ShapeExpr() shapes.Expr {
+func (op transposeOp[DT, T]) ShapeExpr() shapes.Expr {
 	expr := shapes.Arrow{
 		shapes.Var('a'),
 		shapes.TransposeOf{
@@ -59,14 +60,14 @@ func (op transposeOp) ShapeExpr() shapes.Expr {
 }
 
 // Do executes the op.
-func (op transposeOp) Do(ctx context.Context, vs ...values.Value) (retVal values.Value, err error) {
+func (op transposeOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
-	a := vs[0].(tensor.Tensor)
+	a := vs[0]
 	_, task := trace.NewTask(ctx, op.String())
-	pattern := tensor.BorrowInts(op.pattern.Dims())
+	pattern := make([]int, op.pattern.Dims())
 	copy(pattern, op.pattern.AsInts())
 	retVal, err = tensor.Transpose(a, pattern...)
 	task.End()
@@ -74,7 +75,7 @@ func (op transposeOp) Do(ctx context.Context, vs ...values.Value) (retVal values
 }
 
 // String returns Aᵀ{...} where `...` is the transposition pattern.
-func (op transposeOp) String() string {
+func (op transposeOp[DT, T]) String() string {
 	var buf bytes.Buffer
 	buf.WriteString("Aᵀ{")
 	for i, ax := range op.pattern {
@@ -91,7 +92,7 @@ func (op transposeOp) String() string {
 /* DIFFERENTIATION */
 
 // diffAxes computes the backwards pass transposition pattern.
-func (op transposeOp) diffAxes() shapes.Axes {
+func (op transposeOp[DT, T]) diffAxes() shapes.Axes {
 	newPattern := make(shapes.Axes, len(op.pattern))
 	for i, p := range op.pattern {
 		newPattern[p] = shapes.Axis(i)
@@ -102,12 +103,12 @@ func (op transposeOp) diffAxes() shapes.Axes {
 /* transposeOp implements symdiff.Op */
 
 // DiffWRT returns []bool{true}.
-func (op transposeOp) DiffWRT(i int) []bool { return []bool{true} }
+func (op transposeOp[DT, T]) DiffWRT(i int) []bool { return []bool{true} }
 
 // SymDiff performs the symbolic differentiation of `transposeOp`.
-func (op transposeOp) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+func (op transposeOp[DT, T]) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
 	newPattern := op.diffAxes()
-	op2 := transposeOp{pattern: newPattern}
+	op2 := transposeOp[DT, T]{pattern: newPattern}
 	retVal = make([]*exprgraph.Node, 1)
 	if retVal[0], err = apply(g, op2, grN(inputs[0]), grad); err == nil {
 		setGroup(g, encoding.GradientCluster, retVal...)
@@ -118,11 +119,11 @@ func (op transposeOp) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, outp
 /* transposeOp implements ADOp */
 
 // DoDiff allows transposeOp to be automatically differentiated.
-func (op transposeOp) DoDiff(ctx context.Context, inputs []Tensor, output Tensor) (err error) {
+func (op transposeOp[DT, T]) DoDiff(ctx context.Context, inputs []datatypes.Tensor, output datatypes.Tensor) (err error) {
 	newPattern := op.diffAxes()
 
-	adv := exprgraph.T2B(inputs[0]).(*dual.Dual)
-	bdv := exprgraph.T2B(output).(*dual.Dual)
+	adv := exprgraph.T2B[DT](inputs[0]).(*dual.Dual[DT, T])
+	bdv := exprgraph.T2B[DT](output).(*dual.Dual[DT, T])
 	advd := adv.Deriv()
 	bdvd := bdv.Deriv()
 

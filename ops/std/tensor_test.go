@@ -10,21 +10,22 @@ import (
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 )
 
 func TestAt(t *testing.T) {
-	op := &At{1, 1}
+	op := &At[float64, *dense.Dense[float64]]{1, 1}
 
 	// basic test
 	assert.Equal(t, 1, op.Arity())
 
 	// set up
-	var a, b values.Value
+	var a, b *dense.Dense[float64]
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
 	var err error
 
-	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	a = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
 
 	// type and shape checks
 	if expectedType, err = typecheck(op, a); err != nil {
@@ -45,18 +46,18 @@ func TestAt(t *testing.T) {
 }
 
 func TestSlice(t *testing.T) {
-	op := &Slice{Slices: shapes.Slices{shapes.S(1, 2), shapes.S(0, 2)}}
+	op := &Slice[float64, *dense.Dense[float64]]{Slices: shapes.Slices{shapes.S(1, 2), shapes.S(0, 2)}}
 
 	// basic test
 	assert.Equal(t, 1, op.Arity())
 
 	// set up
-	var a, b values.Value
+	var a, b *dense.Dense[float64]
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
 	var err error
 
-	a = tensor.New(tensor.WithShape(2, 3, 2), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}))
+	a = dense.New[float64](tensor.WithShape(2, 3, 2), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}))
 
 	// type and shape checks
 	if expectedType, err = typecheck(op, a); err != nil {
@@ -79,7 +80,7 @@ func TestSlice(t *testing.T) {
 
 	/* PreallocDo */
 	// setup - create preallocated result
-	b = tensor.New(tensor.WithShape(expectedShape...), tensor.Of(tensor.Float64))
+	b = dense.New[float64](tensor.WithShape(expectedShape...))
 	if b, err = op.PreallocDo(context.Background(), b, a); err != nil {
 		t.Fatalf("Expected Slice{}.PreallocDo to work correctly. Err: %v", err)
 	}
@@ -89,18 +90,19 @@ func TestSlice(t *testing.T) {
 }
 
 func TestSize(t *testing.T) {
-	op := Size(0)
+	op := Size[float64, *dense.Dense[float64]](0)
 
 	// basic test
 	assert.Equal(t, 1, op.Arity())
 
 	// set up
-	var a, b values.Value
+	var a *dense.Dense[float64]
+	var b values.Size
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
 	var err error
 
-	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	a = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
 
 	// type and shape checks
 	if expectedType, err = typecheck(op, a); err != nil {
@@ -120,8 +122,8 @@ func TestSize(t *testing.T) {
 	assert.Equal(t, correct, b.Data())
 
 	// alternative edition: different op, and different backing datatype
-	op = Size(1)
-	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]int{1, 2, 3, 4, 5, 6}))
+	op = Size[float64, *dense.Dense[float64]](1)
+	a = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]int{1, 2, 3, 4, 5, 6}))
 	if b, err = op.Do(context.Background(), a); err != nil {
 		t.Fatalf("Expected Size{} to work correctly. Err: %v", err)
 	}
@@ -130,8 +132,8 @@ func TestSize(t *testing.T) {
 	assert.Equal(t, correctIntData, b.Data())
 
 	// alternative edition: op on scalar
-	op = Size(5) // when the input is scalar, then size of any doesn't really matter does it
-	a = tensor.New(tensor.WithShape(), tensor.WithBacking([]bool{true}))
+	op = Size[float64, *dense.Dense[float64]](5) // when the input is scalar, then size of any doesn't really matter does it
+	a = dense.New[float64](tensor.WithShape(), tensor.WithBacking([]bool{true}))
 	if b, err = op.Do(context.Background(), a); err != nil {
 		t.Fatalf("Expected Size{} to work correctly. Err: %v", err)
 	}
@@ -140,26 +142,26 @@ func TestSize(t *testing.T) {
 	assert.Equal(t, correctBoolData, b.Data())
 
 	// bad size
-	a = tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
-	op = Size(5)
+	a = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	op = Size[float64, *dense.Dense[float64]](5)
 	if b, err = op.Do(context.Background(), a); err == nil {
 		t.Fatalf("Expected Size{} to fail when the size is bad. Got value %v", b)
 	}
 }
 
 func TestReshape(t *testing.T) {
-	op := &Reshape{To: shapes.Shape{2, 3}}
+	op := &Reshape[float64, *dense.Dense[float64]]{To: shapes.Shape{2, 3}}
 
 	// basic test
 	assert.Equal(t, 1, op.Arity())
 
 	// set up
-	var a, b values.Value
+	var a, b *dense.Dense[float64]
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
 	var err error
 
-	a = tensor.New(tensor.WithShape(6), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
+	a = dense.New[float64](tensor.WithShape(6), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))
 
 	// type and shape checks
 	if expectedType, err = typecheck(op, a); err != nil {

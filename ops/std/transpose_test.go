@@ -10,11 +10,13 @@ import (
 	"github.com/chewxy/hm"
 	"gorgonia.org/gorgonia/internal/datatypes"
 	"gorgonia.org/gorgonia/types"
+	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 )
 
-func genTrans(d int) transposeOp {
+func genTrans[DT any, T values.Value[DT]](d int) transposeOp[DT, T] {
 	pattern := make(shapes.Axes, 0, d)
 	for i := 0; i < d; i++ {
 		pattern = append(pattern, shapes.Axis(i))
@@ -22,18 +24,18 @@ func genTrans(d int) transposeOp {
 	for i := 0; i < d; i++ {
 		rand.Shuffle(d, func(i, j int) { pattern[i], pattern[j] = pattern[j], pattern[i] })
 	}
-	return transposeOp{pattern: pattern}
+	return transposeOp[DT, T]{pattern: pattern}
 
 }
 
-func (op transposeOp) Generate(rand *rand.Rand, size int) reflect.Value {
+func (op transposeOp[DT, T]) Generate(rand *rand.Rand, size int) reflect.Value {
 	d := rand.Intn(12)
-	return reflect.ValueOf(genTrans(d))
+	return reflect.ValueOf(genTrans[DT, T](d))
 }
 
 func TestTranspose_Basic(t *testing.T) {
 	// Arity
-	arity := func(a transposeOp) bool {
+	arity := func(a transposeOp[float64, *dense.Dense[float64]]) bool {
 		return a.Arity() == 1
 	}
 	if err := quick.Check(arity, nil); err != nil {
@@ -41,7 +43,7 @@ func TestTranspose_Basic(t *testing.T) {
 	}
 
 	// type
-	typ := func(a transposeOp) bool {
+	typ := func(a transposeOp[float64, *dense.Dense[float64]]) bool {
 		d := a.pattern.Dims()
 		v := hm.TypeVariable('a')
 		tt := types.MakeTensorType(d, v)
@@ -53,7 +55,7 @@ func TestTranspose_Basic(t *testing.T) {
 	}
 
 	// ShapeExpr
-	shp := func(a transposeOp) bool {
+	shp := func(a transposeOp[float64, *dense.Dense[float64]]) bool {
 		compExpr, ok := a.ShapeExpr().(shapes.Compound)
 		if !ok {
 			return ok
@@ -73,10 +75,10 @@ func TestTranspose_Basic(t *testing.T) {
 		t.Error(err)
 	}
 
-	do := func(tt tTensor) bool {
+	do := func(tt tTensor[float64]) bool {
 		a := tt.Dense
 		d := a.Dims()
-		op := genTrans(d)
+		op := genTrans[float64, *dense.Dense[float64]](d)
 
 		expectedType, err := typecheck(op, a)
 		if err != nil {
@@ -112,8 +114,8 @@ func TestTranspose_Basic(t *testing.T) {
 }
 
 func TestTransposeScalar(t *testing.T) {
-	s := tensor.New(tensor.FromScalar(1337.0))
-	op := genTrans(s.Dims())
+	s := dense.New[float64](tensor.FromScalar(1337.0))
+	op := genTrans[float64, *dense.Dense[float64]](s.Dims())
 
 	expectedType, err := typecheck(op, s)
 	if err != nil {
