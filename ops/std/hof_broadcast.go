@@ -1,3 +1,6 @@
+//go:build ignoreexp
+// +build ignoreexp
+
 package stdops
 
 import (
@@ -22,14 +25,18 @@ const (
 
 // bcPat is actually a bit array.
 // It's split into 2 nibbles - the left nibble represents the left operand, the right nibble represents the right operand:
-//		xxxx|xxxx
+//
+//	xxxx|xxxx
+//
 // The least significant bit of each nibble is elem 0.
 // Concrete examples:
-//		00000010 (0x02) = broadcast axis 1 of the right operand
-//		00000001 (0x01) = broadcast axis 0 of the right operand
-//		00000101 (0x09) = broadcast axis 0 AND axis 2 of the right operand
-//		00010000 (0x10) = broadcast axis 0 of the left operand
-//		00110000 (0x30) = broadcast axis 0 and axis 1 of the lef operand
+//
+//	00000010 (0x02) = broadcast axis 1 of the right operand
+//	00000001 (0x01) = broadcast axis 0 of the right operand
+//	00000101 (0x09) = broadcast axis 0 AND axis 2 of the right operand
+//	00010000 (0x10) = broadcast axis 0 of the left operand
+//	00110000 (0x30) = broadcast axis 0 and axis 1 of the lef operand
+//
 // You get the drill.
 //
 // Do note that the current limitation of the `bcPat` allows only up to 4 dimensions per operand.
@@ -65,8 +72,10 @@ func (pat bcPat) on() (retVal [2][]int) {
 // While it's modeled as a higher order function, it's not actually a fully higher order function.
 //
 // Consider the type signature and shape signature of a hypothetical higher-order-function `Broadcast`:
-// 	(a → b → c) → a → b → c
-// 	{(a → b → c) → a → b → (a|b) | IsBroadcastable(a, b)}
+//
+//	(a → b → c) → a → b → c
+//	{(a → b → c) → a → b → (a|b) | IsBroadcastable(a, b)}
+//
 // While it is perfectly doable to have such a function, in real life, we're not going to be broadcasting
 // that many functions. Instead, we're just going to be broadcasting a few binary functions.
 //
@@ -186,20 +195,20 @@ func (op *Broadcast) alloc(ctx context.Context, a, b tensor.Tensor, computePreal
 }
 
 /*
-   example cases:
+example cases:
 
-   a (2, 1) b (2, 3) along: {1}
-   repeat along axis 0, repeats = 3
+a (2, 1) b (2, 3) along: {1}
+repeat along axis 0, repeats = 3
 
-   a (1, 3) b (2, 3) along: {0}
-   repeat along axis 1, repeats = 2
+a (1, 3) b (2, 3) along: {0}
+repeat along axis 1, repeats = 2
 
-   a (2, 1, 3) b (2, 4, 3) along: {1}
-   repeat along axis 1, repeats = 4
+a (2, 1, 3) b (2, 4, 3) along: {1}
+repeat along axis 1, repeats = 4
 
-   a (2, 1, 1) b (2, 4, 3) along: {1, 2}
-   repeat along axis 1, repeats = 4
-   repeat along axis 2, repeats = 3
+a (2, 1, 1) b (2, 4, 3) along: {1, 2}
+repeat along axis 1, repeats = 4
+repeat along axis 2, repeats = 3
 */
 func (op *Broadcast) do(ctx context.Context, prealloc, newA, newB, a, b values.Value) (err error) {
 	if err = gctx.Handle(ctx); err != nil {
@@ -256,7 +265,9 @@ func computeNewShape(a, b shapes.Shape, broadcastAlong []int) shapes.Shape {
 }
 
 // calcBCShape computes the shape to be reshaped to. e.g.
-// 	a: (3,), b: (2, 3), broadcastAlong: {0}
+//
+//	a: (3,), b: (2, 3), broadcastAlong: {0}
+//
 // will compute (3,1) for `a`.
 func calcBCShape(shp shapes.Shape, expectedDims int, broadcastAlong []int) (newShape shapes.Shape) {
 	if shp.Dims() == expectedDims {

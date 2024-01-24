@@ -12,6 +12,7 @@ import (
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 )
 
 // this file provides the standard tensor ops
@@ -42,7 +43,7 @@ func (op At[DT, T]) ShapeExpr() shapes.Expr {
 
 func (op At[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 	v := vs[0]
 	_, task := trace.NewTask(ctx, op.String())
@@ -58,7 +59,9 @@ func (op At[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 
 func (op At[DT, T]) String() string { return fmt.Sprintf("At(%v)", []int(op)) }
 
-// Size is an operation that gets the size of a given axis in a shape. It returns the size in the datatype of the input
+// Size is an operation that gets the size of a given axis in a shape. It returns the size in the datatype of the input.
+//
+// Size is a HKOp[DT, Size, T, Size].
 type Size[DT any, T values.Value[DT]] uint
 
 func (op Size[DT, T]) Arity() int { return 1 }
@@ -77,9 +80,9 @@ func (op Size[DT, T]) ShapeExpr() shapes.Expr {
 	)
 }
 
-func (op Size[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+func (op Size[DT, T]) Do(ctx context.Context, vs ...T) (retVal values.Size, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return -1, err
 	}
 	v := vs[0]
 	shp := v.Shape()
@@ -87,7 +90,7 @@ func (op Size[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 		return values.Size(1), nil
 	}
 	if int(op) >= shp.Dims() {
-		return nil, errors.Errorf("Input has shape %v, which has %d dims. Want dim %d.", shp, shp.Dims(), int(op))
+		return -1, errors.Errorf("Input has shape %v, which has %d dims. Want dim %d.", shp, shp.Dims(), int(op))
 	}
 	return values.Size(shp[int(op)]), nil
 }
@@ -151,22 +154,22 @@ func (op Slice[DT, T]) ShapeExpr() shapes.Expr {
 
 func (op Slice[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
-	v := vs[0]
+	v := any(vs[0]).(tensor.Operable[T])
 	return v.Slice(op.Slices...)
 }
 
-func (op Slice[DT, T]) PreallocDo(ctx context.Context, prealloc values.Value, vs ...values.Value) (retVal values.Value, err error) {
+func (op Slice[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 	v := vs[0]
 	if s, ok := v.(tensor.SlicerInto); ok {
 		return s.SliceInto(prealloc.(tensor.Tensor), op.Slices...)
 	}
-	return nil, errors.Errorf("NYI: preallocdo")
+	return retVal, errors.Errorf("NYI: preallocdo")
 }
 
 func (op Slice[DT, T]) String() string            { return fmt.Sprintf("%v", op.Slices) }
@@ -174,13 +177,13 @@ func (op Slice[DT, T]) DiffWRT(inputs int) []bool { return onetrue }
 
 type sliceDiff[DT any, T values.Value[DT]] struct{ Slice[DT, T] }
 
-func (op SliceDiff[DT, T]) Arity() int { return 2 }
-func (op SliceDiff[DT, T]) Type() hm.Type {
+func (op sliceDiff[DT, T]) Arity() int { return 2 }
+func (op sliceDiff[DT, T]) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	b := hm.TypeVariable('b')
 	return hm.NewFnType(a, b, a)
 }
-func (op SliceDiff[DT, T]) ShapeExpr() shapes.Expr {
+func (op sliceDiff[DT, T]) ShapeExpr() shapes.Expr {
 	a := shapes.Var('a')
 	r := shapes.SliceOf{
 		Slice: op.Slices,
@@ -189,29 +192,31 @@ func (op SliceDiff[DT, T]) ShapeExpr() shapes.Expr {
 	return shapes.MakeArrow(a, r, a)
 }
 
-func (op SliceDiff[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+func (op sliceDiff[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
 	t := vs[0]
-	outGrad := vs[1]
 
-	switch t := t.(type) {
-	case *tensor.Dense:
-		grad := tensor.NewDense(t.Dtype(), t.Shape().Clone())
-		var v tensor.View
+	switch t := any(t).(type) {
+	case *dense.Dense[DT]:
+		grad := dense.New[DT](tensor.WithShape(t.Shape().Clone()...))
+		outGrad := any(vs[1]).(*dense.Dense[DT])
+		var v *dense.Dense[DT]
 		if v, err = grad.Slice(op.Slices...); err != nil {
-			return nil, errors.Wrapf(err, "Failed to perform sliceDiff %v", op.Slices)
+			return retVal, errors.Wrapf(err, "Failed to perform sliceDiff %v", op.Slices)
 		}
-		tensor.Add(v, outGrad, tensor.UseUnsafe())
-		retVal = grad
+		if _, err = v.Add(outGrad, tensor.UseUnsafe); err != nil {
+			return retVal, err
+		}
+		retVal = any(grad).(T)
 		return
 	default:
-		return nil, errors.Errorf("NYI %T", t)
+		return retVal, errors.Errorf("NYI %T", t)
 	}
 }
-func (op SliceDiff[DT, T]) String() string { return fmt.Sprintf("∂%v", op.Slices) }
+func (op sliceDiff[DT, T]) String() string { return fmt.Sprintf("∂%v", op.Slices) }
 
 type Concat[DT any, T values.Value[DT]] struct{}
 
@@ -230,16 +235,13 @@ func (op *Reshape[DT, T]) ShapeExpr() shapes.Expr { return shapes.MakeArrow(shap
 
 func (op *Reshape[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
-		return nil, err
+		return retVal, err
 	}
 
-	v, err := values.ShallowClone(vs[0])
-	if err != nil {
-		return nil, errors.Wrapf(err, "Reshape failed. Cannot reshape %v to %v", v.Shape(), op.To)
-	}
+	v := values.ShallowClone(vs[0])
 
 	if err = v.Reshape(op.To...); err != nil {
-		return nil, errors.Wrapf(err, "Reshape failed. Cannot reshape %v to %v", v.Shape(), op.To)
+		return retVal, errors.Wrapf(err, "Reshape failed. Cannot reshape %v to %v", v.Shape(), op.To)
 	}
 	return v, nil
 
