@@ -106,11 +106,11 @@ func (op transposeOp[DT, T]) diffAxes() shapes.Axes {
 func (op transposeOp[DT, T]) DiffWRT(i int) []bool { return []bool{true} }
 
 // SymDiff performs the symbolic differentiation of `transposeOp`.
-func (op transposeOp[DT, T]) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+func (op transposeOp[DT, T]) SymDiff(g *exprgraph.Graph, inputs []exprgraph.Node, output, grad exprgraph.Node) (retVal []exprgraph.Node, err error) {
 	newPattern := op.diffAxes()
 	op2 := transposeOp[DT, T]{pattern: newPattern}
-	retVal = make([]*exprgraph.Node, 1)
-	if retVal[0], err = apply(g, op2, grN(inputs[0]), grad); err == nil {
+	retVal = make([]exprgraph.Node, 1)
+	if retVal[0], err = apply[DT](g, op2, grN(inputs[0]), grad); err == nil {
 		setGroup(g, encoding.GradientCluster, retVal...)
 	}
 	return
@@ -130,14 +130,14 @@ func (op transposeOp[DT, T]) DoDiff(ctx context.Context, inputs []datatypes.Tens
 	// set up new context
 	ctx2, task := trace.NewTask(ctx, op.String())
 
-	op2 := transposeOp{pattern: newPattern}
+	op2 := transposeOp[DT, T]{pattern: newPattern}
 
 	d, err := op2.Do(ctx2, bdvd)
 	if err != nil {
 		return errors.Wrap(err, "Failed to perform transposeOp.DoDiff()")
 	}
 	// get an addOp
-	add := Add(adv, d)
+	add := Add[DT, T](adv, d)
 	if advd, err = add.PreallocDo(ctx2, advd, advd, d); err != nil {
 		return errors.Wrap(err, "Failed to perform addition of gradients in transposeOp.DoDiff()")
 	}
