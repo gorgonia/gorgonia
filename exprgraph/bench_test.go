@@ -227,7 +227,6 @@ func BenchmarkRxEngineComposedFwd(b *testing.B) {
 			fwd := &FwdEngine[float64, *dense.Dense[float64]]{StandardEngine: dense.StdFloat64Engine[*dense.Dense[float64]]{}}
 			g := exprgraph.NewGraph(fwd)
 			fwd.g = g
-
 			engine := NewRx[float64, tensor.Basic[float64]](fwd, g)
 
 			b.ResetTimer()
@@ -250,7 +249,6 @@ func BenchmarkRxEngineComposedFwd(b *testing.B) {
 			fwd := &FwdEngine[float64, *dense.Dense[float64]]{StandardEngine: dense.StdFloat64Engine[*dense.Dense[float64]]{}}
 			g := exprgraph.NewGraph(fwd)
 			fwd.g = g
-
 			engine := NewRx[float64, tensor.Basic[float64]](fwd, g)
 
 			b.ResetTimer()

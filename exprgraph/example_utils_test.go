@@ -391,7 +391,6 @@ func Add[DT tensor.Num, T tensor.Basic[DT]](a, b gorgonia.Tensor) (retVal gorgon
 	default:
 
 	}
-
 	// do the values stuff'
 	at, aok := exprgraph.T2T[DT, T](a)
 	bt, bok := exprgraph.T2T[DT, T](b)

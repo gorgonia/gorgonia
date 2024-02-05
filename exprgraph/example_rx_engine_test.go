@@ -292,7 +292,6 @@ func Example_rx_engine_composed() {
 	fwd := &FwdEngine[float64, *dense.Dense[float64]]{StandardEngine: dense.StdFloat64Engine[*dense.Dense[float64]]{}}
 	g := exprgraph.NewGraph(fwd)
 	fwd.g = g
-
 	engine := NewRx[float64, tensor.Basic[float64]](fwd, g)
 
 	x := exprgraph.New[float64](g, "x", tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))

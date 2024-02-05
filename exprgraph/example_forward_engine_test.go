@@ -12,6 +12,7 @@ import (
 )
 
 var _ tensor.BLA[float64, tensor.Basic[float64]] = (&FwdEngine[float64, *dense.Dense[float64]]{}).BasicEng().(*FwdEngine[float64, *dense.Dense[float64]])
+var _ tensor.Adder[float64, tensor.Basic[float64]] = &FwdEngine[float64, *dense.Dense[float64]]{}
 
 // FwdEngine is a Engine that performs forwards mode differentiation
 //
@@ -114,6 +115,10 @@ func (e *FwdEngine[DT, T]) AddScalar(ctx context.Context, a tensor.Basic[DT], b 
 	advd := adv.DV().(T)
 	advd.Memset(1.0) // this is assuming we only work in float64. More needs to be done here
 	return nil
+}
+
+func (e *FwdEngine[DT, T]) AddBroadcastable(ctx context.Context, a, b, retVal tensor.Basic[DT], expAPA, expAPB *tensor.AP, toIncr bool) (err error) {
+	return errors.New("NYI")
 }
 
 // FwdEngine is a Engine that performs forwards mode differentiation
