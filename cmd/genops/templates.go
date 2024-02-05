@@ -50,34 +50,29 @@ type {{.Name}}SV[DT any, T values.Value[DT]] struct { {{.Name}}Op[DT,T] ; binopS
 	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
+	defer task.End()
 
-	e := getEngine(a, b)
-	var {{.InterfaceName | lower}} tensor.{{.InterfaceName}}[DT, T]
-	var ok bool
-	if {{.InterfaceName | lower}}, ok = e.(tensor.{{.InterfaceName}}[DT, T]); !ok {
+	e, newAPA, newAPB, retVal, fo, err := tensor.PrepBinOpCis[DT](a, b)
+	if err != nil{
+		return retVal, err
+	}
+	toIncr := fo.Incr
+	toBroadcast := fo.Broadcast
+
+	{{.InterfaceName | lower}}, ok := e.(tensor.{{.InterfaceName}}[DT, Basic[DT]]);
+	if !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
 	}
 
-	ashp := a.Shape()
-	bshp := b.Shape()
-	expShape := getLargestShape(ashp, bshp)
-	var fo tensor.Option
-	if retVal, fo, err = handleFuncOpts[DT](e, a, expShape); err != nil {
-		return retVal, err
-	}
-
 	switch {
-	case ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
-		err = {{.InterfaceName | lower}}.{{.Method}}(ctx2, a, b, retVal, fo.Incr)
-	case ashp.IsScalarEquiv() && !bshp.IsScalarEquiv():
-		err = {{.InterfaceName | lower}}.{{.Method}}Scalar(ctx2, b, a.Data()[0], retVal, true, fo.Incr)
-	case !ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
-		err = {{.InterfaceName | lower}}.{{.Method}}Scalar(ctx2, a, b.Data()[0], retVal, false, fo.Incr)
+	case toBroadcast:
+		err = {{.InterfaceName|lower}}.{{.Name}}Broadcastable(ctx, a, b, retVal, newAPA, newAPB, toIncr)
 	default:
-		err = {{.InterfaceName | lower}}.{{.Method}}(ctx2, a, b, retVal, fo.Incr)
+		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil{
+			return retVal, err
+		}
+		err = {{.InterfaceName|lower}}.{{.Name}}(ctx2, a, b, retVal, toIncr)
 	}
-
-	task.End()
 	return retVal, err
 {{- end -}}
 {{- define "PreallocDo" -}}
@@ -89,35 +84,31 @@ if err := gctx.Handle(ctx); err != nil {
 	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
+	defer task.End()
 
-	e := getEngine(a, b)
-	var {{.InterfaceName | lower}} tensor.{{.InterfaceName}}[DT, T]
-	var ok bool
-	if {{.InterfaceName | lower}}, ok = e.(tensor.{{.InterfaceName}}[DT, T]); !ok {
+	e, newAPA, newAPB, retVal, fo, err := tensor.PrepBinOpCis[DT](a, b, tensor.WithReuse(prealloc))
+	if err != nil{
+		return retVal, err
+	}
+	toIncr := fo.Incr
+	toBroadcast := fo.Broadcast
+
+	{{.InterfaceName | lower}}, ok := e.(tensor.{{.InterfaceName}}[DT, Basic[DT]]);
+	if !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
 	}
 
-	ashp := a.Shape()
-	bshp := b.Shape()
-	expShape := getLargestShape(ashp, bshp)
-	var fo tensor.Option
-	if retVal, fo, err = handleFuncOpts[DT](e, a, expShape, tensor.WithReuse(prealloc)); err != nil {
-		return retVal, err
-	}
-
 	switch {
-	case ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
-		err = {{.InterfaceName | lower}}.{{.Method}}(ctx2, a, b, retVal, fo.Incr)
-	case ashp.IsScalarEquiv() && !bshp.IsScalarEquiv():
-		err = {{.InterfaceName | lower}}.{{.Method}}Scalar(ctx2, b, a.Data()[0], retVal, true, fo.Incr)
-	case !ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
-		err = {{.InterfaceName | lower}}.{{.Method}}Scalar(ctx2, a, b.Data()[0], retVal, false, fo.Incr)
+	case toBroadcast:
+		err = {{.InterfaceName|lower}}.{{.Name}}Broadcastable(ctx, a, b, retVal, newAPA, newAPB, toIncr)
 	default:
-		err = {{.InterfaceName | lower}}.{{.Method}}(ctx2, a, b, retVal, fo.Incr)
+		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil{
+			return retVal, err
+		}
+		err = {{.InterfaceName|lower}}.{{.Name}}(ctx2, a, b, retVal, toIncr)
 	}
-
-	task.End()
 	return retVal, err
+
 {{- end -}}
 
 {{/* we don't need to generate Type() for arithmetic Ops */}}
@@ -174,12 +165,33 @@ type {{.Name}}SV[DT any, T values.Value[DT]] struct { {{.Name}}Op[DT,T]; binopSV
 
 	// Do the actual operation
 	ctx2, task := trace.NewTask(ctx, op.String())
-	if op.retSame{
-		retVal, err = tensor.{{.Method}}(a, b, tensor.WithContext(ctx2), tensor.AsSameType())
-	} else {
-		retVal, err = tensor.{{.Method}}(a, b, tensor.WithContext(ctx2))
+	defer task.End()
+
+	e, newAPA, newAPB, retVal, fo, err := tensor.PrepBinOpTrans[DT](a, b)
+	if err != nil {
+		return retVal, err
 	}
-	task.End()
+
+	asSame := fo.AsType == t.Dtype()
+	toBroadcast := fo.Broadcast
+
+	{{.InterfaceName | lower}}, ok := e.(tensor.{{.InterfaceName}}[DT, Basic[DT]]);
+	if !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
+	}
+	if fo.Incr {
+		return retVal, errors.Errorf("Unable to perform Incr for {{.Name}}")
+	}
+	switch {
+	case toBroadcast:
+		err = {{.InterfaceName|lower}}.{{.Name}}Broadcastable(ctx, a, b, retVal, asSame, newAPA, newAPB)
+	default:
+		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil{
+			return retVal, err
+		}
+		err = {{.InterfaceName|lower}}.{{.Name}}(ctx2, a, b, retVal, asSame)
+
+	}
 	return retVal, err
 {{- end -}}
 {{- define "PreallocDo" -}}
@@ -190,13 +202,35 @@ if err := gctx.Handle(ctx); err != nil {
 	a := vs[0]
 	b := vs[1]
 
+
 	ctx2, task := trace.NewTask(ctx, op.String())
-	if op.retSame {
-	retVal, err = tensor.{{.Method}}(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2), tensor.AsSameType())
-	} else {
-	retVal, err = tensor.{{.Method}}(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
+	defer task.End()
+
+	e, newAPA, newAPB, retVal, fo, err := tensor.PrepBinOpTrans[DT](a, b, tensor.WithReuse(prealloc))
+	if err != nil {
+		return retVal, err
 	}
-	task.End()
+
+	asSame := fo.AsType == t.Dtype()
+	toBroadcast := fo.Broadcast
+
+	{{.InterfaceName | lower}}, ok := e.(tensor.{{.InterfaceName}}[DT, tensor.Basic[DT]]);
+	if !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
+	}
+	if fo.Incr {
+		return retVal, errors.Errorf("Unable to perform Incr for {{.Name}}")
+	}
+	switch {
+	case toBroadcast:
+		err = {{.InterfaceName|lower}}.{{.Name}}Broadcastable(ctx, a, b, retVal, asSame, newAPA, newAPB)
+	default:
+		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil{
+			return retVal, err
+		}
+		err = {{.InterfaceName|lower}}.{{.Name}}(ctx2, a,b, retVal, asSame)
+
+	}
 	return retVal, err
 {{- end -}}
 

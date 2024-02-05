@@ -1,25 +1,22 @@
 package stdops
 
 import (
-	"reflect"
-	"runtime"
-
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 )
 
-// funcName returns the name of the function.
-func funcName(f interface{}) string {
-	val := reflect.ValueOf(f)
-	if val.Kind() != reflect.Func {
-		return "Not a function"
-	}
+// // funcName returns the name of the function.
+// func funcName(f interface{}) string {
+// 	val := reflect.ValueOf(f)
+// 	if val.Kind() != reflect.Func {
+// 		return "Not a function"
+// 	}
 
-	//TODO(go1.18) - pc := uintptr(val.UnsafePointer())
-	pc := val.Pointer()
-	return runtime.FuncForPC(pc).Name()
-}
+// 	//TODO(go1.18) - pc := uintptr(val.UnsafePointer())
+// 	pc := val.Pointer()
+// 	return runtime.FuncForPC(pc).Name()
+// }
 
 func getEngine(ts ...tensor.Engineer) tensor.Engine {
 	// TODO: get highest capability engine
@@ -33,8 +30,8 @@ func getEngine(ts ...tensor.Engineer) tensor.Engine {
 
 func handleFuncOpts[DT any, T tensor.Basic[DT]](e tensor.Engine, t T, expShape shapes.Shape, opts ...tensor.FuncOpt) (retVal T, fo tensor.Option, err error) {
 	switch e := e.(type) {
-	case tensor.SpecializedFuncOptHandler[DT, T]:
-		return e.HandleFuncOptsSpecialized(t, expShape, opts...)
+	// case tensor.SpecializedFuncOptHandler[DT, T]:
+	// 	return e.HandleFuncOptsSpecialized(t, expShape, opts...)
 	case tensor.FuncOptHandler[DT]:
 		var ret tensor.Basic[DT]
 		ret, fo, err = e.HandleFuncOpts(t, expShape, opts...)
@@ -72,4 +69,15 @@ func getLargestShape(ss ...shapes.Shape) shapes.Shape {
 		}
 	}
 	return max
+}
+
+func checkCompatibleShape(expected shapes.Shape, others ...shapes.Shape) error {
+	expLen := expected.TotalSize()
+	for _, s := range others {
+		if s.TotalSize() != expLen {
+			return errors.Errorf(errors.ShapeMismatch, expected, s)
+		}
+	}
+	return nil
+
 }

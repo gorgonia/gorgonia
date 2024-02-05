@@ -28,34 +28,29 @@ func (op addOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
+	defer task.End()
 
-	e := getEngine(a, b)
-	var adder tensor.Adder[DT, T]
-	var ok bool
-	if adder, ok = e.(tensor.Adder[DT, T]); !ok {
+	e, newAPA, newAPB, retVal, fo, err := tensor.PrepBinOpCis[DT](a, b)
+	if err != nil {
+		return retVal, err
+	}
+	toIncr := fo.Incr
+	toBroadcast := fo.Broadcast
+
+	adder, ok := e.(tensor.Adder[DT, Basic[DT]])
+	if !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, adder, errors.ThisFn())
 	}
 
-	ashp := a.Shape()
-	bshp := b.Shape()
-	expShape := getLargestShape(ashp, bshp)
-	var fo tensor.Option
-	if retVal, fo, err = handleFuncOpts[DT](e, a, expShape); err != nil {
-		return retVal, err
-	}
-
 	switch {
-	case ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
-		err = adder.Add(ctx2, a, b, retVal, fo.Incr)
-	case ashp.IsScalarEquiv() && !bshp.IsScalarEquiv():
-		err = adder.AddScalar(ctx2, b, a.Data()[0], retVal, true, fo.Incr)
-	case !ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
-		err = adder.AddScalar(ctx2, a, b.Data()[0], retVal, false, fo.Incr)
+	case toBroadcast:
+		err = adder.addBroadcastable(ctx, a, b, retVal, newAPA, newAPB, toIncr)
 	default:
-		err = adder.Add(ctx2, a, b, retVal, fo.Incr)
+		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
+			return retVal, err
+		}
+		err = adder.add(ctx2, a, b, retVal, toIncr)
 	}
-
-	task.End()
 	return retVal, err
 }
 
@@ -70,34 +65,29 @@ func (op addOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (ret
 	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
+	defer task.End()
 
-	e := getEngine(a, b)
-	var adder tensor.Adder[DT, T]
-	var ok bool
-	if adder, ok = e.(tensor.Adder[DT, T]); !ok {
+	e, newAPA, newAPB, retVal, fo, err := tensor.PrepBinOpCis[DT](a, b, tensor.WithReuse(prealloc))
+	if err != nil {
+		return retVal, err
+	}
+	toIncr := fo.Incr
+	toBroadcast := fo.Broadcast
+
+	adder, ok := e.(tensor.Adder[DT, Basic[DT]])
+	if !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, adder, errors.ThisFn())
 	}
 
-	ashp := a.Shape()
-	bshp := b.Shape()
-	expShape := getLargestShape(ashp, bshp)
-	var fo tensor.Option
-	if retVal, fo, err = handleFuncOpts[DT](e, a, expShape, tensor.WithReuse(prealloc)); err != nil {
-		return retVal, err
-	}
-
 	switch {
-	case ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
-		err = adder.Add(ctx2, a, b, retVal, fo.Incr)
-	case ashp.IsScalarEquiv() && !bshp.IsScalarEquiv():
-		err = adder.AddScalar(ctx2, b, a.Data()[0], retVal, true, fo.Incr)
-	case !ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
-		err = adder.AddScalar(ctx2, a, b.Data()[0], retVal, false, fo.Incr)
+	case toBroadcast:
+		err = adder.addBroadcastable(ctx, a, b, retVal, newAPA, newAPB, toIncr)
 	default:
-		err = adder.Add(ctx2, a, b, retVal, fo.Incr)
+		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
+			return retVal, err
+		}
+		err = adder.add(ctx2, a, b, retVal, toIncr)
 	}
-
-	task.End()
 	return retVal, err
 }
 

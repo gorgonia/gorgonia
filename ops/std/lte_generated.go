@@ -8,6 +8,7 @@ import (
 
 	"github.com/chewxy/hm"
 	gctx "gorgonia.org/gorgonia/internal/context"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
@@ -33,12 +34,33 @@ func (op lteOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 
 	// Do the actual operation
 	ctx2, task := trace.NewTask(ctx, op.String())
-	if op.retSame {
-		retVal, err = tensor.Lte(a, b, tensor.WithContext(ctx2), tensor.AsSameType())
-	} else {
-		retVal, err = tensor.Lte(a, b, tensor.WithContext(ctx2))
+	defer task.End()
+
+	e, newAPA, newAPB, retVal, fo, err := tensor.PrepBinOpTrans[DT](a, b)
+	if err != nil {
+		return retVal, err
 	}
-	task.End()
+
+	asSame := fo.AsType == t.Dtype()
+	toBroadcast := fo.Broadcast
+
+	ord, ok := e.(tensor.Ord[DT, Basic[DT]])
+	if !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, ord, errors.ThisFn())
+	}
+	if fo.Incr {
+		return retVal, errors.Errorf("Unable to perform Incr for lte")
+	}
+	switch {
+	case toBroadcast:
+		err = ord.lteBroadcastable(ctx, a, b, retVal, asSame, newAPA, newAPB)
+	default:
+		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
+			return retVal, err
+		}
+		err = ord.lte(ctx2, a, b, retVal, asSame)
+
+	}
 	return retVal, err
 }
 
@@ -53,12 +75,33 @@ func (op lteOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (ret
 	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
-	if op.retSame {
-		retVal, err = tensor.Lte(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2), tensor.AsSameType())
-	} else {
-		retVal, err = tensor.Lte(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
+	defer task.End()
+
+	e, newAPA, newAPB, retVal, fo, err := tensor.PrepBinOpTrans[DT](a, b, tensor.WithReuse(prealloc))
+	if err != nil {
+		return retVal, err
 	}
-	task.End()
+
+	asSame := fo.AsType == t.Dtype()
+	toBroadcast := fo.Broadcast
+
+	ord, ok := e.(tensor.Ord[DT, Basic[DT]])
+	if !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, ord, errors.ThisFn())
+	}
+	if fo.Incr {
+		return retVal, errors.Errorf("Unable to perform Incr for lte")
+	}
+	switch {
+	case toBroadcast:
+		err = ord.lteBroadcastable(ctx, a, b, retVal, asSame, newAPA, newAPB)
+	default:
+		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
+			return retVal, err
+		}
+		err = ord.lte(ctx2, a, b, retVal, asSame)
+
+	}
 	return retVal, err
 }                                                 // DiffWRT returns {false, false} for lte
 func (op lteOp[DT, T]) DiffWRT(inputs int) []bool { return twofalses }

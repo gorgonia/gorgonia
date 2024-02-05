@@ -8,6 +8,7 @@ import (
 
 	"github.com/chewxy/hm"
 	gctx "gorgonia.org/gorgonia/internal/context"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
@@ -33,12 +34,33 @@ func (op gteOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 
 	// Do the actual operation
 	ctx2, task := trace.NewTask(ctx, op.String())
-	if op.retSame {
-		retVal, err = tensor.Gte(a, b, tensor.WithContext(ctx2), tensor.AsSameType())
-	} else {
-		retVal, err = tensor.Gte(a, b, tensor.WithContext(ctx2))
+	defer task.End()
+
+	e, newAPA, newAPB, retVal, fo, err := tensor.PrepBinOpTrans[DT](a, b)
+	if err != nil {
+		return retVal, err
 	}
-	task.End()
+
+	asSame := fo.AsType == t.Dtype()
+	toBroadcast := fo.Broadcast
+
+	fullord, ok := e.(tensor.FullOrd[DT, Basic[DT]])
+	if !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, fullord, errors.ThisFn())
+	}
+	if fo.Incr {
+		return retVal, errors.Errorf("Unable to perform Incr for gte")
+	}
+	switch {
+	case toBroadcast:
+		err = fullord.gteBroadcastable(ctx, a, b, retVal, asSame, newAPA, newAPB)
+	default:
+		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
+			return retVal, err
+		}
+		err = fullord.gte(ctx2, a, b, retVal, asSame)
+
+	}
 	return retVal, err
 }
 
@@ -53,12 +75,33 @@ func (op gteOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (ret
 	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
-	if op.retSame {
-		retVal, err = tensor.Gte(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2), tensor.AsSameType())
-	} else {
-		retVal, err = tensor.Gte(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
+	defer task.End()
+
+	e, newAPA, newAPB, retVal, fo, err := tensor.PrepBinOpTrans[DT](a, b, tensor.WithReuse(prealloc))
+	if err != nil {
+		return retVal, err
 	}
-	task.End()
+
+	asSame := fo.AsType == t.Dtype()
+	toBroadcast := fo.Broadcast
+
+	fullord, ok := e.(tensor.FullOrd[DT, Basic[DT]])
+	if !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, fullord, errors.ThisFn())
+	}
+	if fo.Incr {
+		return retVal, errors.Errorf("Unable to perform Incr for gte")
+	}
+	switch {
+	case toBroadcast:
+		err = fullord.gteBroadcastable(ctx, a, b, retVal, asSame, newAPA, newAPB)
+	default:
+		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
+			return retVal, err
+		}
+		err = fullord.gte(ctx2, a, b, retVal, asSame)
+
+	}
 	return retVal, err
 }                                                 // DiffWRT returns {false, false} for gte
 func (op gteOp[DT, T]) DiffWRT(inputs int) []bool { return twofalses }
