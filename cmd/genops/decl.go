@@ -17,15 +17,18 @@ type Op struct {
 
 	// IsDiff denotes whether the operation is differentiable.
 	IsDiff bool
+
+	// InterfaceName is the name of the interface the method fulfils
+	InterfaceName string
 }
 
 var ariths = []Op{
-	{"add", "Add", "elementwise addition", "+", true},
-	{"sub", "Sub", "elementwise subtraction", "-", true},
-	{"mul", "Mul", "elementwise multiplciatio=", "*", true},
-	{"div", "Div", "elementwise division", "÷", true},
-	{"pow", "Pow", "elementwise exponentiation", "^", true},
-	{"mod", "Mod", "elementwise mod", "%", false},
+	{"add", "Add", "elementwise addition", "+", true, "Adder"},
+	{"sub", "Sub", "elementwise subtraction", "-", true, "BasicArither"},
+	{"mul", "Mul", "elementwise multiplciatio=", "*", true, "BasicArither"},
+	{"div", "Div", "elementwise division", "÷", true, "BasicArither"},
+	{"pow", "Pow", "elementwise exponentiation", "^", true, "Arither"},
+	{"mod", "Mod", "elementwise mod", "%", false, "Arither"},
 }
 
 type binopTest struct {
@@ -109,12 +112,12 @@ var arithTestResults = []binopTestResult{
 }
 
 var cmps = []Op{
-	{"lt", "Lt", "elementwise less-than", "<", false},
-	{"lte", "Lte", "elementwise less-than-or-equal-to", "≤", false},
-	{"gt", "Gt", "elementwise greater-than", ">", false},
-	{"gte", "Gte", "elementwise greater-than-or-equal-to", "≥", false},
-	{"elEq", "ElEq", "elementwise equal-to", "=", false},
-	{"elNe", "ElNe", "elementwise not-equal-to", "≠", false},
+	{"lt", "Lt", "elementwise less-than", "<", false, "Ord"},
+	{"lte", "Lte", "elementwise less-than-or-equal-to", "≤", false, "Ord"},
+	{"gt", "Gt", "elementwise greater-than", ">", false, "FullOrd"},
+	{"gte", "Gte", "elementwise greater-than-or-equal-to", "≥", false, "FullOrd"},
+	{"elEq", "ElEq", "elementwise equal-to", "=", false, "Comparer"},
+	{"elNe", "ElNe", "elementwise not-equal-to", "≠", false, "Comparer"},
 }
 
 var cmpTestResultsBool = []binopTestResult{
@@ -243,40 +246,35 @@ var cmpTestInputSame = binopTestInput{
 	CSV: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 0, 0, 0, 0, 0}))",
 }
 
-type UnOp struct {
-	Op
-	InterfaceName string
-}
+var unops = []Op{
+	{"abs", "Abs", "elementwise absolute value", "|·|", false, "Abser"},
+	{"sign", "Sign", "elementwise sign", "Sign", false, "Signer"},
+	{"ceil", "Ceil", "elementwise ceil", "⌈·⌉", false, "IntRepr"},
+	{"floor", "Floor", "elementwise floor", "⌊·⌋", false, "IntRepr"},
 
-var unops = []UnOp{
-	{Op{"abs", "Abs", "elementwise absolute value", "|·|", false}, "Abser"},
-	{Op{"sign", "Sign", "elementwise sign", "Sign", false}, "Signer"},
-	{Op{"ceil", "Ceil", "elementwise ceil", "⌈·⌉", false}, "IntRepr"},
-	{Op{"floor", "Floor", "elementwise floor", "⌊·⌋", false}, "IntRepr"},
-
-	//{Op{"sin", "Sin", "elementwise sine", "Sin", true}, "Trig"},
-	//{Op{"cos", "Cos", "elementwise cos", "Cos", true}, "Trig"},
-	{Op{"exp", "Exp", "elementwise exp", "Exp", true}, "ExpLoger"},
-	{Op{"ln", "Log", "elementwise ln", "Ln", true}, "ExpLoger"},
-	{Op{"log2", "Log2", "elementwise log2", "Log2", true}, "ExpLoger"},
-	{Op{"neg", "Neg", "elementwise negation", "Neg", true}, "ExpLoger"},
-	{Op{"square", "Square", "elementwise square", "²", true}, "Squarer"},
-	{Op{"sqrt", "Sqrt", "elementwise square root", "√", true}, "Squarter"},
-	{Op{"inv", "Inv", "elementwise 1/x", "1/·", true}, "Inver"},
-	{Op{"invSqrt", "InvSqrt", "elementwise 1/√x", "1/√·", true}, "InvSqrter"},
+	{"sin", "Sin", "elementwise sine", "Sin", true, "Trig"},
+	{"cos", "Cos", "elementwise cos", "Cos", true, "Trig"},
+	{"exp", "Exp", "elementwise exp", "Exp", true, "ExpLoger"},
+	{"ln", "Log", "elementwise ln", "Ln", true, "ExpLoger"},
+	{"log2", "Log2", "elementwise log2", "Log2", true, "ExpLoger"},
+	{"neg", "Neg", "elementwise negation", "Neg", true, "ExpLoger"},
+	{"square", "Square", "elementwise square", "²", true, "Squarer"},
+	{"sqrt", "Sqrt", "elementwise square root", "√", true, "Squarter"},
+	{"inv", "Inv", "elementwise 1/x", "1/·", true, "Inver"},
+	{"invSqrt", "InvSqrt", "elementwise 1/√x", "1/√·", true, "InvSqrter"},
 
 	// numerical stabilization
-	{Op{"log1p", "Log1p", "elementwise log1p", "Log1p", true}, "ExpLoger"},
-	{Op{"expm1", "Expm1", "elementwise expm1", "Expm1", true}, "ExpLoger"},
+	{"log1p", "Log1p", "elementwise log1p", "Log1p", true, "ExpLoger"},
+	{"expm1", "Expm1", "elementwise expm1", "Expm1", true, "ExpLoger"},
 
 	// activation functions... perhaps move them to NN
-	{Op{"cube", "Cube", "elementwise cube", "³", true}, "Cuber"},
-	{Op{"tanh", "Tanh", "elementwise tanh", "tanh", true}, "Tanher"},
+	{"cube", "Cube", "elementwise cube", "³", true, "Cuber"},
+	{"tanh", "Tanh", "elementwise tanh", "tanh", true, "Tanher"},
 }
 
 type unopInterface struct {
 	InterfaceName string
-	Ops           []UnOp
+	Ops           []Op
 }
 
 var unopInterfaces []unopInterface
@@ -308,7 +306,7 @@ type unoptest struct {
 }
 
 type unoptestWithOp struct {
-	UnOp
+	Op
 	unoptest
 }
 

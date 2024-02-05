@@ -67,6 +67,42 @@ func (op powOp[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, out
 	panic("Not implemented")
 }
 
+// SymDiff performs the symbolic differentiation of sin.
+func (op sinOp[DT, T]) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+// DoDiff is the method that allows automatic differentiation of `sin` g.
+func (op sinOp[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
+	adv := exprgraph.T2B[DT](inputs[0]).(*dual.Dual[DT, T])
+	bdv := exprgraph.T2B[DT](inputs[1]).(*dual.Dual[DT, T])
+	cdv := exprgraph.T2B[DT](output).(*dual.Dual[DT, T])
+
+	advd := adv.Deriv()
+	bdvd := bdv.Deriv()
+
+	_, _, _ = cdv, advd, bdvd
+	panic("Not implemented")
+}
+
+// SymDiff performs the symbolic differentiation of cos.
+func (op cosOp[DT, T]) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+// DoDiff is the method that allows automatic differentiation of `cos` g.
+func (op cosOp[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
+	adv := exprgraph.T2B[DT](inputs[0]).(*dual.Dual[DT, T])
+	bdv := exprgraph.T2B[DT](inputs[1]).(*dual.Dual[DT, T])
+	cdv := exprgraph.T2B[DT](output).(*dual.Dual[DT, T])
+
+	advd := adv.Deriv()
+	bdvd := bdv.Deriv()
+
+	_, _, _ = cdv, advd, bdvd
+	panic("Not implemented")
+}
+
 // SymDiff performs the symbolic differentiation of exp.
 func (op expOp[DT, T]) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
 	panic("not implemented")

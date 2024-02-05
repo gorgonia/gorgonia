@@ -7,6 +7,7 @@ import (
 	"runtime/trace"
 
 	gctx "gorgonia.org/gorgonia/internal/context"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 )
@@ -27,7 +28,33 @@ func (op addOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.Add(a, b, tensor.WithContext(ctx2))
+
+	e := getEngine(a, b)
+	var adder tensor.Adder[DT, T]
+	var ok bool
+	if adder, ok = e.(tensor.Adder[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, adder, errors.ThisFn())
+	}
+
+	ashp := a.Shape()
+	bshp := b.Shape()
+	expShape := getLargestShape(ashp, bshp)
+	var fo tensor.Option
+	if retVal, fo, err = handleFuncOpts[DT](e, a, expShape); err != nil {
+		return retVal, err
+	}
+
+	switch {
+	case ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
+		err = adder.Add(ctx2, a, b, retVal, fo.Incr)
+	case ashp.IsScalarEquiv() && !bshp.IsScalarEquiv():
+		err = adder.AddScalar(ctx2, b, a.Data()[0], retVal, true, fo.Incr)
+	case !ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
+		err = adder.AddScalar(ctx2, a, b.Data()[0], retVal, false, fo.Incr)
+	default:
+		err = adder.Add(ctx2, a, b, retVal, fo.Incr)
+	}
+
 	task.End()
 	return retVal, err
 }
@@ -43,7 +70,33 @@ func (op addOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (ret
 	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.Add(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
+
+	e := getEngine(a, b)
+	var adder tensor.Adder[DT, T]
+	var ok bool
+	if adder, ok = e.(tensor.Adder[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, adder, errors.ThisFn())
+	}
+
+	ashp := a.Shape()
+	bshp := b.Shape()
+	expShape := getLargestShape(ashp, bshp)
+	var fo tensor.Option
+	if retVal, fo, err = handleFuncOpts[DT](e, a, expShape, tensor.WithReuse(prealloc)); err != nil {
+		return retVal, err
+	}
+
+	switch {
+	case ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
+		err = adder.Add(ctx2, a, b, retVal, fo.Incr)
+	case ashp.IsScalarEquiv() && !bshp.IsScalarEquiv():
+		err = adder.AddScalar(ctx2, b, a.Data()[0], retVal, true, fo.Incr)
+	case !ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
+		err = adder.AddScalar(ctx2, a, b.Data()[0], retVal, false, fo.Incr)
+	default:
+		err = adder.Add(ctx2, a, b, retVal, fo.Incr)
+	}
+
 	task.End()
 	return retVal, err
 }

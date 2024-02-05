@@ -50,7 +50,33 @@ type {{.Name}}SV[DT any, T values.Value[DT]] struct { {{.Name}}Op[DT,T] ; binopS
 	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.{{.Method}}(a, b, tensor.WithContext(ctx2))
+
+	e := getEngine(a, b)
+	var {{.InterfaceName | lower}} tensor.{{.InterfaceName}}[DT, T]
+	var ok bool
+	if {{.InterfaceName | lower}}, ok = e.(tensor.{{.InterfaceName}}[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
+	}
+
+	ashp := a.Shape()
+	bshp := b.Shape()
+	expShape := getLargestShape(ashp, bshp)
+	var fo tensor.Option
+	if retVal, fo, err = handleFuncOpts[DT](e, a, expShape); err != nil {
+		return retVal, err
+	}
+
+	switch {
+	case ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
+		err = {{.InterfaceName | lower}}.{{.Method}}(ctx2, a, b, retVal, fo.Incr)
+	case ashp.IsScalarEquiv() && !bshp.IsScalarEquiv():
+		err = {{.InterfaceName | lower}}.{{.Method}}Scalar(ctx2, b, a.Data()[0], retVal, true, fo.Incr)
+	case !ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
+		err = {{.InterfaceName | lower}}.{{.Method}}Scalar(ctx2, a, b.Data()[0], retVal, false, fo.Incr)
+	default:
+		err = {{.InterfaceName | lower}}.{{.Method}}(ctx2, a, b, retVal, fo.Incr)
+	}
+
 	task.End()
 	return retVal, err
 {{- end -}}
@@ -63,7 +89,33 @@ if err := gctx.Handle(ctx); err != nil {
 	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.{{.Method}}(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
+
+	e := getEngine(a, b)
+	var {{.InterfaceName | lower}} tensor.{{.InterfaceName}}[DT, T]
+	var ok bool
+	if {{.InterfaceName | lower}}, ok = e.(tensor.{{.InterfaceName}}[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
+	}
+
+	ashp := a.Shape()
+	bshp := b.Shape()
+	expShape := getLargestShape(ashp, bshp)
+	var fo tensor.Option
+	if retVal, fo, err = handleFuncOpts[DT](e, a, expShape, tensor.WithReuse(prealloc)); err != nil {
+		return retVal, err
+	}
+
+	switch {
+	case ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
+		err = {{.InterfaceName | lower}}.{{.Method}}(ctx2, a, b, retVal, fo.Incr)
+	case ashp.IsScalarEquiv() && !bshp.IsScalarEquiv():
+		err = {{.InterfaceName | lower}}.{{.Method}}Scalar(ctx2, b, a.Data()[0], retVal, true, fo.Incr)
+	case !ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
+		err = {{.InterfaceName | lower}}.{{.Method}}Scalar(ctx2, a, b.Data()[0], retVal, false, fo.Incr)
+	default:
+		err = {{.InterfaceName | lower}}.{{.Method}}(ctx2, a, b, retVal, fo.Incr)
+	}
+
 	task.End()
 	return retVal, err
 {{- end -}}
@@ -406,7 +458,7 @@ if err := gctx.Handle(ctx); err != nil {
 	if {{.InterfaceName | lower}} = e.({{.InterfaceName}}[DT,T]); !ok{
 		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
 	}
-	if retVal, _, err = handleFuncOpt[DT] (e, a, a.Shape()); err !=nil{
+	if retVal, _, err = handleFuncOpts[DT,T] (e, a, a.Shape()); err !=nil{
 		return retVal, errors.Wrapf(err , errors.FailedFuncOpt, errors.ThisFn())
 	}
 	if err = {{.InterfaceName | lower}}.{{.Method}}(ctx2, a, retVal); err !=nil{

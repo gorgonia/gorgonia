@@ -53,3 +53,8 @@ type Squarter[DT any, T tensor.Basic[DT]] interface {
 type Tanher[DT any, T tensor.Basic[DT]] interface {
 	Tanh(ctx context.Context, a, retVal T) error
 }
+
+type Trig[DT any, T tensor.Basic[DT]] interface {
+	Sin(ctx context.Context, a, retVal T) error
+	Cos(ctx context.Context, a, retVal T) error
+}

@@ -31,7 +31,7 @@ func getEngine(ts ...tensor.Engineer) tensor.Engine {
 	return nil
 }
 
-func handleFuncOpts[DT any, T tensor.Tensor[DT, T]](e Engine, t T, expShape shapes.Shape, opts ...FuncOpt) (retVal T, fo Option, err error) {
+func handleFuncOpts[DT any, T tensor.Basic[DT]](e tensor.Engine, t T, expShape shapes.Shape, opts ...tensor.FuncOpt) (retVal T, fo tensor.Option, err error) {
 	switch e := e.(type) {
 	case tensor.SpecializedFuncOptHandler[DT, T]:
 		return e.HandleFuncOptsSpecialized(t, expShape, opts...)
@@ -59,4 +59,17 @@ func handleFuncOpts[DT any, T tensor.Tensor[DT, T]](e Engine, t T, expShape shap
 		return
 	}
 	return retVal, fo, errors.Errorf(errors.EngineSupport, e, e, errors.ThisFn())
+}
+
+func getLargestShape(ss ...shapes.Shape) shapes.Shape {
+	var max shapes.Shape
+	var maxSize int
+	for _, s := range ss {
+		sz := s.TotalSize()
+		if sz > maxSize {
+			max = s
+			maxSize = sz
+		}
+	}
+	return max
 }

@@ -31,7 +31,7 @@ func (op cubeOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if cuber = e.(Cuber[DT, T]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, cuber, errors.ThisFn())
 	}
-	if retVal, _, err = handleFuncOpt[DT](e, a, a.Shape()); err != nil {
+	if retVal, _, err = handleFuncOpts[DT, T](e, a, a.Shape()); err != nil {
 		return retVal, errors.Wrapf(err, errors.FailedFuncOpt, errors.ThisFn())
 	}
 	if err = cuber.Cube(ctx2, a, retVal); err != nil {

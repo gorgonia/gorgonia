@@ -7,6 +7,7 @@ import (
 	"runtime/trace"
 
 	gctx "gorgonia.org/gorgonia/internal/context"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
 )
@@ -27,7 +28,33 @@ func (op modOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.Mod(a, b, tensor.WithContext(ctx2))
+
+	e := getEngine(a, b)
+	var arither tensor.Arither[DT, T]
+	var ok bool
+	if arither, ok = e.(tensor.Arither[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, arither, errors.ThisFn())
+	}
+
+	ashp := a.Shape()
+	bshp := b.Shape()
+	expShape := getLargestShape(ashp, bshp)
+	var fo tensor.Option
+	if retVal, fo, err = handleFuncOpts[DT](e, a, expShape); err != nil {
+		return retVal, err
+	}
+
+	switch {
+	case ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
+		err = arither.Mod(ctx2, a, b, retVal, fo.Incr)
+	case ashp.IsScalarEquiv() && !bshp.IsScalarEquiv():
+		err = arither.ModScalar(ctx2, b, a.Data()[0], retVal, true, fo.Incr)
+	case !ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
+		err = arither.ModScalar(ctx2, a, b.Data()[0], retVal, false, fo.Incr)
+	default:
+		err = arither.Mod(ctx2, a, b, retVal, fo.Incr)
+	}
+
 	task.End()
 	return retVal, err
 }
@@ -43,7 +70,33 @@ func (op modOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (ret
 	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.Mod(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
+
+	e := getEngine(a, b)
+	var arither tensor.Arither[DT, T]
+	var ok bool
+	if arither, ok = e.(tensor.Arither[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, arither, errors.ThisFn())
+	}
+
+	ashp := a.Shape()
+	bshp := b.Shape()
+	expShape := getLargestShape(ashp, bshp)
+	var fo tensor.Option
+	if retVal, fo, err = handleFuncOpts[DT](e, a, expShape, tensor.WithReuse(prealloc)); err != nil {
+		return retVal, err
+	}
+
+	switch {
+	case ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
+		err = arither.Mod(ctx2, a, b, retVal, fo.Incr)
+	case ashp.IsScalarEquiv() && !bshp.IsScalarEquiv():
+		err = arither.ModScalar(ctx2, b, a.Data()[0], retVal, true, fo.Incr)
+	case !ashp.IsScalarEquiv() && bshp.IsScalarEquiv():
+		err = arither.ModScalar(ctx2, a, b.Data()[0], retVal, false, fo.Incr)
+	default:
+		err = arither.Mod(ctx2, a, b, retVal, fo.Incr)
+	}
+
 	task.End()
 	return retVal, err
 }                                                 // DiffWRT returns {false, false} for mod

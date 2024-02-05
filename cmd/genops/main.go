@@ -213,6 +213,11 @@ func generateUnOps(unstubbedSymDiffs, unstubbedDoDiffs []string) error {
 
 	tmpl = unopTestTmpl
 	for _, op := range unops {
+		tests, ok := unopTests[op.Name]
+		if !ok {
+			continue
+		}
+
 		filename := strings.ToLower(op.Name) + "_generated_test.go"
 		p := path.Join(stdopsloc, filename)
 		f, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
@@ -220,11 +225,6 @@ func generateUnOps(unstubbedSymDiffs, unstubbedDoDiffs []string) error {
 			return err
 		}
 		fmt.Fprintf(f, "package stdops\n\n%v\n\n %v\n\n", genmsg, importStmt)
-
-		tests, ok := unopTests[op.Name]
-		if !ok {
-			continue
-		}
 
 		o := unoptestWithOp{op, tests}
 		if err := tmpl.Execute(f, o); err != nil {

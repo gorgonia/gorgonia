@@ -31,7 +31,7 @@ func (op invSqrtOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error
 	if invsqrter = e.(InvSqrter[DT, T]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, invsqrter, errors.ThisFn())
 	}
-	if retVal, _, err = handleFuncOpt[DT](e, a, a.Shape()); err != nil {
+	if retVal, _, err = handleFuncOpts[DT, T](e, a, a.Shape()); err != nil {
 		return retVal, errors.Wrapf(err, errors.FailedFuncOpt, errors.ThisFn())
 	}
 	if err = invsqrter.InvSqrt(ctx2, a, retVal); err != nil {
