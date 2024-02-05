@@ -1,6 +1,8 @@
 package main
 
-type op struct {
+import "slices"
+
+type Op struct {
 	// Name of the Op. It will be suffixed with -VV, -VS, -SV.
 	Name string
 
@@ -17,7 +19,7 @@ type op struct {
 	IsDiff bool
 }
 
-var ariths = []op{
+var ariths = []Op{
 	{"add", "Add", "elementwise addition", "+", true},
 	{"sub", "Sub", "elementwise subtraction", "-", true},
 	{"mul", "Mul", "elementwise multiplciatio=", "*", true},
@@ -27,7 +29,7 @@ var ariths = []op{
 }
 
 type binopTest struct {
-	op
+	Op
 	binopTestInput
 	binopTestResult
 	IsCmpRetTrue bool // to generate tests for AsSameType()
@@ -106,7 +108,7 @@ var arithTestResults = []binopTestResult{
 	},
 }
 
-var cmps = []op{
+var cmps = []Op{
 	{"lt", "Lt", "elementwise less-than", "<", false},
 	{"lte", "Lte", "elementwise less-than-or-equal-to", "≤", false},
 	{"gt", "Gt", "elementwise greater-than", ">", false},
@@ -241,30 +243,63 @@ var cmpTestInputSame = binopTestInput{
 	CSV: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 0, 0, 0, 0, 0}))",
 }
 
-var unops = []op{
-	{"abs", "Abs", "elementwise absolute value", "|·|", false},
-	{"sign", "Sign", "elementwise sign", "Sign", false},
-	//{"ceil", "Ceil", "elementwise ceil", "⌈·⌉", false},
-	//{"floor", "Floor", "elementwise floor", "⌊·⌋", false},
+type UnOp struct {
+	Op
+	InterfaceName string
+}
 
-	//{"sin", "Sin", "elementwise sine", "Sin", true},
-	//{"cos", "Cos", "elementwise cos", "Cos", true},
-	{"exp", "Exp", "elementwise exp", "Exp", true},
-	{"ln", "Log", "elementwise ln", "Ln", true},
-	{"log2", "Log2", "elementwise log2", "Log2", true},
-	{"neg", "Neg", "elementwise negation", "Neg", true},
-	{"square", "Square", "elementwise square", "²", true},
-	{"sqrt", "Sqrt", "elementwise square root", "√", true},
-	{"inv", "Inv", "elementwise 1/x", "1/·", true},
-	{"invSqrt", "InvSqrt", "elementwise 1/√x", "1/√·", true},
+var unops = []UnOp{
+	{Op{"abs", "Abs", "elementwise absolute value", "|·|", false}, "Abser"},
+	{Op{"sign", "Sign", "elementwise sign", "Sign", false}, "Signer"},
+	{Op{"ceil", "Ceil", "elementwise ceil", "⌈·⌉", false}, "IntRepr"},
+	{Op{"floor", "Floor", "elementwise floor", "⌊·⌋", false}, "IntRepr"},
+
+	//{Op{"sin", "Sin", "elementwise sine", "Sin", true}, "Trig"},
+	//{Op{"cos", "Cos", "elementwise cos", "Cos", true}, "Trig"},
+	{Op{"exp", "Exp", "elementwise exp", "Exp", true}, "ExpLoger"},
+	{Op{"ln", "Log", "elementwise ln", "Ln", true}, "ExpLoger"},
+	{Op{"log2", "Log2", "elementwise log2", "Log2", true}, "ExpLoger"},
+	{Op{"neg", "Neg", "elementwise negation", "Neg", true}, "ExpLoger"},
+	{Op{"square", "Square", "elementwise square", "²", true}, "Squarer"},
+	{Op{"sqrt", "Sqrt", "elementwise square root", "√", true}, "Squarter"},
+	{Op{"inv", "Inv", "elementwise 1/x", "1/·", true}, "Inver"},
+	{Op{"invSqrt", "InvSqrt", "elementwise 1/√x", "1/√·", true}, "InvSqrter"},
 
 	// numerical stabilization
-	//{"log1p", "Log1p", "elementwise log1p", "Log1p", true},
-	//{"expm1", "Expm1", "elementwise expm1", "Expm1", true},
+	{Op{"log1p", "Log1p", "elementwise log1p", "Log1p", true}, "ExpLoger"},
+	{Op{"expm1", "Expm1", "elementwise expm1", "Expm1", true}, "ExpLoger"},
 
 	// activation functions... perhaps move them to NN
-	{"cube", "Cube", "elementwise cube", "³", true},
-	{"tanh", "Tanh", "elementwise tanh", "tanh", true},
+	{Op{"cube", "Cube", "elementwise cube", "³", true}, "Cuber"},
+	{Op{"tanh", "Tanh", "elementwise tanh", "tanh", true}, "Tanher"},
+}
+
+type unopInterface struct {
+	InterfaceName string
+	Ops           []UnOp
+}
+
+var unopInterfaces []unopInterface
+
+func init() {
+	m := make(map[string]unopInterface)
+	for _, op := range unops {
+		iface := m[op.InterfaceName]
+		iface.InterfaceName = op.InterfaceName
+		iface.Ops = append(iface.Ops, op)
+		m[op.InterfaceName] = iface
+	}
+
+	// let's get them in a sorted order
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+
+	for _, k := range keys {
+		unopInterfaces = append(unopInterfaces, m[k])
+	}
 }
 
 type unoptest struct {
@@ -273,16 +308,16 @@ type unoptest struct {
 }
 
 type unoptestWithOp struct {
-	op
+	UnOp
 	unoptest
 }
 
-var unopTests = []unoptest{
+var unopTests = map[string]unoptest{
 	// abs
-	{"[]float64{-1,-2,-3,4,5,6}", "[]float64{1,2,3,4,5,6}"},
+	"Abs": {"[]float64{-1,-2,-3,4,5,6}", "[]float64{1,2,3,4,5,6}"},
 
 	//sign
-	{"[]float64{-1,-2,-3,4,5,6}", "[]float64{-1,-1,-1,1,1,1}"},
+	"Sign": {"[]float64{-1,-2,-3,4,5,6}", "[]float64{-1,-1,-1,1,1,1}"},
 
 	// ceil
 	// floor
@@ -290,32 +325,32 @@ var unopTests = []unoptest{
 	// cos
 
 	// exp
-	{"[]float64{1,2,3,4,5,6}", "[]float64{math.Exp(1), math.Exp(2), math.Exp(3), math.Exp(4), math.Exp(5), math.Exp(6)}"},
+	"Exp": {"[]float64{1,2,3,4,5,6}", "[]float64{math.Exp(1), math.Exp(2), math.Exp(3), math.Exp(4), math.Exp(5), math.Exp(6)}"},
 
 	// ln
-	{"[]float64{1,2,3,4,5,6}", "[]float64{math.Log(1), math.Log(2), math.Log(3), math.Log(4), math.Log(5), math.Log(6)}"},
+	"Ln": {"[]float64{1,2,3,4,5,6}", "[]float64{math.Log(1), math.Log(2), math.Log(3), math.Log(4), math.Log(5), math.Log(6)}"},
 
 	// log2
-	{"[]float64{1,2,3,4,5,6}", "[]float64{math.Log2(1), math.Log2(2), math.Log2(3), math.Log2(4), math.Log2(5), math.Log2(6)}"},
+	"Log2": {"[]float64{1,2,3,4,5,6}", "[]float64{math.Log2(1), math.Log2(2), math.Log2(3), math.Log2(4), math.Log2(5), math.Log2(6)}"},
 
 	// neg
-	{"[]float64{-1,-2,-3,4,5,6}", "[]float64{1,2,3,-4,-5,-6}"},
+	"Neg": {"[]float64{-1,-2,-3,4,5,6}", "[]float64{1,2,3,-4,-5,-6}"},
 
 	// square
-	{"[]float64{-1,-2,-3,4,5,6}", "[]float64{1*1,2*2,3*3,4*4,5*5,6*6}"},
+	"Square": {"[]float64{-1,-2,-3,4,5,6}", "[]float64{1*1,2*2,3*3,4*4,5*5,6*6}"},
 
 	// sqrt
-	{"[]float64{1,2,3,4,5,6}", "[]float64{math.Sqrt(1), math.Sqrt(2), math.Sqrt(3), math.Sqrt(4), math.Sqrt(5), math.Sqrt(6)}"},
+	"Sqrt": {"[]float64{1,2,3,4,5,6}", "[]float64{math.Sqrt(1), math.Sqrt(2), math.Sqrt(3), math.Sqrt(4), math.Sqrt(5), math.Sqrt(6)}"},
 
 	// inv
-	{"[]float64{-1,-2,-3,4,5,6}", "[]float64{1/-1,1.0/-2.0,1.0/-3.0,1.0/4.0,1.0/5.0,1.0/6.0}"},
+	"Inv": {"[]float64{-1,-2,-3,4,5,6}", "[]float64{1/-1,1.0/-2.0,1.0/-3.0,1.0/4.0,1.0/5.0,1.0/6.0}"},
 
 	// invsqrt
-	{"[]float64{1,2,3,4,5,6}", "[]float64{1/math.Sqrt(1),1/math.Sqrt(2),1/math.Sqrt(3),1/math.Sqrt(4),1/math.Sqrt(5),1/math.Sqrt(6)}"},
+	"InvSqrt": {"[]float64{1,2,3,4,5,6}", "[]float64{1/math.Sqrt(1),1/math.Sqrt(2),1/math.Sqrt(3),1/math.Sqrt(4),1/math.Sqrt(5),1/math.Sqrt(6)}"},
 
 	// cube
-	{"[]float64{-1,-2,-3,4,5,6}", "[]float64{-1,-2*-2*-2,-3*-3*-3,4*4*4,5*5*5,6*6*6}"},
+	"Cube": {"[]float64{-1,-2,-3,4,5,6}", "[]float64{-1,-2*-2*-2,-3*-3*-3,4*4*4,5*5*5,6*6*6}"},
 
 	// tanh
-	{"[]float64{-1,-2,-3,4,5,6}", "[]float64{math.Tanh(-1),math.Tanh(-2),math.Tanh(-3),math.Tanh(4),math.Tanh(5),math.Tanh(6)}"},
+	"Tanh": {"[]float64{-1,-2,-3,4,5,6}", "[]float64{math.Tanh(-1),math.Tanh(-2),math.Tanh(-3),math.Tanh(4),math.Tanh(5),math.Tanh(6)}"},
 }

@@ -86,7 +86,7 @@ func goimports(filename string) error {
 	return nil
 }
 
-func generateBinOp(ops []op, tmpl *template.Template, unstubbedSymDiffs, unstubbedDoDiffs []string) error {
+func generateBinOp(ops []Op, tmpl *template.Template, unstubbedSymDiffs, unstubbedDoDiffs []string) error {
 	for _, op := range ops {
 		filename := strings.ToLower(op.Name) + "_generated.go"
 		p := path.Join(stdopsloc, filename)
@@ -122,9 +122,9 @@ func generateBinOp(ops []op, tmpl *template.Template, unstubbedSymDiffs, unstubb
 	return nil
 }
 
-func generateBinOpTest(ops []op, input binopTestInput, results []binopTestResult, isCmp bool, tmpl *template.Template) error {
+func generateBinOpTest(ops []Op, input binopTestInput, results []binopTestResult, isCmp bool, tmpl *template.Template) error {
 	for i, op := range ops {
-		opTest := binopTest{op: op, binopTestInput: input, binopTestResult: results[i]}
+		opTest := binopTest{Op: op, binopTestInput: input, binopTestResult: results[i]}
 		filename := strings.ToLower(op.Name) + "_generated_test.go"
 		p := path.Join(stdopsloc, filename)
 		f, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
@@ -212,7 +212,7 @@ func generateUnOps(unstubbedSymDiffs, unstubbedDoDiffs []string) error {
 	}
 
 	tmpl = unopTestTmpl
-	for i, op := range unops {
+	for _, op := range unops {
 		filename := strings.ToLower(op.Name) + "_generated_test.go"
 		p := path.Join(stdopsloc, filename)
 		f, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
@@ -221,7 +221,12 @@ func generateUnOps(unstubbedSymDiffs, unstubbedDoDiffs []string) error {
 		}
 		fmt.Fprintf(f, "package stdops\n\n%v\n\n %v\n\n", genmsg, importStmt)
 
-		o := unoptestWithOp{op, unopTests[i]}
+		tests, ok := unopTests[op.Name]
+		if !ok {
+			continue
+		}
+
+		o := unoptestWithOp{op, tests}
 		if err := tmpl.Execute(f, o); err != nil {
 			return errors.Wrapf(err, "Unable to execute unopTmpl for %v", op.Name)
 		}
@@ -237,7 +242,7 @@ func generateUnOps(unstubbedSymDiffs, unstubbedDoDiffs []string) error {
 
 func generateBinOpAPI() (err error) {
 	type apiwrap struct {
-		op
+		Op
 		IsCmp bool
 	}
 
@@ -288,6 +293,28 @@ func generateBinOpAPI() (err error) {
 	return goimports(pt)
 }
 
+func generateInterfaces() error {
+	filename := "interfaces_generated.go"
+	p := path.Join(stdopsloc, filename)
+
+	f, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(f, "package stdops\n\n%v\n\n", genmsg)
+
+	for _, iface := range unopInterfaces {
+		if err := unopInterfaceTempl.Execute(f, iface); err != nil {
+			return errors.Wrapf(err, "Unable to execute template for %v", iface.InterfaceName)
+		}
+	}
+	if err := f.Close(); err != nil {
+		return errors.Wrapf(err, "Unable to close %v", filename)
+	}
+	return goimports(p)
+}
+
 func finishStubs() error {
 	if err := stubsFile.Close(); err != nil {
 		return err
@@ -318,9 +345,18 @@ func unstubbed(file io.Reader, name string) []string {
 		case *ast.Ident:
 			recv = r0.Name
 		case *ast.StarExpr:
+			switch x := r0.X.(type) {
+			case *ast.Ident:
+				recv = x.Name
+			case *ast.IndexListExpr:
+				recv = x.X.(*ast.Ident).Name
+			default:
+				log.Fatalf("ERROR: Unsupported StarExpr of %T - value %#v in %v", r0.X, r0.X, name)
+			}
+		case *ast.IndexListExpr:
 			recv = r0.X.(*ast.Ident).Name
 		default:
-			log.Printf("ERROR: UNSUPPORTED TYPE %v in %v", fn.Recv.List[0].Type, name)
+			log.Printf("ERROR: UNSUPPORTED TYPE %v(%T) in %v", fn.Recv.List[0].Type, fn.Recv.List[0].Type, name)
 		}
 
 		ignored = append(ignored, strings.TrimSuffix(recv, "Op"))
@@ -344,6 +380,10 @@ func main() {
 		log.Fatal(err)
 	}
 	if err := generateBinOpAPI(); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := generateInterfaces(); err != nil {
 		log.Fatal(err)
 	}
 

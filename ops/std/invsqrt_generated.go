@@ -7,8 +7,8 @@ import (
 	"runtime/trace"
 
 	gctx "gorgonia.org/gorgonia/internal/context"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/tensor"
 )
 
 // invSqrt is a elementwise 1/√x.
@@ -25,7 +25,19 @@ func (op invSqrtOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.InvSqrt(a, tensor.WithContext(ctx2))
+	e := getEngine(a)
+	var invsqrter InvSqrter[DT, T]
+	var ok bool
+	if invsqrter = e.(InvSqrter[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, invsqrter, errors.ThisFn())
+	}
+	if retVal, _, err = handleFuncOpt[DT](e, a, a.Shape()); err != nil {
+		return retVal, errors.Wrapf(err, errors.FailedFuncOpt, errors.ThisFn())
+	}
+	if err = invsqrter.InvSqrt(ctx2, a, retVal); err != nil {
+		return retVal, err
+	}
+	// retVal, err = tensor.InvSqrt(a, tensor.WithContext(ctx2))
 	task.End()
 	return retVal, err
 }
@@ -39,7 +51,16 @@ func (op invSqrtOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) 
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.InvSqrt(a, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
+	e := getEngine(a)
+	var invsqrter InvSqrter[DT, T]
+	var ok bool
+	if invsqrter = e.(InvSqrter[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, invsqrter, errors.ThisFn())
+	}
+	// TODO check that prealloc has the same shape as expected reetVal shape
+	if err = invsqrter.InvSqrt(ctx2, a, prealloc); err != nil {
+		return retVal, err
+	}
 	task.End()
 	return retVal, err
 }

@@ -11,14 +11,14 @@ import (
 	"gorgonia.org/gorgonia/values"
 )
 
-// neg is a elementwise negation.
-type negOp[DT any, T values.Value[DT]] struct{ unop }
+// log1p is a elementwise log1p.
+type log1pOp[DT any, T values.Value[DT]] struct{ unop }
 
 // String implements fmt.Stringer.
-func (op negOp[DT, T]) String() string { return "Neg" }
+func (op log1pOp[DT, T]) String() string { return "Log1p" }
 
-// Do performs elementwise negation.
-func (op negOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+// Do performs elementwise log1p.
+func (op log1pOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return retVal, err
 	}
@@ -34,17 +34,17 @@ func (op negOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if retVal, _, err = handleFuncOpt[DT](e, a, a.Shape()); err != nil {
 		return retVal, errors.Wrapf(err, errors.FailedFuncOpt, errors.ThisFn())
 	}
-	if err = exploger.Neg(ctx2, a, retVal); err != nil {
+	if err = exploger.Log1p(ctx2, a, retVal); err != nil {
 		return retVal, err
 	}
-	// retVal, err = tensor.Neg(a, tensor.WithContext(ctx2))
+	// retVal, err = tensor.Log1p(a, tensor.WithContext(ctx2))
 	task.End()
 	return retVal, err
 }
 
-// PreallocDo performs elementwise negation but with a preallocated return value.
+// PreallocDo performs elementwise log1p but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
-func (op negOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
+func (op log1pOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return retVal, err
 	}
@@ -58,12 +58,12 @@ func (op negOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (ret
 		return retVal, errors.Errorf(errors.EngineSupport, e, exploger, errors.ThisFn())
 	}
 	// TODO check that prealloc has the same shape as expected reetVal shape
-	if err = exploger.Neg(ctx2, a, prealloc); err != nil {
+	if err = exploger.Log1p(ctx2, a, prealloc); err != nil {
 		return retVal, err
 	}
 	task.End()
 	return retVal, err
 }
 
-// DiffWRT returns {true} for neg
-func (op negOp[DT, T]) DiffWRT(inputs int) []bool { return onetrue }
+// DiffWRT returns {true} for log1p
+func (op log1pOp[DT, T]) DiffWRT(inputs int) []bool { return onetrue }

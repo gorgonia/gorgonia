@@ -211,6 +211,42 @@ func (op invSqrtOp[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor,
 	panic("Not implemented")
 }
 
+// SymDiff performs the symbolic differentiation of log1p.
+func (op log1pOp[DT, T]) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+// DoDiff is the method that allows automatic differentiation of `log1p` g.
+func (op log1pOp[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
+	adv := exprgraph.T2B[DT](inputs[0]).(*dual.Dual[DT, T])
+	bdv := exprgraph.T2B[DT](inputs[1]).(*dual.Dual[DT, T])
+	cdv := exprgraph.T2B[DT](output).(*dual.Dual[DT, T])
+
+	advd := adv.Deriv()
+	bdvd := bdv.Deriv()
+
+	_, _, _ = cdv, advd, bdvd
+	panic("Not implemented")
+}
+
+// SymDiff performs the symbolic differentiation of expm1.
+func (op expm1Op[DT, T]) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
+	panic("not implemented")
+}
+
+// DoDiff is the method that allows automatic differentiation of `expm1` g.
+func (op expm1Op[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
+	adv := exprgraph.T2B[DT](inputs[0]).(*dual.Dual[DT, T])
+	bdv := exprgraph.T2B[DT](inputs[1]).(*dual.Dual[DT, T])
+	cdv := exprgraph.T2B[DT](output).(*dual.Dual[DT, T])
+
+	advd := adv.Deriv()
+	bdvd := bdv.Deriv()
+
+	_, _, _ = cdv, advd, bdvd
+	panic("Not implemented")
+}
+
 // SymDiff performs the symbolic differentiation of cube.
 func (op cubeOp[DT, T]) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, output *exprgraph.Node, grad *exprgraph.Node) (retVal []*exprgraph.Node, err error) {
 	panic("not implemented")

@@ -400,7 +400,19 @@ if err := gctx.Handle(ctx); err != nil {
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.{{.Method}}(a, tensor.WithContext(ctx2))
+	e := getEngine(a)
+	var {{.InterfaceName | lower}} {{.InterfaceName}}[DT,T]
+	var ok bool
+	if {{.InterfaceName | lower}} = e.({{.InterfaceName}}[DT,T]); !ok{
+		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
+	}
+	if retVal, _, err = handleFuncOpt[DT] (e, a, a.Shape()); err !=nil{
+		return retVal, errors.Wrapf(err , errors.FailedFuncOpt, errors.ThisFn())
+	}
+	if err = {{.InterfaceName | lower}}.{{.Method}}(ctx2, a, retVal); err !=nil{
+		return retVal, err
+	}
+	// retVal, err = tensor.{{.Method}}(a, tensor.WithContext(ctx2))
 	task.End()
 	return retVal, err
 }
@@ -414,7 +426,16 @@ func (op {{.Name}}Op[DT,T]) PreallocDo(ctx context.Context, prealloc T, vs ...T)
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.{{.Method}}(a, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
+	e := getEngine(a)
+	var {{.InterfaceName | lower}} {{.InterfaceName}}[DT,T]
+	var ok bool
+	if {{.InterfaceName | lower}} = e.({{.InterfaceName}}[DT,T]); !ok{
+		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
+	}
+	// TODO check that prealloc has the same shape as expected reetVal shape
+	if err = {{.InterfaceName | lower}}.{{.Method}}(ctx2, a, prealloc); err != nil{
+		return retVal, err
+	}
 	task.End()
 	return retVal, err
 }
@@ -593,7 +614,14 @@ func (op {{ .Name }}Op[DT,T]) DoDiff(ctx context.Context, inputs []gorgonia.Tens
 	panic("Not implemented")
 }
 {{ end }}
+`
 
+const unopInterfaceTemplRaw = `
+type {{.InterfaceName}}[DT any, T tensor.Basic[DT]] interface{
+	{{range .Ops -}}
+	{{.Method}}(ctx context.Context, a, retVal T) error
+	{{end -}}
+}
 `
 
 var (
@@ -609,6 +637,8 @@ var (
 	binopAPITestTmpl *template.Template
 
 	doDiffTmpl *template.Template
+
+	unopInterfaceTempl *template.Template
 )
 
 func init() {
@@ -623,4 +653,6 @@ func init() {
 	binopAPITmpl = template.Must(template.New("api").Funcs(funcmap).Parse(binopAPIRaw))
 	binopAPITestTmpl = template.Must(template.New("api test").Funcs(funcmap).Parse(binopAPITestRaw))
 	doDiffTmpl = template.Must(template.New("binop DoDiff").Funcs(funcmap).Parse(doDiffTmplRaw))
+
+	unopInterfaceTempl = template.Must(template.New("unop interfae").Funcs(funcmap).Parse(unopInterfaceTemplRaw))
 }

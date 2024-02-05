@@ -7,8 +7,8 @@ import (
 	"runtime/trace"
 
 	gctx "gorgonia.org/gorgonia/internal/context"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
-	"gorgonia.org/tensor"
 )
 
 // abs is a elementwise absolute value.
@@ -25,7 +25,19 @@ func (op absOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.Abs(a, tensor.WithContext(ctx2))
+	e := getEngine(a)
+	var abser Abser[DT, T]
+	var ok bool
+	if abser = e.(Abser[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, abser, errors.ThisFn())
+	}
+	if retVal, _, err = handleFuncOpt[DT](e, a, a.Shape()); err != nil {
+		return retVal, errors.Wrapf(err, errors.FailedFuncOpt, errors.ThisFn())
+	}
+	if err = abser.Abs(ctx2, a, retVal); err != nil {
+		return retVal, err
+	}
+	// retVal, err = tensor.Abs(a, tensor.WithContext(ctx2))
 	task.End()
 	return retVal, err
 }
@@ -39,7 +51,16 @@ func (op absOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (ret
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.Abs(a, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
+	e := getEngine(a)
+	var abser Abser[DT, T]
+	var ok bool
+	if abser = e.(Abser[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, abser, errors.ThisFn())
+	}
+	// TODO check that prealloc has the same shape as expected reetVal shape
+	if err = abser.Abs(ctx2, a, prealloc); err != nil {
+		return retVal, err
+	}
 	task.End()
 	return retVal, err
 }
