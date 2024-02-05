@@ -12,7 +12,7 @@ import (
 
 // T2B tries to find a `tensor.Tensor` from a Tensor
 // it returns nil if no tensor is found
-func T2B[DT tensor.Num](a Tensor) tensor.Basic[DT] {
+func T2B[DT any](a Tensor) tensor.Basic[DT] {
 	switch t := a.(type) {
 	case Node:
 		if vl, ok := t.(valuelifter); ok {
@@ -34,7 +34,7 @@ func T2B[DT tensor.Num](a Tensor) tensor.Basic[DT] {
 	}
 }
 
-func T2T[DT tensor.Num, T tensor.Basic[DT]](a Tensor) (retVal T, ok bool) {
+func T2T[DT any, T tensor.Basic[DT]](a Tensor) (retVal T, ok bool) {
 	switch t := a.(type) {
 	case valuer[T]:
 		return t.Value(), true

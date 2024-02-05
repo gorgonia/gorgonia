@@ -1,6 +1,6 @@
 module gorgonia.org/gorgonia
 
-go 1.20
+go 1.21
 
 replace (
 	gorgonia.org/cu => ../cu

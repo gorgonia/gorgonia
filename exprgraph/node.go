@@ -69,6 +69,9 @@ func New[DT any](g *Graph, name string, opts ...tensor.ConsOpt) Node {
 		bas = d
 	case []DT:
 		bas = dense.New[DT](opts...)
+	case nil:
+		// if c.Data == nil and InitFn is not nil
+		bas = dense.New[DT](opts...)
 	default:
 		panic("NYI")
 	}
