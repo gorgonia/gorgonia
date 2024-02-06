@@ -30,27 +30,28 @@ func (op subOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	ctx2, task := trace.NewTask(ctx, op.String())
 	defer task.End()
 
-	e, newAPA, newAPB, retVal, fo, err := tensor.PrepBinOpCis[DT](a, b)
+	e, newAPA, newAPB, ret, fo, err := tensor.PrepBasicBinOpCis[DT](a, b)
 	if err != nil {
 		return retVal, err
 	}
 	toIncr := fo.Incr
 	toBroadcast := fo.Broadcast
 
-	basicarither, ok := e.(tensor.BasicArither[DT, Basic[DT]])
+	basicarither, ok := e.(tensor.BasicArither[DT, tensor.Basic[DT]])
 	if !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, basicarither, errors.ThisFn())
 	}
 
 	switch {
 	case toBroadcast:
-		err = basicarither.subBroadcastable(ctx, a, b, retVal, newAPA, newAPB, toIncr)
+		err = basicarither.SubBroadcastable(ctx, a, b, ret, newAPA, newAPB, toIncr)
 	default:
 		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
 			return retVal, err
 		}
-		err = basicarither.sub(ctx2, a, b, retVal, toIncr)
+		err = basicarither.Sub(ctx2, a, b, ret, toIncr)
 	}
+	retVal = ret.(T)
 	return retVal, err
 }
 
@@ -67,27 +68,28 @@ func (op subOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (ret
 	ctx2, task := trace.NewTask(ctx, op.String())
 	defer task.End()
 
-	e, newAPA, newAPB, retVal, fo, err := tensor.PrepBinOpCis[DT](a, b, tensor.WithReuse(prealloc))
+	e, newAPA, newAPB, ret, fo, err := tensor.PrepBasicBinOpCis[DT](a, b, tensor.WithReuse(prealloc))
 	if err != nil {
 		return retVal, err
 	}
 	toIncr := fo.Incr
 	toBroadcast := fo.Broadcast
 
-	basicarither, ok := e.(tensor.BasicArither[DT, Basic[DT]])
+	basicarither, ok := e.(tensor.BasicArither[DT, tensor.Basic[DT]])
 	if !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, basicarither, errors.ThisFn())
 	}
 
 	switch {
 	case toBroadcast:
-		err = basicarither.subBroadcastable(ctx, a, b, retVal, newAPA, newAPB, toIncr)
+		err = basicarither.SubBroadcastable(ctx, a, b, ret, newAPA, newAPB, toIncr)
 	default:
 		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
 			return retVal, err
 		}
-		err = basicarither.sub(ctx2, a, b, retVal, toIncr)
+		err = basicarither.Sub(ctx2, a, b, ret, toIncr)
 	}
+	retVal = ret.(T)
 	return retVal, err
 }
 

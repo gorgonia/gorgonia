@@ -7,6 +7,7 @@ import (
 	"runtime/trace"
 
 	"github.com/chewxy/hm"
+	"gorgonia.org/dtype"
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/types"
@@ -36,15 +37,15 @@ func (op lteOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	ctx2, task := trace.NewTask(ctx, op.String())
 	defer task.End()
 
-	e, newAPA, newAPB, retVal, fo, err := tensor.PrepBinOpTrans[DT](a, b)
+	e, newAPA, newAPB, ret, fo, err := tensor.PrepBinOpTrans[DT](a, b)
 	if err != nil {
 		return retVal, err
 	}
 
-	asSame := fo.AsType == t.Dtype()
+	asSame := fo.AsType == a.Dtype()
 	toBroadcast := fo.Broadcast
 
-	ord, ok := e.(tensor.Ord[DT, Basic[DT]])
+	ord, ok := e.(tensor.Ord[DT, tensor.Basic[DT]])
 	if !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, ord, errors.ThisFn())
 	}
@@ -53,14 +54,14 @@ func (op lteOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	}
 	switch {
 	case toBroadcast:
-		err = ord.lteBroadcastable(ctx, a, b, retVal, asSame, newAPA, newAPB)
+		err = ord.LteBroadcastable(ctx, a, b, ret, asSame, newAPA, newAPB)
 	default:
 		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
 			return retVal, err
 		}
-		err = ord.lte(ctx2, a, b, retVal, asSame)
-
+		err = ord.Lte(ctx2, a, b, ret, asSame)
 	}
+	retVal = ret.(T)
 	return retVal, err
 }
 
@@ -77,15 +78,15 @@ func (op lteOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (ret
 	ctx2, task := trace.NewTask(ctx, op.String())
 	defer task.End()
 
-	e, newAPA, newAPB, retVal, fo, err := tensor.PrepBinOpTrans[DT](a, b, tensor.WithReuse(prealloc))
+	e, newAPA, newAPB, ret, fo, err := tensor.PrepBinOpTrans[DT](a, b, tensor.WithReuse(prealloc))
 	if err != nil {
 		return retVal, err
 	}
 
-	asSame := fo.AsType == t.Dtype()
+	asSame := fo.AsType == a.Dtype()
 	toBroadcast := fo.Broadcast
 
-	ord, ok := e.(tensor.Ord[DT, Basic[DT]])
+	ord, ok := e.(tensor.Ord[DT, tensor.Basic[DT]])
 	if !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, ord, errors.ThisFn())
 	}
@@ -94,14 +95,14 @@ func (op lteOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (ret
 	}
 	switch {
 	case toBroadcast:
-		err = ord.lteBroadcastable(ctx, a, b, retVal, asSame, newAPA, newAPB)
+		err = ord.LteBroadcastable(ctx, a, b, ret, asSame, newAPA, newAPB)
 	default:
 		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
 			return retVal, err
 		}
-		err = ord.lte(ctx2, a, b, retVal, asSame)
-
+		err = ord.Lte(ctx2, a, b, ret, asSame)
 	}
+	retVal = ret.(T)
 	return retVal, err
 }                                                 // DiffWRT returns {false, false} for lte
 func (op lteOp[DT, T]) DiffWRT(inputs int) []bool { return twofalses }
@@ -118,7 +119,7 @@ func (op lteVV[DT, T]) Type() hm.Type {
 	if op.retSame {
 		return types.NewFunc(a, a, a)
 	}
-	b := types.MakeDependent(a, tensor.Bool) // (T Bool) or Bool
+	b := types.MakeDependent(a, dtype.Bool) // (T Bool) or Bool
 	return types.NewFunc(a, a, b)
 }
 
@@ -132,13 +133,13 @@ type lteVS[DT any, T values.Value[DT]] struct {
 func (op lteVS[DT, T]) String() string { return "≤·" }
 
 // Type returns the type: (·) : a → b → a or (·) :  a → b → c
-func (op lteVS) Type() hm.Type {
+func (op lteVS[DT, T]) Type() hm.Type {
 	a := hm.TypeVariable('a') // (T U) or U
 	b := hm.TypeVariable('b') // U
 	if op.retSame {
 		return types.NewFunc(a, b, a)
 	}
-	c := types.MakeDependent(a, tensor.Bool) // (T Bool) or Bool
+	c := types.MakeDependent(a, dtype.Bool) // (T Bool) or Bool
 	return types.NewFunc(a, b, c)
 }
 
@@ -158,6 +159,6 @@ func (op lteSV[DT, T]) Type() hm.Type {
 	if op.retSame {
 		return types.NewFunc(a, b, b)
 	}
-	c := types.MakeDependent(b, tensor.Bool) // (T Bool) or Bool
+	c := types.MakeDependent(b, dtype.Bool) // (T Bool) or Bool
 	return types.NewFunc(a, b, c)
 }

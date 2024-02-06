@@ -7,6 +7,7 @@ import (
 	"runtime/trace"
 
 	"github.com/chewxy/hm"
+	"gorgonia.org/dtype"
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/types"
@@ -36,15 +37,15 @@ func (op gtOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	ctx2, task := trace.NewTask(ctx, op.String())
 	defer task.End()
 
-	e, newAPA, newAPB, retVal, fo, err := tensor.PrepBinOpTrans[DT](a, b)
+	e, newAPA, newAPB, ret, fo, err := tensor.PrepBinOpTrans[DT](a, b)
 	if err != nil {
 		return retVal, err
 	}
 
-	asSame := fo.AsType == t.Dtype()
+	asSame := fo.AsType == a.Dtype()
 	toBroadcast := fo.Broadcast
 
-	fullord, ok := e.(tensor.FullOrd[DT, Basic[DT]])
+	fullord, ok := e.(tensor.FullOrd[DT, tensor.Basic[DT]])
 	if !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, fullord, errors.ThisFn())
 	}
@@ -53,14 +54,14 @@ func (op gtOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	}
 	switch {
 	case toBroadcast:
-		err = fullord.gtBroadcastable(ctx, a, b, retVal, asSame, newAPA, newAPB)
+		err = fullord.GtBroadcastable(ctx, a, b, ret, asSame, newAPA, newAPB)
 	default:
 		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
 			return retVal, err
 		}
-		err = fullord.gt(ctx2, a, b, retVal, asSame)
-
+		err = fullord.Gt(ctx2, a, b, ret, asSame)
 	}
+	retVal = ret.(T)
 	return retVal, err
 }
 
@@ -77,15 +78,15 @@ func (op gtOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retV
 	ctx2, task := trace.NewTask(ctx, op.String())
 	defer task.End()
 
-	e, newAPA, newAPB, retVal, fo, err := tensor.PrepBinOpTrans[DT](a, b, tensor.WithReuse(prealloc))
+	e, newAPA, newAPB, ret, fo, err := tensor.PrepBinOpTrans[DT](a, b, tensor.WithReuse(prealloc))
 	if err != nil {
 		return retVal, err
 	}
 
-	asSame := fo.AsType == t.Dtype()
+	asSame := fo.AsType == a.Dtype()
 	toBroadcast := fo.Broadcast
 
-	fullord, ok := e.(tensor.FullOrd[DT, Basic[DT]])
+	fullord, ok := e.(tensor.FullOrd[DT, tensor.Basic[DT]])
 	if !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, fullord, errors.ThisFn())
 	}
@@ -94,14 +95,14 @@ func (op gtOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retV
 	}
 	switch {
 	case toBroadcast:
-		err = fullord.gtBroadcastable(ctx, a, b, retVal, asSame, newAPA, newAPB)
+		err = fullord.GtBroadcastable(ctx, a, b, ret, asSame, newAPA, newAPB)
 	default:
 		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
 			return retVal, err
 		}
-		err = fullord.gt(ctx2, a, b, retVal, asSame)
-
+		err = fullord.Gt(ctx2, a, b, ret, asSame)
 	}
+	retVal = ret.(T)
 	return retVal, err
 }                                                // DiffWRT returns {false, false} for gt
 func (op gtOp[DT, T]) DiffWRT(inputs int) []bool { return twofalses }
@@ -118,7 +119,7 @@ func (op gtVV[DT, T]) Type() hm.Type {
 	if op.retSame {
 		return types.NewFunc(a, a, a)
 	}
-	b := types.MakeDependent(a, tensor.Bool) // (T Bool) or Bool
+	b := types.MakeDependent(a, dtype.Bool) // (T Bool) or Bool
 	return types.NewFunc(a, a, b)
 }
 
@@ -132,13 +133,13 @@ type gtVS[DT any, T values.Value[DT]] struct {
 func (op gtVS[DT, T]) String() string { return ">·" }
 
 // Type returns the type: (·) : a → b → a or (·) :  a → b → c
-func (op gtVS) Type() hm.Type {
+func (op gtVS[DT, T]) Type() hm.Type {
 	a := hm.TypeVariable('a') // (T U) or U
 	b := hm.TypeVariable('b') // U
 	if op.retSame {
 		return types.NewFunc(a, b, a)
 	}
-	c := types.MakeDependent(a, tensor.Bool) // (T Bool) or Bool
+	c := types.MakeDependent(a, dtype.Bool) // (T Bool) or Bool
 	return types.NewFunc(a, b, c)
 }
 
@@ -158,6 +159,6 @@ func (op gtSV[DT, T]) Type() hm.Type {
 	if op.retSame {
 		return types.NewFunc(a, b, b)
 	}
-	c := types.MakeDependent(b, tensor.Bool) // (T Bool) or Bool
+	c := types.MakeDependent(b, dtype.Bool) // (T Bool) or Bool
 	return types.NewFunc(a, b, c)
 }
