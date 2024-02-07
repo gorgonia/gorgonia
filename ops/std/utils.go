@@ -18,16 +18,6 @@ import (
 // 	return runtime.FuncForPC(pc).Name()
 // }
 
-func getEngine(ts ...tensor.Engineer) tensor.Engine {
-	// TODO: get highest capability engine
-	for _, t := range ts {
-		if e := t.Engine(); e != nil {
-			return e
-		}
-	}
-	return nil
-}
-
 func handleFuncOpts[DT any, T tensor.Basic[DT]](e tensor.Engine, t T, expShape shapes.Shape, opts ...tensor.FuncOpt) (retVal T, fo tensor.Option, err error) {
 	switch e := e.(type) {
 	// case tensor.SpecializedFuncOptHandler[DT, T]:
@@ -80,4 +70,9 @@ func checkCompatibleShape(expected shapes.Shape, others ...shapes.Shape) error {
 	}
 	return nil
 
+}
+
+func elimInnermostOutermost(a, b shapes.Shape) shapes.Shape {
+	a2 := a.Clone()
+	return append(a2[:len(a)-1], b[1:]...)
 }

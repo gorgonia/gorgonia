@@ -24,20 +24,16 @@ type gteOp[DT any, T values.Value[DT]] struct {
 // String implements fmt.Stringer.
 func (op gteOp[DT, T]) String() string { return "≥" }
 
-// Do performs elementwise greater-than-or-equal-to.
-func (op gteOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+func (op gteOp[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return retVal, err
 	}
-
-	a := vs[0]
-	b := vs[1]
 
 	// Do the actual operation
 	ctx2, task := trace.NewTask(ctx, op.String())
 	defer task.End()
 
-	e, newAPA, newAPB, ret, fo, err := tensor.PrepBinOpTrans[DT](a, b)
+	e, newAPA, newAPB, ret, fo, err := tensor.PrepBinOpTrans[DT](a, b, tensor.WithReuse(prealloc), tensor.As(dtype.Datatype[DT]{}))
 	if err != nil {
 		return retVal, err
 	}
@@ -65,45 +61,20 @@ func (op gteOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	return retVal, err
 }
 
+// Do performs elementwise greater-than-or-equal-to.
+func (op gteOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+	a := vs[0]
+	b := vs[1]
+	var prealloc T
+	return op.do(ctx, a, b, prealloc)
+}
+
 // PreallocDo performs elementwise greater-than-or-equal-to but with a preallocated return value.
 // PreallocDo allows gte to implement ops.PreallocOp.
 func (op gteOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
-		return retVal, err
-	}
-
 	a := vs[0]
 	b := vs[1]
-
-	ctx2, task := trace.NewTask(ctx, op.String())
-	defer task.End()
-
-	e, newAPA, newAPB, ret, fo, err := tensor.PrepBinOpTrans[DT](a, b, tensor.WithReuse(prealloc))
-	if err != nil {
-		return retVal, err
-	}
-
-	asSame := fo.AsType == a.Dtype()
-	toBroadcast := fo.Broadcast
-
-	fullord, ok := e.(tensor.FullOrd[DT, tensor.Basic[DT]])
-	if !ok {
-		return retVal, errors.Errorf(errors.EngineSupport, e, fullord, errors.ThisFn())
-	}
-	if fo.Incr {
-		return retVal, errors.Errorf("Unable to perform Incr for gte")
-	}
-	switch {
-	case toBroadcast:
-		err = fullord.GteBroadcastable(ctx, a, b, ret, asSame, newAPA, newAPB)
-	default:
-		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
-			return retVal, err
-		}
-		err = fullord.Gte(ctx2, a, b, ret, asSame)
-	}
-	retVal = ret.(T)
-	return retVal, err
+	return op.do(ctx, a, b, prealloc)
 }                                                 // DiffWRT returns {false, false} for gte
 func (op gteOp[DT, T]) DiffWRT(inputs int) []bool { return twofalses }
 

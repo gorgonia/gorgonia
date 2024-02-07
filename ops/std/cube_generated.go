@@ -9,6 +9,7 @@ import (
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/tensor"
 )
 
 // cube is a elementwise cube.
@@ -25,7 +26,7 @@ func (op cubeOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	e := getEngine(a)
+	e := tensor.GetEngine(a)
 	var cuber Cuber[DT, T]
 	var ok bool
 	if cuber = e.(Cuber[DT, T]); !ok {
@@ -51,7 +52,7 @@ func (op cubeOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (re
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	e := getEngine(a)
+	e := tensor.GetEngine(a)
 	var cuber Cuber[DT, T]
 	var ok bool
 	if cuber = e.(Cuber[DT, T]); !ok {

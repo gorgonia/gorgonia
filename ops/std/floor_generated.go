@@ -9,6 +9,7 @@ import (
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/tensor"
 )
 
 // floor is a elementwise floor.
@@ -25,7 +26,7 @@ func (op floorOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) 
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	e := getEngine(a)
+	e := tensor.GetEngine(a)
 	var intrepr IntRepr[DT, T]
 	var ok bool
 	if intrepr = e.(IntRepr[DT, T]); !ok {
@@ -51,7 +52,7 @@ func (op floorOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (r
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	e := getEngine(a)
+	e := tensor.GetEngine(a)
 	var intrepr IntRepr[DT, T]
 	var ok bool
 	if intrepr = e.(IntRepr[DT, T]); !ok {

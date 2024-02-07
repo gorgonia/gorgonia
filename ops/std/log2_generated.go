@@ -9,6 +9,7 @@ import (
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/tensor"
 )
 
 // log2 is a elementwise log2.
@@ -25,7 +26,7 @@ func (op log2Op[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	e := getEngine(a)
+	e := tensor.GetEngine(a)
 	var exploger ExpLoger[DT, T]
 	var ok bool
 	if exploger = e.(ExpLoger[DT, T]); !ok {
@@ -51,7 +52,7 @@ func (op log2Op[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (re
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	e := getEngine(a)
+	e := tensor.GetEngine(a)
 	var exploger ExpLoger[DT, T]
 	var ok bool
 	if exploger = e.(ExpLoger[DT, T]); !ok {

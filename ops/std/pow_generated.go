@@ -18,14 +18,10 @@ type powOp[DT any, T values.Value[DT]] struct{ binop }
 // String implements fmt.Stringer.
 func (op powOp[DT, T]) String() string { return "^" }
 
-// Do performs elementwise exponentiation.
-func (op powOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+func (op powOp[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return retVal, err
 	}
-
-	a := vs[0]
-	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	defer task.End()
@@ -55,42 +51,20 @@ func (op powOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	return retVal, err
 }
 
+// Do performs elementwise exponentiation.
+func (op powOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+	a := vs[0]
+	b := vs[1]
+	var prealloc T
+	return op.do(ctx, a, b, prealloc)
+}
+
 // PreallocDo performs elementwise exponentiation but with a preallocated return value.
 // PreallocDo allows pow to implement ops.PreallocOp.
 func (op powOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
-		return retVal, err
-	}
-
 	a := vs[0]
 	b := vs[1]
-
-	ctx2, task := trace.NewTask(ctx, op.String())
-	defer task.End()
-
-	e, newAPA, newAPB, ret, fo, err := tensor.PrepBasicBinOpCis[DT](a, b, tensor.WithReuse(prealloc))
-	if err != nil {
-		return retVal, err
-	}
-	toIncr := fo.Incr
-	toBroadcast := fo.Broadcast
-
-	arither, ok := e.(tensor.Arither[DT, tensor.Basic[DT]])
-	if !ok {
-		return retVal, errors.Errorf(errors.EngineSupport, e, arither, errors.ThisFn())
-	}
-
-	switch {
-	case toBroadcast:
-		err = arither.PowBroadcastable(ctx, a, b, ret, newAPA, newAPB, toIncr)
-	default:
-		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
-			return retVal, err
-		}
-		err = arither.Pow(ctx2, a, b, ret, toIncr)
-	}
-	retVal = ret.(T)
-	return retVal, err
+	return op.do(ctx, a, b, prealloc)
 }
 
 // powVV is a tensor-tensor elementwise exponentiation.

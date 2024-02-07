@@ -5,10 +5,10 @@ import (
 	"runtime/trace"
 
 	"github.com/chewxy/hm"
-	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/exprgraph"
 	gctx "gorgonia.org/gorgonia/internal/context"
+	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/gorgonia/values/dual"
@@ -38,32 +38,52 @@ func (op MatMul[DT, T]) ShapeExpr() shapes.Expr {
 	)
 }
 
-// Do performs the matrix multiplication.
-func (op MatMul[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+func (op MatMul[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return retVal, err
 	}
-
-	a := vs[0]
-	b := vs[1]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.MatMul(a, b, tensor.WithContext(ctx2))
+
+	e := tensor.GetEngine(a, b)
+
+	var prepper tensor.SpecializedFuncOptHandler[DT, T]
+	var ok bool
+	if prepper, ok = e.(tensor.SpecializedFuncOptHandler[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, prepper, errors.ThisFn())
+	}
+	expShape := elimInnermostOutermost(a.Shape(), b.Shape())
+
+	if retVal, _, err = prepper.HandleFuncOptsSpecialized(a, expShape, tensor.WithReuse(prealloc)); err != nil {
+		return retVal, errors.Wrapf(err, errors.FailedFuncOpt, errors.ThisFn())
+	}
+
+	var bla tensor.BLA[DT, T]
+	if bla, ok = e.(tensor.BLA[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, bla, errors.ThisFn())
+	}
+
+	if err = bla.MatMul(ctx2, a, b, retVal, nil); err != nil {
+		return retVal, err
+	}
+
 	task.End()
 	return retVal, err
+}
+
+// Do performs the matrix multiplication.
+func (op MatMul[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+	var prealloc T
+	a := vs[0]
+	b := vs[1]
+	return op.do(ctx, a, b, prealloc)
 }
 
 // PreallocDo performs the matrix multiplication with a preallocated value.
 // PreallocDo allows MatMul to implement ops.PreallocDo
 func (op MatMul[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
-		return retVal, err
-	}
 	a := vs[0]
 	b := vs[1]
-	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.MatMul(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
-	task.End()
-	return retVal, err
+	return op.do(ctx, a, b, prealloc)
 }
 
 // String implements fmt.Stringer.

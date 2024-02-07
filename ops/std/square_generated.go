@@ -9,6 +9,7 @@ import (
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/tensor"
 )
 
 // square is a elementwise square.
@@ -25,7 +26,7 @@ func (op squareOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error)
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	e := getEngine(a)
+	e := tensor.GetEngine(a)
 	var squarer Squarer[DT, T]
 	var ok bool
 	if squarer = e.(Squarer[DT, T]); !ok {
@@ -51,7 +52,7 @@ func (op squareOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	e := getEngine(a)
+	e := tensor.GetEngine(a)
 	var squarer Squarer[DT, T]
 	var ok bool
 	if squarer = e.(Squarer[DT, T]); !ok {

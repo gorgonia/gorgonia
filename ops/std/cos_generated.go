@@ -9,6 +9,7 @@ import (
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/tensor"
 )
 
 // cos is a elementwise cos.
@@ -25,7 +26,7 @@ func (op cosOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	e := getEngine(a)
+	e := tensor.GetEngine(a)
 	var trig Trig[DT, T]
 	var ok bool
 	if trig = e.(Trig[DT, T]); !ok {
@@ -51,7 +52,7 @@ func (op cosOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (ret
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	e := getEngine(a)
+	e := tensor.GetEngine(a)
 	var trig Trig[DT, T]
 	var ok bool
 	if trig = e.(Trig[DT, T]); !ok {

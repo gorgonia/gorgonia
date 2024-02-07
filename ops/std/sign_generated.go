@@ -9,6 +9,7 @@ import (
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
+	"gorgonia.org/tensor"
 )
 
 // sign is a elementwise sign.
@@ -25,7 +26,7 @@ func (op signOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	e := getEngine(a)
+	e := tensor.GetEngine(a)
 	var signer Signer[DT, T]
 	var ok bool
 	if signer = e.(Signer[DT, T]); !ok {
@@ -51,7 +52,7 @@ func (op signOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (re
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	e := getEngine(a)
+	e := tensor.GetEngine(a)
 	var signer Signer[DT, T]
 	var ok bool
 	if signer = e.(Signer[DT, T]); !ok {

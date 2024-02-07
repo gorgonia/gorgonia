@@ -18,14 +18,10 @@ type addOp[DT any, T values.Value[DT]] struct{ binop }
 // String implements fmt.Stringer.
 func (op addOp[DT, T]) String() string { return "+" }
 
-// Do performs elementwise addition.
-func (op addOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+func (op addOp[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return retVal, err
 	}
-
-	a := vs[0]
-	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	defer task.End()
@@ -55,42 +51,20 @@ func (op addOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	return retVal, err
 }
 
+// Do performs elementwise addition.
+func (op addOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+	a := vs[0]
+	b := vs[1]
+	var prealloc T
+	return op.do(ctx, a, b, prealloc)
+}
+
 // PreallocDo performs elementwise addition but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
 func (op addOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
-		return retVal, err
-	}
-
 	a := vs[0]
 	b := vs[1]
-
-	ctx2, task := trace.NewTask(ctx, op.String())
-	defer task.End()
-
-	e, newAPA, newAPB, ret, fo, err := tensor.PrepBasicBinOpCis[DT](a, b, tensor.WithReuse(prealloc))
-	if err != nil {
-		return retVal, err
-	}
-	toIncr := fo.Incr
-	toBroadcast := fo.Broadcast
-
-	adder, ok := e.(tensor.Adder[DT, tensor.Basic[DT]])
-	if !ok {
-		return retVal, errors.Errorf(errors.EngineSupport, e, adder, errors.ThisFn())
-	}
-
-	switch {
-	case toBroadcast:
-		err = adder.AddBroadcastable(ctx, a, b, ret, newAPA, newAPB, toIncr)
-	default:
-		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
-			return retVal, err
-		}
-		err = adder.Add(ctx2, a, b, ret, toIncr)
-	}
-	retVal = ret.(T)
-	return retVal, err
+	return op.do(ctx, a, b, prealloc)
 }
 
 // addVV is a tensor-tensor elementwise addition.

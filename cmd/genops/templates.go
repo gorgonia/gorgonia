@@ -11,6 +11,39 @@ type {{.Name }}Op[DT any, T values.Value[DT]] struct{ binop }
 // String implements fmt.Stringer.
 func (op {{.Name}}Op[DT,T]) String() string { return "{{.Symbol}}" }
 
+func (op {{.Name}}Op[DT,T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
+	if err := gctx.Handle(ctx); err != nil {
+		return retVal, err
+	}
+
+	ctx2, task := trace.NewTask(ctx, op.String())
+	defer task.End()
+
+	e, newAPA, newAPB, ret, fo, err := tensor.PrepBasicBinOpCis[DT](a, b)
+	if err != nil{
+		return retVal, err
+	}
+	toIncr := fo.Incr
+	toBroadcast := fo.Broadcast
+
+	{{.InterfaceName | lower}}, ok := e.(tensor.{{.InterfaceName}}[DT, tensor.Basic[DT]]);
+	if !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
+	}
+
+	switch {
+	case toBroadcast:
+		err = {{.InterfaceName|lower}}.{{.Method}}Broadcastable(ctx, a, b, ret, newAPA, newAPB, toIncr)
+	default:
+		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil{
+			return retVal, err
+		}
+		err = {{.InterfaceName|lower}}.{{.Method}}(ctx2, a, b, ret, toIncr)
+	}
+	retVal = ret.(T)
+	return retVal, err
+}
+
 // Do performs {{.CommentOp}}.
 func (op {{.Name}}Op[DT,T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	{{- template "Do" . -}}
@@ -42,75 +75,15 @@ type {{.Name}}SV[DT any, T values.Value[DT]] struct { {{.Name}}Op[DT,T] ; binopS
 {{end}}
 
 {{- define "Do" -}}
-	if err := gctx.Handle(ctx); err != nil {
-		return retVal, err
-	}
-
 	a := vs[0]
 	b := vs[1]
-
-	ctx2, task := trace.NewTask(ctx, op.String())
-	defer task.End()
-
-	e, newAPA, newAPB, ret, fo, err := tensor.PrepBasicBinOpCis[DT](a, b)
-	if err != nil{
-		return retVal, err
-	}
-	toIncr := fo.Incr
-	toBroadcast := fo.Broadcast
-
-	{{.InterfaceName | lower}}, ok := e.(tensor.{{.InterfaceName}}[DT, tensor.Basic[DT]]);
-	if !ok {
-		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
-	}
-
-	switch {
-	case toBroadcast:
-		err = {{.InterfaceName|lower}}.{{.Method}}Broadcastable(ctx, a, b, ret, newAPA, newAPB, toIncr)
-	default:
-		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil{
-			return retVal, err
-		}
-		err = {{.InterfaceName|lower}}.{{.Method}}(ctx2, a, b, ret, toIncr)
-	}
-	retVal = ret.(T)
-	return retVal, err
+	var prealloc T
+	return op.do(ctx, a, b, prealloc)
 {{- end -}}
 {{- define "PreallocDo" -}}
-if err := gctx.Handle(ctx); err != nil {
-		return retVal, err
-	}
-
 	a := vs[0]
 	b := vs[1]
-
-	ctx2, task := trace.NewTask(ctx, op.String())
-	defer task.End()
-
-	e, newAPA, newAPB, ret, fo, err := tensor.PrepBasicBinOpCis[DT](a, b, tensor.WithReuse(prealloc))
-	if err != nil{
-		return retVal, err
-	}
-	toIncr := fo.Incr
-	toBroadcast := fo.Broadcast
-
-	{{.InterfaceName | lower}}, ok := e.(tensor.{{.InterfaceName}}[DT, tensor.Basic[DT]]);
-	if !ok {
-		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
-	}
-
-	switch {
-	case toBroadcast:
-		err = {{.InterfaceName|lower}}.{{.Method}}Broadcastable(ctx, a, b, ret, newAPA, newAPB, toIncr)
-	default:
-		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil{
-			return retVal, err
-		}
-		err = {{.InterfaceName|lower}}.{{.Method}}(ctx2, a, b, ret, toIncr)
-	}
-	retVal = ret.(T)
-	return retVal, err
-
+	return op.do(ctx, a, b, prealloc)
 {{- end -}}
 
 {{/* we don't need to generate Type() for arithmetic Ops */}}
@@ -126,6 +99,43 @@ type {{.Name}}Op[DT any, T values.Value[DT]] struct{ binop; retSame bool }
 
 // String implements fmt.Stringer.
 func (op {{.Name}}Op[DT,T]) String() string { return "{{.Symbol}}" }
+
+func (op {{.Name}}Op[DT,T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
+	if err := gctx.Handle(ctx); err != nil {
+		return retVal, err
+	}
+
+	// Do the actual operation
+	ctx2, task := trace.NewTask(ctx, op.String())
+	defer task.End()
+
+	e, newAPA, newAPB, ret, fo, err := tensor.PrepBinOpTrans[DT](a, b, tensor.WithReuse(prealloc), tensor.As(dtype.Datatype[DT]{}))
+	if err != nil {
+		return retVal, err
+	}
+
+	asSame := fo.AsType == a.Dtype()
+	toBroadcast := fo.Broadcast
+
+	{{.InterfaceName | lower}}, ok := e.(tensor.{{.InterfaceName}}[DT, tensor.Basic[DT]]);
+	if !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
+	}
+	if fo.Incr {
+		return retVal, errors.Errorf("Unable to perform Incr for {{.Name}}")
+	}
+	switch {
+	case toBroadcast:
+		err = {{.InterfaceName|lower}}.{{.Method}}Broadcastable(ctx, a, b, ret, asSame, newAPA, newAPB)
+	default:
+		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil{
+			return retVal, err
+		}
+		err = {{.InterfaceName|lower}}.{{.Method}}(ctx2, a, b, ret, asSame)
+	}
+	retVal = ret.(T)
+	return retVal, err
+}
 
 // Do performs {{.CommentOp}}.
 func (op {{.Name}}Op[DT,T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
@@ -158,82 +168,15 @@ type {{.Name}}SV[DT any, T values.Value[DT]] struct { {{.Name}}Op[DT,T]; binopSV
 {{end}}
 
 {{- define "Do" -}}
-	if err := gctx.Handle(ctx); err != nil {
-		return retVal, err
-	}
-
 	a := vs[0]
 	b := vs[1]
-
-	// Do the actual operation
-	ctx2, task := trace.NewTask(ctx, op.String())
-	defer task.End()
-
-	e, newAPA, newAPB, ret, fo, err := tensor.PrepBinOpTrans[DT](a, b)
-	if err != nil {
-		return retVal, err
-	}
-
-	asSame := fo.AsType == a.Dtype()
-	toBroadcast := fo.Broadcast
-
-	{{.InterfaceName | lower}}, ok := e.(tensor.{{.InterfaceName}}[DT, tensor.Basic[DT]]);
-	if !ok {
-		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
-	}
-	if fo.Incr {
-		return retVal, errors.Errorf("Unable to perform Incr for {{.Name}}")
-	}
-	switch {
-	case toBroadcast:
-		err = {{.InterfaceName|lower}}.{{.Method}}Broadcastable(ctx, a, b, ret, asSame, newAPA, newAPB)
-	default:
-		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil{
-			return retVal, err
-		}
-		err = {{.InterfaceName|lower}}.{{.Method}}(ctx2, a, b, ret, asSame)
-	}
-	retVal = ret.(T)
-	return retVal, err
+	var prealloc T
+	return op.do(ctx,a,b, prealloc)
 {{- end -}}
 {{- define "PreallocDo" -}}
-if err := gctx.Handle(ctx); err != nil {
-		return retVal, err
-	}
-
 	a := vs[0]
 	b := vs[1]
-
-
-	ctx2, task := trace.NewTask(ctx, op.String())
-	defer task.End()
-
-	e, newAPA, newAPB, ret, fo, err := tensor.PrepBinOpTrans[DT](a, b, tensor.WithReuse(prealloc))
-	if err != nil {
-		return retVal, err
-	}
-
-	asSame := fo.AsType == a.Dtype()
-	toBroadcast := fo.Broadcast
-
-	{{.InterfaceName | lower}}, ok := e.(tensor.{{.InterfaceName}}[DT, tensor.Basic[DT]]);
-	if !ok {
-		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
-	}
-	if fo.Incr {
-		return retVal, errors.Errorf("Unable to perform Incr for {{.Name}}")
-	}
-	switch {
-	case toBroadcast:
-		err = {{.InterfaceName|lower}}.{{.Method}}Broadcastable(ctx, a, b, ret, asSame, newAPA, newAPB)
-	default:
-		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil{
-			return retVal, err
-		}
-		err = {{.InterfaceName|lower}}.{{.Method}}(ctx2, a,b, ret, asSame)
-	}
-	retVal = ret.(T)
-	return retVal, err
+	return op.do(ctx, a,b, prealloc)
 {{- end -}}
 
 {{define "Type()VV"}}
@@ -488,7 +431,7 @@ if err := gctx.Handle(ctx); err != nil {
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	e := getEngine(a)
+	e := tensor.GetEngine(a)
 	var {{.InterfaceName | lower}} {{.InterfaceName}}[DT,T]
 	var ok bool
 	if {{.InterfaceName | lower}} = e.({{.InterfaceName}}[DT,T]); !ok{
@@ -514,7 +457,7 @@ func (op {{.Name}}Op[DT,T]) PreallocDo(ctx context.Context, prealloc T, vs ...T)
 
 	a := vs[0]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	e := getEngine(a)
+	e := tensor.GetEngine(a)
 	var {{.InterfaceName | lower}} {{.InterfaceName}}[DT,T]
 	var ok bool
 	if {{.InterfaceName | lower}} = e.({{.InterfaceName}}[DT,T]); !ok{

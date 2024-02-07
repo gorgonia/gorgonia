@@ -18,14 +18,10 @@ type modOp[DT any, T values.Value[DT]] struct{ binop }
 // String implements fmt.Stringer.
 func (op modOp[DT, T]) String() string { return "%" }
 
-// Do performs elementwise mod.
-func (op modOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+func (op modOp[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return retVal, err
 	}
-
-	a := vs[0]
-	b := vs[1]
 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	defer task.End()
@@ -55,42 +51,20 @@ func (op modOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	return retVal, err
 }
 
+// Do performs elementwise mod.
+func (op modOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+	a := vs[0]
+	b := vs[1]
+	var prealloc T
+	return op.do(ctx, a, b, prealloc)
+}
+
 // PreallocDo performs elementwise mod but with a preallocated return value.
 // PreallocDo allows mod to implement ops.PreallocOp.
 func (op modOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
-		return retVal, err
-	}
-
 	a := vs[0]
 	b := vs[1]
-
-	ctx2, task := trace.NewTask(ctx, op.String())
-	defer task.End()
-
-	e, newAPA, newAPB, ret, fo, err := tensor.PrepBasicBinOpCis[DT](a, b, tensor.WithReuse(prealloc))
-	if err != nil {
-		return retVal, err
-	}
-	toIncr := fo.Incr
-	toBroadcast := fo.Broadcast
-
-	arither, ok := e.(tensor.Arither[DT, tensor.Basic[DT]])
-	if !ok {
-		return retVal, errors.Errorf(errors.EngineSupport, e, arither, errors.ThisFn())
-	}
-
-	switch {
-	case toBroadcast:
-		err = arither.ModBroadcastable(ctx, a, b, ret, newAPA, newAPB, toIncr)
-	default:
-		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
-			return retVal, err
-		}
-		err = arither.Mod(ctx2, a, b, ret, toIncr)
-	}
-	retVal = ret.(T)
-	return retVal, err
+	return op.do(ctx, a, b, prealloc)
 }                                                 // DiffWRT returns {false, false} for mod
 func (op modOp[DT, T]) DiffWRT(inputs int) []bool { return twofalses }
 
