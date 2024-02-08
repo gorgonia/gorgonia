@@ -45,9 +45,10 @@ func (op At[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return retVal, err
 	}
-	v := vs[0]
+	v := any(vs[0]).(tensor.ValueGetter[DT])
 	_, task := trace.NewTask(ctx, op.String())
 	var r DT
+
 	if r, err = v.At(op...); err == nil {
 		ret, _ := values.AnyToScalar(r)
 		retVal = ret.(T)
@@ -166,8 +167,8 @@ func (op Slice[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (ret
 		return retVal, err
 	}
 	v := vs[0]
-	if s, ok := v.(tensor.SlicerInto); ok {
-		return s.SliceInto(prealloc.(tensor.Tensor), op.Slices...)
+	if s, ok := any(v).(tensor.SlicerInto); ok {
+		return s.SliceInto(prealloc, op.Slices...)
 	}
 	return retVal, errors.Errorf("NYI: preallocdo")
 }
@@ -238,7 +239,7 @@ func (op *Reshape[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error)
 		return retVal, err
 	}
 
-	v := values.ShallowClone(vs[0])
+	v := values.ShallowClone(any(vs[0]).(tensor.ShallowCloner[T]))
 
 	if err = v.Reshape(op.To...); err != nil {
 		return retVal, errors.Wrapf(err, "Reshape failed. Cannot reshape %v to %v", v.Shape(), op.To)

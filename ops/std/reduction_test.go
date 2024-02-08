@@ -7,9 +7,9 @@ import (
 	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/assert"
 	"gorgonia.org/gorgonia/internal/datatypes"
-	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/dense"
 )
 
 var sumTests = []struct {
@@ -61,19 +61,19 @@ var sumTests = []struct {
 }
 
 func TestSum(t *testing.T) {
-	op := &Sum{}
+	op := &Sum[float64, *dense.Dense[float64]]{}
 
 	// basic test
 	assert.Equal(t, 1, op.Arity())
 
 	for _, tc := range sumTests {
 		// set up
-		var a, b values.Value
+		var a, b *dense.Dense[float64]
 		var expectedType hm.Type
 		var expectedShape shapes.Shape
 		var err error
 
-		a = tensor.New(tensor.WithShape(tc.shape...), tensor.WithBacking(tc.backing))
+		a = dense.New[float64](tensor.WithShape(tc.shape...), tensor.WithBacking(tc.backing))
 		op.along = tc.along
 
 		t.Logf("%v \n %v", op.Type(), op.ShapeExpr())

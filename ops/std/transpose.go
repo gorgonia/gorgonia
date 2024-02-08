@@ -66,10 +66,11 @@ func (op transposeOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err err
 	}
 
 	a := vs[0]
+	t := any(a).(tensor.Operable[T])
 	_, task := trace.NewTask(ctx, op.String())
 	pattern := make([]int, op.pattern.Dims())
 	copy(pattern, op.pattern.AsInts())
-	retVal, err = tensor.Transpose(a, pattern...)
+	retVal, err = t.Transpose(pattern...)
 	task.End()
 	return retVal, err
 }

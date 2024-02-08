@@ -211,7 +211,7 @@ func Clone[T Cloner[T]](v T) T {
 // If A and B are shallow clones of C then if A modifies the data, B will see the modification too.
 // The whole purpose of ShallowClone is for there to be multiple "views" of the same underlying data:
 // e.g. A and B could be reshapes or slices of C.
-func ShallowClone[T ShallowCloner[T]](v T) T {
+func ShallowClone[T tensor.ShallowCloner[T]](v T) T {
 	return v.ShallowClone()
 }
 

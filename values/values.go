@@ -99,7 +99,3 @@ type CopierTo[T any] interface {
 type CopierFrom interface {
 	CopyFrom(src any) error
 }
-
-type ShallowCloner[T any] interface {
-	ShallowClone() T
-}

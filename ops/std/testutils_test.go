@@ -47,7 +47,7 @@ func typecheck(op ops.Desc, vs ...values.V) (retType hm.Type, err error) {
 	return types.Infer(op.Type(), childrenTypes...)
 }
 
-func shapecheck(op ops.Op, vs ...values.Value) (retVal shapes.Shape, err error) {
+func shapecheck(op ops.Desc, vs ...tensor.Desc) (retVal shapes.Shape, err error) {
 	s := op.ShapeExpr()
 	for i, v := range vs {
 		if s, err = shapes.InferApp(s, v.Shape()); err != nil {

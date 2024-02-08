@@ -46,16 +46,18 @@ func (op MatMul[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err
 
 	e := tensor.GetEngine(a, b)
 
-	var prepper tensor.SpecializedFuncOptHandler[DT, T]
+	var prepper tensor.FuncOptHandler[DT]
 	var ok bool
-	if prepper, ok = e.(tensor.SpecializedFuncOptHandler[DT, T]); !ok {
+	if prepper, ok = e.(tensor.FuncOptHandler[DT]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, prepper, errors.ThisFn())
 	}
 	expShape := elimInnermostOutermost(a.Shape(), b.Shape())
 
-	if retVal, _, err = prepper.HandleFuncOptsSpecialized(a, expShape, tensor.WithReuse(prealloc)); err != nil {
+	var ret tensor.Basic[DT]
+	if ret, _, err = prepper.HandleFuncOpts(a, expShape, tensor.WithReuse(prealloc)); err != nil {
 		return retVal, errors.Wrapf(err, errors.FailedFuncOpt, errors.ThisFn())
 	}
+	retVal = ret.(T)
 
 	var bla tensor.BLA[DT, T]
 	if bla, ok = e.(tensor.BLA[DT, T]); !ok {
@@ -166,16 +168,18 @@ func (op MatVecMul[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, 
 
 	e := tensor.GetEngine(a, b)
 
-	var prepper tensor.SpecializedFuncOptHandler[DT, T]
+	var prepper tensor.FuncOptHandler[DT]
 	var ok bool
-	if prepper, ok = e.(tensor.SpecializedFuncOptHandler[DT, T]); !ok {
+	if prepper, ok = e.(tensor.FuncOptHandler[DT]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, prepper, errors.ThisFn())
 	}
 	expShape := elimInnermostOutermost(a.Shape(), b.Shape())
 
-	if retVal, _, err = prepper.HandleFuncOptsSpecialized(a, expShape, tensor.WithReuse(prealloc)); err != nil {
+	var ret tensor.Basic[DT]
+	if ret, _, err = prepper.HandleFuncOpts(a, expShape, tensor.WithReuse(prealloc)); err != nil {
 		return retVal, errors.Wrapf(err, errors.FailedFuncOpt, errors.ThisFn())
 	}
+	retVal = ret.(T)
 
 	var bla tensor.BLA[DT, T]
 	if bla, ok = e.(tensor.BLA[DT, T]); !ok {
@@ -302,16 +306,18 @@ func (op Outer[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	e := tensor.GetEngine(a, b)
 
-	var prepper tensor.SpecializedFuncOptHandler[DT, T]
+	var prepper tensor.FuncOptHandler[DT]
 	var ok bool
-	if prepper, ok = e.(tensor.SpecializedFuncOptHandler[DT, T]); !ok {
+	if prepper, ok = e.(tensor.FuncOptHandler[DT]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, prepper, errors.ThisFn())
 	}
 
+	var ret tensor.Basic[DT]
 	expShape := shapes.Shape{a.Shape().TotalSize(), b.Shape().TotalSize()}
-	if retVal, _, err = prepper.HandleFuncOptsSpecialized(a, expShape, tensor.WithReuse(prealloc)); err != nil {
+	if ret, _, err = prepper.HandleFuncOpts(a, expShape, tensor.WithReuse(prealloc)); err != nil {
 		return retVal, errors.Wrapf(err, errors.FailedFuncOpt, errors.ThisFn())
 	}
+	retVal = ret.(T)
 
 	var bla tensor.BLA[DT, T]
 	if bla, ok = e.(tensor.BLA[DT, T]); !ok {

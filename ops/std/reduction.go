@@ -40,7 +40,7 @@ func reductionTypeExpr(along shapes.Axes) hm.Type {
 	return hm.NewFnType(a, d)
 }
 
-func denseReduction[DT any](task *trace.Task, ctx context.Context, f func(t *dense.Dense[DT], along ...int) (*dense.Dense[DT], error), along []int, input *dense.Dense[DT]) (retVal values.Value[DT], err error) {
+func denseReduction[DT any](task *trace.Task, ctx context.Context, f func(t *dense.Dense[DT], along ...int) (*dense.Dense[DT], error), along []int, input *dense.Dense[DT]) (retVal *dense.Dense[DT], err error) {
 	defer task.End()
 	// TODO: put ctx into input.Engine somehow
 	var ret *dense.Dense[DT]
@@ -95,7 +95,13 @@ func (op *Sum[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	switch t := any(vs[0]).(type) {
 	case *dense.Dense[DT]:
 		ctx2, task := trace.NewTask(ctx, op.String())
-		return denseReduction(task, ctx2, (*dense.Dense[DT]).Sum, axesToInts(op.along), t)
+		var ret any
+		ret, err = denseReduction(task, ctx2, (*dense.Dense[DT]).Sum, axesToInts(op.along), t)
+		if err != nil {
+			return retVal, err
+		}
+		retVal = ret.(T)
+		return
 	default:
 		return retVal, errors.NYI(t)
 	}
