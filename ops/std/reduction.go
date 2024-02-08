@@ -45,7 +45,7 @@ func denseReduction[DT any](task *trace.Task, ctx context.Context, f func(t *den
 	// TODO: put ctx into input.Engine somehow
 	var ret *dense.Dense[DT]
 	if ret, err = f(input, along...); err != nil {
-		return nil, errors.Wrapf(err, "Failed to perform reduction of %v", funcName(f))
+		return nil, errors.Wrapf(err, "Failed to perform reduction of %v", errors.ThisFn())
 	}
 	return ret, err
 }
