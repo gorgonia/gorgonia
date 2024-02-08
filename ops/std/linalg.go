@@ -158,49 +158,69 @@ func (op MatVecMul[DT, T]) ShapeExpr() shapes.Expr {
 	)
 }
 
-// Do performs the matrix-vector multiplication.
-func (op MatVecMul[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+func (op MatVecMul[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return retVal, err
 	}
-
-	a := vs[0]
-	b := vs[1]
 	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.MatVecMul(a, b, tensor.WithContext(ctx2))
+
+	e := tensor.GetEngine(a, b)
+
+	var prepper tensor.SpecializedFuncOptHandler[DT, T]
+	var ok bool
+	if prepper, ok = e.(tensor.SpecializedFuncOptHandler[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, prepper, errors.ThisFn())
+	}
+	expShape := elimInnermostOutermost(a.Shape(), b.Shape())
+
+	if retVal, _, err = prepper.HandleFuncOptsSpecialized(a, expShape, tensor.WithReuse(prealloc)); err != nil {
+		return retVal, errors.Wrapf(err, errors.FailedFuncOpt, errors.ThisFn())
+	}
+
+	var bla tensor.BLA[DT, T]
+	if bla, ok = e.(tensor.BLA[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, bla, errors.ThisFn())
+	}
+
+	if err = bla.MatVecMul(ctx2, a, b, retVal, nil); err != nil {
+		return retVal, err
+	}
+
 	task.End()
 	return retVal, err
+}
+
+// Do performs the matrix-vector multiplication.
+func (op MatVecMul[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+	a := vs[0]
+	b := vs[1]
+	var prealloc T
+	return op.do(ctx, a, b, prealloc)
 }
 
 // PreallocDo performs the matrix-vector multiplication with a preallocated value.
 // PreallocDo allows MatMul to implement ops.PreallocDo
 func (op MatVecMul[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
-		return retVal, err
-	}
 	a := vs[0]
 	b := vs[1]
-	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.MatVecMul(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
-	task.End()
-	return retVal, err
+	return op.do(ctx, a, b, prealloc)
 }
 
-// VecDot is a op representing vector dot product (inner product) operations.
-type VecDot[DT tensor.Num, T values.Value[DT]] struct{ binop }
+// Inner is a op representing vector dot product (inner product) operations.
+type Inner[DT tensor.Num, T values.Value[DT]] struct{ binop }
 
 // String implements fmt.Stringer.
-func (op VecDot[DT, T]) String() string { return "·" }
+func (op Inner[DT, T]) String() string { return "·" }
 
-// Type informs the type of the VecDot: Vector a → Vector a → a
-func (op VecDot[DT, T]) Type() hm.Type {
+// Type informs the type of the Inner: Vector a → Vector a → a
+func (op Inner[DT, T]) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	v := types.MakeTensorType(1, a) // Vector a
 	return types.NewFunc(v, v, a)
 }
 
-// ShapeExpr informs the shape operations of VecDot: (a, ) → (a, ) → ()
-func (op VecDot[DT, T]) ShapeExpr() shapes.Expr {
+// ShapeExpr informs the shape operations of Inner: (a, ) → (a, ) → ()
+func (op Inner[DT, T]) ShapeExpr() shapes.Expr {
 	a := shapes.Var('a')
 	return shapes.MakeArrow(
 		shapes.Abstract{a},
@@ -209,37 +229,39 @@ func (op VecDot[DT, T]) ShapeExpr() shapes.Expr {
 	)
 }
 
-// Do performs the inner product operation.
-func (op VecDot[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+func (op Inner[DT, T]) do(ctx context.Context, a, b T) (retVal DT, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return retVal, err
 	}
+	ctx2, task := trace.NewTask(ctx, op.String())
+	e := tensor.GetEngine(a, b)
+	var bla tensor.InnerProder[DT, T]
+	var ok bool
+	if bla, ok = e.(tensor.InnerProder[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, bla, errors.ThisFn())
+	}
+	retVal, err = bla.Inner(ctx2, a, b)
+	task.End()
+	return
+}
 
+// Do performs the inner product operation.
+func (op Inner[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	a := vs[0]
 	b := vs[1]
-	ctx2, task := trace.NewTask(ctx, op.String())
-	ret, err := tensor.Inner(a, b, tensor.WithContext(ctx2))
+	ret, err := op.do(ctx, a, b)
 	retVal, _ = values.AnyToScalar(ret)
-	task.End()
 	return retVal, err
 }
 
 // PreallocDo performs the inner product operation with a preallocated value.
 // PreallocDo allows MatMul to implement ops.PreallocDo
-func (op VecDot[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
-		return retVal, err
-	}
+func (op Inner[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	a := vs[0]
 	b := vs[1]
-	ctx2, task := trace.NewTask(ctx, op.String())
-	ret, err := tensor.Inner(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
-	if err != nil {
-		return retVal, errors.Wrap(err, "VecDot.PreallocDo failed")
-	}
+	ret, err := op.do(ctx, a, b)
 	err = prealloc.SetAt(ret, 0)
 	retVal = prealloc
-	task.End()
 	return retVal, err
 }
 
@@ -253,7 +275,6 @@ func (op Outer[DT, T]) String() string { return "⊗" }
 
 // Type informs the type of Outer: Tensor-n a → Tensor-n a → Matrix a
 func (op Outer[DT, T]) Type() hm.Type {
-
 	a := hm.TypeVariable('a')
 	t := types.MakeTensorType(-1, a)
 	m := types.MakeTensorType(2, a)
@@ -274,32 +295,54 @@ func (op Outer[DT, T]) ShapeExpr() shapes.Expr {
 	)
 }
 
-// Do performs the outer product operation.
-func (op Outer[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+func (op Outer[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return retVal, err
 	}
+	ctx2, task := trace.NewTask(ctx, op.String())
+	e := tensor.GetEngine(a, b)
 
+	var prepper tensor.SpecializedFuncOptHandler[DT, T]
+	var ok bool
+	if prepper, ok = e.(tensor.SpecializedFuncOptHandler[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, prepper, errors.ThisFn())
+	}
+
+	expShape := shapes.Shape{a.Shape().TotalSize(), b.Shape().TotalSize()}
+	if retVal, _, err = prepper.HandleFuncOptsSpecialized(a, expShape, tensor.WithReuse(prealloc)); err != nil {
+		return retVal, errors.Wrapf(err, errors.FailedFuncOpt, errors.ThisFn())
+	}
+
+	var bla tensor.BLA[DT, T]
+	if bla, ok = e.(tensor.BLA[DT, T]); !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, bla, errors.ThisFn())
+	}
+	// var incr []DT
+	// if fo.Incr {
+	// 	incr = make([]DT, len(retVal.Data()))
+	// 	copy(incr, retVal.Data())
+	// }
+
+	if err = bla.Outer(ctx2, a, b, retVal, nil); err != nil {
+		return retVal, err
+	}
+	task.End()
+	return retVal, err
+}
+
+// Do performs the outer product operation.
+func (op Outer[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	a := vs[0]
 	b := vs[1]
-	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.Outer(a, b, tensor.WithContext(ctx2))
-
-	task.End()
-
-	return retVal, err
+	var prealloc T
+	return op.do(ctx, a, b, prealloc)
 }
 
 // PreallocDo performs the outer product operation with a preallocated value.
 // PreallocDo allows MatMul to implement ops.PreallocDo
 func (op Outer[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
-		return retVal, err
-	}
 	a := vs[0]
 	b := vs[1]
-	ctx2, task := trace.NewTask(ctx, op.String())
-	retVal, err = tensor.Outer(a, b, tensor.WithReuse(prealloc), tensor.WithContext(ctx2))
-	task.End()
-	return retVal, err
+	return op.do(ctx, a, b, prealloc)
+
 }

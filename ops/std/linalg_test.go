@@ -106,7 +106,7 @@ func TestMatVecMul(t *testing.T) {
 
 func TestInner(t *testing.T) {
 	assert := assert.New(t)
-	op := VecDot[float64, *dense.Dense[float64]]{}
+	op := Inner[float64, *dense.Dense[float64]]{}
 
 	// basic test
 	assert.Equal(2, op.Arity())
