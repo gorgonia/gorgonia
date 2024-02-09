@@ -26,28 +26,28 @@ func (op subOp[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	defer task.End()
 
-	e, newAPA, newAPB, ret, fo, err := tensor.PrepBasicBinOpCis[DT](a, b)
+	e, newAPA, newAPB, ret, fo, err := tensor.PrepBasicBinOpCis[DT](a, b, tensor.WithReuse(prealloc))
 	if err != nil {
 		return retVal, err
 	}
 	toIncr := fo.Incr
 	toBroadcast := fo.Broadcast
+	retVal = ret.(T)
 
-	basicarither, ok := e.(tensor.BasicArither[DT, tensor.Basic[DT]])
+	basicarither, ok := e.(tensor.BasicArither[DT, T])
 	if !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, basicarither, errors.ThisFn())
 	}
 
 	switch {
 	case toBroadcast:
-		err = basicarither.SubBroadcastable(ctx, a, b, ret, newAPA, newAPB, toIncr)
+		err = basicarither.SubBroadcastable(ctx, a, b, retVal, newAPA, newAPB, toIncr)
 	default:
 		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
 			return retVal, err
 		}
-		err = basicarither.Sub(ctx2, a, b, ret, toIncr)
+		err = basicarither.Sub(ctx2, a, b, retVal, toIncr)
 	}
-	retVal = ret.(T)
 	return retVal, err
 }
 

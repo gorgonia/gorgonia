@@ -26,28 +26,28 @@ func (op addOp[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	defer task.End()
 
-	e, newAPA, newAPB, ret, fo, err := tensor.PrepBasicBinOpCis[DT](a, b)
+	e, newAPA, newAPB, ret, fo, err := tensor.PrepBasicBinOpCis[DT](a, b, tensor.WithReuse(prealloc))
 	if err != nil {
 		return retVal, err
 	}
 	toIncr := fo.Incr
 	toBroadcast := fo.Broadcast
+	retVal = ret.(T)
 
-	adder, ok := e.(tensor.Adder[DT, tensor.Basic[DT]])
+	adder, ok := e.(tensor.Adder[DT, T])
 	if !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, adder, errors.ThisFn())
 	}
 
 	switch {
 	case toBroadcast:
-		err = adder.AddBroadcastable(ctx, a, b, ret, newAPA, newAPB, toIncr)
+		err = adder.AddBroadcastable(ctx, a, b, retVal, newAPA, newAPB, toIncr)
 	default:
 		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
 			return retVal, err
 		}
-		err = adder.Add(ctx2, a, b, ret, toIncr)
+		err = adder.Add(ctx2, a, b, retVal, toIncr)
 	}
-	retVal = ret.(T)
 	return retVal, err
 }
 

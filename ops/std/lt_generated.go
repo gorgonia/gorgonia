@@ -37,6 +37,7 @@ func (op ltOp[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err e
 	if err != nil {
 		return retVal, err
 	}
+	e = e.BasicEng()
 
 	asSame := fo.AsType == a.Dtype()
 	toBroadcast := fo.Broadcast
