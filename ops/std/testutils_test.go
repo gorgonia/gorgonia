@@ -63,8 +63,11 @@ var specializedTypes = []dtype.Dtype{
 	dtype.Bool, dtype.Int, dtype.Int8, dtype.Int16, dtype.Int32, dtype.Int64, dtype.Uint, dtype.Uint8, dtype.Uint16, dtype.Uint32, dtype.Uint64, dtype.Float32, dtype.Float64, dtype.Complex64, dtype.Complex128, dtype.String,
 }
 
-//go:linkname divmod gorgonia.org/tensor.divmod
-func divmod(a, b int) (q, r int)
+func divmod(a, b int) (q, r int) {
+	q = a / b
+	r = a % b
+	return
+}
 
 func factorize(a int) []int {
 	if a <= 0 {

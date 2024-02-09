@@ -254,7 +254,11 @@ func (op Inner[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	a := vs[0]
 	b := vs[1]
 	ret, err := op.do(ctx, a, b)
-	retVal, _ = values.AnyToScalar(ret)
+	t, ok := any(a).(tensor.Aliker[T])
+	if !ok {
+		return retVal, errors.Errorf("Unable to construct a tensor of type %T representing a scalar value", a)
+	}
+	retVal = t.Alike(tensor.WithBacking([]DT{ret}), tensor.WithShape())
 	return retVal, err
 }
 

@@ -1,12 +1,11 @@
 package datatypes
 
 import (
-	"fmt"
-
 	"github.com/chewxy/hm"
 	"gorgonia.org/dtype"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/types"
+	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 )
 
@@ -58,7 +57,16 @@ func TypeOf(t Tensor) hm.Type {
 	case hm.Typer:
 		return tt.Type()
 	default:
-		panic(fmt.Sprintf("%v of %T is currently unsupported", tt, tt))
+		shp := t.Shape()
+		dt := t.Dtype()
+		if shp.Eq(shapes.ScalarShape()) {
+			return dt
+		}
+		return types.TensorType{
+			Dims: shp.Dims(),
+			Of:   dt,
+		}
+
 	}
 }
 

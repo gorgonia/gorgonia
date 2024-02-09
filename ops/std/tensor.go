@@ -167,8 +167,9 @@ func (op Slice[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (ret
 		return retVal, err
 	}
 	v := vs[0]
-	if s, ok := any(v).(tensor.SlicerInto); ok {
-		return s.SliceInto(prealloc, op.Slices...)
+	if s, ok := any(v).(tensor.SlicerInto[T]); ok {
+		err = s.SliceInto(prealloc, op.Slices...)
+		return retVal, err
 	}
 	return retVal, errors.Errorf("NYI: preallocdo")
 }
@@ -238,8 +239,14 @@ func (op *Reshape[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error)
 	if err := gctx.Handle(ctx); err != nil {
 		return retVal, err
 	}
+	a := vs[0]
+	cloner, ok := any(a).(tensor.ShallowCloner[T])
+	if !ok {
+		return retVal, errors.Errorf("Cannot ShallowClone in order to reshape")
+	}
+	v := cloner.ShallowClone()
 
-	v := values.ShallowClone(any(vs[0]).(tensor.ShallowCloner[T]))
+	//v := values.ShallowClone(any(vs[0]).(tensor.ShallowCloner[T]))
 
 	if err = v.Reshape(op.To...); err != nil {
 		return retVal, errors.Wrapf(err, "Reshape failed. Cannot reshape %v to %v", v.Shape(), op.To)

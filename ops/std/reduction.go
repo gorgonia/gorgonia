@@ -9,6 +9,7 @@ import (
 	"gorgonia.org/gorgonia/exprgraph"
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/internal/errors"
+	"gorgonia.org/tensor"
 	"gorgonia.org/tensor/dense"
 
 	"gorgonia.org/gorgonia/ops"
@@ -40,11 +41,11 @@ func reductionTypeExpr(along shapes.Axes) hm.Type {
 	return hm.NewFnType(a, d)
 }
 
-func denseReduction[DT any](task *trace.Task, ctx context.Context, f func(t *dense.Dense[DT], along ...int) (*dense.Dense[DT], error), along []int, input *dense.Dense[DT]) (retVal *dense.Dense[DT], err error) {
+func denseReduction[DT any](task *trace.Task, ctx context.Context, f func(t *dense.Dense[DT], opts ...tensor.FuncOpt) (*dense.Dense[DT], error), along []int, input *dense.Dense[DT]) (retVal *dense.Dense[DT], err error) {
 	defer task.End()
 	// TODO: put ctx into input.Engine somehow
 	var ret *dense.Dense[DT]
-	if ret, err = f(input, along...); err != nil {
+	if ret, err = f(input, tensor.Along(along...)); err != nil {
 		return nil, errors.Wrapf(err, "Failed to perform reduction of %v", errors.ThisFn())
 	}
 	return ret, err
@@ -73,7 +74,7 @@ func (op *Reduction[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err erro
 func (op *Reduction[DT, T]) String() string { return fmt.Sprintf("%v/", op.op) }
 
 // Sum is an op that performs a reduction with + along the given axes
-type Sum[DT any, T values.Value[DT]] struct {
+type Sum[DT tensor.Num, T values.Value[DT]] struct {
 	along shapes.Axes
 }
 
@@ -96,7 +97,7 @@ func (op *Sum[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	case *dense.Dense[DT]:
 		ctx2, task := trace.NewTask(ctx, op.String())
 		var ret any
-		ret, err = denseReduction(task, ctx2, (*dense.Dense[DT]).Sum, axesToInts(op.along), t)
+		ret, err = denseReduction(task, ctx2, dense.Sum, axesToInts(op.along), t)
 		if err != nil {
 			return retVal, err
 		}

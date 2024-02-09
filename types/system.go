@@ -16,8 +16,9 @@ type canonizable interface {
 // Infer infers the application of the children on the opType. Note that children should already match the arity of the opType.
 //
 // Example:
-// 	opType: a → a → a
-// 	children: [Float64, Float64, b] // note that `b` has to already been passed in.
+//
+//	opType: a → a → a
+//	children: [Float64, Float64, b] // note that `b` has to already been passed in.
 func Infer(opType hm.Type, children ...hm.Type) (retVal hm.Type, err error) {
 
 	last := children[len(children)-1]
