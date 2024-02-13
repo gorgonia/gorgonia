@@ -177,11 +177,11 @@ var cmpTestInputBool = binopTestInput{
 
 	AVS: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
 	BVS: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{100}))",
-	CVS: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))",
+	CVS: "dense.New[bool](tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))",
 
 	ASV: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{100}))",
 	BSV: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
-	CSV: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))",
+	CSV: "dense.New[bool](tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))",
 }
 
 var cmpTestResultsSame = []binopTestResult{

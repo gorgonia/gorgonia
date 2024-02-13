@@ -14,8 +14,8 @@ import (
 	"gorgonia.org/tensor/dense"
 )
 
-func Test_lteVV_RetSame(t *testing.T) {
-	op := lteVV[float64, *dense.Dense[float64]]{lteOp[float64, *dense.Dense[float64]]{retSame: true}, binopVV{}}
+func Test_lteVVRS_RetSame(t *testing.T) {
+	op := lteVVRS[float64, *dense.Dense[float64]]{}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -33,15 +33,15 @@ func Test_lteVV_RetSame(t *testing.T) {
 
 	// type and shape checks
 	if expectedType, err = typecheck(op, a, b); err != nil {
-		t.Fatalf("Expected lteVV{} to pass type checking. Err: %v", err)
+		t.Fatalf("Expected lteVVRS{} to pass type checking. Err: %v", err)
 	}
 	if expectedShape, err = shapecheck(op, a, b); err != nil {
-		t.Fatalf("Expected lteVV{} to pass shape checking. Err: %v", err)
+		t.Fatalf("Expected lteVVRS{} to pass shape checking. Err: %v", err)
 	}
 
 	// actually doing and testing
 	if c, err = op.Do(context.Background(), a, b); err != nil {
-		t.Fatalf("Expected lteVV{} to work correctly. Err: %v", err)
+		t.Fatalf("Expected lteVVRS{} to work correctly. Err: %v", err)
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
@@ -57,16 +57,16 @@ func Test_lteVV_RetSame(t *testing.T) {
 
 	// type and shape checks
 	if expectedType, err = typecheck(op, a, b); err != nil {
-		t.Fatalf("Expected lteVV{} to pass type checking. Err: %v", err)
+		t.Fatalf("Expected lteVVRS{} to pass type checking. Err: %v", err)
 	}
 	if expectedShape, err = shapecheck(op, a, b); err != nil {
-		t.Fatalf("Expected lteVV{} to pass shape checking. Err: %v", err)
+		t.Fatalf("Expected lteVVRS{} to pass shape checking. Err: %v", err)
 	}
 
 	// actually PreallocDo-ing and testing
 	c, err = op.PreallocDo(context.Background(), c, a, b)
 	if err != nil {
-		t.Fatalf("Expected lteVV{}'s Prealloc to work. Err: %v", err)
+		t.Fatalf("Expected lteVVRS{}'s Prealloc to work. Err: %v", err)
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
@@ -85,8 +85,8 @@ func Test_lteVV_RetSame(t *testing.T) {
 
 }
 
-func Test_lteVS_RetSame(t *testing.T) {
-	op := lteVS[float64, *dense.Dense[float64]]{lteOp[float64, *dense.Dense[float64]]{retSame: true}, binopVS{}}
+func Test_lteVSRS_RetSame(t *testing.T) {
+	op := lteVSRS[float64, *dense.Dense[float64]]{}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -104,15 +104,15 @@ func Test_lteVS_RetSame(t *testing.T) {
 
 	// type and shape checks
 	if expectedType, err = typecheck(op, a, b); err != nil {
-		t.Fatalf("Expected lteVS{} to pass type checking. Err: %v", err)
+		t.Fatalf("Expected lteVSRS{} to pass type checking. Err: %v", err)
 	}
 	if expectedShape, err = shapecheck(op, a, b); err != nil {
-		t.Fatalf("Expected lteVS{} to pass shape checking. Err: %v", err)
+		t.Fatalf("Expected lteVSRS{} to pass shape checking. Err: %v", err)
 	}
 
 	// actually doing and test
 	if c, err = op.Do(context.Background(), a, b); err != nil {
-		t.Fatalf("Expected lteVS{} to work correctly. Err: %v", err)
+		t.Fatalf("Expected lteVSRS{} to work correctly. Err: %v", err)
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
@@ -127,13 +127,13 @@ func Test_lteVS_RetSame(t *testing.T) {
 	// actually PreallocDo-ing and checking
 	c, err = op.PreallocDo(context.Background(), c, a, b)
 	if err != nil {
-		t.Fatalf("Expected lteVS{}'s Prealloc to work. Err: %v", err)
+		t.Fatalf("Expected lteVSRS{}'s Prealloc to work. Err: %v", err)
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
 	assert.Equal(t, correct, c.Data())
 
-	/* bad cases: lteVS{} on tensor-tensor */
+	/* bad cases: lteVSRS{} on tensor-tensor */
 
 	b = dense.New[float64](tensor.WithShape(2, 3))
 	// we won't type check because the type system is not a dependent type system, thus
@@ -143,8 +143,8 @@ func Test_lteVS_RetSame(t *testing.T) {
 	}
 }
 
-func Test_lteSV_RetSame(t *testing.T) {
-	op := lteSV[float64, *dense.Dense[float64]]{lteOp[float64, *dense.Dense[float64]]{retSame: true}, binopSV{}}
+func Test_lteSVRS_RetSame(t *testing.T) {
+	op := lteSVRS[float64, *dense.Dense[float64]]{}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -162,15 +162,15 @@ func Test_lteSV_RetSame(t *testing.T) {
 
 	// type and shape checks
 	if expectedType, err = typecheck(op, a, b); err != nil {
-		t.Fatalf("Expected lteSV{} to pass type checking. Err: %v", err)
+		t.Fatalf("Expected lteSVRS{} to pass type checking. Err: %v", err)
 	}
 	if expectedShape, err = shapecheck(op, a, b); err != nil {
-		t.Fatalf("Expected lteSV{} to pass shape checking. Err: %v", err)
+		t.Fatalf("Expected lteSVRS{} to pass shape checking. Err: %v", err)
 	}
 
 	// actually doing and test
 	if c, err = op.Do(context.Background(), a, b); err != nil {
-		t.Fatalf("Expected lteSV{} to work correctly. Err: %v", err)
+		t.Fatalf("Expected lteSVRS{} to work correctly. Err: %v", err)
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
@@ -185,7 +185,7 @@ func Test_lteSV_RetSame(t *testing.T) {
 	// actually PreallocDo-ing and checking
 	c, err = op.PreallocDo(context.Background(), c, a, b)
 	if err != nil {
-		t.Fatalf("Expected lteVS{}'s Prealloc to work. Err: %v", err)
+		t.Fatalf("Expected lteVSRS{}'s Prealloc to work. Err: %v", err)
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
@@ -202,7 +202,7 @@ func Test_lteSV_RetSame(t *testing.T) {
 }
 
 func Test_lteVV(t *testing.T) {
-	op := lteVV[float64, *dense.Dense[float64]]{}
+	op := lteVV[float64, *dense.Dense[float64], *dense.Dense[bool]]{}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -273,7 +273,7 @@ func Test_lteVV(t *testing.T) {
 }
 
 func Test_lteVS(t *testing.T) {
-	op := lteVS[float64, *dense.Dense[float64]]{}
+	op := lteVS[float64, *dense.Dense[float64], *dense.Dense[bool]]{}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -309,7 +309,7 @@ func Test_lteVS(t *testing.T) {
 	/* PreallocDo */
 
 	// set up - create a new preallocated result
-	c = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))
+	c = dense.New[bool](tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))
 
 	// actually PreallocDo-ing and checking
 	c, err = op.PreallocDo(context.Background(), c, a, b)
@@ -331,7 +331,7 @@ func Test_lteVS(t *testing.T) {
 }
 
 func Test_lteSV(t *testing.T) {
-	op := lteSV[float64, *dense.Dense[float64]]{}
+	op := lteSV[float64, *dense.Dense[float64], *dense.Dense[bool]]{}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -367,7 +367,7 @@ func Test_lteSV(t *testing.T) {
 	/* PreallocDo */
 
 	// set up - create a new preallocated result
-	c = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))
+	c = dense.New[bool](tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))
 
 	// actually PreallocDo-ing and checking
 	c, err = op.PreallocDo(context.Background(), c, a, b)

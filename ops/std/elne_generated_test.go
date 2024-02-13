@@ -14,8 +14,8 @@ import (
 	"gorgonia.org/tensor/dense"
 )
 
-func Test_elNeVV_RetSame(t *testing.T) {
-	op := elNeVV[float64, *dense.Dense[float64]]{elNeOp[float64, *dense.Dense[float64]]{retSame: true}, binopVV{}}
+func Test_elNeVVRS_RetSame(t *testing.T) {
+	op := elNeVVRS[float64, *dense.Dense[float64]]{}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -33,15 +33,15 @@ func Test_elNeVV_RetSame(t *testing.T) {
 
 	// type and shape checks
 	if expectedType, err = typecheck(op, a, b); err != nil {
-		t.Fatalf("Expected elNeVV{} to pass type checking. Err: %v", err)
+		t.Fatalf("Expected elNeVVRS{} to pass type checking. Err: %v", err)
 	}
 	if expectedShape, err = shapecheck(op, a, b); err != nil {
-		t.Fatalf("Expected elNeVV{} to pass shape checking. Err: %v", err)
+		t.Fatalf("Expected elNeVVRS{} to pass shape checking. Err: %v", err)
 	}
 
 	// actually doing and testing
 	if c, err = op.Do(context.Background(), a, b); err != nil {
-		t.Fatalf("Expected elNeVV{} to work correctly. Err: %v", err)
+		t.Fatalf("Expected elNeVVRS{} to work correctly. Err: %v", err)
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
@@ -57,16 +57,16 @@ func Test_elNeVV_RetSame(t *testing.T) {
 
 	// type and shape checks
 	if expectedType, err = typecheck(op, a, b); err != nil {
-		t.Fatalf("Expected elNeVV{} to pass type checking. Err: %v", err)
+		t.Fatalf("Expected elNeVVRS{} to pass type checking. Err: %v", err)
 	}
 	if expectedShape, err = shapecheck(op, a, b); err != nil {
-		t.Fatalf("Expected elNeVV{} to pass shape checking. Err: %v", err)
+		t.Fatalf("Expected elNeVVRS{} to pass shape checking. Err: %v", err)
 	}
 
 	// actually PreallocDo-ing and testing
 	c, err = op.PreallocDo(context.Background(), c, a, b)
 	if err != nil {
-		t.Fatalf("Expected elNeVV{}'s Prealloc to work. Err: %v", err)
+		t.Fatalf("Expected elNeVVRS{}'s Prealloc to work. Err: %v", err)
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
@@ -85,8 +85,8 @@ func Test_elNeVV_RetSame(t *testing.T) {
 
 }
 
-func Test_elNeVS_RetSame(t *testing.T) {
-	op := elNeVS[float64, *dense.Dense[float64]]{elNeOp[float64, *dense.Dense[float64]]{retSame: true}, binopVS{}}
+func Test_elNeVSRS_RetSame(t *testing.T) {
+	op := elNeVSRS[float64, *dense.Dense[float64]]{}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -104,15 +104,15 @@ func Test_elNeVS_RetSame(t *testing.T) {
 
 	// type and shape checks
 	if expectedType, err = typecheck(op, a, b); err != nil {
-		t.Fatalf("Expected elNeVS{} to pass type checking. Err: %v", err)
+		t.Fatalf("Expected elNeVSRS{} to pass type checking. Err: %v", err)
 	}
 	if expectedShape, err = shapecheck(op, a, b); err != nil {
-		t.Fatalf("Expected elNeVS{} to pass shape checking. Err: %v", err)
+		t.Fatalf("Expected elNeVSRS{} to pass shape checking. Err: %v", err)
 	}
 
 	// actually doing and test
 	if c, err = op.Do(context.Background(), a, b); err != nil {
-		t.Fatalf("Expected elNeVS{} to work correctly. Err: %v", err)
+		t.Fatalf("Expected elNeVSRS{} to work correctly. Err: %v", err)
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
@@ -127,13 +127,13 @@ func Test_elNeVS_RetSame(t *testing.T) {
 	// actually PreallocDo-ing and checking
 	c, err = op.PreallocDo(context.Background(), c, a, b)
 	if err != nil {
-		t.Fatalf("Expected elNeVS{}'s Prealloc to work. Err: %v", err)
+		t.Fatalf("Expected elNeVSRS{}'s Prealloc to work. Err: %v", err)
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
 	assert.Equal(t, correct, c.Data())
 
-	/* bad cases: elNeVS{} on tensor-tensor */
+	/* bad cases: elNeVSRS{} on tensor-tensor */
 
 	b = dense.New[float64](tensor.WithShape(2, 3))
 	// we won't type check because the type system is not a dependent type system, thus
@@ -143,8 +143,8 @@ func Test_elNeVS_RetSame(t *testing.T) {
 	}
 }
 
-func Test_elNeSV_RetSame(t *testing.T) {
-	op := elNeSV[float64, *dense.Dense[float64]]{elNeOp[float64, *dense.Dense[float64]]{retSame: true}, binopSV{}}
+func Test_elNeSVRS_RetSame(t *testing.T) {
+	op := elNeSVRS[float64, *dense.Dense[float64]]{}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -162,15 +162,15 @@ func Test_elNeSV_RetSame(t *testing.T) {
 
 	// type and shape checks
 	if expectedType, err = typecheck(op, a, b); err != nil {
-		t.Fatalf("Expected elNeSV{} to pass type checking. Err: %v", err)
+		t.Fatalf("Expected elNeSVRS{} to pass type checking. Err: %v", err)
 	}
 	if expectedShape, err = shapecheck(op, a, b); err != nil {
-		t.Fatalf("Expected elNeSV{} to pass shape checking. Err: %v", err)
+		t.Fatalf("Expected elNeSVRS{} to pass shape checking. Err: %v", err)
 	}
 
 	// actually doing and test
 	if c, err = op.Do(context.Background(), a, b); err != nil {
-		t.Fatalf("Expected elNeSV{} to work correctly. Err: %v", err)
+		t.Fatalf("Expected elNeSVRS{} to work correctly. Err: %v", err)
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
@@ -185,7 +185,7 @@ func Test_elNeSV_RetSame(t *testing.T) {
 	// actually PreallocDo-ing and checking
 	c, err = op.PreallocDo(context.Background(), c, a, b)
 	if err != nil {
-		t.Fatalf("Expected elNeVS{}'s Prealloc to work. Err: %v", err)
+		t.Fatalf("Expected elNeVSRS{}'s Prealloc to work. Err: %v", err)
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
@@ -202,7 +202,7 @@ func Test_elNeSV_RetSame(t *testing.T) {
 }
 
 func Test_elNeVV(t *testing.T) {
-	op := elNeVV[float64, *dense.Dense[float64]]{}
+	op := elNeVV[float64, *dense.Dense[float64], *dense.Dense[bool]]{}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -273,7 +273,7 @@ func Test_elNeVV(t *testing.T) {
 }
 
 func Test_elNeVS(t *testing.T) {
-	op := elNeVS[float64, *dense.Dense[float64]]{}
+	op := elNeVS[float64, *dense.Dense[float64], *dense.Dense[bool]]{}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -309,7 +309,7 @@ func Test_elNeVS(t *testing.T) {
 	/* PreallocDo */
 
 	// set up - create a new preallocated result
-	c = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))
+	c = dense.New[bool](tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))
 
 	// actually PreallocDo-ing and checking
 	c, err = op.PreallocDo(context.Background(), c, a, b)
@@ -331,7 +331,7 @@ func Test_elNeVS(t *testing.T) {
 }
 
 func Test_elNeSV(t *testing.T) {
-	op := elNeSV[float64, *dense.Dense[float64]]{}
+	op := elNeSV[float64, *dense.Dense[float64], *dense.Dense[bool]]{}
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
@@ -367,7 +367,7 @@ func Test_elNeSV(t *testing.T) {
 	/* PreallocDo */
 
 	// set up - create a new preallocated result
-	c = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))
+	c = dense.New[bool](tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, false, false, false}))
 
 	// actually PreallocDo-ing and checking
 	c, err = op.PreallocDo(context.Background(), c, a, b)

@@ -56,6 +56,13 @@ type PreallocOp[DT any, T values.Value[DT]] interface {
 	PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error)
 }
 
+// PreallocHKOp represents and Op that has a PreallocDo() method. The PreallocDo method is exactly the same as Do() except it also requres a previously preallocated value.
+type PreallocHKOp[DT1, DT2 any, T values.Value[DT1], U values.Value[DT2]] interface {
+	HKOp[DT1, DT2, T, U]
+
+	PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal U, err error)
+}
+
 // AnalyzableOp is any Op that provides enough intensionality for analysis during compilation phase.
 type AnalyzableOp[DT any, T values.Value[DT]] interface {
 	Op[DT, T]

@@ -16,15 +16,17 @@ import (
 )
 
 // elNeOp is the base op for elementwise not-equal-to.
-type elNeOp[DT any, T values.Value[DT]] struct {
-	binop
-	retSame bool
-}
+type elNeOp[DT any, T values.Value[DT], U values.Value[bool]] struct{ binop }
+
+type elNeOpRS[DT any, T values.Value[DT]] struct{ binop }
 
 // String implements fmt.Stringer.
-func (op elNeOp[DT, T]) String() string { return "≠" }
+func (op elNeOp[DT, T, U]) String() string { return "≠" }
 
-func (op elNeOp[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
+// String implements fmt.Stringer.
+func (op elNeOpRS[DT, T]) String() string { return "≠" }
+
+func (op elNeOp[DT, T, U]) do(ctx context.Context, a, b, prealloc T) (retVal U, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return retVal, err
 	}
@@ -58,12 +60,57 @@ func (op elNeOp[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err
 		}
 		err = comparer.ElNe(ctx2, a, b, ret, asSame)
 	}
+	retVal = ret.(U)
+	return retVal, rr
+}
+
+func (op elNeOpRS[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
+	if err := gctx.Handle(ctx); err != nil {
+		return retVal, err
+	}
+
+	// Do the actual operation
+	ctx2, task := trace.NewTask(ctx, op.String())
+	defer task.End()
+
+	e, newAPA, newAPB, ret, fo, err := tensor.PrepBinOpTrans[DT](a, b, tensor.WithReuse(prealloc), tensor.As(dtype.Datatype[DT]{}))
+	if err != nil {
+		return retVal, err
+	}
+	e = e.BasicEng()
+
+	toBroadcast := fo.Broadcast
+
+	comparer, ok := e.(tensor.Comparer[DT, tensor.Basic[DT]])
+	if !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, comparer, errors.ThisFn())
+	}
+	if fo.Incr {
+		return retVal, errors.Errorf("Unable to perform Incr for elNe")
+	}
+	switch {
+	case toBroadcast:
+		err = comparer.ElNeBroadcastable(ctx, a, b, ret, true, newAPA, newAPB)
+	default:
+		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
+			return retVal, err
+		}
+		err = comparer.ElNe(ctx2, a, b, ret, true)
+	}
 	retVal = ret.(T)
 	return retVal, err
 }
 
 // Do performs elementwise not-equal-to.
-func (op elNeOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+func (op elNeOp[DT, T, U]) Do(ctx context.Context, vs ...T) (retVal U, err error) {
+	a := vs[0]
+	b := vs[1]
+	var prealloc T
+	return op.do(ctx, a, b, prealloc)
+}
+
+// Do performs elementwise not-equal-to.
+func (op elNeOpRS[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	a := vs[0]
 	b := vs[1]
 	var prealloc T
@@ -72,65 +119,115 @@ func (op elNeOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 
 // PreallocDo performs elementwise not-equal-to but with a preallocated return value.
 // PreallocDo allows elNe to implement ops.PreallocOp.
-func (op elNeOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
+func (op elNeOp[DT, T, U]) PreallocDo(ctx context.Context, prealloc U, vs ...T) (retVal U, err error) {
 	a := vs[0]
 	b := vs[1]
 	return op.do(ctx, a, b, prealloc)
-}                                                  // DiffWRT returns {false, false} for elNe
-func (op elNeOp[DT, T]) DiffWRT(inputs int) []bool { return twofalses }
+}
+
+// PreallocDo performs elementwise not-equal-to but with a preallocated return value.
+// PreallocDo allows elNe to implement ops.PreallocOp.
+func (op elNeOpRS[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
+	a := vs[0]
+	b := vs[1]
+	return op.do(ctx, a, b, prealloc)
+}                                                     // DiffWRT returns {false, false} for elNe
+func (op elNeOp[DT, T, U]) DiffWRT(inputs int) []bool { return twofalses }
+
+// DiffWRT returns {false, false} for elNe
+func (op elNeOpRS[DT, T]) DiffWRT(inputs int) []bool { return twofalses }
 
 // elNeVV is a tensor-tensor elementwise not-equal-to.
-type elNeVV[DT any, T values.Value[DT]] struct {
-	elNeOp[DT, T]
+type elNeVV[DT any, T values.Value[DT], U values.Value[bool]] struct {
+	elNeOp[DT, T, U]
 	binopVV
 }
 
-// Type returns the type: (·) : a → a → a or (·) :  a → a → b
-func (op elNeVV[DT, T]) Type() hm.Type {
-	a := hm.TypeVariable('a') // (T U) or U
-	if op.retSame {
-		return types.NewFunc(a, a, a)
-	}
+type elNeVVRS[DT any, T values.Value[DT]] struct {
+	elNeOpRS[DT, T]
+	binopVV
+}
+
+// Type returns the type: (·) (·) :  a → a → b
+func (op elNeVV[DT, T, U]) Type() hm.Type {
+	a := hm.TypeVariable('a')               // (T a) or a
 	b := types.MakeDependent(a, dtype.Bool) // (T Bool) or Bool
 	return types.NewFunc(a, a, b)
 }
 
+// Type returns the type: (·) :  a → a → a
+func (op elNeVVRS[DT, T]) Type() hm.Type {
+	a := hm.TypeVariable('a') // (T a) or a
+	if op.retSame {
+		return types.NewFunc(a, a, a)
+	}
+	return types.NewFunc(a, a, a)
+}
+
 // elNeVS is a tensor-scalar elementwise not-equal-to.
-type elNeVS[DT any, T values.Value[DT]] struct {
-	elNeOp[DT, T]
+type elNeVS[DT any, T values.Value[DT], U values.Value[bool]] struct {
+	elNeOp[DT, T, U]
+	binopVS
+}
+
+// elNeVSRS is a tensor-scalar elementwise not-equal-to.
+type elNeVSRS[DT any, T values.Value[DT]] struct {
+	elNeOpRS[DT, T]
 	binopVS
 }
 
 // String implements fmt.Stringer.
-func (op elNeVS[DT, T]) String() string { return "≠·" }
+func (op elNeVS[DT, T, U]) String() string { return "≠·" }
 
-// Type returns the type: (·) : a → b → a or (·) :  a → b → c
-func (op elNeVS[DT, T]) Type() hm.Type {
-	a := hm.TypeVariable('a') // (T U) or U
-	b := hm.TypeVariable('b') // U
-	if op.retSame {
-		return types.NewFunc(a, b, a)
-	}
+// String implements fmt.Stringer.
+func (op elNeVSRS[DT, T]) String() string { return "≠·" }
+
+// Type returns the type: (·) :  a → b → c
+func (op elNeVS[DT, T, U]) Type() hm.Type {
+	a := hm.TypeVariable('a')               // (T a)
+	b := hm.TypeVariable('b')               // a
 	c := types.MakeDependent(a, dtype.Bool) // (T Bool) or Bool
 	return types.NewFunc(a, b, c)
 }
 
+// Type returns the type: (·) : a → b → a
+func (op elNeVSRS[DT, T]) Type() hm.Type {
+	a := hm.TypeVariable('a')               // (T a) or a
+	b := hm.TypeVariable('b')               // b
+	c := types.MakeDependent(a, dtype.Bool) // (T Bool) or Bool
+	return types.NewFunc(a, b, a)
+}
+
 // elNeSV is a scalar-tensor elementwise not-equal-to.
-type elNeSV[DT any, T values.Value[DT]] struct {
-	elNeOp[DT, T]
+type elNeSV[DT any, T values.Value[DT], U values.Value[bool]] struct {
+	elNeOp[DT, T, U]
+	binopSV
+}
+
+// elNeSV is a scalar-tensor elementwise not-equal-to.
+type elNeSVRS[DT any, T values.Value[DT]] struct {
+	elNeOpRS[DT, T]
 	binopSV
 }
 
 // String implements fmt.Stringer.
-func (op elNeSV[DT, T]) String() string { return "·≠" }
+func (op elNeSV[DT, T, U]) String() string { return "·≠" }
 
-// Type returns the type: (·) : a → b → b or (·) :  a → b → c
-func (op elNeSV[DT, T]) Type() hm.Type {
-	a := hm.TypeVariable('a') // U
-	b := hm.TypeVariable('b') // (T U) or U
-	if op.retSame {
-		return types.NewFunc(a, b, b)
-	}
+// String implements fmt.Stringer.
+func (op elNeSVRS[DT, T]) String() string { return "·≠" }
+
+// Type returns the type: (·) :  a → b → c
+func (op elNeSV[DT, T, U]) Type() hm.Type {
+	a := hm.TypeVariable('a')               // U
+	b := hm.TypeVariable('b')               // (T U) or U
 	c := types.MakeDependent(b, dtype.Bool) // (T Bool) or Bool
 	return types.NewFunc(a, b, c)
+}
+
+// Type returns the type: (·) : a → b → b
+func (op elNeSVRS[DT, T]) Type() hm.Type {
+	a := hm.TypeVariable('a')               // a
+	b := hm.TypeVariable('b')               // (T b) or b
+	c := types.MakeDependent(b, dtype.Bool) // (T Bool) or Bool
+	return types.NewFunc(a, b, b)
 }

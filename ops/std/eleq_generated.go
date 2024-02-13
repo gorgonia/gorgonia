@@ -16,15 +16,17 @@ import (
 )
 
 // elEqOp is the base op for elementwise equal-to.
-type elEqOp[DT any, T values.Value[DT]] struct {
-	binop
-	retSame bool
-}
+type elEqOp[DT any, T values.Value[DT], U values.Value[bool]] struct{ binop }
+
+type elEqOpRS[DT any, T values.Value[DT]] struct{ binop }
 
 // String implements fmt.Stringer.
-func (op elEqOp[DT, T]) String() string { return "=" }
+func (op elEqOp[DT, T, U]) String() string { return "=" }
 
-func (op elEqOp[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
+// String implements fmt.Stringer.
+func (op elEqOpRS[DT, T]) String() string { return "=" }
+
+func (op elEqOp[DT, T, U]) do(ctx context.Context, a, b, prealloc T) (retVal U, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return retVal, err
 	}
@@ -58,12 +60,57 @@ func (op elEqOp[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err
 		}
 		err = comparer.ElEq(ctx2, a, b, ret, asSame)
 	}
+	retVal = ret.(U)
+	return retVal, rr
+}
+
+func (op elEqOpRS[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
+	if err := gctx.Handle(ctx); err != nil {
+		return retVal, err
+	}
+
+	// Do the actual operation
+	ctx2, task := trace.NewTask(ctx, op.String())
+	defer task.End()
+
+	e, newAPA, newAPB, ret, fo, err := tensor.PrepBinOpTrans[DT](a, b, tensor.WithReuse(prealloc), tensor.As(dtype.Datatype[DT]{}))
+	if err != nil {
+		return retVal, err
+	}
+	e = e.BasicEng()
+
+	toBroadcast := fo.Broadcast
+
+	comparer, ok := e.(tensor.Comparer[DT, tensor.Basic[DT]])
+	if !ok {
+		return retVal, errors.Errorf(errors.EngineSupport, e, comparer, errors.ThisFn())
+	}
+	if fo.Incr {
+		return retVal, errors.Errorf("Unable to perform Incr for elEq")
+	}
+	switch {
+	case toBroadcast:
+		err = comparer.ElEqBroadcastable(ctx, a, b, ret, true, newAPA, newAPB)
+	default:
+		if err := checkCompatibleShape(a.Shape(), b.Shape()); err != nil {
+			return retVal, err
+		}
+		err = comparer.ElEq(ctx2, a, b, ret, true)
+	}
 	retVal = ret.(T)
 	return retVal, err
 }
 
 // Do performs elementwise equal-to.
-func (op elEqOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
+func (op elEqOp[DT, T, U]) Do(ctx context.Context, vs ...T) (retVal U, err error) {
+	a := vs[0]
+	b := vs[1]
+	var prealloc T
+	return op.do(ctx, a, b, prealloc)
+}
+
+// Do performs elementwise equal-to.
+func (op elEqOpRS[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	a := vs[0]
 	b := vs[1]
 	var prealloc T
@@ -72,65 +119,115 @@ func (op elEqOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 
 // PreallocDo performs elementwise equal-to but with a preallocated return value.
 // PreallocDo allows elEq to implement ops.PreallocOp.
-func (op elEqOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
+func (op elEqOp[DT, T, U]) PreallocDo(ctx context.Context, prealloc U, vs ...T) (retVal U, err error) {
 	a := vs[0]
 	b := vs[1]
 	return op.do(ctx, a, b, prealloc)
-}                                                  // DiffWRT returns {false, false} for elEq
-func (op elEqOp[DT, T]) DiffWRT(inputs int) []bool { return twofalses }
+}
+
+// PreallocDo performs elementwise equal-to but with a preallocated return value.
+// PreallocDo allows elEq to implement ops.PreallocOp.
+func (op elEqOpRS[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
+	a := vs[0]
+	b := vs[1]
+	return op.do(ctx, a, b, prealloc)
+}                                                     // DiffWRT returns {false, false} for elEq
+func (op elEqOp[DT, T, U]) DiffWRT(inputs int) []bool { return twofalses }
+
+// DiffWRT returns {false, false} for elEq
+func (op elEqOpRS[DT, T]) DiffWRT(inputs int) []bool { return twofalses }
 
 // elEqVV is a tensor-tensor elementwise equal-to.
-type elEqVV[DT any, T values.Value[DT]] struct {
-	elEqOp[DT, T]
+type elEqVV[DT any, T values.Value[DT], U values.Value[bool]] struct {
+	elEqOp[DT, T, U]
 	binopVV
 }
 
-// Type returns the type: (·) : a → a → a or (·) :  a → a → b
-func (op elEqVV[DT, T]) Type() hm.Type {
-	a := hm.TypeVariable('a') // (T U) or U
-	if op.retSame {
-		return types.NewFunc(a, a, a)
-	}
+type elEqVVRS[DT any, T values.Value[DT]] struct {
+	elEqOpRS[DT, T]
+	binopVV
+}
+
+// Type returns the type: (·) (·) :  a → a → b
+func (op elEqVV[DT, T, U]) Type() hm.Type {
+	a := hm.TypeVariable('a')               // (T a) or a
 	b := types.MakeDependent(a, dtype.Bool) // (T Bool) or Bool
 	return types.NewFunc(a, a, b)
 }
 
+// Type returns the type: (·) :  a → a → a
+func (op elEqVVRS[DT, T]) Type() hm.Type {
+	a := hm.TypeVariable('a') // (T a) or a
+	if op.retSame {
+		return types.NewFunc(a, a, a)
+	}
+	return types.NewFunc(a, a, a)
+}
+
 // elEqVS is a tensor-scalar elementwise equal-to.
-type elEqVS[DT any, T values.Value[DT]] struct {
-	elEqOp[DT, T]
+type elEqVS[DT any, T values.Value[DT], U values.Value[bool]] struct {
+	elEqOp[DT, T, U]
+	binopVS
+}
+
+// elEqVSRS is a tensor-scalar elementwise equal-to.
+type elEqVSRS[DT any, T values.Value[DT]] struct {
+	elEqOpRS[DT, T]
 	binopVS
 }
 
 // String implements fmt.Stringer.
-func (op elEqVS[DT, T]) String() string { return "=·" }
+func (op elEqVS[DT, T, U]) String() string { return "=·" }
 
-// Type returns the type: (·) : a → b → a or (·) :  a → b → c
-func (op elEqVS[DT, T]) Type() hm.Type {
-	a := hm.TypeVariable('a') // (T U) or U
-	b := hm.TypeVariable('b') // U
-	if op.retSame {
-		return types.NewFunc(a, b, a)
-	}
+// String implements fmt.Stringer.
+func (op elEqVSRS[DT, T]) String() string { return "=·" }
+
+// Type returns the type: (·) :  a → b → c
+func (op elEqVS[DT, T, U]) Type() hm.Type {
+	a := hm.TypeVariable('a')               // (T a)
+	b := hm.TypeVariable('b')               // a
 	c := types.MakeDependent(a, dtype.Bool) // (T Bool) or Bool
 	return types.NewFunc(a, b, c)
 }
 
+// Type returns the type: (·) : a → b → a
+func (op elEqVSRS[DT, T]) Type() hm.Type {
+	a := hm.TypeVariable('a')               // (T a) or a
+	b := hm.TypeVariable('b')               // b
+	c := types.MakeDependent(a, dtype.Bool) // (T Bool) or Bool
+	return types.NewFunc(a, b, a)
+}
+
 // elEqSV is a scalar-tensor elementwise equal-to.
-type elEqSV[DT any, T values.Value[DT]] struct {
-	elEqOp[DT, T]
+type elEqSV[DT any, T values.Value[DT], U values.Value[bool]] struct {
+	elEqOp[DT, T, U]
+	binopSV
+}
+
+// elEqSV is a scalar-tensor elementwise equal-to.
+type elEqSVRS[DT any, T values.Value[DT]] struct {
+	elEqOpRS[DT, T]
 	binopSV
 }
 
 // String implements fmt.Stringer.
-func (op elEqSV[DT, T]) String() string { return "·=" }
+func (op elEqSV[DT, T, U]) String() string { return "·=" }
 
-// Type returns the type: (·) : a → b → b or (·) :  a → b → c
-func (op elEqSV[DT, T]) Type() hm.Type {
-	a := hm.TypeVariable('a') // U
-	b := hm.TypeVariable('b') // (T U) or U
-	if op.retSame {
-		return types.NewFunc(a, b, b)
-	}
+// String implements fmt.Stringer.
+func (op elEqSVRS[DT, T]) String() string { return "·=" }
+
+// Type returns the type: (·) :  a → b → c
+func (op elEqSV[DT, T, U]) Type() hm.Type {
+	a := hm.TypeVariable('a')               // U
+	b := hm.TypeVariable('b')               // (T U) or U
 	c := types.MakeDependent(b, dtype.Bool) // (T Bool) or Bool
 	return types.NewFunc(a, b, c)
+}
+
+// Type returns the type: (·) : a → b → b
+func (op elEqSVRS[DT, T]) Type() hm.Type {
+	a := hm.TypeVariable('a')               // a
+	b := hm.TypeVariable('b')               // (T b) or b
+	c := types.MakeDependent(b, dtype.Bool) // (T Bool) or Bool
+	return types.NewFunc(a, b, b)
 }
