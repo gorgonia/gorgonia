@@ -78,7 +78,7 @@ type {{.Name}}SV[DT any, T values.Value[DT]] struct { {{.Name}}Op[DT,T] ; binopS
 	a := vs[0]
 	b := vs[1]
 	var prealloc T
-	return op.do(ctx, a, b, prealloc)
+	return op.do(ctx, a,b, prealloc)
 {{- end -}}
 {{- define "PreallocDo" -}}
 	a := vs[0]
@@ -105,7 +105,7 @@ func (op {{.Name}}Op[DT,T,U]) String() string { return "{{.Symbol}}" }
 // String implements fmt.Stringer.
 func (op {{.Name}}OpRS[DT,T]) String() string {return "{{.Symbol}}" }
 
-func (op {{.Name}}Op[DT,T,U]) do(ctx context.Context, a, b, prealloc T) (retVal U, err error) {
+func (op {{.Name}}Op[DT,T,U]) do(ctx context.Context, a, b T, prealloc U) (retVal U, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return retVal, err
 	}
@@ -140,7 +140,7 @@ func (op {{.Name}}Op[DT,T,U]) do(ctx context.Context, a, b, prealloc T) (retVal 
 		err = {{.InterfaceName|lower}}.{{.Method}}(ctx2, a, b, ret, asSame)
 	}
 	retVal = ret.(U)
-	return retVal, rr
+	return retVal, err
 }
 
 func (op {{.Name}}OpRS[DT,T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
@@ -182,25 +182,35 @@ func (op {{.Name}}OpRS[DT,T]) do(ctx context.Context, a, b, prealloc T) (retVal 
 
 // Do performs {{.CommentOp}}.
 func (op {{.Name}}Op[DT,T,U]) Do(ctx context.Context, vs ...T) (retVal U, err error) {
-	{{- template "Do" . -}}
+	a := vs[0]
+	b := vs[1]
+	var prealloc U
+	return op.do(ctx,a,b, prealloc)
 }
 
 // Do performs {{.CommentOp}}.
 func (op {{.Name}}OpRS[DT,T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
-	{{- template "Do" . -}}
+	a := vs[0]
+	b := vs[1]
+	var prealloc T
+	return op.do(ctx,a,b, prealloc)
 }
 
 
 // PreallocDo performs {{.CommentOp}} but with a preallocated return value.
 // PreallocDo allows {{.Name}} to implement ops.PreallocOp.
 func (op {{.Name}}Op[DT,T,U]) PreallocDo(ctx context.Context, prealloc U, vs ...T) (retVal U, err error) {
-	{{- template "PreallocDo" . -}}
+	a := vs[0]
+	b := vs[1]
+	return op.do(ctx, a,b, prealloc)
 }
 
 // PreallocDo performs {{.CommentOp}} but with a preallocated return value.
 // PreallocDo allows {{.Name}} to implement ops.PreallocOp.
 func (op {{.Name}}OpRS[DT,T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
-	{{- template "PreallocDo" . -}}
+	a := vs[0]
+	b := vs[1]
+	return op.do(ctx, a,b, prealloc)
 }
 
 {{- if not .IsDiff -}}
@@ -233,17 +243,6 @@ type {{.Name}}SV[DT any, T values.Value[DT], U values.Value[bool]] struct { {{.N
 type {{.Name}}SVRS[DT any, T values.Value[DT]] struct { {{.Name}}OpRS[DT,T]; binopSV }
 {{end}}
 
-{{- define "Do" -}}
-	a := vs[0]
-	b := vs[1]
-	var prealloc T
-	return op.do(ctx,a,b, prealloc)
-{{- end -}}
-{{- define "PreallocDo" -}}
-	a := vs[0]
-	b := vs[1]
-	return op.do(ctx, a,b, prealloc)
-{{- end -}}
 
 {{define "Type()VV"}}
 // Type returns the type: (·) (·) :  a → a → b
@@ -256,9 +255,6 @@ func (op {{.Name}}VV[DT,T,U]) Type() hm.Type{
 // Type returns the type: (·) :  a → a → a
 func (op {{.Name}}VVRS[DT,T]) Type() hm.Type{
 	a := hm.TypeVariable('a') // (T a) or a
-	if op.retSame{
-		return types.NewFunc(a, a, a)
-	}
 	return types.NewFunc(a,a,a)
 }
 {{end}}
@@ -275,7 +271,6 @@ func (op {{.Name}}VS[DT,T,U]) Type() hm.Type {
 func (op {{.Name}}VSRS[DT,T]) Type() hm.Type {
 	a := hm.TypeVariable('a') // (T a) or a
 	b := hm.TypeVariable('b') // b
-	c := types.MakeDependent(a, dtype.Bool) // (T Bool) or Bool
 	return types.NewFunc(a,b,a)
 }
 {{end}}
@@ -292,7 +287,6 @@ func (op {{.Name}}SV[DT,T,U]) Type() hm.Type {
 func (op {{.Name}}SVRS[DT,T]) Type() hm.Type {
 	a := hm.TypeVariable('a') // a
 	b := hm.TypeVariable('b') // (T b) or b
-	c := types.MakeDependent(b, dtype.Bool) // (T Bool) or Bool
 	return types.NewFunc(a,b,b)
 }
 {{end}}

@@ -26,7 +26,7 @@ func (op ltOp[DT, T, U]) String() string { return "<" }
 // String implements fmt.Stringer.
 func (op ltOpRS[DT, T]) String() string { return "<" }
 
-func (op ltOp[DT, T, U]) do(ctx context.Context, a, b, prealloc T) (retVal U, err error) {
+func (op ltOp[DT, T, U]) do(ctx context.Context, a, b T, prealloc U) (retVal U, err error) {
 	if err := gctx.Handle(ctx); err != nil {
 		return retVal, err
 	}
@@ -61,7 +61,7 @@ func (op ltOp[DT, T, U]) do(ctx context.Context, a, b, prealloc T) (retVal U, er
 		err = ord.Lt(ctx2, a, b, ret, asSame)
 	}
 	retVal = ret.(U)
-	return retVal, rr
+	return retVal, err
 }
 
 func (op ltOpRS[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
@@ -105,7 +105,7 @@ func (op ltOpRS[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err
 func (op ltOp[DT, T, U]) Do(ctx context.Context, vs ...T) (retVal U, err error) {
 	a := vs[0]
 	b := vs[1]
-	var prealloc T
+	var prealloc U
 	return op.do(ctx, a, b, prealloc)
 }
 
@@ -158,9 +158,6 @@ func (op ltVV[DT, T, U]) Type() hm.Type {
 // Type returns the type: (·) :  a → a → a
 func (op ltVVRS[DT, T]) Type() hm.Type {
 	a := hm.TypeVariable('a') // (T a) or a
-	if op.retSame {
-		return types.NewFunc(a, a, a)
-	}
 	return types.NewFunc(a, a, a)
 }
 
@@ -192,9 +189,8 @@ func (op ltVS[DT, T, U]) Type() hm.Type {
 
 // Type returns the type: (·) : a → b → a
 func (op ltVSRS[DT, T]) Type() hm.Type {
-	a := hm.TypeVariable('a')               // (T a) or a
-	b := hm.TypeVariable('b')               // b
-	c := types.MakeDependent(a, dtype.Bool) // (T Bool) or Bool
+	a := hm.TypeVariable('a') // (T a) or a
+	b := hm.TypeVariable('b') // b
 	return types.NewFunc(a, b, a)
 }
 
@@ -226,8 +222,7 @@ func (op ltSV[DT, T, U]) Type() hm.Type {
 
 // Type returns the type: (·) : a → b → b
 func (op ltSVRS[DT, T]) Type() hm.Type {
-	a := hm.TypeVariable('a')               // a
-	b := hm.TypeVariable('b')               // (T b) or b
-	c := types.MakeDependent(b, dtype.Bool) // (T Bool) or Bool
+	a := hm.TypeVariable('a') // a
+	b := hm.TypeVariable('b') // (T b) or b
 	return types.NewFunc(a, b, b)
 }
