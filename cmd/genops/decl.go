@@ -35,6 +35,7 @@ type binopTest struct {
 	Op
 	binopTestInput
 	binopTestResult
+	IsCmp        bool
 	IsCmpRetTrue bool // to generate tests for AsSameType()
 }
 type binopTestInput struct {
@@ -172,7 +173,7 @@ var cmpTestInputBool = binopTestInput{
 	BVV:  "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1,2, 3, 40, 50, 60}))",
 	AVV2: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{1}))",
 	BVV2: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{2}))",
-	CVV:  "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]bool{false}))",
+	CVV:  "dense.New[bool](tensor.WithShape(), tensor.WithBacking([]bool{false}))",
 
 	AVS: "dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))",
 	BVS: "dense.New[float64](tensor.WithShape(), tensor.WithBacking([]float64{100}))",

@@ -23,6 +23,7 @@ func Test_addVV(t *testing.T) {
 
 	// set up
 	var a, b, c *dense.Dense[float64]
+
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
 	var err error
@@ -93,6 +94,7 @@ func Test_addVS(t *testing.T) {
 
 	// set up
 	var a, b, c *dense.Dense[float64]
+
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
 	var err error
@@ -150,6 +152,7 @@ func Test_addSV(t *testing.T) {
 
 	// set up
 	var a, b, c *dense.Dense[float64]
+
 	var expectedType hm.Type
 	var expectedShape shapes.Shape
 	var err error

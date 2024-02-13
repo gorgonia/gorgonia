@@ -124,7 +124,7 @@ func generateBinOp(ops []Op, tmpl *template.Template, unstubbedSymDiffs, unstubb
 
 func generateBinOpTest(ops []Op, input binopTestInput, results []binopTestResult, isCmp bool, tmpl *template.Template) error {
 	for i, op := range ops {
-		opTest := binopTest{Op: op, binopTestInput: input, binopTestResult: results[i]}
+		opTest := binopTest{Op: op, binopTestInput: input, binopTestResult: results[i], IsCmpRetTrue: true, IsCmp: isCmp}
 		filename := strings.ToLower(op.Name) + "_generated_test.go"
 		p := path.Join(stdopsloc, filename)
 		f, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
@@ -138,9 +138,9 @@ func generateBinOpTest(ops []Op, input binopTestInput, results []binopTestResult
 		}
 		// for cmp
 		if isCmp {
-			opTest.IsCmpRetTrue = true
-			opTest.binopTestInput = cmpTestInputSame
-			opTest.binopTestResult = cmpTestResultsSame[i]
+			opTest.IsCmpRetTrue = false
+			opTest.binopTestInput = cmpTestInputBool
+			opTest.binopTestResult = cmpTestResultsBool[i]
 			if err := tmpl.Execute(f, opTest); err != nil {
 				return errors.Wrapf(err, "Unable to execute binopTmpl for %v", op.Name)
 			}
@@ -170,7 +170,7 @@ func generateCmps(unstubbedSymDiffs, unstubbedDoDiffs []string) error {
 	if err := generateBinOp(cmps, cmpOpTmpl, unstubbedSymDiffs, unstubbedDoDiffs); err != nil {
 		return errors.Wrap(err, "generateCmps.generateBinOp")
 	}
-	if err := generateBinOpTest(cmps, cmpTestInputBool, cmpTestResultsBool, true, arithOpTestTmpl); err != nil {
+	if err := generateBinOpTest(cmps, cmpTestInputSame, cmpTestResultsSame, true, arithOpTestTmpl); err != nil {
 		return errors.Wrap(err, "generateCmps.generateBinOpTests")
 	}
 	return nil

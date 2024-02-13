@@ -287,15 +287,16 @@ const arithOpTestRaw = `{{ define "varExpected" }}
 {{- $VV := ( printf "%vVV" .Name ) -}}
 {{- $VS := ( printf "%vVS" .Name ) -}}
 {{- $SV := ( printf "%vSV" .Name ) -}}
-func Test_{{$VV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
-	op := {{$VV}}[float64, *dense.Dense[float64]]{ {{if .IsCmpRetTrue}}{{.Name}}Op[float64, *dense.Dense[float64]]{retSame: true}, binopVV{} {{end}} }
+func Test_{{$VV}}{{if and .IsCmp .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
+	op := {{$VV}}[float64, *dense.Dense[float64]]{ {{if and .IsCmp .IsCmpRetTrue}}{{.Name}}Op[float64, *dense.Dense[float64]]{retSame: true}, binopVV{} {{end}} }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
 	/* Do (using tensor-tensor) */
 
 	// set up
-	var a, b, c *dense.Dense[float64]
+	var a, b {{if .IsCmpRetTrue}},c{{end}} *dense.Dense[float64]
+	{{if not .IsCmpRetTrue}}var c tensor.{{end}}
 	{{- template "varExpected" }}
 	a = {{.AVV}}
 	b = {{.BVV}}
@@ -336,15 +337,17 @@ func Test_{{$VV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 
 }
 
-func Test_{{$VS}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
-	op := {{$VS}}[float64, *dense.Dense[float64]]{ {{if .IsCmpRetTrue}}{{.Name}}Op[float64, *dense.Dense[float64]]{retSame: true}, binopVS{} {{end}} }
+func Test_{{$VS}}{{if and .IsCmp .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
+	op := {{$VS}}[float64, *dense.Dense[float64]]{ {{if and .IsCmp .IsCmpRetTrue}}{{.Name}}Op[float64, *dense.Dense[float64]]{retSame: true}, binopVS{} {{end}} }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
 	/* Do */
 
 	// set up
-	var a, b, c *dense.Dense[float64]
+	var a, b {{if .IsCmpRetTrue}},c{{end}} *dense.Dense[float64]
+	{{if not .IsCmpRetTrue}}var c *dense.Dense[bool]{{end}}
+
 	{{- template "varExpected" }}
 	a = {{.AVS}}
 	b = {{.BVS}}
@@ -376,15 +379,17 @@ func Test_{{$VS}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
 	}
 }
 
-func Test_{{$SV}}{{if .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
-	op := {{$SV}}[float64, *dense.Dense[float64]]{ {{if .IsCmpRetTrue}}{{.Name}}Op[float64, *dense.Dense[float64]]{retSame: true}, binopSV{} {{end}}  }
+func Test_{{$SV}}{{if and .IsCmp .IsCmpRetTrue}}_RetSame{{end}}(t *testing.T) {
+	op := {{$SV}}[float64, *dense.Dense[float64]]{ {{if and .IsCmp .IsCmpRetTrue}}{{.Name}}Op[float64, *dense.Dense[float64]]{retSame: true}, binopSV{} {{end}}  }
 	// basic test
 	assert.Equal(t, 2, op.Arity())
 
 	/* Do */
 
 	// set up
-	var a, b, c *dense.Dense[float64]
+	var a, b {{if .IsCmpRetTrue}},c{{end}} *dense.Dense[float64]
+	{{if not .IsCmpRetTrue}}var c *dense.Dense[bool]{{end}}
+
 	{{- template "varExpected" }}
 	a = {{.ASV}}
 	b = {{.BSV}}
