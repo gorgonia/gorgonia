@@ -643,22 +643,42 @@ const binopAPIRaw = `{{- $cmp := "" -}}
 {{- $vv := "" -}}
 {{- $vs := "" -}}
 {{- $sv := "" -}}
+{{- $vvrs := "" -}}
+{{- $vsrs := "" -}}
+{{- $svrs := "" -}}
 {{- if .IsCmp -}}
 {{- $cmp = ", retSame bool" -}}
-{{- $vv = (printf "%vVV[DT,T]{%vOp[DT,T]{retSame: retSame}, binopVV{}}" .Name .Name ) -}}
-{{- $vs = (printf "%vVS[DT,T]{%vOp[DT,T]{retSame: retSame}, binopVS{}}" .Name .Name ) -}}
-{{- $sv = (printf "%vSV[DT,T]{%vOp[DT,T]{retSame: retSame}, binopSV{}}" .Name .Name ) -}}
+{{- $vvrs = (printf "%vVVRS[DT,T]{}" .Name ) -}}
+{{- $vsrs = (printf "%vVSRS[DT,T]{}" .Name ) -}}
+{{- $svrs = (printf "%vSVRS[DT,T]{}" .Name ) -}}
+{{- $vv = (printf "%vVV[DT,T, values.Value[bool]]{}" .Name ) -}}
+{{- $vs = (printf "%vVS[DT,T, values.Value[bool]]{}" .Name ) -}}
+{{- $sv = (printf "%vSV[DT,T, values.Value[bool]]{}" .Name ) -}}
 {{- else -}}
-{{- $cmp = ""}}
 {{- $vv = (printf "%vVV[DT, T]{}" .Name ) -}}
 {{- $vs = (printf "%vVS[DT,T]{}" .Name ) -}}
 {{- $sv = (printf "%vSV[DT,T]{}" .Name ) -}}
 {{- end -}}
 
 // {{.Name | title}} creates an ops.Op that is correct to the shape of the given operands.
-func {{.Name | title}}[DT any, T values.Value[DT]](a, b ops.Operand {{$cmp}}) ops.PreallocOp[DT,T] {
+func {{.Name | title}}[DT any, T values.Value[DT]](a, b ops.Operand {{$cmp}}) ops.Desc {
 	aScalar := a.Shape().IsScalar()
 	bScalar := b.Shape().IsScalar()
+
+	{{ if .IsCmp -}}
+	if retSame {
+		switch {
+		default:
+			fallthrough
+		case !aScalar && !bScalar:
+			return {{$vvrs}}
+		case !aScalar && bScalar:
+			return {{$vsrs}}
+		case aScalar && !bScalar:
+			return {{$svrs}}
+		}
+	}
+	{{- end }}
 
 	switch {
 	default:
