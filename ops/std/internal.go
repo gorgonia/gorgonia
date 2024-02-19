@@ -36,7 +36,13 @@ func (op binopVV) Type() hm.Type {
 // ShapeExpr returns the shape expression of (·) : a → a → a.
 func (op binopVV) ShapeExpr() shapes.Expr {
 	a := shapes.Var('a')
-	return shapes.MakeArrow(a, a, a)
+	b := shapes.Var('b')
+	raw := shapes.MakeArrow(a, b, shapes.BroadcastOf{a, b})
+	return shapes.Compound{raw, shapes.SubjectTo{
+		shapes.Bc,
+		shapes.UnaryOp{shapes.Const, a},
+		shapes.UnaryOp{shapes.Const, b},
+	}}
 }
 
 type binopVS struct{}
