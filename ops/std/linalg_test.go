@@ -135,7 +135,7 @@ func TestInner(t *testing.T) {
 	}
 	assert.Equal(expectedType, datatypes.TypeOf(c))
 	assert.True(expectedShape.Eq(c.Shape()))
-	correct := 14.0
+	correct := []float64{14.0}
 	assert.Equal(correct, c.Data())
 
 	// prealloc
