@@ -8,6 +8,7 @@ import (
 	"testing/quick"
 
 	"github.com/chewxy/hm"
+	"gorgonia.org/gorgonia/internal"
 	"gorgonia.org/gorgonia/internal/datatypes"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
@@ -100,7 +101,7 @@ func TestTranspose_Basic(t *testing.T) {
 		}
 
 		b, err := op.Do(context.Background(), a)
-		if err != nil {
+		if err = internal.HandleNoOp(err); err != nil {
 			t.Errorf("Expected %v to work correctly. Error: %v", op, err)
 			return false
 		}

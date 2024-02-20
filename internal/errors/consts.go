@@ -31,6 +31,12 @@ const (
 	EngineSupport = "Engine %T does not implement %T, which is needed for %s"
 )
 
+// NoOpError represents an error that is a NoOp. This is standardized across all Gorgonia family packages - every package should have their own NoOpError interface declared.
+type NoOpError interface {
+	NoOp()
+}
+
+// NoOp represents a no-operation required error. It's not strictly an error per se.
 type NoOp struct{}
 
 func (err NoOp) Error() string { return noopMsg }

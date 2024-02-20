@@ -14,17 +14,17 @@ import (
 
 var sumTests = []struct {
 	shape        shapes.Shape
-	backing      interface{}
+	backing      []float64
 	along        shapes.Axes
 	correctShape shapes.Shape
-	correctData  interface{}
+	correctData  []float64
 }{
 	{
 		shapes.Shape{6},
 		[]float64{1, 2, 3, 4, 5, 6},
 		nil,
 		shapes.ScalarShape(),
-		21.0,
+		[]float64{21.0},
 	},
 
 	{
@@ -32,7 +32,7 @@ var sumTests = []struct {
 		[]float64{1, 2, 3, 4, 5, 6},
 		nil,
 		shapes.ScalarShape(),
-		21.0,
+		[]float64{21.0},
 	},
 
 	{
@@ -56,7 +56,7 @@ var sumTests = []struct {
 		[]float64{1, 2, 3, 4, 5, 6},
 		shapes.Axes{0, 1},
 		shapes.ScalarShape(),
-		21.0,
+		[]float64{21.0},
 	},
 }
 
