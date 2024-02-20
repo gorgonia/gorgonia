@@ -661,7 +661,7 @@ const binopAPIRaw = `{{- $cmp := "" -}}
 {{- end -}}
 
 // {{.Name | title}} creates an ops.Op that is correct to the shape of the given operands.
-func {{.Name | title}}[DT any, T values.Value[DT]](a, b ops.Operand {{$cmp}}) ops.Desc {
+func {{.Name | title}}[DT any, T values.Value[DT]](a, b ops.Operand {{$cmp}}) {{if .IsCmp}}ops.Desc{{else}}ops.PreallocOp[DT,T]{{end}} {
 	aScalar := a.Shape().IsScalar()
 	bScalar := b.Shape().IsScalar()
 
@@ -708,47 +708,47 @@ const binopAPITestRaw = `{{- $retSameFalse := "" -}}
 func Test{{.Name | title}}(t *testing.T){
 	assert := assert.New(t)
 
-	var op, expected ops.Op[float64, *dense.Dense[float64]]
+	var op, expected ops.Desc
 
 	// test vv
 	a := dense.New[float64](tensor.WithShape(2,3))
 	b := dense.New[float64](tensor.WithShape(2,3))
 	op = {{.Name | title}}[float64, *dense.Dense[float64]](a, b {{$retSameFalse}})
-	expected = {{.Name}}VV[float64, *dense.Dense[float64]]{ {{if .IsCmp}} {{.Name}}Op[float64, *dense.Dense[float64]]{ {{$cmpfalse}} }, binopVV{} {{end}} }
+	expected = {{.Name}}VV[float64, *dense.Dense[float64] {{if .IsCmp}}, *dense.Dense[bool]{{end}}]{}
 	assert.Equal(op, expected)
 
 
 {{ if .IsCmp }}
 	// test vv but retSame = true
 	op = {{.Name | title}}[float64, *dense.Dense[float64]](a, b {{$retSameTrue}})
-	expected = {{.Name}}VV[float64, *dense.Dense[float64]]{ {{.Name}}Op[float64, *dense.Dense[float64]]{ {{$cmptrue}} }, binopVV{} }
+	expected = {{.Name}}VVRS[float64, *dense.Dense[float64]]{}
 	assert.Equal(op, expected)
 {{ end }}
 
 	// test vs
 	b = dense.New[float64](tensor.WithShape())
 	op = {{.Name | title}}[float64, *dense.Dense[float64]](a, b {{$retSameFalse}})
-	expected = {{.Name}}VS[float64, *dense.Dense[float64]]{ {{if .IsCmp}} {{.Name}}Op[float64, *dense.Dense[float64]]{ {{$cmpfalse}} }, binopVS{} {{end}} }
+	expected = {{.Name}}VS[float64, *dense.Dense[float64] {{if .IsCmp}}, *dense.Dense[bool]{{end}}]{ }
 	assert.Equal(op, expected)
 
 
 {{ if .IsCmp }}
 	// test vs but retSame = true
 	op = {{.Name | title}}[float64, *dense.Dense[float64]](a, b {{$retSameTrue}})
-	expected = {{.Name}}VS[float64, *dense.Dense[float64]]{ {{.Name}}Op[float64, *dense.Dense[float64]]{ {{$cmptrue}} }, binopVS{} }
+	expected = {{.Name}}VSRS[float64, *dense.Dense[float64]]{}
 	assert.Equal(op, expected)
 {{ end }}
 
 
 	// test sv
 	op = {{.Name | title}}[float64, *dense.Dense[float64]](b, a {{$retSameFalse}})
-	expected = {{.Name}}SV[float64, *dense.Dense[float64]]{ {{if .IsCmp}} {{.Name}}Op[float64, *dense.Dense[float64]]{ {{$cmpfalse}} }, binopSV{} {{end}} }
+	expected = {{.Name}}SV[float64, *dense.Dense[float64] {{if .IsCmp}}, *dense.Dense[bool]{{end}}]{ }
 	assert.Equal(op, expected)
 
 {{ if .IsCmp }}
 	// test sv but retSame = true
 	op = {{.Name | title}}[float64, *dense.Dense[float64]](b, a  {{$retSameTrue}})
-	expected = {{.Name}}SV[float64, *dense.Dense[float64]]{ {{.Name}}Op[float64, *dense.Dense[float64]]{ {{$cmptrue}} }, binopSV{} }
+	expected = {{.Name}}SVRS[float64, *dense.Dense[float64]]{}
 	assert.Equal(op, expected)
 {{ end }}
 
@@ -756,14 +756,14 @@ func Test{{.Name | title}}(t *testing.T){
 	// test ss
 	a = dense.New[float64](tensor.WithShape())
 	op = {{.Name | title}}[float64, *dense.Dense[float64]](a, b {{$retSameFalse}})
-	expected = {{.Name}}VV[float64, *dense.Dense[float64]]{ {{if .IsCmp}} {{.Name}}Op[float64, *dense.Dense[float64]]{ {{$cmpfalse}} }, binopVV{} {{end}} }
+	expected = {{.Name}}VV[float64, *dense.Dense[float64] {{if .IsCmp}}, *dense.Dense[bool]{{end}}]{ }
 	assert.Equal(op, expected)
 
 
 {{ if .IsCmp }}
 	// test ss but retSame = true
 	op = {{.Name | title}}[float64, *dense.Dense[float64]](a, b {{$retSameTrue}})
-	expected = {{.Name}}VV[float64, *dense.Dense[float64]]{ {{.Name}}Op[float64, *dense.Dense[float64]]{ {{$cmptrue}} }, binopVV{} }
+	expected = {{.Name}}VVRS[float64, *dense.Dense[float64]]{ }
 	assert.Equal(op, expected)
 {{ end }}
 
