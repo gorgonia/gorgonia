@@ -279,6 +279,8 @@ func (n *Symbolic[DT]) Name() string {
 
 func (n *Symbolic[DT]) Dtype() dtype.Dtype { return n.dt }
 
+func (n *Symbolic[DT]) IsNil() bool { return n == nil }
+
 func (n *Symbolic[DT]) Info() *tensor.AP { return &n.AP }
 
 // Type returns the type of the *header. This implements hm.Typer.

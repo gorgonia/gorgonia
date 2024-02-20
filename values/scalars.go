@@ -24,6 +24,8 @@ func (sz Size) Dims() int { return 0 }
 
 func (sz Size) Size() int { return 0 }
 
+func (sz Size) IsNil() bool { return false }
+
 func (sz Size) Info() *tensor.AP { return nil }
 
 func (sz Size) DataSize() int { return 1 }
