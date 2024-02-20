@@ -97,7 +97,7 @@ func (op *Sum[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	case *dense.Dense[DT]:
 		ctx2, task := trace.NewTask(ctx, op.String())
 		var ret any
-		ret, err = denseReduction(task, ctx2, dense.Sum, axesToInts(op.along), t)
+		ret, err = denseReduction(task, ctx2, dense.Sum[DT], axesToInts(op.along), t)
 		if err != nil {
 			return retVal, err
 		}

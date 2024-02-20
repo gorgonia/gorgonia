@@ -70,7 +70,7 @@ func Test_mulVV(t *testing.T) {
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
-	correctScalar := 2.0
+	correctScalar := []float64{2.0}
 	assert.Equal(t, correctScalar, c.Data())
 
 	// bad cases: fails  typecheck and shapecheck

@@ -106,6 +106,7 @@ func (e *Engine[DT,T]) {{.ScalarMethod}}Broadcastable(ctx context.Context, a, b,
 }
 `
 
+
 const unopRaw = `// {{.Method}} implements tensor.{{.Method}}er. It does not support safe or increment options and will return an error if those options are passed in.
 func (e *Engine[DT,T]) {{.Method}}(ctx context.Context, a T, retVal T) (err error) {
 	name := constructUnOpName(a, "{{.KernelName}}")

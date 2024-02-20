@@ -70,7 +70,7 @@ func Test_gteVVRS_RetSame(t *testing.T) {
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
-	correctScalar := 0.0
+	correctScalar := []float64{0.0}
 	assert.Equal(t, correctScalar, c.Data())
 
 	// bad cases: fails  typecheck and shapecheck
@@ -257,7 +257,7 @@ func Test_gteVV(t *testing.T) {
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
-	correctScalar := false
+	correctScalar := []bool{false}
 	assert.Equal(t, correctScalar, c.Data())
 
 	// bad cases: fails  typecheck and shapecheck

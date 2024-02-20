@@ -35,7 +35,7 @@ func (op ltOp[DT, T, U]) do(ctx context.Context, a, b T, prealloc U) (retVal U, 
 	ctx2, task := trace.NewTask(ctx, op.String())
 	defer task.End()
 
-	e, newAPA, newAPB, ret, fo, err := tensor.PrepBinOpTrans[DT](a, b, tensor.WithReuse(prealloc), tensor.As(dtype.Datatype[DT]{}))
+	e, newAPA, newAPB, ret, fo, err := tensor.PrepBinOpTrans[DT](a, b, tensor.WithReuse(prealloc))
 	if err != nil {
 		return retVal, err
 	}

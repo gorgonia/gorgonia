@@ -70,7 +70,7 @@ func Test_divVV(t *testing.T) {
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.True(t, expectedShape.Eq(c.Shape()))
-	correctScalar := 0.5
+	correctScalar := []float64{0.5}
 	assert.Equal(t, correctScalar, c.Data())
 
 	// bad cases: fails  typecheck and shapecheck
