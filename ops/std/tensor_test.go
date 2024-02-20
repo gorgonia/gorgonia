@@ -11,6 +11,7 @@ import (
 	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 	"gorgonia.org/tensor/dense"
+	"gorgonia.org/tensor/scalar"
 )
 
 func TestAt(t *testing.T) {
@@ -41,7 +42,7 @@ func TestAt(t *testing.T) {
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(b))
 	assert.True(t, expectedShape.Eq(b.Shape()))
-	correct := 5.0
+	correct := []float64{5.0}
 	assert.Equal(t, correct, b.Data())
 }
 
@@ -84,6 +85,7 @@ func TestSlice(t *testing.T) {
 	if b, err = op.PreallocDo(context.Background(), b, a); err != nil {
 		t.Fatalf("Expected Slice{}.PreallocDo to work correctly. Err: %v", err)
 	}
+
 	assert.Equal(t, expectedType, datatypes.TypeOf(b))
 	assert.True(t, expectedShape.Eq(b.Shape()))
 	assert.Equal(t, correct, b.Data())
@@ -118,28 +120,31 @@ func TestSize(t *testing.T) {
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(b))
 	assert.True(t, expectedShape.Eq(b.Shape()), "Expected %v. Got %v", expectedShape, b.Shape())
-	correct := 2.0
+	correct := []values.Size{2}
 	assert.Equal(t, correct, b.Data())
 
 	// alternative edition: different op, and different backing datatype
-	op = Size[float64, *dense.Dense[float64]](1)
-	a = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]int{1, 2, 3, 4, 5, 6}))
-	if b, err = op.Do(context.Background(), a); err != nil {
+	opInt := Size[int, *dense.Dense[int]](1)
+	aInt := dense.New[int](tensor.WithShape(2, 3), tensor.WithBacking([]int{1, 2, 3, 4, 5, 6}))
+	bInt, err := opInt.Do(context.Background(), aInt)
+	if err != nil {
 		t.Fatalf("Expected Size{} to work correctly. Err: %v", err)
 	}
-	assert.True(t, expectedShape.Eq(b.Shape()), "Expected %v. Got %v", expectedShape, b.Shape())
-	correctIntData := 3
-	assert.Equal(t, correctIntData, b.Data())
+	assert.True(t, expectedShape.Eq(bInt.Shape()), "Expected %v. Got %v", expectedShape, bInt.Shape())
+	correctIntData := []values.Size{3}
+	assert.Equal(t, correctIntData, bInt.Data())
 
 	// alternative edition: op on scalar
-	op = Size[float64, *dense.Dense[float64]](5) // when the input is scalar, then size of any doesn't really matter does it
-	a = dense.New[float64](tensor.WithShape(), tensor.WithBacking([]bool{true}))
-	if b, err = op.Do(context.Background(), a); err != nil {
+	opScalar := Size[float64, scalar.Scalar[float64]](5) // when the input is scalar, then size of any doesn't really matter does it
+	aScalar := scalar.S(1.0)
+	//a = dense.New[float64](tensor.WithShape(), tensor.WithBacking([]bool{true}))
+	b, err = opScalar.Do(context.Background(), aScalar)
+	if err != nil {
 		t.Fatalf("Expected Size{} to work correctly. Err: %v", err)
 	}
 	assert.True(t, expectedShape.Eq(b.Shape()), "Expected %v. Got %v", expectedShape, b.Shape())
-	correctBoolData := 1
-	assert.Equal(t, correctBoolData, b.Data())
+	correctScalar := []values.Size{1}
+	assert.Equal(t, correctScalar, b.Data())
 
 	// bad size
 	a = dense.New[float64](tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 2, 3, 4, 5, 6}))

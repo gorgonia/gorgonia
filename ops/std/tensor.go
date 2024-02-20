@@ -7,6 +7,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/dtype"
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
@@ -55,7 +56,6 @@ func (op At[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	}
 	task.End()
 	return retVal, err
-
 }
 
 func (op At[DT, T]) String() string { return fmt.Sprintf("At(%v)", []int(op)) }
@@ -69,8 +69,8 @@ func (op Size[DT, T]) Arity() int { return 1 }
 
 func (op Size[DT, T]) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	t := types.MakeTensorType(0, types.Ptr) // types.Ptr is a dummy dtype. types.Dependent relies on the dtype of `a` and the dims of `t`
-	return hm.NewFnType(a, types.MakeDependent(t, a))
+	t := dtype.Datatype[values.Size]{}
+	return hm.NewFnType(a, t)
 }
 
 func (op Size[DT, T]) ShapeExpr() shapes.Expr {
@@ -169,7 +169,7 @@ func (op Slice[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (ret
 	v := vs[0]
 	if s, ok := any(v).(tensor.SlicerInto[T]); ok {
 		err = s.SliceInto(prealloc, op.Slices...)
-		return retVal, err
+		return prealloc, err
 	}
 	return retVal, errors.Errorf("NYI: preallocdo")
 }
