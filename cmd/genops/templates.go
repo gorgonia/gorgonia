@@ -554,7 +554,7 @@ if err := gctx.Handle(ctx); err != nil {
 	e := tensor.GetEngine(a)
 	var {{.InterfaceName | lower}} {{.InterfaceName}}[DT,T]
 	var ok bool
-	if {{.InterfaceName | lower}} = e.({{.InterfaceName}}[DT,T]); !ok{
+	if {{.InterfaceName | lower}}, ok = e.({{.InterfaceName}}[DT,T]); !ok{
 		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
 	}
 	if retVal, _, err = handleFuncOpts[DT,T] (e, a, a.Shape()); err !=nil{
@@ -580,7 +580,7 @@ func (op {{.Name}}Op[DT,T]) PreallocDo(ctx context.Context, prealloc T, vs ...T)
 	e := tensor.GetEngine(a)
 	var {{.InterfaceName | lower}} {{.InterfaceName}}[DT,T]
 	var ok bool
-	if {{.InterfaceName | lower}} = e.({{.InterfaceName}}[DT,T]); !ok{
+	if {{.InterfaceName | lower}}, ok = e.({{.InterfaceName}}[DT,T]); !ok{
 		return retVal, errors.Errorf(errors.EngineSupport, e, {{.InterfaceName | lower}}, errors.ThisFn())
 	}
 	// TODO check that prealloc has the same shape as expected reetVal shape
@@ -588,7 +588,7 @@ func (op {{.Name}}Op[DT,T]) PreallocDo(ctx context.Context, prealloc T, vs ...T)
 		return retVal, err
 	}
 	task.End()
-	return retVal, err
+	return prealloc, err
 }
 
 

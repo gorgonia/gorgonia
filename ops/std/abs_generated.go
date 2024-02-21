@@ -29,7 +29,7 @@ func (op absOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	e := tensor.GetEngine(a)
 	var abser Abser[DT, T]
 	var ok bool
-	if abser = e.(Abser[DT, T]); !ok {
+	if abser, ok = e.(Abser[DT, T]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, abser, errors.ThisFn())
 	}
 	if retVal, _, err = handleFuncOpts[DT, T](e, a, a.Shape()); err != nil {
@@ -55,7 +55,7 @@ func (op absOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (ret
 	e := tensor.GetEngine(a)
 	var abser Abser[DT, T]
 	var ok bool
-	if abser = e.(Abser[DT, T]); !ok {
+	if abser, ok = e.(Abser[DT, T]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, abser, errors.ThisFn())
 	}
 	// TODO check that prealloc has the same shape as expected reetVal shape
@@ -63,5 +63,5 @@ func (op absOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (ret
 		return retVal, err
 	}
 	task.End()
-	return retVal, err
+	return prealloc, err
 }

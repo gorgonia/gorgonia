@@ -29,7 +29,7 @@ func (op cubeOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	e := tensor.GetEngine(a)
 	var cuber Cuber[DT, T]
 	var ok bool
-	if cuber = e.(Cuber[DT, T]); !ok {
+	if cuber, ok = e.(Cuber[DT, T]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, cuber, errors.ThisFn())
 	}
 	if retVal, _, err = handleFuncOpts[DT, T](e, a, a.Shape()); err != nil {
@@ -55,7 +55,7 @@ func (op cubeOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (re
 	e := tensor.GetEngine(a)
 	var cuber Cuber[DT, T]
 	var ok bool
-	if cuber = e.(Cuber[DT, T]); !ok {
+	if cuber, ok = e.(Cuber[DT, T]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, cuber, errors.ThisFn())
 	}
 	// TODO check that prealloc has the same shape as expected reetVal shape
@@ -63,7 +63,7 @@ func (op cubeOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (re
 		return retVal, err
 	}
 	task.End()
-	return retVal, err
+	return prealloc, err
 }
 
 // DiffWRT returns {true} for cube

@@ -29,7 +29,7 @@ func (op invSqrtOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error
 	e := tensor.GetEngine(a)
 	var invsqrter InvSqrter[DT, T]
 	var ok bool
-	if invsqrter = e.(InvSqrter[DT, T]); !ok {
+	if invsqrter, ok = e.(InvSqrter[DT, T]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, invsqrter, errors.ThisFn())
 	}
 	if retVal, _, err = handleFuncOpts[DT, T](e, a, a.Shape()); err != nil {
@@ -55,7 +55,7 @@ func (op invSqrtOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) 
 	e := tensor.GetEngine(a)
 	var invsqrter InvSqrter[DT, T]
 	var ok bool
-	if invsqrter = e.(InvSqrter[DT, T]); !ok {
+	if invsqrter, ok = e.(InvSqrter[DT, T]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, invsqrter, errors.ThisFn())
 	}
 	// TODO check that prealloc has the same shape as expected reetVal shape
@@ -63,7 +63,7 @@ func (op invSqrtOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) 
 		return retVal, err
 	}
 	task.End()
-	return retVal, err
+	return prealloc, err
 }
 
 // DiffWRT returns {true} for invSqrt

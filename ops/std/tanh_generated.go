@@ -29,7 +29,7 @@ func (op tanhOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	e := tensor.GetEngine(a)
 	var tanher Tanher[DT, T]
 	var ok bool
-	if tanher = e.(Tanher[DT, T]); !ok {
+	if tanher, ok = e.(Tanher[DT, T]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, tanher, errors.ThisFn())
 	}
 	if retVal, _, err = handleFuncOpts[DT, T](e, a, a.Shape()); err != nil {
@@ -55,7 +55,7 @@ func (op tanhOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (re
 	e := tensor.GetEngine(a)
 	var tanher Tanher[DT, T]
 	var ok bool
-	if tanher = e.(Tanher[DT, T]); !ok {
+	if tanher, ok = e.(Tanher[DT, T]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, tanher, errors.ThisFn())
 	}
 	// TODO check that prealloc has the same shape as expected reetVal shape
@@ -63,7 +63,7 @@ func (op tanhOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (re
 		return retVal, err
 	}
 	task.End()
-	return retVal, err
+	return prealloc, err
 }
 
 // DiffWRT returns {true} for tanh

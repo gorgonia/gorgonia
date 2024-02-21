@@ -29,7 +29,7 @@ func (op floorOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) 
 	e := tensor.GetEngine(a)
 	var intrepr IntRepr[DT, T]
 	var ok bool
-	if intrepr = e.(IntRepr[DT, T]); !ok {
+	if intrepr, ok = e.(IntRepr[DT, T]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, intrepr, errors.ThisFn())
 	}
 	if retVal, _, err = handleFuncOpts[DT, T](e, a, a.Shape()); err != nil {
@@ -55,7 +55,7 @@ func (op floorOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (r
 	e := tensor.GetEngine(a)
 	var intrepr IntRepr[DT, T]
 	var ok bool
-	if intrepr = e.(IntRepr[DT, T]); !ok {
+	if intrepr, ok = e.(IntRepr[DT, T]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, intrepr, errors.ThisFn())
 	}
 	// TODO check that prealloc has the same shape as expected reetVal shape
@@ -63,5 +63,5 @@ func (op floorOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (r
 		return retVal, err
 	}
 	task.End()
-	return retVal, err
+	return prealloc, err
 }

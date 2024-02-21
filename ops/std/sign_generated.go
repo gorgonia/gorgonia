@@ -29,7 +29,7 @@ func (op signOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 	e := tensor.GetEngine(a)
 	var signer Signer[DT, T]
 	var ok bool
-	if signer = e.(Signer[DT, T]); !ok {
+	if signer, ok = e.(Signer[DT, T]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, signer, errors.ThisFn())
 	}
 	if retVal, _, err = handleFuncOpts[DT, T](e, a, a.Shape()); err != nil {
@@ -55,7 +55,7 @@ func (op signOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (re
 	e := tensor.GetEngine(a)
 	var signer Signer[DT, T]
 	var ok bool
-	if signer = e.(Signer[DT, T]); !ok {
+	if signer, ok = e.(Signer[DT, T]); !ok {
 		return retVal, errors.Errorf(errors.EngineSupport, e, signer, errors.ThisFn())
 	}
 	// TODO check that prealloc has the same shape as expected reetVal shape
@@ -63,5 +63,5 @@ func (op signOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (re
 		return retVal, err
 	}
 	task.End()
-	return retVal, err
+	return prealloc, err
 }

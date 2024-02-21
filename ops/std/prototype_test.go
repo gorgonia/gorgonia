@@ -12,6 +12,10 @@ import (
 	"gorgonia.org/tensor/dense"
 )
 
+var (
+	_ Abser[float64, *dense.Dense[float64]] = dense.StdFloat64Engine[*dense.Dense[float64]]{}
+)
+
 func TestAdd__(t *testing.T) {
 	op := addVV[float64, *dense.Dense[float64]]{}
 	// basic test
