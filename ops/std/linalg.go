@@ -7,6 +7,7 @@ import (
 	"github.com/chewxy/hm"
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/exprgraph"
+	"gorgonia.org/gorgonia/internal"
 	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/types"
@@ -267,9 +268,29 @@ func (op Inner[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 func (op Inner[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
 	a := vs[0]
 	b := vs[1]
+	if err = internal.HandleNoOp(prealloc.Reshape()); err != nil {
+		return retVal, err
+	}
 	ret, err := op.do(ctx, a, b)
+	if err != nil {
+		return retVal, err
+	}
 	err = prealloc.SetAt(ret, 0)
 	retVal = prealloc
+
+	/*
+		// The following cannot happen, but I have left the code commented in case in the future we
+		// want to come back to allow this to be a HKPreallocOp with the return value being a scalar.Scalar.
+		switch p := any(prealloc).(type) {
+		case scalar.Scalar[DT]:
+			p.V = ret
+			retVal = any(p).(T)
+		default:
+			err = prealloc.SetAt(ret, 0)
+			retVal = prealloc
+		}
+	*/
+
 	return retVal, err
 }
 

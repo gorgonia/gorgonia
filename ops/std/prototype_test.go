@@ -59,7 +59,7 @@ func TestAdd__(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected Add{}'s Prealloc to work. Err: %v", err)
 	}
-	correctScalar := 3.0
+	correctScalar := []float64{3.0}
 	assert.Equal(t, expectedType, datatypes.TypeOf(c))
 	assert.Equal(t, correctScalar, c.Data())
 	assert.True(t, expectedShape.Eq(c.Shape()))
@@ -190,7 +190,7 @@ func TestAbs__(t *testing.T) {
 	}
 
 	if b, err = op.Do(context.Background(), a); err != nil {
-		t.Fatalf("Expected AddSV{} to work correctly. Err: %v", err)
+		t.Fatalf("Expected Abs{} to work correctly. Err: %v", err)
 	}
 	assert.Equal(t, expectedType, datatypes.TypeOf(b))
 	assert.True(t, expectedShape.Eq(b.Shape()))

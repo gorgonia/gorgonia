@@ -138,8 +138,11 @@ func TestInner(t *testing.T) {
 	correct := []float64{14.0}
 	assert.Equal(correct, c.Data())
 
-	// prealloc
+	// prealloc with a *Dense
 	c.Zero()
+	if err := c.Reshape(); err != nil {
+		t.Fatal(err)
+	}
 	if d, err = op.PreallocDo(context.Background(), c, a, b); err != nil {
 		t.Fatalf("Expected %v (Prealloc) to work correctly. Err: %v", op, err)
 	}
