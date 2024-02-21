@@ -782,6 +782,12 @@ func Test{{.Name | title}}(t *testing.T){
 
 `
 
+const unopAPITmplRaw = `// {{.Name | title}} creates an ops.Op that performs the named operation.
+func {{.Name | title}}[DT any, T values.Value[DT]]() ops.PreallocOp[DT,T]{
+	return {{.Name}}Op[DT,T] {}
+}
+`
+
 const doDiffTmplRaw = `{{ if .IsDiff }}
 // DoDiff is the method that allows automatic differentiation of` + " `{{ .Name }}` " + `g.
 func (op {{ .Name }}Op[DT,T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
@@ -817,6 +823,7 @@ var (
 	unopTestTmpl     *template.Template
 	binopAPITmpl     *template.Template
 	binopAPITestTmpl *template.Template
+	unopAPITmpl      *template.Template
 
 	doDiffTmpl *template.Template
 
@@ -834,6 +841,7 @@ func init() {
 	unopTestTmpl = template.Must(template.New("unary op test").Funcs(funcmap).Parse(unopTestRaw))
 	binopAPITmpl = template.Must(template.New("api").Funcs(funcmap).Parse(binopAPIRaw))
 	binopAPITestTmpl = template.Must(template.New("api test").Funcs(funcmap).Parse(binopAPITestRaw))
+	unopAPITmpl = template.Must(template.New("api (unary op)").Funcs(funcmap).Parse(unopAPITmplRaw))
 	doDiffTmpl = template.Must(template.New("binop DoDiff").Funcs(funcmap).Parse(doDiffTmplRaw))
 
 	unopInterfaceTempl = template.Must(template.New("unop interfae").Funcs(funcmap).Parse(unopInterfaceTemplRaw))

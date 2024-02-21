@@ -171,7 +171,7 @@ func TestAddSV__(t *testing.T) {
 }
 
 func TestAbs__(t *testing.T) {
-	op := absOp[float64, *dense.Dense[float64]]{}
+	op := Abs[float64, *dense.Dense[float64]]()
 
 	// Do
 	var a, b *dense.Dense[float64]

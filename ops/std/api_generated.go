@@ -307,3 +307,93 @@ func ElNe[DT any, T values.Value[DT], U values.V](a, b ops.Operand) ops.Desc {
 		return elNeSV[DT, T, *dense.Dense[bool]]{}
 	}
 }
+
+// Abs creates an ops.Op that performs the named operation.
+func Abs[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return absOp[DT, T]{}
+}
+
+// Sign creates an ops.Op that performs the named operation.
+func Sign[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return signOp[DT, T]{}
+}
+
+// Ceil creates an ops.Op that performs the named operation.
+func Ceil[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return ceilOp[DT, T]{}
+}
+
+// Floor creates an ops.Op that performs the named operation.
+func Floor[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return floorOp[DT, T]{}
+}
+
+// Sin creates an ops.Op that performs the named operation.
+func Sin[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return sinOp[DT, T]{}
+}
+
+// Cos creates an ops.Op that performs the named operation.
+func Cos[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return cosOp[DT, T]{}
+}
+
+// Exp creates an ops.Op that performs the named operation.
+func Exp[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return expOp[DT, T]{}
+}
+
+// Ln creates an ops.Op that performs the named operation.
+func Ln[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return lnOp[DT, T]{}
+}
+
+// Log2 creates an ops.Op that performs the named operation.
+func Log2[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return log2Op[DT, T]{}
+}
+
+// Neg creates an ops.Op that performs the named operation.
+func Neg[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return negOp[DT, T]{}
+}
+
+// Square creates an ops.Op that performs the named operation.
+func Square[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return squareOp[DT, T]{}
+}
+
+// Sqrt creates an ops.Op that performs the named operation.
+func Sqrt[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return sqrtOp[DT, T]{}
+}
+
+// Inv creates an ops.Op that performs the named operation.
+func Inv[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return invOp[DT, T]{}
+}
+
+// InvSqrt creates an ops.Op that performs the named operation.
+func InvSqrt[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return invSqrtOp[DT, T]{}
+}
+
+// Log1p creates an ops.Op that performs the named operation.
+func Log1p[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return log1pOp[DT, T]{}
+}
+
+// Expm1 creates an ops.Op that performs the named operation.
+func Expm1[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return expm1Op[DT, T]{}
+}
+
+// Cube creates an ops.Op that performs the named operation.
+func Cube[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return cubeOp[DT, T]{}
+}
+
+// Tanh creates an ops.Op that performs the named operation.
+func Tanh[DT any, T values.Value[DT]]() ops.PreallocOp[DT, T] {
+	return tanhOp[DT, T]{}
+}

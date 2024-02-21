@@ -240,12 +240,7 @@ func generateUnOps(unstubbedSymDiffs, unstubbedDoDiffs []string) error {
 	return nil
 }
 
-func generateBinOpAPI() (err error) {
-	type apiwrap struct {
-		Op
-		IsCmp bool
-	}
-
+func generateAPI() (err error) {
 	filename := "api_generated.go"
 	filenameTest := "api_generated_test.go"
 	p := path.Join(stdopsloc, filename)
@@ -261,6 +256,34 @@ func generateBinOpAPI() (err error) {
 
 	fmt.Fprintf(f, "package stdops\n\n%v\n\n", genmsg)
 	fmt.Fprintf(g, "package stdops\n\n%v\n\n", genmsg)
+
+	if err = generateBinOpAPI(f, g); err != nil {
+		return err
+	}
+
+	if err = generateUnOpAPI(f); err != nil {
+		return err
+	}
+
+	if err := f.Close(); err != nil {
+		return errors.Wrapf(err, "Unable to close %v", p)
+	}
+	if err := g.Close(); err != nil {
+		return errors.Wrapf(err, "Unable to close %v", pt)
+	}
+
+	if err := goimports(p); err != nil {
+		return errors.Wrapf(err, "Unable to goimports %v", p)
+	}
+	return goimports(pt)
+}
+
+func generateBinOpAPI(f, g *os.File) (err error) {
+	type apiwrap struct {
+		Op
+		IsCmp bool
+	}
+
 	for _, o := range ariths {
 		if err := binopAPITmpl.Execute(f, apiwrap{o, false}); err != nil {
 			return errors.Wrapf(err, "Unable to execute binopAPITmpl for %v", o.Name)
@@ -279,18 +302,16 @@ func generateBinOpAPI() (err error) {
 			return errors.Wrapf(err, "Unable to execute binopAPITestTmpl for %v", o.Name)
 		}
 	}
+	return nil
+}
 
-	if err := f.Close(); err != nil {
-		return errors.Wrapf(err, "Unable to close %v", p)
+func generateUnOpAPI(f *os.File) (err error) {
+	for _, o := range unops {
+		if err := unopAPITmpl.Execute(f, o); err != nil {
+			return errors.Wrapf(err, "Unable to execute unopAPITmpl for %v", o.Name)
+		}
 	}
-	if err := g.Close(); err != nil {
-		return errors.Wrapf(err, "Unable to close %v", pt)
-	}
-
-	if err := goimports(p); err != nil {
-		return errors.Wrapf(err, "Unable to goimports %v", p)
-	}
-	return goimports(pt)
+	return nil
 }
 
 func generateInterfaces() error {
@@ -379,7 +400,7 @@ func main() {
 	if err := generateUnOps(unstubbedSymDiffs, unstubbedDoDiffs); err != nil {
 		log.Fatal(err)
 	}
-	if err := generateBinOpAPI(); err != nil {
+	if err := generateAPI(); err != nil {
 		log.Fatal(err)
 	}
 
