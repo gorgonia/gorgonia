@@ -6,7 +6,7 @@ import (
 	"context"
 	"runtime/trace"
 
-	gctx "gorgonia.org/gorgonia/internal/context"
+	"gorgonia.org/gorgonia/internal"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
@@ -20,7 +20,7 @@ func (op sinOp[DT, T]) String() string { return "Sin" }
 
 // Do performs elementwise sine.
 func (op sinOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 
@@ -46,7 +46,7 @@ func (op sinOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 // PreallocDo performs elementwise sine but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
 func (op sinOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 

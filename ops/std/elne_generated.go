@@ -8,7 +8,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"gorgonia.org/dtype"
-	gctx "gorgonia.org/gorgonia/internal/context"
+	"gorgonia.org/gorgonia/internal"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
@@ -27,7 +27,7 @@ func (op elNeOp[DT, T, U]) String() string { return "≠" }
 func (op elNeOpRS[DT, T]) String() string { return "≠" }
 
 func (op elNeOp[DT, T, U]) do(ctx context.Context, a, b T, prealloc U) (retVal U, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 
@@ -65,7 +65,7 @@ func (op elNeOp[DT, T, U]) do(ctx context.Context, a, b T, prealloc U) (retVal U
 }
 
 func (op elNeOpRS[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 

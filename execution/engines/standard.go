@@ -2,8 +2,8 @@ package engines
 
 import (
 	"gorgonia.org/gorgonia/exprgraph"
+	"gorgonia.org/gorgonia/internal/datatypes"
 	"gorgonia.org/gorgonia/ops"
-	"gorgonia.org/internal/datatypes"
 	"gorgonia.org/tensor"
 )
 

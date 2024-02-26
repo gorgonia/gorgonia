@@ -5,10 +5,10 @@ import (
 	"runtime/trace"
 
 	"github.com/chewxy/hm"
-	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/exprgraph"
 	"gorgonia.org/gorgonia/internal"
 	gctx "gorgonia.org/gorgonia/internal/context"
+	"gorgonia.org/gorgonia/internal/datatypes"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
@@ -98,7 +98,7 @@ func (op MatMul[DT, T]) SymDiff(g *exprgraph.Graph, inputs []*exprgraph.Node, ou
 }
 
 // DoDiff allows automatic differentiation for `MatMul`.
-func (op MatMul[DT, T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) (err error) {
+func (op MatMul[DT, T]) DoDiff(ctx context.Context, inputs []datatypes.Tensor, output datatypes.Tensor) (err error) {
 	adv := exprgraph.T2B[DT](inputs[0]).(*dual.Dual[DT, T])
 	bdv := exprgraph.T2B[DT](inputs[1]).(*dual.Dual[DT, T])
 	cdv := exprgraph.T2B[DT](output).(*dual.Dual[DT, T])
@@ -162,7 +162,7 @@ func (op MatVecMul[DT, T]) ShapeExpr() shapes.Expr {
 }
 
 func (op MatVecMul[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 	ctx2, task := trace.NewTask(ctx, op.String())
@@ -235,7 +235,7 @@ func (op Inner[DT, T]) ShapeExpr() shapes.Expr {
 }
 
 func (op Inner[DT, T]) do(ctx context.Context, a, b T) (retVal DT, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 	ctx2, task := trace.NewTask(ctx, op.String())
@@ -325,7 +325,7 @@ func (op Outer[DT, T]) ShapeExpr() shapes.Expr {
 }
 
 func (op Outer[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 	ctx2, task := trace.NewTask(ctx, op.String())

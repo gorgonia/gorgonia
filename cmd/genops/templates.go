@@ -12,7 +12,7 @@ type {{.Name }}Op[DT any, T values.Value[DT]] struct{ binop }
 func (op {{.Name}}Op[DT,T]) String() string { return "{{.Symbol}}" }
 
 func (op {{.Name}}Op[DT,T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 
@@ -106,7 +106,7 @@ func (op {{.Name}}Op[DT,T,U]) String() string { return "{{.Symbol}}" }
 func (op {{.Name}}OpRS[DT,T]) String() string {return "{{.Symbol}}" }
 
 func (op {{.Name}}Op[DT,T,U]) do(ctx context.Context, a, b T, prealloc U) (retVal U, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 
@@ -144,7 +144,7 @@ func (op {{.Name}}Op[DT,T,U]) do(ctx context.Context, a, b T, prealloc U) (retVa
 }
 
 func (op {{.Name}}OpRS[DT,T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 
@@ -545,7 +545,7 @@ func (op {{.Name}}Op[DT,T]) String() string {return "{{.Symbol}}" }
 
 // Do performs {{.CommentOp}}.
 func (op {{.Name}}Op[DT,T]) Do(ctx context.Context, vs ...T)(retVal T, err error){
-if err := gctx.Handle(ctx); err != nil {
+if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 
@@ -571,7 +571,7 @@ if err := gctx.Handle(ctx); err != nil {
 // PreallocDo performs {{.CommentOp}} but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
 func (op {{.Name}}Op[DT,T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 
@@ -790,7 +790,7 @@ func {{.Name | title}}[DT any, T values.Value[DT]]() ops.PreallocOp[DT,T]{
 
 const doDiffTmplRaw = `{{ if .IsDiff }}
 // DoDiff is the method that allows automatic differentiation of` + " `{{ .Name }}` " + `g.
-func (op {{ .Name }}Op[DT,T]) DoDiff(ctx context.Context, inputs []gorgonia.Tensor, output gorgonia.Tensor) error {
+func (op {{ .Name }}Op[DT,T]) DoDiff(ctx context.Context, inputs []datatypes.Tensor, output datatypes.Tensor) error {
 	adv := exprgraph.T2B[DT](inputs[0]).(*dual.Dual[DT,T])
 	bdv := exprgraph.T2B[DT](inputs[1]).(*dual.Dual[DT,T])
 	cdv := exprgraph.T2B[DT](output).(*dual.Dual[DT,T])

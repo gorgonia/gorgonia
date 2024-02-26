@@ -6,7 +6,7 @@ import (
 	"context"
 	"runtime/trace"
 
-	gctx "gorgonia.org/gorgonia/internal/context"
+	"gorgonia.org/gorgonia/internal"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
@@ -20,7 +20,7 @@ func (op absOp[DT, T]) String() string { return "|·|" }
 
 // Do performs elementwise absolute value.
 func (op absOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 
@@ -46,7 +46,7 @@ func (op absOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 // PreallocDo performs elementwise absolute value but with a preallocated return value.
 // PreallocDo allows add to implement ops.PreallocOp.
 func (op absOp[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 

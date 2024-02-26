@@ -6,7 +6,7 @@ import (
 	"context"
 	"runtime/trace"
 
-	gctx "gorgonia.org/gorgonia/internal/context"
+	"gorgonia.org/gorgonia/internal"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/tensor"
@@ -19,7 +19,7 @@ type addOp[DT any, T values.Value[DT]] struct{ binop }
 func (op addOp[DT, T]) String() string { return "+" }
 
 func (op addOp[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 
