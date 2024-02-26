@@ -15,6 +15,17 @@ type Hybrid interface {
 	Graph() *exprgraph.Graph
 }
 
+// H is an engine that creates symbolic nodes and also performs the operations immediately.
+// However when it encounters a Symbolic node, the remaining operations are symbolic only.
+type H[DT tensor.Num, T tensor.Basic[DT]] struct {
+	StandardEngine[DT, T]
+	g *exprgraph.Graph
+}
+
+func (e *H[DT, T]) Graph() *exprgraph.Graph { return e.g }
+
+func (e *H[DT, T]) SetGraph(g *exprgraph.Graph) { e.g = g }
+
 // StandardEngine is a set of operations that must be supported by an engine in order to be used by Gorgonia.
 type StandardEngine[DT any, T tensor.Basic[DT]] interface {
 	tensor.Engine

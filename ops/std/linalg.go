@@ -7,7 +7,6 @@ import (
 	"github.com/chewxy/hm"
 	"gorgonia.org/gorgonia/exprgraph"
 	"gorgonia.org/gorgonia/internal"
-	gctx "gorgonia.org/gorgonia/internal/context"
 	"gorgonia.org/gorgonia/internal/datatypes"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/gorgonia/types"
@@ -40,7 +39,7 @@ func (op MatMul[DT, T]) ShapeExpr() shapes.Expr {
 }
 
 func (op MatMul[DT, T]) do(ctx context.Context, a, b, prealloc T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 	ctx2, task := trace.NewTask(ctx, op.String())

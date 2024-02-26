@@ -9,7 +9,7 @@ import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/exprgraph"
-	gctx "gorgonia.org/gorgonia/internal/context"
+	"gorgonia.org/gorgonia/internal"
 	"gorgonia.org/gorgonia/internal/datatypes"
 	"gorgonia.org/gorgonia/internal/encoding"
 	"gorgonia.org/gorgonia/types"
@@ -61,7 +61,7 @@ func (op transposeOp[DT, T]) ShapeExpr() shapes.Expr {
 
 // Do executes the op.
 func (op transposeOp[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 

@@ -8,7 +8,7 @@ import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"gorgonia.org/dtype"
-	gctx "gorgonia.org/gorgonia/internal/context"
+	"gorgonia.org/gorgonia/internal"
 	"gorgonia.org/gorgonia/types"
 	"gorgonia.org/gorgonia/values"
 	"gorgonia.org/shapes"
@@ -43,7 +43,7 @@ func (op At[DT, T]) ShapeExpr() shapes.Expr {
 } // TODO: leverage shape package to actually add more checks
 
 func (op At[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 	v := any(vs[0]).(tensor.ValueGetter[DT])
@@ -82,7 +82,7 @@ func (op Size[DT, T]) ShapeExpr() shapes.Expr {
 }
 
 func (op Size[DT, T]) Do(ctx context.Context, vs ...T) (retVal values.Size, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return -1, err
 	}
 	v := vs[0]
@@ -154,7 +154,7 @@ func (op Slice[DT, T]) ShapeExpr() shapes.Expr {
 }
 
 func (op Slice[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 
@@ -163,7 +163,7 @@ func (op Slice[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
 }
 
 func (op Slice[DT, T]) PreallocDo(ctx context.Context, prealloc T, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 	v := vs[0]
@@ -195,7 +195,7 @@ func (op sliceDiff[DT, T]) ShapeExpr() shapes.Expr {
 }
 
 func (op sliceDiff[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 
@@ -236,7 +236,7 @@ func (op *Reshape[DT, T]) Type() hm.Type {
 func (op *Reshape[DT, T]) ShapeExpr() shapes.Expr { return shapes.MakeArrow(shapes.Var('a'), op.To) } // TODO: take advantage of shapes library's checking options
 
 func (op *Reshape[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 	a := vs[0]

@@ -7,7 +7,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"gorgonia.org/gorgonia/exprgraph"
-	gctx "gorgonia.org/gorgonia/internal/context"
+	"gorgonia.org/gorgonia/internal"
 	"gorgonia.org/gorgonia/internal/errors"
 	"gorgonia.org/tensor"
 	"gorgonia.org/tensor/dense"
@@ -89,7 +89,7 @@ func (op *Sum[DT, T]) ShapeExpr() shapes.Expr { return reductionShapeExpr(op.alo
 
 // Do executes the op.
 func (op *Sum[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
-	if err := gctx.Handle(ctx); err != nil {
+	if err := internal.HandleCtx(ctx); err != nil {
 		return retVal, err
 	}
 
