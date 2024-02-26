@@ -3,7 +3,6 @@ package kernels
 import (
 	"sync"
 
-	"gorgonia.org/shapes"
 	"gorgonia.org/tensor"
 )
 
@@ -17,8 +16,7 @@ type Im2ColOp struct {
 	Height int
 	Width  int
 
-	ChanStride  int
-	InRowStride int
+	ChanStride int
 
 	RetH, RetW int
 }
@@ -27,7 +25,6 @@ type Im2ColOp struct {
 func Im2Col[DT tensor.Num](op Im2ColOp, im, col []DT, wg *sync.WaitGroup, workers chan struct{}) {
 	chans, height, width := op.Chans, op.Height, op.Width
 	chanStride := op.ChanStride
-	inRowStride := op.InRowStride
 	retHeight := op.RetH
 	retWidth := op.RetW
 	workers <- struct{}{}
@@ -35,15 +32,15 @@ func Im2Col[DT tensor.Num](op Im2ColOp, im, col []DT, wg *sync.WaitGroup, worker
 	for outputRow := 0; outputRow < retHeight; outputRow++ {
 		for outputCol := 0; outputCol < retWidth; outputCol++ {
 			for ch := 0; ch < chans; ch++ {
-				for kernelRow := 0; kernelRow < op.h; kernelRow++ {
-					inputRow = -op.padH + kernelRow*op.dilationH + outputRow*op.strideH
-					for kernelCol := 0; kernelCol < op.w; kernelCol++ {
+				for kernelRow := 0; kernelRow < op.H; kernelRow++ {
+					inputRow = -op.PadH + kernelRow*op.DilationH + outputRow*op.StrideH
+					for kernelCol := 0; kernelCol < op.W; kernelCol++ {
 						if inputRow < 0 || inputRow >= height {
 							col[colIdx] = 0
 							colIdx++
 							continue
 						}
-						inputCol = -op.padW + kernelCol*op.dilationW + outputCol*op.strideW
+						inputCol = -op.PadW + kernelCol*op.DilationW + outputCol*op.StrideW
 						if inputCol < 0 || inputCol >= width {
 							col[colIdx] = 0
 						} else {

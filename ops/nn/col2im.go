@@ -118,7 +118,6 @@ func (op im2col[DT, T]) do(ctx context.Context, prealloc, input T) (retVal T, er
 	batchStrideIm := inputStrides[0]
 	batchStrideCol := prealloc.Strides()[0]
 	chanStride := h * w
-	inRowStride := inputStrides[2]
 
 	var wg sync.WaitGroup
 	workers := make(chan struct{}, runtime.NumCPU())
@@ -135,11 +134,10 @@ func (op im2col[DT, T]) do(ctx context.Context, prealloc, input T) (retVal T, er
 		Height: h,
 		Width:  w,
 
-		ChanStride:  chanStride,
-		InRowStride: inRowStride,
+		ChanStride: chanStride,
 
-		RetHeight: retH,
-		RetWidth:  retW,
+		RetH: retH,
+		RetW: retW,
 	}
 
 	for i := 0; i < b; i++ {
@@ -155,7 +153,7 @@ func (op im2col[DT, T]) do(ctx context.Context, prealloc, input T) (retVal T, er
 			colEnd = len(colData)
 		}
 		wg.Add(1)
-		go kernels.Im2Col(kernelParams, retH, retW, imData[imStart:imEnd], colData[colStart:colEnd], &wg, workers)
+		go kernels.Im2Col(kernelParams, imData[imStart:imEnd], colData[colStart:colEnd], &wg, workers)
 	}
 	wg.Wait()
 	return prealloc, nil
