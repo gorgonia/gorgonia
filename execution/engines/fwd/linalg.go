@@ -1,53 +1,65 @@
 package fwd
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
 )
 
-func (e *Engine) MatMul(a, b, c tensor.Tensor) error {
-	adv := a.(*dual.Dual)
-	bdv := b.(*dual.Dual)
-	cdv := c.(*dual.Dual)
-
-	// perform forwards
-	if err := e.StdEng.MatMul(adv.Value, bdv.Value, cdv.Value); err != nil {
-		return errors.Wrap(err, "Unable to perform MatMul op in fwd.Engine")
-	}
-
-	// perform differentiation
-	if err := e.diffMatMul(adv, bdv, cdv); err != nil {
-		return errors.Wrap(err, "Unable to differentiate a MatMul op in fwd.Engine")
-	}
-	return nil
+func (e *Engine[DT, T]) Inner(ctx context.Context, a, b tensor.Basic[DT]) (DT, error) {
+	var z DT
+	return z, errors.New("NYI")
 }
 
-func (e *Engine) diffMatMul(adv, bdv, cdv *dual.Duaal) error {
-	advd := adv.Deriv()
-	bdvd := bdv.Deriv()
+func (e *Engine[DT, T]) FMA(ctx context.Context, a, x, retVal tensor.Basic[DT]) error {
+	return errors.New("NYI")
+}
 
-	if err := bdv.Value.T(); err != nil {
-		return errors.Wrap(err, "Differentiaing a MatMul op: Unable to transpose B")
+func (e *Engine[DT, T]) MatVecMul(ctx context.Context, a, b, retVal tensor.Basic[DT], incr []DT) error {
+	return errors.New("NYI")
+}
+
+func (e *Engine[DT, T]) Outer(ctx context.Context, a, b, retVal tensor.Basic[DT], incr []DT) error {
+	return errors.New("NYI")
+}
+
+func (e *Engine[DT, T]) MatMul(ctx context.Context, a, b, c tensor.Basic[DT], incr []DT) error {
+	adv := a.(dual.V)
+	bdv := b.(dual.V)
+	cdv := c.(dual.V)
+
+	advv := adv.V().(T)
+	bdvv := bdv.V().(T)
+	cdvv := cdv.V().(T)
+
+	if err := e.StandardEngine.MatMul(ctx, advv, bdvv, cdvv, incr); err != nil {
+		return err
+	}
+
+	advd := adv.DV().(T)
+	bdvd := bdv.DV().(T)
+
+	bdvT, err := bdv.V().(tensor.Operable[T]).T()
+	if err != nil {
+		return err // cannot transpose
 	}
 
 	// dA = C×B'
-	if err := e.StdEng.MatMul(cdv.Value, bdv.Value, advd); err != nil {
-		return errors.Wrap(err, "Differentiating a MatMul op: Unable to perform C×B'")
+	if err := e.StandardEngine.MatMul(ctx, cdvv, bdvT, advd, advd.Data()); err != nil {
+		return err
 	}
 
-	if err := adv.Value.T(); err != nil {
-		return errors.Wrap(err, "Differentiating a MatMul op: Unable to transpose A")
+	advT, err := adv.V().(tensor.Operable[T]).T()
+	if err != nil {
+		return err // cannot transpose
 	}
 
 	// dB = A'×C
-	if err := e.StdEng.MatMul(adv.Value, cdv.Value, bdvd); err != nil {
-		return errors.Wrap(err, "Differentiating a MatMul op: Unable to perform A'×C")
+	if err := e.StandardEngine.MatMul(ctx, advT, cdvv, bdvd, bdvd.Data()); err != nil {
+		return err
 	}
-
-	// now we undo our transposes
-	adv.Value.UT()
-	bdv.Value.UT()
 
 	return nil
 }

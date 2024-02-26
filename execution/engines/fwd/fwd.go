@@ -2,38 +2,45 @@
 package fwd
 
 import (
-	"gorgonia.org/gorgonia"
+	"gorgonia.org/gorgonia/execution/engines"
 	"gorgonia.org/gorgonia/exprgraph"
+	"gorgonia.org/gorgonia/internal/datatypes"
 	"gorgonia.org/gorgonia/values/dual"
 	"gorgonia.org/tensor"
 )
 
-// Engine is a tensor.Engine that performs forwards mode differentiations.
-type Engine struct {
-	tensor.StdEng
+// Engine is a Engine that performs forwards mode differentiation
+//
+// Here the implementation is done by means of implementing MatMul and AddScalar
+// Obviously in the real world situation, Add also needs to be implemented, but in this example
+// we are not going to call Add, only AddScalar.
+type Engine[DT any, T tensor.Basic[DT]] struct {
+	engines.StandardEngine[DT, T]
 	g *exprgraph.Graph
 }
 
-// New creates a new Engine.
-func New(g *exprgraph.Graph) *Engine {
-	retVal := &Engine{g: g}
-	g.Engine = retVal
-	return retVal
+// New creates a new fwd engine.
+func New[DT any, T tensor.Basic[DT]]() *Engine[DT, T] {
+	return &Engine[DT, T]{
+		StandardEngine: nil, // TODO
+	}
 }
 
-// Graph returns the embedded graph.
-func (e *Engine) Graph() *exprgraph.Graph { return e.g }
+func (e *Engine[DT, T]) BasicEng() tensor.Engine {
+	//return &FwdEngine[DT, tensor.Basic[DT]]{StandardEngine: e.StandardEngine.BasicEng().(StandardEngine[DT, tensor.Basic[DT]]), g: e.g}
+	return e
+}
 
-// SetGraph sets the graph in the engine to g.
-func (e *Engine) SetGraph(g *exprgraph.Graph) { e.g = g }
+func (e *Engine[DT, T]) Graph() *exprgraph.Graph { return e.g }
 
-// Lift implements exprgraph.Lifter. This converts values to dual.Dual.
-func (e *Engine) Lift(a gorgonia.Tensor) gorgonia.Tensor {
+func (e *Engine[DT, T]) SetGraph(g *exprgraph.Graph) { e.g = g }
+
+func (e *Engine[DT, T]) Lift(a datatypes.Tensor) datatypes.Tensor {
 	switch t := a.(type) {
-	case *dual.Dual:
+	case *dual.Dual[DT, T]:
 		return a
-	case tensor.Tensor:
-		return dual.New(t)
+	case T:
+		return dual.New[DT, T](t)
 	}
 	panic("Unreachable")
 }

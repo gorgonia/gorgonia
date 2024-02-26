@@ -44,6 +44,8 @@ func AnyToValue[DT any](any interface{}) (val Value[DT], t hm.Type, dt dtype.Dty
 func One[DT any]() DT {
 	var z DT
 	switch o := any(z).(type) {
+	case ScalarOner[DT]:
+		return o.ScalarOne()
 	case uint8:
 		return any(o + 1).(DT)
 	case uint16:
@@ -72,8 +74,6 @@ func One[DT any]() DT {
 		return any(o + 1).(DT)
 	case bool:
 		return any(true).(DT)
-	case ScalarOner[DT]:
-		return o.ScalarOne()
 	default:
 		panic(fmt.Sprintf("Cannot get One for %T", z))
 	}
