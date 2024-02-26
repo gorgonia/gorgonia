@@ -48,7 +48,7 @@ func (op *convolution[DT, T]) String() string {
 
 // Do performs the convolution operation.
 func (c *convolution[DT, T]) Do(ctx context.Context, vs ...T) (retVal T, err error) {
-	panic("xx")
+
 }
 
 type convDiffIm[DT any, T values.Value[DT]] struct {
