@@ -81,6 +81,12 @@ type Statement interface {
 	IsStatement()
 }
 
+// Partial represents a partially applied operator.
+type Partial[DT any, T values.Value[DT]] interface {
+	Op[DT, T]
+	Operands() []Operand
+}
+
 /*
 // SDOp is any Op that supports symbolic differentiation
 type SDOp interface {
