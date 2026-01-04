@@ -132,6 +132,12 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 			retVal = NewF32(float32(size))
 		case tensor.Int:
 			retVal = NewI(size)
+		case tensor.Int64:
+			retVal = NewI64(int64(size))
+		case tensor.Int32:
+			retVal = NewI32(int32(size))
+		case tensor.Uint8:
+			retVal = NewU8(uint8(size))
 		default:
 			return nil, errors.Errorf(nyiFail, "sizeOf.Do()", t.Dtype())
 		}
