@@ -25,6 +25,8 @@ type ʘUnaryOperator interface {
 
 type sf32UnaryOperator func(float32) float32
 type sf64UnaryOperator func(float64) float64
+type si64UnaryOperator func(int64) int64
+type si32UnaryOperator func(int32) int32
 
 // unaryCheckApply checks in a interface is fulfilled. If it is, that engine is used instead
 func unaryCheckApply(op ʘUnaryOperator, t tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
@@ -95,6 +97,10 @@ func unaryCheckApply(op ʘUnaryOperator, t tensor.Tensor, opts ...tensor.FuncOpt
 		fn = (func(float64) float64)(*opFn)
 	case *sf32UnaryOperator:
 		fn = (func(float32) float32)(*opFn)
+	case *si64UnaryOperator:
+		fn = (func(int64) int64)(*opFn)
+	case *si32UnaryOperator:
+		fn = (func(int32) int32)(*opFn)
 	}
 
 	return t.Apply(fn, opts...)

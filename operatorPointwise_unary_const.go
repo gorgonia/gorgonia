@@ -69,6 +69,14 @@ var (
 	log1pf32    = sf32UnaryOperator(math32.Log1p)
 	expm1f32    = sf32UnaryOperator(math32.Expm1)
 	softplusf32 = sf32UnaryOperator(_softplusf32)
+
+	/* Int64 - only neg and abs are meaningful for integers */
+	negi64 = si64UnaryOperator(_negi64)
+	absi64 = si64UnaryOperator(_absi64)
+
+	/* Int32 */
+	negi32 = si32UnaryOperator(_negi32)
+	absi32 = si32UnaryOperator(_absi32)
 )
 
 type ʘUnaryOperatorType byte
@@ -200,4 +208,53 @@ var sf32UnaryOperators = [maxʘUnaryOperator]*sf32UnaryOperator{
 	&log1pf32,
 	&expm1f32,
 	&softplusf32,
+}
+
+// si64UnaryOperators - only neg and abs are meaningful for integers
+// nil entries indicate unsupported operations for this type
+var si64UnaryOperators = [maxʘUnaryOperator]*si64UnaryOperator{
+	&absi64, // absOpType
+	nil,     // signOpType
+	nil,     // ceilOpType
+	nil,     // floorOpType
+	nil,     // sinOpType
+	nil,     // cosOpType
+	nil,     // expOpType
+	nil,     // lnOpType
+	nil,     // log2OpType
+	&negi64, // negOpType
+	nil,     // squareOpType
+	nil,     // sqrtOpType
+	nil,     // inverseOpType
+	nil,     // inverseSqrtOpType
+	nil,     // cubeOpType
+	nil,     // tanhOpType
+	nil,     // sigmoidOpType
+	nil,     // log1pOpType
+	nil,     // expm1OpType
+	nil,     // softplusOpType
+}
+
+// si32UnaryOperators - only neg and abs are meaningful for integers
+var si32UnaryOperators = [maxʘUnaryOperator]*si32UnaryOperator{
+	&absi32, // absOpType
+	nil,     // signOpType
+	nil,     // ceilOpType
+	nil,     // floorOpType
+	nil,     // sinOpType
+	nil,     // cosOpType
+	nil,     // expOpType
+	nil,     // lnOpType
+	nil,     // log2OpType
+	&negi32, // negOpType
+	nil,     // squareOpType
+	nil,     // sqrtOpType
+	nil,     // inverseOpType
+	nil,     // inverseSqrtOpType
+	nil,     // cubeOpType
+	nil,     // tanhOpType
+	nil,     // sigmoidOpType
+	nil,     // log1pOpType
+	nil,     // expm1OpType
+	nil,     // softplusOpType
 }

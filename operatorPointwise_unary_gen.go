@@ -97,3 +97,25 @@ func (f *sf64UnaryOperator) unaryOpType() ʘUnaryOperatorType {
 	return maxʘUnaryOperator
 }
 func (f *sf64UnaryOperator) String() string { return f.unaryOpType().String() }
+
+func (f *si64UnaryOperator) unaryOpType() ʘUnaryOperatorType {
+	switch f {
+	case &absi64:
+		return absOpType
+	case &negi64:
+		return negOpType
+	}
+	return maxʘUnaryOperator
+}
+func (f *si64UnaryOperator) String() string { return f.unaryOpType().String() }
+
+func (f *si32UnaryOperator) unaryOpType() ʘUnaryOperatorType {
+	switch f {
+	case &absi32:
+		return absOpType
+	case &negi32:
+		return negOpType
+	}
+	return maxʘUnaryOperator
+}
+func (f *si32UnaryOperator) String() string { return f.unaryOpType().String() }

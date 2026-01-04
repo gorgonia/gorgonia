@@ -33,6 +33,23 @@ func _cubef32(x float32) float32 { return x * x * x }
 func _negf32(x float32) float32 { return -x }
 func _negf64(x float64) float64 { return -x }
 
+func _negi64(x int64) int64 { return -x }
+func _negi32(x int32) int32 { return -x }
+
+func _absi64(x int64) int64 {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+func _absi32(x int32) int32 {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
 /* TODO: write optimized versions of these */
 
 // bounds acquired with this:

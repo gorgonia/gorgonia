@@ -399,6 +399,10 @@ func newElemUnaryOp(op ʘUnaryOperatorType, a *Node) elemUnaryOp {
 		operator = sf32UnaryOperators[op]
 	case Float64:
 		operator = sf64UnaryOperators[op]
+	case Int64:
+		operator = si64UnaryOperators[op]
+	case Int32:
+		operator = si32UnaryOperators[op]
 	}
 
 	return elemUnaryOp{
