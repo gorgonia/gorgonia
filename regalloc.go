@@ -87,10 +87,11 @@ func (i *interval) noUsePositions() bool {
 	return false
 }
 
-// inclusive of start, but exclusive of end
+// inclusive of start and end - a value is live at its last use instruction
+// because it's being used as input at that instruction
 func (i *interval) liveAt(id int) bool {
 	// compileLogf("%v live at %d", i, id)
-	if i.start <= id && id < i.end {
+	if i.start <= id && id <= i.end {
 		return true
 	}
 	return false

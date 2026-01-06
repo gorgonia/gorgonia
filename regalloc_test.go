@@ -61,23 +61,11 @@ func TestRegAlloc(t *testing.T) {
 		t.Error("y is an input, and would have a lifetime of the entire program")
 	}
 
-	var onDev bool
-	switch z2.op.(type) {
-	case CUDADoer:
-		onDev = true
-	case CLDoer:
-		onDev = true
-	}
-
-	switch {
-	case z2.op.CallsExtern() && !onDev:
-		if is[z].result.id == is[z2].result.id {
-			t.Error("z2 should NOT reuse the register of z")
-		}
-	default:
-		if is[z].result.id != is[z2].result.id {
-			t.Error("z2 should reuse the register of z")
-		}
+	// z is used as input to z2, so z is live at the instruction where z2 is computed.
+	// Therefore z2 should NOT reuse z's register - this ensures that reading z.Value()
+	// after execution returns the correct value (fix for issue #576).
+	if is[z].result.id == is[z2].result.id {
+		t.Error("z2 should NOT reuse the register of z because z is still live at z2's instruction")
 	}
 
 }

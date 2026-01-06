@@ -170,3 +170,47 @@ func Test_tapeMachinePointerWatchFail(t *testing.T) {
 
 	c.True(strings.Contains(err.Error(), "Pointer clash found in value."))
 }
+
+// Test_tapeMachineRegisterReuse tests that intermediate values are not overwritten
+// when they shouldn't be. This is a regression test for issue #576.
+// See: https://github.com/gorgonia/gorgonia/issues/576
+func Test_tapeMachineRegisterReuse(t *testing.T) {
+	c := require.New(t)
+
+	g := NewGraph()
+
+	// Create input tensors
+	aVal := tensor.New(tensor.WithShape(4), tensor.WithBacking([]float64{1, 2, 3, 4}))
+	bVal := tensor.New(tensor.WithShape(4), tensor.WithBacking([]float64{10, 20, 30, 40}))
+
+	a := NewTensor(g, Float64, 1, WithShape(4), WithValue(aVal), WithName("a"))
+	b := NewTensor(g, Float64, 1, WithShape(4), WithValue(bVal), WithName("b"))
+
+	// squared = a * a (element-wise)
+	squared := Must(Square(a))
+
+	// result = squared + b
+	result := Must(Add(squared, b))
+
+	// Run the tape machine
+	vm := NewTapeMachine(g)
+	defer vm.Close()
+
+	err := vm.RunAll()
+	c.NoError(err)
+
+	// Verify result is correct: [1+10, 4+20, 9+30, 16+40] = [11, 24, 39, 56]
+	resultData := result.Value().Data().([]float64)
+	c.Equal([]float64{11, 24, 39, 56}, resultData, "result should be [11, 24, 39, 56]")
+
+	// CRITICAL: Verify squared retains its correct value: [1, 4, 9, 16]
+	// Before the fix for issue #576, squared would incorrectly show [11, 24, 39, 56]
+	// because it shared the same register as result.
+	squaredData := squared.Value().Data().([]float64)
+	c.Equal([]float64{1, 4, 9, 16}, squaredData, "squared should be [1, 4, 9, 16], not aliased with result")
+
+	// Verify they don't share the same backing memory
+	squaredPtr := reflect.ValueOf(squared.Value().Data()).Pointer()
+	resultPtr := reflect.ValueOf(result.Value().Data()).Pointer()
+	c.NotEqual(squaredPtr, resultPtr, "squared and result should not share the same backing memory")
+}
