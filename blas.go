@@ -8,7 +8,7 @@ import (
 	"gorgonia.org/tensor"
 )
 
-var blasdoor sync.Mutex
+var blasdoor sync.RWMutex
 var whichblas BLAS
 
 // BLAS represents all the possible implementations of BLAS.
@@ -50,7 +50,11 @@ func Use(b BLAS) {
 }
 
 // WhichBLAS returns the BLAS that gorgonia uses.
-func WhichBLAS() BLAS { return whichblas }
+func WhichBLAS() BLAS {
+	blasdoor.RLock()
+	defer blasdoor.RUnlock()
+	return whichblas
+}
 
 func init() {
 	whichblas = gonum.Implementation{}

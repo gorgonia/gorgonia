@@ -189,8 +189,9 @@ func (g *ExprGraph) addToAll(n *Node) {
 	if n == nil {
 		panic("HELP! trying to add nil")
 	}
-	g.all = append(g.all, n)
 	n.id = int64(g.counter)
+	g.byID[n.id] = len(g.all)
+	g.all = append(g.all, n)
 	g.counter++
 }
 

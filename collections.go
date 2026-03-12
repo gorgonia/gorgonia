@@ -160,8 +160,12 @@ func (ns Nodes) Equals(other Nodes) bool {
 		return false
 	}
 
+	set := make(map[*Node]struct{}, len(other))
+	for _, n := range other {
+		set[n] = struct{}{}
+	}
 	for _, n := range ns {
-		if !other.Contains(n) {
+		if _, ok := set[n]; !ok {
 			return false
 		}
 	}
@@ -199,13 +203,17 @@ func (ns Nodes) replace(what, with *Node) Nodes {
 var removers = make(map[string]int)
 
 func (ns Nodes) remove(what *Node) Nodes {
-	for i := ns.index(what); i != -1; i = ns.index(what) {
-		copy(ns[i:], ns[i+1:])
-		ns[len(ns)-1] = nil // to prevent any unwanted references so things can be GC'd away
-		ns = ns[:len(ns)-1]
+	w := 0
+	for _, n := range ns {
+		if n != what {
+			ns[w] = n
+			w++
+		}
 	}
-
-	return ns
+	for i := w; i < len(ns); i++ {
+		ns[i] = nil // to prevent any unwanted references so things can be GC'd away
+	}
+	return ns[:w]
 }
 
 func (ns Nodes) dimSizers() []DimSizer {

@@ -431,7 +431,6 @@ func (op repeatOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value,
 		pt.Memset(s)
 		retVal = pt
 		return
-		t = tensor.New(tensor.FromScalar(s))
 	case tensor.Tensor:
 		if iv.Shape().IsScalarEquiv() {
 			data := iv.Data()

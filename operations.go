@@ -662,12 +662,12 @@ func containsDuplicate(slice []int) bool {
 		return false
 	}
 
-	for index1, value1 := range slice {
-		for index2, value2 := range slice {
-			if (value1 == value2) && (index1 != index2) {
-				return true
-			}
+	seen := make(map[int]struct{}, len(slice))
+	for _, v := range slice {
+		if _, ok := seen[v]; ok {
+			return true
 		}
+		seen[v] = struct{}{}
 	}
 
 	return false

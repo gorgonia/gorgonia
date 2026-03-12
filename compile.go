@@ -126,15 +126,16 @@ type codegenerator struct {
 }
 
 func newCodeGenerator(inputs, sorted Nodes, df *dataflow) *codegenerator {
+	n := len(sorted)
 	return &codegenerator{
-		locMap:     make(map[*Node]register),
-		lastWrites: make(map[register]*Node),
-		flushed:    make(map[int]struct{}),
-		allocated:  make(map[register]struct{}),
-		freed:      make(map[register]struct{}),
-		deferFree:  make(map[register]struct{}),
-		instrMap:   make(map[*Node]fragment),
-		lastReads:  make(map[register]int),
+		locMap:     make(map[*Node]register, n),
+		lastWrites: make(map[register]*Node, n),
+		flushed:    make(map[int]struct{}, n),
+		allocated:  make(map[register]struct{}, n),
+		freed:      make(map[register]struct{}, n),
+		deferFree:  make(map[register]struct{}, n),
+		instrMap:   make(map[*Node]fragment, n),
+		lastReads:  make(map[register]int, n),
 
 		g:      inputs[0].g,
 		inputs: inputs,

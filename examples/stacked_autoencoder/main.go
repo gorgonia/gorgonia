@@ -165,7 +165,7 @@ func main() {
 		img := visualizeRow(row)
 
 		f, _ := os.OpenFile(fmt.Sprintf("images/%d.jpg", i), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-		jpeg.Encode(f, img, &jpeg.Options{jpeg.DefaultQuality})
+		jpeg.Encode(f, img, &jpeg.Options{Quality: jpeg.DefaultQuality})
 		f.Close()
 	}
 
