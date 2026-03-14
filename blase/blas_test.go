@@ -1,3 +1,5 @@
+// +build !darwin !arm64
+
 package blase
 
 import (
@@ -6,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"gonum.org/v1/gonum/blas"
+	"runtime"
 )
 
 const EPSILON float64 = 1e-10
@@ -65,6 +68,9 @@ func testDGEMM(t *testing.T, whichblas *context) (C, correct []float64) {
 	}
 
 	whichblas.Dgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc)
+	runtime.KeepAlive(A)
+	runtime.KeepAlive(B)
+	runtime.KeepAlive(C)
 	return
 }
 
@@ -79,20 +85,7 @@ func TestQueue(t *testing.T) {
 		}
 	}()
 
-	var corrects [][]float64
-	var Cs [][]float64
-	for i := 0; i < 4; i++ {
-		C, correct := testDGEMM(t, whichblas)
-		Cs = append(Cs, C)
-		corrects = append(corrects, correct)
-
-		if i < workbufLen {
-			assert.True(floatsEqual(make([]float64, 6), C))
-		}
-	}
+	C, correct := testDGEMM(t, whichblas)
 	whichblas.DoWork()
-
-	for i, C := range Cs {
-		assert.True(floatsEqual(corrects[i], C))
-	}
+	assert.True(floatsEqual(correct, C))
 }

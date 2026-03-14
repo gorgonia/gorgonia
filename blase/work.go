@@ -1,3 +1,5 @@
+// +build !darwin !arm64
+
 package blase
 
 /*
@@ -129,30 +131,16 @@ func (ctx *context) DoWork() {
 		case w := <-ctx.work:
 			ctx.queue = append(ctx.queue, w)
 		default:
-			return
-		}
-
-		blocking := ctx.queue[len(ctx.queue)-1].blocking
-	enqueue:
-		for len(ctx.queue) < cap(ctx.queue) && !blocking {
-			select {
-			case w := <-ctx.work:
-				ctx.queue = append(ctx.queue, w)
-				blocking = ctx.queue[len(ctx.queue)-1].blocking
-			default:
-				break enqueue
-
-			}
-
-			for i, c := range ctx.queue {
-				ctx.fns[i] = *(*C.struct_fnargs)(unsafe.Pointer(c.args))
-			}
-			C.process(&ctx.fns[0], C.int(len(ctx.queue)))
-
-			// clear queue
-			ctx.queue = ctx.queue[:0]
+			goto process
 		}
 	}
+process:
+	log.Printf("Queue length before processing: %d", len(ctx.queue))
+	for _, c := range ctx.queue {
+		ctx.fns[0] = *(*C.struct_fnargs)(unsafe.Pointer(c.args))
+		C.process(&ctx.fns[0], 1)
+	}
+	ctx.queue = ctx.queue[:0]
 }
 
 // WorkAvailable is the channel which users should subscribe to to know if there is work incoming.

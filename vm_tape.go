@@ -133,6 +133,47 @@ func (m *tapeMachine) Reset() {
 	}
 }
 
+// Refresh updates the tape with new nodes added to the graph after initial compilation.
+// This allows dynamic graph modifications, such as those from Grad() calls.
+func (m *tapeMachine) Refresh() error {
+	g := m.p.g
+	if g == nil {
+		return errors.New("no graph associated with program")
+	}
+
+	// Check if there are new nodes
+	hasNewNodes := false
+	for _, node := range g.AllNodes() {
+		if _, exists := m.locMap[node]; !exists {
+			hasNewNodes = true
+			break
+		}
+	}
+
+	if !hasNewNodes {
+		return nil // no new nodes
+	}
+
+	// Recompile the entire graph for simplicity
+	// TODO: Implement true incremental compilation
+	prog, locMap, err := Compile(g)
+	if err != nil {
+		return errors.Wrap(err, "failed to recompile graph")
+	}
+
+	// Update the machine with new program
+	m.p = prog
+	m.locMap = locMap
+	m.cpumem = make([]Value, m.p.cpulocs)
+	m.gpumem = make([]Value, m.p.gpulocs)
+	m.init()
+
+	// Reset execution state
+	m.pc = 0
+
+	return nil
+}
+
 func (m *tapeMachine) Close() error {
 	finalizeTapeMachine(m)
 	return nil
@@ -214,6 +255,22 @@ func (m *tapeMachine) RunAll() (err error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 	defer m.DoWork()
+
+	// Check for new nodes and refresh if needed
+	if m.p.g != nil {
+		hasNewNodes := false
+		for _, node := range m.p.g.AllNodes() {
+			if _, exists := m.locMap[node]; !exists {
+				hasNewNodes = true
+				break
+			}
+		}
+		if hasNewNodes {
+			if err = m.Refresh(); err != nil {
+				return errors.Wrap(err, "failed to refresh tape machine")
+			}
+		}
+	}
 
 	workAvailable := m.ExternMetadata.WorkAvailable()
 	syncChan := m.ExternMetadata.Sync()

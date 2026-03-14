@@ -1,3 +1,5 @@
+// +build !darwin !arm64
+
 // Package blase is a thin wrapper over Gonum's BLAS interface that provides a queue
 // so that cgo calls are batched. This package was created so MKL usage can be improved.
 //
@@ -5,6 +7,7 @@
 package blase
 
 /*
+#cgo LDFLAGS: -lopenblas
 #include <stdint.h>
 #include <stdio.h>
 #include "cblas.h"

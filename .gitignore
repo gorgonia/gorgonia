@@ -34,3 +34,4 @@ examples/convnet/tmp.dot
 examples/iris/cmd/theta.bin
 examples/iris/theta.bin
 examples/testdata
+.vscode/

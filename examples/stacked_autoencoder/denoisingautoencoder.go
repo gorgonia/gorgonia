@@ -4,6 +4,7 @@ import (
 	"log"
 
 	. "gorgonia.org/gorgonia"
+	"gorgonia.org/tensor"
 )
 
 type DenoisingAutoencoder struct {
@@ -35,12 +36,12 @@ func NewDATiedWeights(w, b *Node, corruption float64, opts ...LayerConsOpt) *Den
 	da.h.w = Must(Transpose(w))
 	log.Printf("w %v da.h.w %v", w.Shape(), da.h.w.Shape())
 	if da.BatchSize == 1 {
-		da.h.b = NewVector(da.g, dt, WithShape(da.Inputs), WithInit(Zeroes()))
+		da.h.b = NewVector(da.g, tensor.Float64, WithShape(da.Inputs), WithInit(Zeroes()))
 	} else {
-		da.h.b = NewMatrix(da.g, dt, WithShape(da.BatchSize, da.Inputs), WithInit(Zeroes()))
+		da.h.b = NewMatrix(da.g, tensor.Float64, WithShape(da.BatchSize, da.Inputs), WithInit(Zeroes()))
 	}
 
-	da.corruption = BinomialRandomNode(da.g, dt, 1, corruption)
+	da.corruption = BinomialRandomNode(da.g, tensor.Float64, 1, corruption)
 
 	return da
 }

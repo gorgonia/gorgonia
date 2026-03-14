@@ -2,7 +2,7 @@ import glob
 from subprocess import call
 from os.path import basename, splitext
 
-compute = [30, 32, 35, 37, 50, 52, 53, 60, 61, 62]
+compute = [35, 37, 50, 52, 53, 60, 61, 62, 70, 72, 75, 80, 86, 87]
 def main():
 	src = glob.glob("src/*.cu")
 	cmd = ['nvcc', '-o=', '-arch=', '-ptx', '-Xptxas', '-allow-expensive-optimizations']

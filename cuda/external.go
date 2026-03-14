@@ -1,3 +1,5 @@
+//go:build cuda && !darwin && !arm64
+
 package cuda
 
 import (
@@ -5,8 +7,8 @@ import (
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
-	"gorgonia.org/cu/blas"
-	"gorgonia.org/cu/dnn"
+	cublas "gorgonia.org/cu/blas"
+	cudnn "gorgonia.org/cu/dnn"
 )
 
 //  this file implements all the methods required to fulfil the External interface
@@ -20,6 +22,11 @@ const (
 	//
 	memalign    = 32
 	scalarAlign = 8
+)
+
+var (
+	getCuMemInfo          = cu.MemInfo
+	callCuMemAllocManaged = cu.MemAllocManaged
 )
 
 // HasFunc returns true if the execution is external (cgo/cuda/openCL) AND the external device contains the function with the given name
@@ -109,6 +116,24 @@ func (e *Engine) Init(device cu.Device, size int64) (err error) {
 	return
 }
 
+func (e *Engine) allocateMemory(size int64) (err error) {
+	if e.freeMem, e.totalMem, err = getCuMemInfo(); err != nil {
+		return errors.Wrapf(err, "Failed to get free and total mem for device %v", e.d)
+	}
+
+	// actually reserve memory for the allocator
+	var allocsize int64 = size + (size / 2) + minAllocSize
+	if allocsize > e.freeMem {
+		allocsize = e.freeMem
+	}
+	ptr, err := callCuMemAllocManaged(allocsize, cu.AttachGlobal)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to allocate %v bytes of managed memory for %v", allocsize, e.d)
+	}
+	e.a.reserve(uintptr(ptr), allocsize)
+	return nil
+}
+
 func (e *Engine) doInit(size int64) (err error) {
 	e.workAvailable = make(chan bool)
 	e.syncChan = make(chan struct{})
@@ -121,7 +146,7 @@ func (e *Engine) doInit(size int64) (err error) {
 	ctxFlag := cu.SchedAuto
 	if cuctx, err = e.d.MakeContext(ctxFlag); err != nil {
 		if err == cu.OutOfMemory {
-			free, total, err2 := cu.MemInfo()
+			free, total, err2 := getCuMemInfo()
 			if err2 != nil {
 				return errors.Wrapf(err, "Out of memory. Additionally errors were found while retrieving mem info %v", err2)
 			}
@@ -149,21 +174,9 @@ func (e *Engine) doInit(size int64) (err error) {
 	e.f = make(map[string]cu.Function)
 
 	// actual work to allocate from graphics card
-
-	if e.freeMem, e.totalMem, err = cu.MemInfo(); err != nil {
-		return errors.Wrapf(err, "Failed to get free and total mem for device %v", e.d)
+	if err = e.allocateMemory(size); err != nil {
+		return err
 	}
-
-	// actually reserve memory for the allocator
-	var allocsize int64 = 2*size + (size / 2) + minAllocSize
-	if allocsize >= e.freeMem {
-		return errors.Errorf("Unable to get %v bytes. Free memory available %v", allocsize, e.freeMem)
-	}
-	ptr, err := cu.MemAllocManaged(allocsize, cu.AttachGlobal)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to allocate %v bytes of managed memory for %v", allocsize, e.d)
-	}
-	e.a.reserve(uintptr(ptr), allocsize)
 	e.n = *(cudnn.NewContext())
 	go e.Run()
 	return nil

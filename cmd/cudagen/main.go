@@ -103,6 +103,10 @@ func main() {
 	}
 
 	// Get the lowest possible compute capability
+	// CUDA 12 minimum: SM35 (dropped SM30/32 support)
+	const minSupportedMajor = 3
+	const minSupportedMinor = 5
+
 	major := int(^uint(0) >> 1)
 	minor := int(^uint(0) >> 1)
 	for d := 0; d < devices; d++ {
@@ -115,6 +119,20 @@ func main() {
 		if err != nil {
 			log.Fatalf("Unable to get compute compatibility of GPU%d - %v", d, err)
 		}
+
+		// Validate minimum CUDA 12 support
+		if maj < minSupportedMajor || (maj == minSupportedMajor && min < minSupportedMinor) {
+			log.Fatalf("GPU%d has compute capability %d.%d, but CUDA 12 requires minimum SM%d.%d\n"+
+				"Unsupported GPU architectures: Fermi (SM2.x), Kepler K10/K20 (SM3.0-3.2)\n"+
+				"Please use CUDA 11.x or upgrade your GPU.", d, maj, min, minSupportedMajor, minSupportedMinor)
+		}
+
+		// Warn about Kepler deprecation
+		if maj == 3 && (min == 5 || min == 7) {
+			log.Printf("WARNING: GPU%d uses Kepler architecture (SM%d.%d) which is deprecated in CUDA 12\n"+
+				"This may be removed in future CUDA versions. Consider upgrading to Maxwell (SM5.x) or newer.", d, maj, min)
+		}
+
 		if maj > 0 && maj < major {
 			major = maj
 			minor = min
@@ -125,6 +143,8 @@ func main() {
 			minor = min
 		}
 	}
+
+	log.Printf("Detected compute capability: SM%d.%d (compiling for lowest capability across all GPUs)", major, minor)
 
 	cwd, err := os.Getwd()
 	if err != nil {

@@ -1,3 +1,5 @@
+// +build !darwin !arm64
+
 package blase
 
 /*

@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
+	"log"
 	"os"
 
 	. "gorgonia.org/gorgonia"
@@ -156,7 +157,7 @@ func (sda *StackedDA) Pretrain(x tensor.Tensor, epoch int) (err error) {
 			fmt.Fprintf(&buf, "%v", ac)
 		}
 	}
-	trainingLog.Println(buf.String())
+	log.Println(buf.String())
 
 	return nil
 }
@@ -242,7 +243,7 @@ func (sda *StackedDA) Finetune(x tensor.Tensor, y []int, epoch int) (err error) 
 	}
 	solver.Step(model)
 
-	trainingLog.Printf("%d\t%v", epoch, avgF64s(cvs))
+	log.Printf("%d\t%v", epoch, avgF64s(cvs))
 	return nil
 }
 

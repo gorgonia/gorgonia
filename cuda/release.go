@@ -1,4 +1,4 @@
-// +build !debug
+//go:build !darwin && !arm64 && !debug
 
 package cuda
 
