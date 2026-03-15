@@ -54,6 +54,26 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 				return errors.Wrap(err, opDoFail)
 			}
 		}
+	case instr.useUnsafe:
+		// useUnsafe is set by the compiler when the output register is the
+		// same as the overwritten input register. It must be checked before
+		// usePrealloc because when registers are shared, usePrealloc is
+		// always true (the dest register contains the input value). Without
+		// this ordering, ops that implement UnsafeDo but not UsePreallocDo
+		// (e.g. elemUnaryOp) would fall through to plain Do(), which
+		// allocates new memory instead of modifying in-place.
+		// This matches the CUDA execution path (vm_tape_cuda.go) which has
+		// no usePrealloc case at all.
+		if ud, ok := instr.op.(UnsafeDoer); ok {
+			if v, err = ud.UnsafeDo(inputs...); err != nil {
+				return errors.Wrap(err, "Failed to carry UnsafeDo()")
+			}
+		} else {
+			// TODO: warn?
+			if v, err = instr.op.Do(inputs...); err != nil {
+				return errors.Wrap(err, opDoFail)
+			}
+		}
 	case usePrealloc:
 		if pd, ok := instr.op.(UsePreallocDoer); ok {
 			p := m.cpumem[instr.writeTo.id]
@@ -63,17 +83,6 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 				}
 			}
 		} else {
-			if v, err = instr.op.Do(inputs...); err != nil {
-				return errors.Wrap(err, opDoFail)
-			}
-		}
-	case instr.useUnsafe:
-		if ud, ok := instr.op.(UnsafeDoer); ok {
-			if v, err = ud.UnsafeDo(inputs...); err != nil {
-				return errors.Wrap(err, "Failed to carry UnsafeDo()")
-			}
-		} else {
-			// TODO: warn?
 			if v, err = instr.op.Do(inputs...); err != nil {
 				return errors.Wrap(err, opDoFail)
 			}
