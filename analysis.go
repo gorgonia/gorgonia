@@ -35,7 +35,7 @@ func (df *dataflow) vn(n *Node) (retVal *Node, unique bool) {
 
 	node, ok := df.uniques[n.Hashcode()]
 
-	if ok {
+	if ok && nodeEq(n, node) {
 		return node, false
 	}
 
