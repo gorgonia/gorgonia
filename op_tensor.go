@@ -963,9 +963,9 @@ func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
 	// t.UT()
 }
 
-func (op transposeOp) ReturnsPtr() bool     { return true }
+func (op transposeOp) ReturnsPtr() bool     { return false }
 func (op transposeOp) CallsExtern() bool    { return false }
-func (op transposeOp) OverwritesInput() int { return 0 }
+func (op transposeOp) OverwritesInput() int { return -1 }
 
 func (op transposeOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("transposeOp"))
@@ -1188,9 +1188,9 @@ func (op reshapeOp) Do(vals ...Value) (Value, error) {
 	}
 }
 
-func (op reshapeOp) ReturnsPtr() bool     { return true }
+func (op reshapeOp) ReturnsPtr() bool     { return false }
 func (op reshapeOp) CallsExtern() bool    { return false }
-func (op reshapeOp) OverwritesInput() int { return 0 }
+func (op reshapeOp) OverwritesInput() int { return -1 }
 func (op reshapeOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("reshapeOp"))
 	fmt.Fprintf(h, "from: %v, dims: %v", op.from, op.to)

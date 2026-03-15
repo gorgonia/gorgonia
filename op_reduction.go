@@ -165,8 +165,8 @@ func (op maxOp) Do(inputs ...Value) (retVal Value, err error) {
 	return reductionDo(op, "max", (*tensor.Dense).Max, op.along, inputs...)
 }
 
-func (op maxOp) ReturnsPtr() bool     { return true }
-func (op maxOp) OverwritesInput() int { return 0 }
+func (op maxOp) ReturnsPtr() bool     { return false }
+func (op maxOp) OverwritesInput() int { return -1 }
 func (op maxOp) CallsExtern() bool    { return false }
 
 func (op maxOp) WriteHash(h hash.Hash) {
@@ -343,8 +343,8 @@ func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
 	return reductionDo(op, "sum", (*tensor.Dense).Sum, op.along, inputs...)
 }
 
-func (op sumOp) ReturnsPtr() bool      { return true }
-func (op sumOp) OverwritesInput() int  { return 0 }
+func (op sumOp) ReturnsPtr() bool      { return false }
+func (op sumOp) OverwritesInput() int  { return -1 }
 func (op sumOp) CallsExtern() bool     { return false }
 func (op sumOp) WriteHash(h hash.Hash) { fmt.Fprintf(h, "sum%v->%v", op.along, op.inputShape) }
 func (op sumOp) Hashcode() uint32      { return simpleHash(op) }
