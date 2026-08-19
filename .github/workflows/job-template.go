@@ -51,21 +51,21 @@ jobs:
     continue-on-error: ${{"{{"}} matrix.experimental {{"}}"}}
     steps:
     - name: Install Go 
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v5
       with:
         go-version: ${{"{{"}} env.GOVERSION {{"}}"}}
     # Get values for cache paths to be used in later steps
     - id: go-cache-paths
       run: |
-        echo "::set-output name=go-build::$(go env GOCACHE)"
-        echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+        echo "go-build=$(go env GOCACHE)" >> $GITHUB_OUTPUT
+        echo "go-mod=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     # Cache go build cache, used to speedup go test
     - name: Go Build Cache
       if: steps.go-cache-paths.outputs.go-build != ''
       id: build-cache
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ${{"{{"}} steps.go-cache-paths.outputs.go-build {{"}}"}}
         key: ${{"{{"}} runner.os {{"}}"}}-go-build-${{"{{"}} hashFiles('**/go.sum') {{"}}"}}
@@ -75,7 +75,7 @@ jobs:
     - name: Go Mod Cache
       if: steps.go-cache-paths.outputs.go-mod != ''
       id: build-mod-cache
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ${{"{{"}} steps.go-cache-paths.outputs.go-mod {{"}}"}}
         key: ${{"{{"}} runner.os {{"}}"}}-go-mod-${{"{{"}} hashFiles('**/go.sum') {{"}}"}}

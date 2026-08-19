@@ -13,15 +13,15 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
     - name: Install Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v5
       with:
         go-version: 1.15.x
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Calc coverage
       run: |
         go test -v -covermode=atomic -coverprofile=coverage.out 
-    - uses: codecov/codecov-action@v1
+    - uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
         files: coverage.out
